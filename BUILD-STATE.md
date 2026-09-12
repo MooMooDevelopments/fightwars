@@ -29,7 +29,9 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 ## Handoff — read this first (written 2026-09-12 at the end of session 6)
 
 - **The plan for everything that remains (Phases 4–7 and the blocked items) is
-  `docs/HANDOFF.md`.** This section is the per-session resume; that file is the map.
+  `docs/HANDOFF.md`.** This section is the per-session resume; that file is the map. Its §3
+  now carries a per-item handoff for each unfinished Phase 4 item — entry points, what is
+  already there, the approach, and the traps — written after doing five of them.
 
 - Tree is clean and pushed; HEAD is on `origin/main`. Nothing is mid-flight, no background
   process is running, the dev stack is stopped.
@@ -107,6 +109,14 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   and it now also shows the pre-Phase-4 palette. Replacing it needs a clean capture of our
   own client at 1200x630; the browser pane can frame one but cannot write it to disk, so it
   wants the Node asset pipeline (`resources/` images are generated in Node — see Phase 1).
+- **The client perf harness does not run, and this predates session 6.** `npm run perf:client`
+  dies with `ReferenceError: document is not defined` (`src/client/Api.ts` adds a
+  `session-cleared` listener at module scope and the script imports it into plain Node);
+  `perf:client-mem` and `perf:client-tick` die with `spawn npx ENOENT`, because they spawn
+  `npx vite` without `shell: true`, which does not work on Windows. Reproduced at
+  `dfef14c60`, so it is not fallout from the Phase 4 work. The renderer item's stated
+  verification depends on it. `npm run perf:gate` — the headless _simulation_ budget — is
+  unaffected and passes (mean 5.76 ms, 0 over-budget ticks).
 - `npm run test:coverage` now fails if `src/core` drops below the floor in `vite.config.ts`
   (lines 85 / functions 83 / branches 77 / statements 84). Raise the floor as coverage grows.
 - **A two-player browser test** now needs no localStorage trick: open the second player at
