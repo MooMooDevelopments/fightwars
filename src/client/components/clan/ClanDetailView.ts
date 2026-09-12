@@ -1,5 +1,6 @@
 import { html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { BRAND } from "../../../brand/Brand";
 import { invalidateUserMe } from "../../Api";
 import {
   type ClanDiscord,
@@ -822,7 +823,8 @@ export class ClanDetailView extends LitElement {
         </button>
       `);
     }
-    if (isMember) {
+    // Clan currency comes from the store; without one there is nothing to give.
+    if (isMember && BRAND.monetisation.store) {
       buttons.push(html`
         <button
           @click=${() => (this.donateOpen = true)}

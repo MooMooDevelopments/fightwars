@@ -1,5 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+// FightWars ships with the store off (BRAND.monetisation.store === false), so
+// the Donate button and the Donations tab render nothing by default. These
+// suites cover upstream's clan-currency paths, so run them with the switch on.
+vi.mock("../../../src/brand/Brand", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../../../src/brand/Brand")>();
+  return {
+    BRAND: {
+      ...actual.BRAND,
+      monetisation: { ...actual.BRAND.monetisation, store: true },
+    },
+  };
+});
+
 import {
   apiMockFactory,
   authMockFactory,

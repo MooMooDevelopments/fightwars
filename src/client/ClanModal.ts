@@ -1,6 +1,7 @@
 import { html } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { GameEnv } from "../core/configuration/Config";
+import { BRAND } from "../brand/Brand";
 import { getUserMe, invalidateUserMe } from "./Api";
 import { type ClanInfo, type ClanMember } from "./ClanApi";
 import { ClientEnv } from "./ClientEnv";
@@ -153,10 +154,15 @@ export class ClanModal extends BaseModal {
                 key: "game-history",
                 label: translateText("clan_modal.tab_game_history"),
               },
-              {
-                key: "donations",
-                label: translateText("clan_modal.tab_donations"),
-              },
+              // The donation ledger only exists where a store funds it.
+              ...(BRAND.monetisation.store
+                ? [
+                    {
+                      key: "donations",
+                      label: translateText("clan_modal.tab_donations"),
+                    },
+                  ]
+                : []),
             ]
           : [],
     };
@@ -371,7 +377,9 @@ export class ClanModal extends BaseModal {
     try {
       const me = await getUserMe();
       if (!this.isModalOpen) return;
-      if (!me || Object.keys(me.user).length === 0) {
+      // FightWars: every player holds a guest account, so a session is a
+      // sign-in. Upstream also required a linked identity in `me.user`.
+      if (!me) {
         this.signedOut = true;
         this.myPublicId = null;
         this.myPendingRequests = [];

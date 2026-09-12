@@ -431,6 +431,27 @@ describe("clan lifecycle", () => {
     });
   });
 
+  it("creates the account row for a dev raw-id bearer that never logged in", async () => {
+    // The dev bearer path (a bare persistent id) reaches the routes without
+    // /auth/guest ever running; the clan insert must not trip the members FK.
+    const fresh = randomUUID();
+    const r = await fetch(`${api.base}/clans`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${fresh}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ tag: "raw", name: "Raw bearer" }),
+    });
+    expect(r.status).toBe(201);
+    expect(ClanInfoSchema.parse(await r.json()).memberCount).toBe(1);
+    const leave = await fetch(`${api.base}/clans/RAW/leave`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${fresh}` },
+    });
+    expect(leave.status).toBe(204);
+  });
+
   it("has no currency: the ledger is empty and donating fails", async () => {
     const ledger = await call(
       api.base,

@@ -519,20 +519,23 @@ export function registerClanRoutes(
         .json({ error: "tag taken", message: "Tag already registered" });
       return;
     }
+    // One statement, so a clan never exists without its leader.
     await db.query(
-      `INSERT INTO clans (tag, name, description, discord_url, is_open)
-       VALUES ($1, $2, $3, $4, $5)`,
+      `WITH c AS (
+         INSERT INTO clans (tag, name, description, discord_url, is_open)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING tag
+       )
+       INSERT INTO clan_members (persistent_id, tag, role)
+       SELECT $6, c.tag, 'leader' FROM c`,
       [
         tag,
         body.data.name,
         body.data.description ?? "",
         discord,
         body.data.isOpen ?? true,
+        caller.persistentId,
       ],
-    );
-    await db.query(
-      "INSERT INTO clan_members (persistent_id, tag, role) VALUES ($1, $2, 'leader')",
-      [caller.persistentId, tag],
     );
     res.status(201).json(clanInfo((await getClan(db, tag))!));
   });

@@ -39,7 +39,9 @@ describe("ClanModal — signed out", () => {
     if (!customElements.get("clan-modal")) {
       customElements.define("clan-modal", ClanModal);
     }
-    asMock(getUserMe).mockResolvedValue({ user: {}, player: {} } as never);
+    // FightWars: signed out means no session at all (getUserMe → false); a
+    // guest account with an empty `user` is a signed-in player.
+    asMock(getUserMe).mockResolvedValue(false);
     showPage = vi.fn<(pageId: string) => void>();
     window.showPage = showPage;
 

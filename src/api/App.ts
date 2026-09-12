@@ -192,12 +192,21 @@ export async function createApiApp(
     const auth = req.headers.authorization;
     if (auth === undefined || !auth.startsWith("Bearer ")) return null;
     const token = auth.slice("Bearer ".length).trim();
+    let persistentId: string;
+    let role: string | undefined;
     if (PersistentIdSchema.safeParse(token).success) {
-      return isDev ? { persistentId: token } : null;
+      if (!isDev) return null;
+      persistentId = token;
+    } else {
+      const v = await verifyToken(keys, token, issuer, audience);
+      if (v === null) return null;
+      persistentId = base64urlToUuid(v.persistentIdB64);
+      role = v.role;
     }
-    const v = await verifyToken(keys, token, issuer, audience);
-    if (v === null) return null;
-    return { persistentId: base64urlToUuid(v.persistentIdB64), role: v.role };
+    // Every authenticated caller has an account row (the dev raw-id path
+    // can arrive before any /auth/guest call) and is marked seen.
+    await ensureAccount(db, persistentId);
+    return { persistentId, role };
   };
 
   const issueJwt = (persistentId: string, role: string | null) =>
@@ -468,6 +477,26 @@ export async function createApiApp(
     const account = await getAccount(db, caller.persistentId);
     res.json(account === null ? null : { publicId: account.public_id });
   });
+
+  // Errors are JSON, never Express's HTML stack page.
+  app.use(
+    (
+      err: unknown,
+      _req: Request,
+      res: Response,
+      _next: (e?: unknown) => void,
+    ) => {
+      console.error(
+        JSON.stringify({
+          level: "error",
+          service: "fightwars-api",
+          error: err instanceof Error ? err.message : String(err),
+        }),
+      );
+      if (res.headersSent) return;
+      res.status(500).json({ error: "internal error" });
+    },
+  );
 
   return { app, db, keys, issuer, audience, matchmaking };
 }
