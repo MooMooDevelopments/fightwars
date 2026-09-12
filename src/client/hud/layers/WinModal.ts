@@ -142,6 +142,8 @@ export class WinModal extends LitElement implements Controller {
   }
 
   renderYoutubeTutorial() {
+    // No configured video means no empty black box where one used to be.
+    if (TUTORIAL_VIDEO_URL === "") return html``;
     return html`
       <div class="text-center mb-6 bg-black/30 p-2.5 rounded-sm">
         <h3 class="text-xl font-semibold text-white mb-3">

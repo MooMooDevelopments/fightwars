@@ -29,7 +29,7 @@ export class PlayPage extends LitElement {
           class="lg:hidden fixed left-0 right-0 top-[var(--top-ad-height,0px)] z-40 pt-[env(safe-area-inset-top)] bg-surface border-b border-white/10"
         >
           <div
-            class="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center h-14 px-2 gap-2"
+            class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)_minmax(0,1fr)] items-center h-14 px-2 gap-2"
           >
             <button
               id="hamburger-btn"
@@ -62,7 +62,7 @@ export class PlayPage extends LitElement {
               <img
                 src=${assetUrl(BRAND.assets.logo)}
                 alt=${BRAND.name}
-                class="h-full w-auto"
+                class="h-8 w-auto max-w-full object-contain"
               />
             </div>
 

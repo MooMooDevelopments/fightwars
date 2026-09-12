@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync, statSync } from "fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "fs";
 import path from "path";
 import { describe, expect, it } from "vitest";
 import { BRAND } from "../src/brand/Brand";
@@ -70,5 +70,53 @@ describe("Brand", () => {
         needle.toLowerCase(),
       );
     }
+  });
+});
+
+describe("Brand assets", () => {
+  it("points every third-party embed through BRAND, not a literal", () => {
+    // The inherited tutorial video was a hardcoded YouTube URL for an
+    // OpenFront guide — someone else's product, playing inside our death and
+    // victory screens. Anything embedded from off-site has to be brand
+    // configuration so it can be changed (or emptied) in one place.
+    const utils = readFileSync(
+      path.join(SRC_ROOT, "client", "Utils.ts"),
+      "utf8",
+    );
+    expect(utils).not.toMatch(/https:\/\/www\.youtube\.com\/embed\//);
+    expect(BRAND.tutorialVideoUrl).toBe("");
+  });
+
+  it("ships the display font it claims to", () => {
+    // The wordmark, the UI and the map's text atlas are all one face; a
+    // mismatch here is how the map ends up in a different font from the
+    // chrome without anyone noticing.
+    expect(BRAND.assets.displayFontFamily).toBe("Barlow Condensed");
+    for (const face of BRAND.assets.fontFaces) {
+      expect(
+        existsSync(path.join(REPO_ROOT, "resources", face.file)),
+        `${face.file} is registered but not shipped`,
+      ).toBe(true);
+    }
+    const atlas = JSON.parse(
+      readFileSync(
+        path.join(REPO_ROOT, "resources", "atlases", "msdf-atlas.json"),
+        "utf8",
+      ),
+    ) as { info: { face: string } };
+    expect(atlas.info.face).toMatch(/^BarlowCondensed/);
+  });
+
+  it("uses its own social card rather than an inherited screenshot", () => {
+    expect(BRAND.assets.socialImage).toBe("images/SocialCard.png");
+    expect(
+      existsSync(path.join(REPO_ROOT, "resources", BRAND.assets.socialImage)),
+    ).toBe(true);
+    expect(
+      existsSync(
+        path.join(REPO_ROOT, "resources", "images", "GameplayScreenshot.png"),
+      ),
+      "upstream's screenshot should be gone, not merely unreferenced",
+    ).toBe(false);
   });
 });

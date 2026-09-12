@@ -32,5 +32,10 @@
     "scripts/**/*",
     "vite.config.ts"
   ],
-  "exclude": ["node_modules"]
+  // scripts/generateBrandMarks.ts is a one-off asset generator. Its tools
+  // (opentype.js, canvas) are deliberately not dependencies — see the file's
+  // header — so after a plain `npm ci` they are simply absent and tsc has
+  // nothing to resolve. Excluded rather than given stub types, which would
+  // claim a check that is not happening.
+  "exclude": ["node_modules", "scripts/generateBrandMarks.ts"]
 }

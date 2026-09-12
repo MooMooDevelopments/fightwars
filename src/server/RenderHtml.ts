@@ -93,7 +93,7 @@ export async function renderHtmlContent(
     manifestHref: buildAssetUrl("manifest.json", assetManifest, cdnBase),
     faviconHref: buildAssetUrl("images/Favicon.svg", assetManifest, cdnBase),
     gameplayScreenshotUrl: buildAssetUrl(
-      "images/GameplayScreenshot.png",
+      BRAND.assets.socialImage,
       assetManifest,
       cdnBase,
     ),

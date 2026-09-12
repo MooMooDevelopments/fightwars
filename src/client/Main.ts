@@ -450,12 +450,16 @@ class Client {
     await customElements.whenDefined("mobile-nav-bar");
     await customElements.whenDefined("desktop-nav-bar");
 
-    const displayFont = new FontFace(
-      BRAND.assets.displayFontFamily,
-      `url(${assetUrl(BRAND.assets.displayFontFile)})`,
-    );
-    document.fonts.add(displayFont);
-    displayFont.load().catch(() => {});
+    // Display and body faces together. A failed load is not worth blocking
+    // boot for — the fallback stack in styles.css carries the UI until (or
+    // instead of) the real face arriving.
+    for (const face of BRAND.assets.fontFaces) {
+      const font = new FontFace(face.family, `url(${assetUrl(face.file)})`, {
+        weight: face.weight,
+      });
+      document.fonts.add(font);
+      font.load().catch(() => {});
+    }
 
     // The tagged version only, so a player's version reads the same across web
     // and Steam. The build's full identity -- the commit on an untagged build,

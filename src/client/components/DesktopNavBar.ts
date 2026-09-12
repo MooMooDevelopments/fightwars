@@ -58,7 +58,7 @@ export class DesktopNavBar extends LitElement {
         <div class="flex flex-col items-center justify-center">
           <div class="h-8">
             <img
-              class="block h-full aspect-[1364/259]"
+              class="block h-full w-auto"
               src=${assetUrl(BRAND.assets.logo)}
               alt=${BRAND.name}
             />

@@ -6,7 +6,13 @@
 @theme {
   --default-ring-width: 3px;
   --default-ring-color: var(--color-malibu-blue);
-  --font-display: "Overpass", Inter, Arial, sans-serif;
+  /* Condensed for figures, its sibling for prose. Barlow's stack falls back
+     to the narrow system faces first so a failed webfont load keeps the
+     column widths the HUD was laid out for. */
+  --font-display:
+    "Barlow Condensed", "Roboto Condensed", "Arial Narrow", Inter, Arial,
+    sans-serif;
+  --font-body: "Barlow", Inter, "Helvetica Neue", Arial, sans-serif;
 
   /* Brand palette, inherited from the upstream brand guidelines §4 */
   --color-malibu-blue: #0084d1;
@@ -89,6 +95,10 @@ html {
 
 body {
   min-height: 100%;
+  /* The UI's prose face. Set here rather than as a utility because it is the
+     default every component inherits; the condensed display face is opted
+     into (font-display) for headings and figures, not the other way round. */
+  font-family: var(--font-body);
   /* clip (not hidden) so the body doesn't become a scroll container */
   overflow-x: clip;
   /* Safe area padding for notched devices */

@@ -204,8 +204,7 @@ export async function buildPreview(
         `maps/${encodeURIComponent(normalizedMap)}/thumbnail.webp`,
       )
     : null;
-  const image =
-    mapThumbnail ?? buildAbsoluteAssetUrl("images/GameplayScreenshot.png");
+  const image = mapThumbnail ?? buildAbsoluteAssetUrl(BRAND.assets.socialImage);
 
   const gameType = lobby?.gameConfig?.gameType ?? config.gameType;
   const gameTypeLabel = gameType ? ` (${gameType})` : "";

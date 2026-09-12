@@ -33,6 +33,9 @@ export default [
             "__mocks__/fileMock.js",
             "eslint.config.js",
             "scripts/sync-assets.mjs",
+            // Excluded from tsconfig because its tools are not dependencies
+            // (see the file's header), so it has no project to belong to.
+            "scripts/generateBrandMarks.ts",
             "tests/matchmaking/*.mjs",
           ],
         },

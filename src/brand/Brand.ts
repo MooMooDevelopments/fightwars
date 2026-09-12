@@ -38,6 +38,13 @@ export const BRAND = {
   repoUrl: "https://github.com/MooMooDevelopments/fightwars",
   /** Shown only when non-empty. */
   supportEmail: "",
+  /**
+   * Embedded "how to play" video, rendered only when non-empty. Empty until
+   * FightWars has one of its own: the inherited value pointed at a
+   * third-party OpenFront tutorial, which showed someone else's product (and
+   * someone else's UI) inside our death and victory screens.
+   */
+  tutorialVideoUrl: "",
   /** Community links; each is rendered only when non-empty. */
   community: {
     discordUrl: "",
@@ -70,11 +77,39 @@ export const BRAND = {
     iconPng: "images/Favicon.svg",
     favicon: "images/Favicon.svg",
     /** Social-card image. */
-    socialImage: "images/GameplayScreenshot.png",
-    /** Display face used for the wordmark, version label and numbers. */
-    displayFontFamily: "Overpass",
+    socialImage: "images/SocialCard.png",
+    /**
+     * Display face: the wordmark, headings, the version label and every
+     * number in the HUD. Condensed on purpose — a territorial game is read
+     * as a column of figures (troops, gold, tiles, percentages) and a
+     * condensed face fits more of them at a legible size.
+     */
+    displayFontFamily: "Barlow Condensed",
     /** Font file registered under displayFontFamily via FontFace. */
-    displayFontFile: "fonts/overpass-bold.woff",
+    displayFontFile: "fonts/barlow-condensed-latin-600-normal.woff2",
+    /** Body face: everything that is prose rather than a figure. */
+    bodyFontFamily: "Barlow",
+    /**
+     * Every face the client registers at boot, display and body alike.
+     * `npm run fonts:sync` is what puts these files in resources/fonts.
+     */
+    fontFaces: [
+      {
+        family: "Barlow Condensed",
+        weight: "600",
+        file: "fonts/barlow-condensed-latin-600-normal.woff2",
+      },
+      {
+        family: "Barlow",
+        weight: "400",
+        file: "fonts/barlow-latin-400-normal.woff2",
+      },
+      {
+        family: "Barlow",
+        weight: "600",
+        file: "fonts/barlow-latin-600-normal.woff2",
+      },
+    ] as readonly { family: string; weight: string; file: string }[],
     /**
      * The looping in-game track (SoundManager) and the home-page theme
      * (MenuMusic). Upstream ships both under /proprietary, which this fork
