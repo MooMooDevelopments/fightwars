@@ -5,10 +5,17 @@
 import { randomBytes } from "node:crypto";
 import type { AddressInfo } from "node:net";
 import pg from "pg";
+import { vi } from "vitest";
 import { createApiApp, type ApiContext } from "../../src/api/App";
 import { GameRecordSchema } from "../../src/core/Schemas";
 
 export const API_KEY = "test-api-key";
+
+// Booting an app (PGlite in WASM, seven migrations, an Ed25519 key) takes a
+// few seconds per file; with every API file starting at once on a busy box,
+// or against CI's Postgres service, the default 10 s hook timeout is too
+// tight. Applies to every file that imports these helpers.
+vi.setConfig({ hookTimeout: 60_000 });
 
 /**
  * Env for createApiApp. With TEST_DATABASE_URL set (CI's Postgres service)

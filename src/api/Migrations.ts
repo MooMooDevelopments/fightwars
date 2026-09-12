@@ -153,6 +153,16 @@ export const MIGRATIONS: { id: string; sql: string }[] = [
       CREATE INDEX friends_b ON friends(b);
     `,
   },
+  {
+    id: "0007_ladder_seasons",
+    sql: `
+      ALTER TABLE ratings ADD COLUMN season TEXT NOT NULL DEFAULT '1';
+      ALTER TABLE ratings DROP CONSTRAINT ratings_pkey;
+      ALTER TABLE ratings ADD PRIMARY KEY (persistent_id, ladder, season);
+      DROP INDEX ratings_ladder_rating;
+      CREATE INDEX ratings_season_ladder_rating ON ratings(season, ladder, rating DESC);
+    `,
+  },
 ];
 
 export async function migrate(db: Db): Promise<string[]> {

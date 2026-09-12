@@ -55,6 +55,8 @@ import {
   ingestMatch,
   leaderboard,
   scrubRecord,
+  seasonFrom,
+  seasonParam,
 } from "./Matches";
 import { MatchmakingQueue, type Mode } from "./Matchmaking";
 import { migrate } from "./Migrations";
@@ -71,6 +73,8 @@ export interface ApiContext {
   audience: string;
   /** Ranked queues; call `matchmaking.attach(httpServer)` after listen(). */
   matchmaking: MatchmakingQueue;
+  /** The ladder season new results accrue to (LADDER_SEASON). */
+  season: string;
 }
 
 function issuerFor(domain: string): string {
@@ -134,6 +138,7 @@ export async function createApiApp(
   const db = await openDb(env);
   await migrate(db);
   const keys = await loadSigningKeys(env);
+  const season = seasonFrom(env);
 
   const app = express();
   app.disable("x-powered-by");
@@ -240,6 +245,7 @@ export async function createApiApp(
       db,
       account.persistent_id,
       mode === "1v1" ? "ffa" : "team",
+      season,
     );
     return {
       persistentId: account.persistent_id,
@@ -316,8 +322,8 @@ export async function createApiApp(
     }
     const account = await ensureAccount(db, caller.persistentId);
     const [ffa, team, clans, clanRequests, friends] = await Promise.all([
-      getRating(db, account.persistent_id, "ffa"),
-      getRating(db, account.persistent_id, "team"),
+      getRating(db, account.persistent_id, "ffa", season),
+      getRating(db, account.persistent_id, "team", season),
       clansFor(db, account.persistent_id),
       clanRequestsFor(db, account.persistent_id),
       friendPublicIds(db, account.persistent_id),
@@ -443,7 +449,7 @@ export async function createApiApp(
       res.status(400).json({ error: "game id mismatch" });
       return;
     }
-    const result = await ingestMatch(db, record.data);
+    const result = await ingestMatch(db, record.data, season);
     res.json({ ok: true, ...result });
   });
 
@@ -464,7 +470,7 @@ export async function createApiApp(
       .send(JSON.stringify(scrubRecord(record), replacer));
   });
 
-  registerProfileRoutes(app, db);
+  registerProfileRoutes(app, db, season);
   registerGamesRoutes(app, db);
   registerClanRoutes(app, db, callerFromBearer);
   registerFriendRoutes(app, db, callerFromBearer);
@@ -479,7 +485,12 @@ export async function createApiApp(
       500,
       Number.parseInt(String(req.query.limit ?? "100"), 10) || 100,
     );
-    res.json({ ladder, entries: await leaderboard(db, ladder, limit) });
+    const which = seasonParam(req.query.season) ?? season;
+    res.json({
+      ladder,
+      season: which,
+      entries: await leaderboard(db, ladder, which, limit),
+    });
   });
 
   // Useful for the /users/@me dev path and for tests.
@@ -513,7 +524,7 @@ export async function createApiApp(
     },
   );
 
-  return { app, db, keys, issuer, audience, matchmaking };
+  return { app, db, keys, issuer, audience, matchmaking, season };
 }
 
 const feedCache = new Map<string, string>();

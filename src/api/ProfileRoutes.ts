@@ -15,7 +15,7 @@ import { clansFor } from "./ClanRoutes";
 import { decodeCursor, durationSeconds, encodeCursor } from "./Cursor";
 import { Db } from "./Db";
 import { filterSql } from "./GameBuckets";
-import { getRating } from "./Matches";
+import { getRating, seasonParam } from "./Matches";
 import { buildStatsTree, type StatRow } from "./StatsTree";
 
 const HISTORY_PAGE = 20;
@@ -37,7 +37,11 @@ interface HistoryRow {
   clan_tag: string | null;
 }
 
-export function registerProfileRoutes(app: Express, db: Db): void {
+export function registerProfileRoutes(
+  app: Express,
+  db: Db,
+  season: string,
+): void {
   app.get("/public/player/:publicId", async (req, res) => {
     const account = await getAccountByPublicId(db, req.params.publicId);
     if (account === null) {
@@ -45,8 +49,8 @@ export function registerProfileRoutes(app: Express, db: Db): void {
       return;
     }
     const [ffa, team, clans, statRows] = await Promise.all([
-      getRating(db, account.persistent_id, "ffa"),
-      getRating(db, account.persistent_id, "team"),
+      getRating(db, account.persistent_id, "ffa", season),
+      getRating(db, account.persistent_id, "team", season),
       clansFor(db, account.persistent_id),
       db.query<StatRow>(
         `SELECT m.game_type, m.game_mode, m.difficulty, m.player_teams, m.ranked_type,
@@ -69,6 +73,7 @@ export function registerProfileRoutes(app: Express, db: Db): void {
       clans,
       // FightWars extension (ignored by the strict client schema).
       publicId: account.public_id,
+      season,
       ratings: { ffa: shape(ffa), team: shape(team) },
     });
   });
@@ -146,6 +151,7 @@ export function registerProfileRoutes(app: Express, db: Db): void {
       Number.parseInt(String(req.query.page ?? "1"), 10) || 1,
     );
     const offset = (page - 1) * LEADERBOARD_PAGE;
+    const which = seasonParam(req.query.season) ?? season;
     const entries = async (ladder: string) =>
       (
         await db.query<{
@@ -157,10 +163,10 @@ export function registerProfileRoutes(app: Express, db: Db): void {
         }>(
           `SELECT a.public_id, a.username, r.rating, r.games, r.wins
            FROM ratings r JOIN accounts a ON a.persistent_id = r.persistent_id
-           WHERE r.ladder = $1
+           WHERE r.ladder = $1 AND r.season = $2
            ORDER BY r.rating DESC, r.games DESC, a.public_id
-           LIMIT $2 OFFSET $3`,
-          [ladder, LEADERBOARD_PAGE, offset],
+           LIMIT $3 OFFSET $4`,
+          [ladder, which, LEADERBOARD_PAGE, offset],
         )
       ).rows.map((r, i) => ({
         rank: offset + i + 1,

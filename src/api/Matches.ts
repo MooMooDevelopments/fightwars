@@ -15,9 +15,27 @@ import { ensureAccount } from "./Accounts";
 import { Db } from "./Db";
 import { DEFAULT_RATING, matchResults, Rating, updateRating } from "./Glicko2";
 
+/**
+ * The ladder season ratings accrue to: LADDER_SEASON, "1" when unset.
+ * Changing it starts everyone at the default rating on the new season;
+ * earlier seasons stay queryable (?season= on the leaderboards).
+ */
+export function seasonFrom(env: NodeJS.ProcessEnv): string {
+  const s = env.LADDER_SEASON?.trim();
+  return s === undefined || s === "" ? "1" : s;
+}
+
+/** A `?season=` query value, or undefined when absent or malformed. */
+export function seasonParam(raw: unknown): string | undefined {
+  if (typeof raw !== "string") return undefined;
+  const s = raw.trim();
+  return /^[A-Za-z0-9_-]{1,32}$/.test(s) ? s : undefined;
+}
+
 export interface RatingRow {
   persistent_id: string;
   ladder: string;
+  season: string;
   rating: number;
   rd: number;
   volatility: number;
@@ -71,10 +89,11 @@ export async function getRating(
   db: Db,
   persistentId: string,
   ladder: string,
+  season: string,
 ): Promise<RatingRow | null> {
   const r = await db.query<RatingRow>(
-    "SELECT * FROM ratings WHERE persistent_id = $1 AND ladder = $2",
-    [persistentId, ladder],
+    "SELECT * FROM ratings WHERE persistent_id = $1 AND ladder = $2 AND season = $3",
+    [persistentId, ladder, season],
   );
   return r.rows[0] ?? null;
 }
@@ -88,6 +107,7 @@ export interface IngestResult {
 export async function ingestMatch(
   db: Db,
   record: GameRecord,
+  season: string,
 ): Promise<IngestResult> {
   const info = record.info;
   const inserted = await db.query<{ game_id: string }>(
@@ -160,7 +180,7 @@ export async function ingestMatch(
   // pre-match ratings (a proper rating period), then write.
   const current = new Map<string, Rating>();
   for (const p of rated) {
-    const row = await getRating(db, p.persistentID!, ladder);
+    const row = await getRating(db, p.persistentID!, ladder, season);
     current.set(
       p.clientID,
       row === null
@@ -181,14 +201,15 @@ export async function ingestMatch(
       results.get(p.clientID)!,
     );
     await db.query(
-      `INSERT INTO ratings (persistent_id, ladder, rating, rd, volatility, games, wins, updated_at)
-       VALUES ($1, $2, $3, $4, $5, 1, $6, now())
-       ON CONFLICT (persistent_id, ladder) DO UPDATE SET
+      `INSERT INTO ratings (persistent_id, ladder, season, rating, rd, volatility, games, wins, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, 1, $7, now())
+       ON CONFLICT (persistent_id, ladder, season) DO UPDATE SET
          rating = EXCLUDED.rating, rd = EXCLUDED.rd, volatility = EXCLUDED.volatility,
          games = ratings.games + 1, wins = ratings.wins + EXCLUDED.wins, updated_at = now()`,
       [
         p.persistentID,
         ladder,
+        season,
         next.rating,
         next.rd,
         next.volatility,
@@ -211,6 +232,7 @@ export interface LeaderboardEntry {
 export async function leaderboard(
   db: Db,
   ladder: string,
+  season: string,
   limit = 100,
 ): Promise<LeaderboardEntry[]> {
   const r = await db.query<{
@@ -223,10 +245,10 @@ export async function leaderboard(
   }>(
     `SELECT a.public_id, a.username, r.rating, r.rd, r.games, r.wins
      FROM ratings r JOIN accounts a ON a.persistent_id = r.persistent_id
-     WHERE r.ladder = $1
+     WHERE r.ladder = $1 AND r.season = $2
      ORDER BY r.rating DESC
-     LIMIT $2`,
-    [ladder, limit],
+     LIMIT $3`,
+    [ladder, season, limit],
   );
   return r.rows.map((row) => ({
     publicId: row.public_id,
