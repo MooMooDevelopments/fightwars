@@ -7,18 +7,21 @@
  *   GET  /users/@me               account profile for a bearer token
  *   POST /join_verify             name screening (+ Turnstile when configured)
  *   GET  /cosmetics.json          catalogue (empty: FightWars sells nothing)
- *   GET  /reserved_clan_tags      []
+ *   GET  /reserved_clan_tags      every registered clan tag
  *   POST /custom_tribes           { tribes: [] }
  *   POST /matchmaking/checkin     { assignment? } — ranked queue (Matchmaking.ts)
  *   POST /game/:id                ingest a finished GameRecord → ladder
- *   GET  /game/:id                the stored record (replay)
+ *   GET  /game/:id                the stored record, scrubbed of persistent ids
  *
  * Routes the browser calls (CORS with credentials):
  *   POST /auth/guest              { persistentId } → { jwt, expiresIn } + refresh cookie
  *   POST /auth/refresh            cookie → rotated cookie + { jwt, expiresIn }
  *   POST /auth/logout
- *   GET  /public/player/:publicId
- *   GET  /public/leaderboard/:ladder
+ *   GET  /public/player/:publicId[/games]   ProfileRoutes.ts
+ *   GET  /leaderboard/ranked, /public/leaderboard/:ladder
+ *   GET  /public/games, /public/game/:id    GamesRoutes.ts
+ *   *    /clans/*, /public/clans/*          ClanRoutes.ts
+ *   *    /friends/*                         FriendRoutes.ts
  *   GET  /api/health
  */
 import express, { type Express, type Request, type Response } from "express";
@@ -34,9 +37,23 @@ import {
   revokeSessions,
   rotateSession,
 } from "./Accounts";
+import {
+  clanRequestsFor,
+  clansFor,
+  registerClanRoutes,
+  reservedClanTags,
+} from "./ClanRoutes";
 import { Db, openDb } from "./Db";
+import { friendPublicIds, registerFriendRoutes } from "./FriendRoutes";
+import { registerGamesRoutes } from "./GamesRoutes";
 import { loadSigningKeys, SigningKeys, signToken, verifyToken } from "./Keys";
-import { getMatchRecord, getRating, ingestMatch, leaderboard } from "./Matches";
+import {
+  getMatchRecord,
+  getRating,
+  ingestMatch,
+  leaderboard,
+  scrubRecord,
+} from "./Matches";
 import { MatchmakingQueue, type Mode } from "./Matchmaking";
 import { migrate } from "./Migrations";
 import { registerProfileRoutes } from "./ProfileRoutes";
@@ -146,7 +163,10 @@ export async function createApiApp(
         "Access-Control-Allow-Headers",
         "Content-Type, Authorization, X-Api-Key",
       );
-      res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+      res.setHeader(
+        "Access-Control-Allow-Methods",
+        "GET, POST, PATCH, DELETE, OPTIONS",
+      );
     }
     if (req.method === "OPTIONS") {
       res.status(204).end();
@@ -279,9 +299,12 @@ export async function createApiApp(
       return;
     }
     const account = await ensureAccount(db, caller.persistentId);
-    const [ffa, team] = await Promise.all([
+    const [ffa, team, clans, clanRequests, friends] = await Promise.all([
       getRating(db, account.persistent_id, "ffa"),
       getRating(db, account.persistent_id, "team"),
+      clansFor(db, account.persistent_id),
+      clanRequestsFor(db, account.persistent_id),
+      friendPublicIds(db, account.persistent_id),
     ]);
     res.setHeader("Cache-Control", "no-store");
     res.json({
@@ -300,9 +323,9 @@ export async function createApiApp(
           oneVone: ffa ? { elo: Math.round(ffa.rating) } : {},
           twoVtwo: team ? { elo: Math.round(team.rating) } : {},
         },
-        clans: [],
-        clanRequests: [],
-        friends: [],
+        clans,
+        clanRequests,
+        friends,
         subscription: null,
       },
     });
@@ -349,8 +372,9 @@ export async function createApiApp(
     res.setHeader("Cache-Control", "public, max-age=60");
     res.json({ patterns: {}, flags: {}, effects: {} });
   });
-  app.get("/reserved_clan_tags", (_req, res) => {
-    res.json([]);
+  app.get("/reserved_clan_tags", async (_req, res) => {
+    res.setHeader("Cache-Control", "public, max-age=30");
+    res.json(await reservedClanTags(db));
   });
   app.post("/custom_tribes", requireApiKey, (_req, res) => {
     res.json({ tribes: [] });
@@ -411,10 +435,15 @@ export async function createApiApp(
       return;
     }
     res.setHeader("Cache-Control", "public, max-age=3600");
-    res.type("application/json").send(JSON.stringify(record, replacer));
+    res
+      .type("application/json")
+      .send(JSON.stringify(scrubRecord(record), replacer));
   });
 
   registerProfileRoutes(app, db);
+  registerGamesRoutes(app, db);
+  registerClanRoutes(app, db, callerFromBearer);
+  registerFriendRoutes(app, db, callerFromBearer);
 
   app.get("/public/leaderboard/:ladder", async (req, res) => {
     const ladder = req.params.ladder;

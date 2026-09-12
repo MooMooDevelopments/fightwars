@@ -10,6 +10,7 @@ import {
   type QueueEntry,
 } from "../../src/api/Matchmaking";
 import { CloseCode } from "../../src/core/CloseCodes";
+import { apiTestEnv } from "./fixtures";
 
 const API_KEY = "test-api-key";
 let ctx: ApiContext;
@@ -18,7 +19,7 @@ let wsBase: string;
 let server: ReturnType<ApiContext["app"]["listen"]>;
 
 beforeAll(async () => {
-  ctx = await createApiApp({ DOMAIN: "localhost", GAME_ENV: "dev", API_KEY });
+  ctx = await createApiApp(await apiTestEnv());
   await new Promise<void>((resolve) => {
     server = ctx.app.listen(0, () => resolve());
   });

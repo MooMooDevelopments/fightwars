@@ -12,6 +12,7 @@ import { ReservedClanTagsResponseSchema } from "../../src/core/ClanApiSchemas";
 import { JwksSchema } from "../../src/core/configuration/Config";
 import { CosmeticsSchema } from "../../src/core/CosmeticSchemas";
 import { GameRecordSchema } from "../../src/core/Schemas";
+import { apiTestEnv } from "./fixtures";
 
 // The API is exercised over real HTTP, and every response the game server
 // consumes is parsed with the game server's own schema.
@@ -22,12 +23,9 @@ let base: string;
 let server: ReturnType<ApiContext["app"]["listen"]>;
 
 beforeAll(async () => {
-  ctx = await createApiApp({
-    DOMAIN: "localhost",
-    GAME_ENV: "dev",
-    API_KEY,
-    API_CORS_ORIGINS: "http://localhost:9000",
-  });
+  ctx = await createApiApp(
+    await apiTestEnv({ API_CORS_ORIGINS: "http://localhost:9000" }),
+  );
   await new Promise<void>((resolve) => {
     server = ctx.app.listen(0, () => resolve());
   });

@@ -2,18 +2,21 @@
  * Player-facing profile routes (FightWars API), shaped to the schemas the
  * client already parses (src/core/ApiSchemas.ts):
  *
- *   GET /public/player/:publicId            PlayerProfileSchema
+ *   GET /public/player/:publicId            PlayerProfileSchema (stats tree + clans)
  *   GET /public/player/:publicId/games      PublicPlayerGamesResponseSchema
  *       ?filter=ffa|team|hvn|ranked &type=public|private|singleplayer &cursor=
  *   GET /leaderboard/ranked?page=N          RankedLeaderboardResponseSchema
  *
- * The stats tree is empty for now (every key is optional); ratings ride in
- * an extra `ratings` field the strict schema ignores.
+ * Ratings ride in an extra `ratings` field the strict schema ignores.
  */
 import type { Express } from "express";
 import { getAccountByPublicId } from "./Accounts";
+import { clansFor } from "./ClanRoutes";
+import { decodeCursor, durationSeconds, encodeCursor } from "./Cursor";
 import { Db } from "./Db";
+import { filterSql } from "./GameBuckets";
 import { getRating } from "./Matches";
+import { buildStatsTree, type StatRow } from "./StatsTree";
 
 const HISTORY_PAGE = 20;
 const LEADERBOARD_PAGE = 50;
@@ -26,28 +29,12 @@ interface HistoryRow {
   started_at: Date;
   ended_at: Date;
   num_players: number;
+  player_teams: string | null;
+  ranked_type: string | null;
+  winner_known: boolean;
   username: string;
   won: boolean;
-}
-
-function encodeCursor(endedAt: Date, gameId: string): string {
-  return Buffer.from(JSON.stringify([endedAt.getTime(), gameId])).toString(
-    "base64url",
-  );
-}
-
-function decodeCursor(
-  cursor: string,
-): { endedAt: Date; gameId: string } | null {
-  try {
-    const [ms, gameId] = JSON.parse(
-      Buffer.from(cursor, "base64url").toString("utf8"),
-    ) as [number, string];
-    if (typeof ms !== "number" || typeof gameId !== "string") return null;
-    return { endedAt: new Date(ms), gameId };
-  } catch {
-    return null;
-  }
+  clan_tag: string | null;
 }
 
 export function registerProfileRoutes(app: Express, db: Db): void {
@@ -57,9 +44,18 @@ export function registerProfileRoutes(app: Express, db: Db): void {
       res.status(404).json({ error: "not found" });
       return;
     }
-    const [ffa, team] = await Promise.all([
+    const [ffa, team, clans, statRows] = await Promise.all([
       getRating(db, account.persistent_id, "ffa"),
       getRating(db, account.persistent_id, "team"),
+      clansFor(db, account.persistent_id),
+      db.query<StatRow>(
+        `SELECT m.game_type, m.game_mode, m.difficulty, m.player_teams, m.ranked_type,
+                mp.won, (m.winner IS NOT NULL) AS winner_known, mp.stats
+         FROM match_players mp JOIN matches m ON m.game_id = mp.game_id
+         WHERE mp.persistent_id = $1
+         ORDER BY m.ended_at DESC, m.game_id DESC`,
+        [account.persistent_id],
+      ),
     ]);
     const shape = (r: typeof ffa) =>
       r === null
@@ -69,8 +65,8 @@ export function registerProfileRoutes(app: Express, db: Db): void {
     res.json({
       createdAt: new Date(account.created_at).toISOString(),
       username: account.username,
-      stats: {},
-      clans: [],
+      stats: buildStatsTree(statRows.rows),
+      clans,
       // FightWars extension (ignored by the strict client schema).
       publicId: account.public_id,
       ratings: { ffa: shape(ffa), team: shape(team) },
@@ -83,13 +79,11 @@ export function registerProfileRoutes(app: Express, db: Db): void {
       res.status(404).json({ error: "not found" });
       return;
     }
-    const filter = String(req.query.filter ?? "");
     const type = String(req.query.type ?? "");
     const where: string[] = ["mp.persistent_id = $1"];
     const params: unknown[] = [account.persistent_id];
-    if (filter === "ffa") where.push("m.game_mode = 'Free For All'");
-    else if (filter === "team") where.push("m.game_mode = 'Team'");
-    else if (filter === "hvn" || filter === "ranked") where.push("false");
+    const filter = filterSql(String(req.query.filter ?? ""));
+    if (filter !== null) where.push(filter);
     if (type === "public") where.push("m.game_type = 'Public'");
     else if (type === "private") where.push("m.game_type = 'Private'");
     else if (type === "singleplayer")
@@ -112,7 +106,9 @@ export function registerProfileRoutes(app: Express, db: Db): void {
     const rows = (
       await db.query<HistoryRow>(
         `SELECT m.game_id, m.game_type, m.game_mode, m.game_map, m.started_at,
-                m.ended_at, m.num_players, mp.username, mp.won
+                m.ended_at, m.num_players, m.player_teams, m.ranked_type,
+                (m.winner IS NOT NULL) AS winner_known,
+                mp.username, mp.won, mp.clan_tag
          FROM match_players mp JOIN matches m ON m.game_id = mp.game_id
          WHERE ${where.join(" AND ")}
          ORDER BY m.ended_at DESC, m.game_id DESC
@@ -126,23 +122,16 @@ export function registerProfileRoutes(app: Express, db: Db): void {
       results: page.map((r) => ({
         gameId: r.game_id,
         start: new Date(r.started_at).toISOString(),
-        durationSeconds: Math.max(
-          0,
-          Math.round(
-            (new Date(r.ended_at).getTime() -
-              new Date(r.started_at).getTime()) /
-              1000,
-          ),
-        ),
+        durationSeconds: durationSeconds(r.started_at, r.ended_at),
         map: r.game_map,
         mode: r.game_mode,
         type: r.game_type,
-        playerTeams: null,
-        rankedType: "unranked",
-        result: r.won ? "victory" : "defeat",
+        playerTeams: r.player_teams,
+        rankedType: r.ranked_type ?? "unranked",
+        result: !r.winner_known ? "incomplete" : r.won ? "victory" : "defeat",
         totalPlayers: r.num_players,
         username: r.username,
-        clanTag: null,
+        clanTag: r.clan_tag,
       })),
       nextCursor:
         rows.length > HISTORY_PAGE && last !== undefined

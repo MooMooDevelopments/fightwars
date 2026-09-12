@@ -53,6 +53,39 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run test:coverage
 
+  api-postgres:
+    # The API tests again, on real Postgres instead of PGlite: same SQL, the
+    # production adapter (PgDb). Each test file gets its own database.
+    name: 🐘 API on Postgres
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          submodules: false
+      - name: Setup node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: "npm"
+      - run: npm ci --ignore-scripts
+      - run: npx vitest run tests/api
+        env:
+          TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+
   determinism:
     # THE gate. Two processes replay one intent log and must produce
     # byte-identical state digests. See tests/determinism.test.ts.

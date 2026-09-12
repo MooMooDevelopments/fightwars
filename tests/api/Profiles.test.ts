@@ -9,6 +9,7 @@ import {
   RankedLeaderboardResponseSchema,
 } from "../../src/core/ApiSchemas";
 import { GameRecordSchema } from "../../src/core/Schemas";
+import { apiTestEnv } from "./fixtures";
 
 // Profile routes are parsed with the client's own schemas.
 
@@ -18,7 +19,7 @@ let base: string;
 let server: ReturnType<ApiContext["app"]["listen"]>;
 
 beforeAll(async () => {
-  ctx = await createApiApp({ DOMAIN: "localhost", GAME_ENV: "dev", API_KEY });
+  ctx = await createApiApp(await apiTestEnv());
   await new Promise<void>((resolve) => {
     server = ctx.app.listen(0, () => resolve());
   });

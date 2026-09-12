@@ -26,6 +26,27 @@ export interface RatingRow {
   updated_at: Date;
 }
 
+const bigintToString = (_k: string, v: unknown) =>
+  typeof v === "bigint" ? v.toString() : v;
+
+/**
+ * A record safe to hand to anyone: persistent ids (login credentials in
+ * dev, PII always) and player reports are stripped, like upstream's API.
+ */
+export function scrubRecord(
+  record: GameRecord,
+  includeTurns = true,
+): Record<string, unknown> {
+  const info: Record<string, unknown> = {
+    ...record.info,
+    players: record.info.players.map((p) => ({ ...p, persistentID: null })),
+  };
+  delete info.reports;
+  const scrubbed: Record<string, unknown> = { ...record, info };
+  if (!includeTurns) delete scrubbed.turns;
+  return scrubbed;
+}
+
 export function ladderFor(record: GameRecord): string | null {
   if (record.info.config.gameType === "Singleplayer") return null;
   return record.info.config.gameMode === "Team" ? "team" : "ffa";
@@ -72,8 +93,9 @@ export async function ingestMatch(
   const inserted = await db.query<{ game_id: string }>(
     `INSERT INTO matches
        (game_id, game_type, game_mode, game_map, started_at, ended_at,
-        num_turns, num_players, winner, record)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        num_turns, num_players, winner, record,
+        difficulty, player_teams, ranked_type, max_players, lobby_fill_ms)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
      ON CONFLICT (game_id) DO NOTHING
      RETURNING game_id`,
     [
@@ -86,9 +108,14 @@ export async function ingestMatch(
       info.num_turns,
       info.players.length,
       info.winner === undefined ? null : JSON.stringify(info.winner),
-      JSON.stringify(record, (_k, v) =>
-        typeof v === "bigint" ? v.toString() : v,
-      ),
+      JSON.stringify(record, bigintToString),
+      info.config.difficulty,
+      info.config.playerTeams === undefined
+        ? null
+        : String(info.config.playerTeams),
+      info.config.rankedType ?? null,
+      info.config.maxPlayers ?? null,
+      Math.round(info.lobbyFillTime),
     ],
   );
   if (inserted.rows.length === 0) {
@@ -98,14 +125,28 @@ export async function ingestMatch(
   const won = winners(record);
   for (const p of info.players) {
     let persistentId: string | null = null;
+    let verified = false;
     if (p.persistentID) {
-      persistentId = (await ensureAccount(db, p.persistentID)).persistent_id;
+      const account = await ensureAccount(db, p.persistentID);
+      persistentId = account.persistent_id;
+      // Played under the account's own name: the verified check in history.
+      verified = account.username !== null && account.username === p.username;
     }
     await db.query(
-      `INSERT INTO match_players (game_id, client_id, persistent_id, username, won)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO match_players
+         (game_id, client_id, persistent_id, username, won, clan_tag, verified, stats)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        ON CONFLICT DO NOTHING`,
-      [info.gameID, p.clientID, persistentId, p.username, won.has(p.clientID)],
+      [
+        info.gameID,
+        p.clientID,
+        persistentId,
+        p.username,
+        won.has(p.clientID),
+        p.clanTag === null ? null : p.clanTag.toUpperCase(),
+        verified,
+        p.stats === undefined ? null : JSON.stringify(p.stats, bigintToString),
+      ],
     );
   }
 
