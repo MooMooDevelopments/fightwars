@@ -9,7 +9,7 @@
  *   GET  /cosmetics.json          catalogue (empty: FightWars sells nothing)
  *   GET  /reserved_clan_tags      []
  *   POST /custom_tribes           { tribes: [] }
- *   POST /matchmaking/checkin     {} (no assignment; ranked queues come later)
+ *   POST /matchmaking/checkin     { assignment? } — ranked queue (Matchmaking.ts)
  *   POST /game/:id                ingest a finished GameRecord → ladder
  *   GET  /game/:id                the stored record (replay)
  *
@@ -38,6 +38,7 @@ import {
 import { Db, openDb } from "./Db";
 import { loadSigningKeys, SigningKeys, signToken, verifyToken } from "./Keys";
 import { getMatchRecord, getRating, ingestMatch, leaderboard } from "./Matches";
+import { MatchmakingQueue, type Mode } from "./Matchmaking";
 import { migrate } from "./Migrations";
 
 const REFRESH_COOKIE = "fw_refresh";
@@ -49,6 +50,8 @@ export interface ApiContext {
   keys: SigningKeys;
   issuer: string;
   audience: string;
+  /** Ranked queues; call `matchmaking.attach(httpServer)` after listen(). */
+  matchmaking: MatchmakingQueue;
 }
 
 function issuerFor(domain: string): string {
@@ -185,6 +188,29 @@ export async function createApiApp(
       role: role ?? undefined,
       ttlSeconds: JWT_TTL_SECONDS,
     });
+
+  // Ranked queues: a join token resolves to the account and its ladder rating.
+  const matchmaking = new MatchmakingQueue(async (jwt, mode) => {
+    let persistentId: string | null;
+    if (PersistentIdSchema.safeParse(jwt).success) {
+      persistentId = isDev ? jwt : null;
+    } else {
+      const v = await verifyToken(keys, jwt, issuer, audience);
+      persistentId = v === null ? null : base64urlToUuid(v.persistentIdB64);
+    }
+    if (persistentId === null) return null;
+    const account = await ensureAccount(db, persistentId);
+    const rating = await getRating(
+      db,
+      account.persistent_id,
+      mode === "1v1" ? "ffa" : "team",
+    );
+    return {
+      persistentId: account.persistent_id,
+      publicId: account.public_id,
+      rating: rating?.rating ?? 1500,
+    };
+  });
 
   // ── Health / keys ──
 
@@ -329,8 +355,24 @@ export async function createApiApp(
   app.post("/custom_tribes", requireApiKey, (_req, res) => {
     res.json({ tribes: [] });
   });
-  app.post("/matchmaking/checkin", requireApiKey, (_req, res) => {
-    res.json({});
+  app.post("/matchmaking/checkin", requireApiKey, (req, res) => {
+    const body = z
+      .object({
+        gameId: ID,
+        mode: z.enum(["1v1", "2v2"]),
+        instanceId: z.string().nullable().optional(),
+      })
+      .safeParse(req.body);
+    if (!body.success) {
+      res.json({});
+      return;
+    }
+    const assignment = matchmaking.checkin(
+      body.data.mode as Mode,
+      body.data.gameId,
+      body.data.instanceId ?? null,
+    );
+    res.json(assignment === null ? {} : { assignment });
   });
 
   // ── Matches / ladder ──
@@ -418,7 +460,7 @@ export async function createApiApp(
     res.json(account === null ? null : { publicId: account.public_id });
   });
 
-  return { app, db, keys, issuer, audience };
+  return { app, db, keys, issuer, audience, matchmaking };
 }
 
 async function verifyTurnstile(

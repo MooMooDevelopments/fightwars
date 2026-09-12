@@ -144,3 +144,12 @@ shared upstream files are listed individually because each one is a future rebas
 - `docker-compose.yml` — game + api + postgres + redis (not yet run: no Docker on the dev box).
 - Tests: `tests/api/Api.test.ts` (every server-facing response parsed with the server's own
   schemas), `tests/api/Glicko2.test.ts` (paper example), `tests/server/ArchiveToApi.test.ts`.
+
+### Ranked matchmaking (Phase 2, 2026-09-12)
+
+- `src/api/Matchmaking.ts` — new: the 1v1 / 2v2 queues behind the exact contract the client
+  (`WebSocket /matchmaking/join`, `join` / `queue-size` / `match-assignment` JSON frames) and
+  the worker (`POST /matchmaking/checkin` with a pre-minted game id → `{ assignment }`)
+  already speak. Rating-proximity pairing that widens with wait time; 2v2 teams balanced by
+  rating sum. Attached to the API's HTTP server in `Server.ts`.
+- `tests/api/Matchmaking.test.ts` — real sockets + worker check-ins; pairing unit tests.

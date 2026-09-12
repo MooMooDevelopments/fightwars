@@ -13,13 +13,15 @@ import { createApiApp } from "./App";
 
 async function main(): Promise<void> {
   const port = Number.parseInt(process.env.API_PORT ?? "8787", 10);
-  const { app, db, issuer } = await createApiApp(process.env);
+  const { app, db, issuer, matchmaking } = await createApiApp(process.env);
   const server = app.listen(port, () => {
     console.log(
       `FightWars API listening on http://localhost:${port} (issuer ${issuer}, db ${db.kind})`,
     );
   });
+  matchmaking.attach(server);
   const shutdown = () => {
+    matchmaking.stop();
     server.close(() => {
       void db.close().finally(() => process.exit(0));
     });

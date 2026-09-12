@@ -57,6 +57,10 @@ it: `npm run load:test -- --clients 150 --map world --turns 600`.
       `DATABASE_URL`, embedded PGlite otherwise. The game server pushes finished records to it;
       the client mints a guest session on a 401. Verified end to end on the dev stack: guest
       login → JWT join → the server fetched the JWKS and the profile from the API.
+- [x] Phase 2: ranked matchmaking queues (`src/api/Matchmaking.ts`): 1v1 and 2v2 over the
+      existing client/worker contract; pairing by ladder rating with widening tolerance.
+      Tested with real sockets. Not yet exercised in a browser (Ranked needs a JWT, which
+      the guest flow now provides — try it next session with two browser profiles).
 - [x] Phase 2: `docker-compose.yml` (game + api + postgres + redis) — written, **not run**
       (no Docker on the dev box).
 - [x] CI is live on GitHub: every job green on the first dispatched run (push-triggered runs
@@ -72,9 +76,9 @@ it: `npm run load:test -- --clients 150 --map world --turns 600`.
    conflicts (expect some in `index.html`, nav bars, Footer, SoundManager — the brand sweep
    touched them); rerun all gates.
 2. **Phase 2 — finish the accounts backend:** Discord OAuth login attached to the same account
-   row (`/auth/discord`), clans (tables + `/clans/*` matching `ClanApiSchemas.ts`), friends,
-   ranked queue matchmaking (`/matchmaking/checkin` returning assignments; the worker already
-   consumes them), `/public/games` listing per `docs/API.md`, and ladder seasons. Then a
+   row (`/auth/discord` — BLOCKED ON A DISCORD APPLICATION CLIENT ID/SECRET, which only the
+   owner can create), clans (tables + `/clans/*` matching `ClanApiSchemas.ts`), friends,
+   `/public/games` listing per `docs/API.md`, ladder seasons, and a browser run of Ranked. Then a
    `PgDb` integration test against a real Postgres in CI (service container).
 3. **Phase 2 — run the compose stack** on a box with Docker; fix what breaks; then point the
    desync webhook and the metrics dashboard at real alerting.
