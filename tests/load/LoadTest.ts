@@ -30,6 +30,7 @@
  *   npx tsx tests/load/LoadTest.ts --lobbies 20 --clients 4 --turns 600
  * Options:
  *   --worker-base http://localhost:3001   worker HTTP base (ws on same port)
+ *   --workers N        round-robin lobby creation over workers 0..N-1 (ports 3001+i)
  *   --clients N --lobbies N --map name --bots N --nations default|disabled|N
  *   --turns N          turns to observe per lobby before stopping
  *   --latency-ms N --jitter-ms N          added to every client send
@@ -44,15 +45,23 @@ import { randomUUID } from "node:crypto";
 import path from "path";
 import { fileURLToPath } from "url";
 import WebSocket from "ws";
+import { Config } from "../../src/core/configuration/Config";
+import { Executor } from "../../src/core/execution/ExecutionManager";
 import {
   Difficulty,
   GameMapSize,
   GameMapType,
   GameMode,
   GameType,
+  PlayerInfo,
+  PlayerType,
 } from "../../src/core/game/Game";
+import { createGame } from "../../src/core/game/GameImpl";
 import { GameUpdateType, HashUpdate } from "../../src/core/game/GameUpdates";
-import { createGameRunner, GameRunner } from "../../src/core/GameRunner";
+import { createNationsForGame } from "../../src/core/game/NationCreation";
+import { genTerrainFromBin } from "../../src/core/game/TerrainMapLoader";
+import { GameRunner } from "../../src/core/GameRunner";
+import { PseudoRandom } from "../../src/core/PseudoRandom";
 import {
   ClientMessage,
   GameConfig,
@@ -60,6 +69,7 @@ import {
   Intent,
   ServerMessage,
 } from "../../src/core/Schemas";
+import { simpleHash } from "../../src/core/Util";
 import {
   createGameWireContext,
   decodeServerMessage,
@@ -78,6 +88,8 @@ const PROJECT_ROOT = path.resolve(
 
 interface Options {
   workerBase: string;
+  /** Round-robin lobby creation across this many workers (ports 3001+i). */
+  workers: number;
   clients: number;
   lobbies: number;
   map: string;
@@ -96,6 +108,7 @@ interface Options {
 function parseArgs(argv: string[]): Options {
   const o: Options = {
     workerBase: "http://localhost:3001",
+    workers: 1,
     clients: 150,
     lobbies: 1,
     map: "world",
@@ -123,6 +136,9 @@ function parseArgs(argv: string[]): Options {
         break;
       case "--clients":
         o.clients = parseInt(next(), 10);
+        break;
+      case "--workers":
+        o.workers = parseInt(next(), 10);
         break;
       case "--lobbies":
         o.lobbies = parseInt(next(), 10);
@@ -392,6 +408,13 @@ class Lobby {
     readonly index: number,
   ) {}
 
+  private createBase(): string {
+    const base = new URL(this.opts.workerBase);
+    const first = Number.parseInt(base.port || "3001", 10);
+    base.port = String(first + (this.index % Math.max(1, this.opts.workers)));
+    return base.toString().replace(/\/$/, "");
+  }
+
   async create(): Promise<void> {
     // Build the clients first: the first client's token creates the game so
     // it is the lobby creator and may send toggle_game_start_timer.
@@ -415,16 +438,25 @@ class Lobby {
       instantBuild: false,
       randomSpawn: false,
     };
-    const res = await fetch(`${this.opts.workerBase}/api/create_game`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${this.clients[0].token}`,
-      },
-      body: JSON.stringify(gameConfig),
-    });
-    if (!res.ok) {
-      throw new Error(`create_game ${res.status}: ${await res.text()}`);
+    // The worker rate-limits creation per IP; back off on 429 like a
+    // well-behaved client rather than failing the whole run.
+    let res: Response | null = null;
+    for (let attempt = 0; attempt < 30; attempt++) {
+      res = await fetch(`${this.createBase()}/api/create_game`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.clients[0].token}`,
+        },
+        body: JSON.stringify(gameConfig),
+      });
+      if (res.status !== 429) break;
+      await sleep(500 + attempt * 250);
+    }
+    if (res === null || !res.ok) {
+      throw new Error(
+        `create_game ${res?.status}: ${res ? await res.text() : "no response"}`,
+      );
     }
     const info = (await res.json()) as { gameID: string; workerIndex: number };
     this.gameID = info.gameID;
@@ -470,20 +502,17 @@ class Lobby {
     this.startInfo = info;
     this.ctx = createGameWireContext(info.players);
     console.debug = () => {};
-    // Mirror the browser: build the runner from the start info.
-    const runner = await createGameRunner(
-      info,
-      undefined,
-      new NodeGameMapLoader(path.join(PROJECT_ROOT, "resources/maps")),
-      (gu) => {
-        if ("errMsg" in gu) {
-          this.log.push(`sim error: ${gu.errMsg}`);
-          return;
-        }
-        const hashes = gu.updates[GameUpdateType.Hash] as HashUpdate[];
-        if (hashes.length > 0) this.lastHash = hashes[hashes.length - 1];
-      },
-    );
+    // Mirror createGameRunner(), but decode the terrain fresh for this lobby:
+    // loadTerrainMap() caches one mutable GameMap per map name, which is fine
+    // for a browser running one game and fatal for a process running 100.
+    const runner = await buildRunner(info, (gu) => {
+      if ("errMsg" in gu) {
+        this.log.push(`sim error: ${gu.errMsg}`);
+        return;
+      }
+      const hashes = gu.updates[GameUpdateType.Hash] as HashUpdate[];
+      if (hashes.length > 0) this.lastHash = hashes[hashes.length - 1];
+    });
     this.runner = runner;
     // Scripts for every client that is a player in this game.
     for (const c of this.clients) {
@@ -557,6 +586,69 @@ class Lobby {
       c.closeQuietly();
     }
   }
+}
+
+// ── Fresh runner per lobby ──
+
+const mapLoader = new NodeGameMapLoader(
+  path.join(PROJECT_ROOT, "resources/maps"),
+);
+
+async function buildRunner(
+  gameStart: GameStartInfo,
+  callBack: ConstructorParameters<typeof GameRunner>[2],
+): Promise<GameRunner> {
+  const config = new Config(gameStart.config, null, false, gameStart.listed);
+  const files = mapLoader.getMapData(gameStart.config.gameMap);
+  const manifest = await files.manifest();
+  const compact = gameStart.config.gameMapSize === GameMapSize.Compact;
+  const gameMap = compact
+    ? await genTerrainFromBin(manifest.map4x, await files.map4xBin())
+    : await genTerrainFromBin(manifest.map, await files.mapBin());
+  const miniGameMap = compact
+    ? await genTerrainFromBin(manifest.map16x, await files.map16xBin())
+    : await genTerrainFromBin(manifest.map4x, await files.map4xBin());
+  const random = new PseudoRandom(simpleHash(gameStart.gameID));
+  const humans = gameStart.players.map(
+    (p) =>
+      new PlayerInfo(
+        p.username,
+        PlayerType.Human,
+        p.clientID,
+        random.nextID(),
+        p.isLobbyCreator ?? false,
+        p.clanTag,
+        p.friends ?? [],
+        p.teamIndex ?? null,
+      ),
+  );
+  const nations = createNationsForGame(
+    gameStart,
+    manifest.nations,
+    manifest.additionalNations ?? [],
+    humans.length,
+    random,
+  );
+  const game = createGame(
+    humans,
+    nations,
+    gameMap,
+    miniGameMap,
+    config,
+    manifest.teamGameSpawnAreas,
+  );
+  const runner = new GameRunner(
+    game,
+    new Executor(
+      game,
+      gameStart.gameID,
+      undefined,
+      gameStart.tribes?.map((t) => t.name),
+    ),
+    callBack,
+  );
+  runner.init();
+  return runner;
 }
 
 // ── Server process sampling ──

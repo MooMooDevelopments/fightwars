@@ -126,7 +126,9 @@ it: `npm run load:test -- --clients 150 --map world --turns 600`.
   turn interval, 65 KB/s out for the lobby, worker RSS 123 MB. Target < 8 ms: met.
 - Load test (150 clients, world, 600 turns, dev server): **0.72 KB/s down per client**
   (budget 8), turn gap p50 108 ms / p99 115 / max 423, 0 desyncs, 0 errors, 0 rejoins.
-  5 lobbies × 3 clients: 0.06 KB/s, all lobbies in lockstep.
+  **100 lobbies × 2 clients across both dev workers** (onion, 200 turns, `--workers 2`): every
+  lobby in lockstep, 0 desyncs, 0 errors, 0.06 KB/s per client, 24.5 s wall. The brief's 500-lobby
+  cluster run needs more workers/hosts than the dev box, not more harness.
 - Bundle (`build-prod` → `static/`): JS+CSS 3.3 MB; largest map 14.4 MB; ≈ 18 MB initial
   download incl. the largest map (target < 90 MB). `tsc --noEmit` clean.
 - Client fps: not measured.

@@ -65,6 +65,9 @@ shared upstream files are listed individually because each one is a future rebas
   latency/jitter and disconnect-rejoin churn, per-client bandwidth and turn-cadence report, exit 1
   on desync/error/budget breach.
 - `tests/determinism/DeterminismRunner.ts` — `ScriptedHuman` is now exported for the load harness.
+- Load harness later gained: `--workers N` round-robin creation, 429 back-off on `create_game`, and
+  a fresh terrain decode per lobby (the core `loadTerrainMap` cache shares one mutable `GameMap`
+  per map name, which corrupts state when one process runs many games).
 
 ### Brand sweep (Phase 1, agent-assisted, 2026-09-12)
 
