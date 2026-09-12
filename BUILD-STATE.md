@@ -1,6 +1,6 @@
 # FightWars Build State
 
-Last session: 2026-09-12 (session 6) | Current phase: 4 (identity) — 5 of its 10 work items done and a 6th part-done, with two Phase 2 items still blocked on the owner/hardware | Build status: green
+Last session: 2026-09-13 (session 8) | Current phase: 4 (identity) — 5 of its 10 work items done, 2 part-done, 3 not started, with two Phase 2 items still blocked on the owner/hardware | Build status: green
 
 Repo: `C:\Users\disbo\dev\fightwars` · `upstream` = openfrontio/OpenFrontIO (forked at
 `c77005586`, rebased onto `7d95251f1` the same day) · `origin` = github.com/MooMooDevelopments/fightwars
@@ -26,7 +26,45 @@ follows it). In the Claude desktop session the launch configs `fightwars-dev` /
 shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 `npm run load:test -- --clients 150 --map world --turns 600`.
 
-## Handoff — read this first (written 2026-09-12 at the end of session 7)
+## Handoff — read this first (written 2026-09-13 at the end of session 8)
+
+### Session 8 — item 5 finished
+
+- **Rebased onto three new upstream commits** (`f02d74660`): a global jsdom teardown
+  (`tests/domTeardown.ts`) that supersedes the same fix this fork had made locally in two test
+  files, the desktop Exit control moving from the settings modal into the nav, and a second set
+  of clean-room reimplementations. Conflicts were in `resources/lang/en.json` and three tests.
+  The new `tests/client/NavUtilityIcons.quit.test.ts` had to be renamed to this fork's
+  `fightwarsDesktop` global.
+- **Phase 4 item 5 is done.** The nuke ring (`ShockwavePass`), the border wave
+  (`BorderWavePass`) and `prefers-reduced-motion` for the shake and flash. Details, and the two
+  lessons, are in `docs/HANDOFF.md` §3 item 5. The short version:
+  - **Two effects were shipped invisible before being photographed.** Both the ring's fade and
+    the wave's motes were first written at opacities that sounded right — the ring at 0.24 a
+    third of the way through its life, the wave at 0.5 — and neither can be seen on a live map.
+    The readable band over terrain is about 0.6; below 0.5 a pale line is simply not there.
+    **Photograph any new effect before believing its numbers.**
+  - **Module identity breaks after any HMR.** Once Vite has hot-reloaded anything,
+    `await import("/src/client/…")` from the console hands back a different module object from
+    the one the running app holds, so a prototype patch never fires and every measurement reads
+    zero. It cost an hour of chasing a bug that was not there. Restart the dev server before
+    instrumenting, and prove the patch is reached before trusting a null result.
+  - **The browser pane only runs rAF while it is displayed.** With the pane hidden the game's
+    frame loop is throttled to nothing and each screenshot forces a burst of about 14 frames.
+    That is enough to photograph with, and enough to sample per-frame state through, but it is
+    not a timeline — do not read anything into how often something ran.
+- **Numbers this session.** `perf:gate` 2.39 ms mean, final hash `23404413546031824` —
+  identical to session 7, which is the evidence that two new render passes touched nothing the
+  simulation does. `perf:client` on World: main-thread burst mean 0.27 ms, p95 0.55, p99 0.88,
+  max 2.71, 0/1800 ticks over the frame budget, view hash `0de99c33`. **Not comparable to
+  session 7's baseline** (mean 0.99, p99 21.1, view hash `5333c99b`) — the view hash moved, so
+  it is a different scenario, not a 4x win.
+- **Also `.claude/launch.json`**: the desktop session's working directory was the Claude Memories
+  folder rather than the repo, so the launch configs there now call
+  `npm --prefix C:/Users/disbo/dev/fightwars run dev`. The repo's own `.claude/launch.json`
+  still works when the session's directory is the repo.
+
+## Earlier handoff (written 2026-09-12 at the end of session 7)
 
 - **The plan for everything that remains (Phases 4–7 and the blocked items) is
   `docs/HANDOFF.md`.** This section is the per-session resume; that file is the map. Its §3
@@ -48,16 +86,15 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   the untested verbs/bots/attack record have tests, and `src/core` coverage has a CI floor.
   Two Phase 2 items remain blocked here: Discord login (needs a Discord application
   id/secret only the owner can create) and the compose stack (no Docker on this box).
-- **Phase 4 (identity) is under way: 6 of 10 done, 2 part-done.** Done: nation colours + the
-  three dichromat palettes; the clan create form; the attack-cost breakdown on hover **and the
-  live spend during an attack (item 4)**; the display face and brand marks; the account page.
-  Part-done: **item 3** has political blocks
-  and borders that survive sub-pixel, but not the halo/flash legibility the brief also asks
-  for; **item 5** has the sounds, the flash and the shake, but not the border wave or the nuke
-  ring; **item 6** has had its palette and typography but not its layout or `dataviz` pass.
-  Untouched: the live "cost so far" (item 4), mobile (7), the tutorial (8), and the
-  build-queue / rally-point / attack-preset intents (9, do last — the only one that touches the
-  simulation). See `docs/HANDOFF.md` §3.
+- **Phase 4 (identity): 5 items done, 2 part-done, 3 not started** — see the table in
+  `docs/HANDOFF.md` §3, which is the count to trust. Done: nation colours + the three dichromat
+  palettes (1); the display face and brand marks (2); the attack-cost breakdown on hover and the
+  live spend during an attack (4); **feel — sounds, flash, shake, nuke ring, border wave (5,
+  finished in session 8)**; the clan create form and account page (10). Part-done: **item 3** has
+  political blocks and borders that survive sub-pixel, but not the halo/flash legibility the brief
+  also asks for; **item 6** has had its palette and typography but not its layout or `dataviz`
+  pass. Not started: mobile (7), the tutorial (8), and the build-queue / rally-point /
+  attack-preset intents (9, do last — the only one that touches the simulation).
 
 - **Session 7, in order, with what each left behind:**
   1. **The client perf harness runs again.** `npm run perf:client` had never run — `src/client/Api.ts`

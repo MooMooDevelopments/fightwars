@@ -59,10 +59,13 @@ where tokens must end up — "brand through configuration, not code"), `dataviz`
 chart, stat tile or sparkline, and on the finished work `impeccable` then
 `web-design-guidelines`. Never load `frontend-design` and `impeccable` together.
 
-**Status (end of session 7): 6 of 10 done, 2 part-done.**
+**Status (end of session 8): 5 items done, 2 part-done, 3 not started — counted by the rows
+of the table below, which is the honest count.** (Earlier versions of this line said "6 of 10"
+by counting the sub-items inside a row; the table has always been the thing to read.)
 
-Items 3 and 5 each had their main body built in session 7 and each has a named remainder,
-so neither is counted as finished. The remainder is written at the end of its section.
+Item 5 was finished in session 8 — the nuke ring and the border wave, plus the
+`prefers-reduced-motion` respect the shake and flash shipped without. Items 3 and 6 keep their
+named remainders, written at the end of their sections.
 
 | #   | Item                                                                                   | State                                                                 |
 | --- | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
@@ -70,7 +73,7 @@ so neither is counted as finished. The remainder is written at the end of its se
 | 2   | Wordmark, favicon, app icons, `og:image`, display font (and the renderer's MSDF atlas) | **done**                                                              |
 | 3   | Readable at every zoom (political blocks, halos, flashes)                              | **part-done** — blocks and borders; halos and flashes remain          |
 | 4   | Every number explained on hover                                                        | **done** — estimate before, spend during (tiles conquered: see below) |
-| 5   | Feel: border wave, nuke flash + shake + ring + sound                                   | **part-done** — sound, flash, shake; border wave and ring remain      |
+| 5   | Feel: border wave, nuke flash + shake + ring + sound                                   | **done**                                                              |
 | 6   | Radial menus, HUD, leaderboard, events feed                                            | **part-done** — palette and typography only                           |
 | 7   | Mobile first-class                                                                     | not started                                                           |
 | 8   | Onboarding: 90-second tutorial                                                         | not started                                                           |
@@ -161,14 +164,45 @@ holds the `SoundEffect` union and the url map, `src/client/sound/SoundManager.ts
 `src/client/controllers/ImpactFeedbackController.ts` off nuke detonations, scaled by warhead and
 by distance from the centre of the view.
 
-**Verify this first, before anything else:** nobody has watched the screen shake actually move
-the camera. Build a silo, launch an atom bomb, look. The flash _was_ confirmed on a real GPU;
-the shake has unit tests for its curve and its overlap rule and three lines of wiring in
-`syncCamera`, which is not the same thing.
+**Done (session 8), and this item is now finished.**
 
-**What is still open on this item:** the brief's **border wave** and the nuke **ring**. Neither
-was started. The ring is the easier of the two and belongs next to `FlashPass`; the border wave
-is a `BorderStampPass` animation driven by conquest events.
+- **The nuke ring.** `src/client/render/gl/passes/ShockwavePass.ts` — an expanding world-space
+  ring at the blast's own outer radius, triggered from `ImpactFeedbackController` beside the
+  flash and the shake. Deliberately _not_ scaled by the distance falloff the other two use:
+  the flash and the shake are felt and answer to where the camera is pointing, the ring is map
+  information and answers to the blast.
+- **The border wave.** `src/client/render/gl/passes/BorderWavePass.ts` — one short-lived mote
+  per tile that changes hands, fed from the per-tile owner-change callback the border recompute
+  already uses (`TerritoryPass.setBorderPatchConsumer`, wired in `Renderer.ts`). The wave is
+  emergent: there is no frontier object anywhere, only a few hundred tiles flipping together.
+  `isConquest` is the rule that makes it mean something — growth into unclaimed land does not
+  count, or the first two minutes of every game set the whole map alight.
+- **`prefers-reduced-motion`.** The shake goes entirely, the flash drops to 30%, the ring is
+  untouched. A MIRV is thirty flashes in a few seconds, which is what WCAG 2.3.1 is about.
+  This was missing from the shake and flash as shipped in session 7.
+- **The session-7 gap is closed.** Two real atom bombs, built and launched through the normal
+  intent path, were watched driving `shake.add`, `triggerFlash` and `triggerShockwave`; the
+  camera centre was sampled moving 16x13 tiles through the real `syncCamera` loop while
+  `transformHandler.offsetX/offsetY` stayed byte-identical, then settled back to baseline.
+
+**Two lessons worth carrying into the rest of Phase 4**, both learned the hard way here:
+
+1. **Opacity has to be chosen by looking.** Both effects were first written at opacities that
+   sounded right and were invisible on a live map. Over terrain, a pale line starts to read at
+   about 0.6 and disappears below 0.5. Photograph it before believing a number.
+2. **Module identity breaks after any HMR.** `await import("/src/client/…")` from the console
+   returns a _different_ module object from the one the running app holds once Vite has
+   hot-reloaded anything, so prototype patches silently never fire and every measurement comes
+   back zero. Restart the dev server before instrumenting, and prove the patch is reached
+   before believing a null result.
+
+**Known limit:** at the strategic zoom (below about one pixel per tile) the wave is faint. The
+pixel floor stops it flickering, but a small skirmish is not legible from there. Whether it
+should be is an open question — arguably only a big offensive should show from that far out.
+
+**Neither effect has its own graphics toggle.** The wave rides `passEnabled.fx`; the ring has no
+switch. A per-effect toggle would need `RenderSettings`, `render-settings.json`,
+`debug/Layout.ts` and `GraphicsAdvancedSettings.ts` changed together.
 
 Audio budget is 2 MB and `resources/sounds` is 1.5 MB, so ~500 KB of headroom. The music
 playlist is deliberately empty (`BRAND.assets.music`) until CC-licensed tracks exist.

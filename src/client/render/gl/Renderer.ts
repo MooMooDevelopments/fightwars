@@ -34,6 +34,7 @@ import { GLUnavailableError, initGL } from "./initGL";
 import { BarPass } from "./passes/BarPass";
 import { BorderComputePass } from "./passes/BorderComputePass";
 import { BorderStampPass } from "./passes/BorderStampPass";
+import { BorderWavePass } from "./passes/BorderWavePass";
 import { CoordinateGridPass } from "./passes/CoordinateGridPass";
 import { CrosshairPass } from "./passes/CrosshairPass";
 import { DefenseCoveragePass } from "./passes/DefenseCoveragePass";
@@ -142,6 +143,7 @@ export class GPURenderer {
   private crosshairPass: CrosshairPass;
   private flashPass: FlashPass;
   private shockwavePass: ShockwavePass;
+  private borderWavePass: BorderWavePass;
   private railroadPass: RailroadPass;
   private barPass: BarPass;
   private worldTextPass: WorldTextPass;
@@ -449,6 +451,16 @@ export class GPURenderer {
     this.territoryPass.setBorderPatchConsumer((x, y, prevOwner, newOwner) => {
       this.borderPass.patchTile(x, y, prevOwner, newOwner);
       this.defenseCoveragePass.markTileDirty(x, y);
+      // Ground changing hands lights up — see BorderWavePass. Same callback
+      // because it is the same fact, and the renderer has no other place
+      // where a tile's previous owner is still known.
+      this.borderWavePass.markTile(
+        x,
+        y,
+        prevOwner,
+        newOwner,
+        performance.now(),
+      );
     });
     // Territory fill darkens on interior tiles defended by a same-owner post;
     // borderTex lets the fill skip border tiles (those get the checkerboard).
@@ -568,6 +580,7 @@ export class GPURenderer {
     this.crosshairPass = new CrosshairPass(gl);
     this.flashPass = new FlashPass(gl);
     this.shockwavePass = new ShockwavePass(gl);
+    this.borderWavePass = new BorderWavePass(gl);
 
     // --- Remaining passes (unchanged from v1) ---
     this.structurePass = new StructurePass(
@@ -1387,6 +1400,10 @@ export class GPURenderer {
 
     this.spawnOverlayPass.draw(cam);
     if (pe.borderStamp) this.borderStampPass.draw(cam);
+    // On the border it decorates, under everything standing on the ground.
+    // Gated with the other effects rather than with the borders themselves:
+    // it is the effects switch a player reaches for to quieten the map.
+    if (pe.fx) this.borderWavePass.draw(cam, zoom, performance.now());
     if (pe.railroad) this.railroadPass.draw(cam, zoom);
     if (pe.unit) this.unitPass.drawGround(cam);
     if (pe.falloutBloom) this.bloomPass.draw(cam, this.frameTick);
@@ -1536,6 +1553,7 @@ export class GPURenderer {
     this.crosshairPass.dispose();
     this.flashPass.dispose();
     this.shockwavePass.dispose();
+    this.borderWavePass.dispose();
     this.structurePass.dispose();
     this.structureLevelPass.dispose();
     this.unitPass.dispose();
