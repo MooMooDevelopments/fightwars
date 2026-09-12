@@ -148,6 +148,16 @@ export class MapRenderer {
     this.renderer?.triggerFlash(strength, color);
   }
 
+  /** Throw a ring out from a tile for a detonation — see ShockwavePass. */
+  triggerShockwave(
+    x: number,
+    y: number,
+    maxRadius: number,
+    strength: number,
+  ): void {
+    this.renderer?.triggerShockwave(x, y, maxRadius, strength);
+  }
+
   setCameraState(x: number, y: number, z: number): void {
     this.renderer?.setCameraState(x, y, z);
   }

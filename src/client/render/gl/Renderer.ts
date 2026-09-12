@@ -53,6 +53,7 @@ import { RailroadPass } from "./passes/RailroadPass";
 import { RangeCirclePass } from "./passes/RangeCirclePass";
 import { SAMRadiusPass } from "./passes/SamRadiusPass";
 import { SelectionBoxPass } from "./passes/SelectionBoxPass";
+import { ShockwavePass } from "./passes/ShockwavePass";
 import { SkinAtlasArray } from "./passes/SkinAtlasArray";
 import { SmallPlayerGlowPass } from "./passes/SmallPlayerGlowPass";
 import type { SpawnCenter } from "./passes/SpawnOverlayPass";
@@ -140,6 +141,7 @@ export class GPURenderer {
   private samRadiusPass: SAMRadiusPass;
   private crosshairPass: CrosshairPass;
   private flashPass: FlashPass;
+  private shockwavePass: ShockwavePass;
   private railroadPass: RailroadPass;
   private barPass: BarPass;
   private worldTextPass: WorldTextPass;
@@ -565,6 +567,7 @@ export class GPURenderer {
     // --- Crosshair (warship placement) ---
     this.crosshairPass = new CrosshairPass(gl);
     this.flashPass = new FlashPass(gl);
+    this.shockwavePass = new ShockwavePass(gl);
 
     // --- Remaining passes (unchanged from v1) ---
     this.structurePass = new StructurePass(
@@ -692,6 +695,20 @@ export class GPURenderer {
    */
   triggerFlash(strength: number, color?: [number, number, number]): void {
     this.flashPass.trigger(strength, performance.now(), color);
+  }
+
+  /**
+   * Throw a ring out from a tile, for a detonation. See ShockwavePass; unlike
+   * the flash, this is drawn on the map at the blast's own radius and is not
+   * scaled by how close the player was looking.
+   */
+  triggerShockwave(
+    x: number,
+    y: number,
+    maxRadius: number,
+    strength: number,
+  ): void {
+    this.shockwavePass.trigger(x, y, maxRadius, strength, performance.now());
   }
 
   setCameraState(x: number, y: number, z: number): void {
@@ -1397,6 +1414,10 @@ export class GPURenderer {
       this.fxPass.draw(cam, zoom);
     }
 
+    // Over the explosion sprites, under the labels: the ring is part of the
+    // blast, and nothing it covers should be text the player is reading.
+    this.shockwavePass.draw(cam, zoom, performance.now());
+
     // Grid shows on either trigger; names hide only under alt-view (space
     // hold), not under the persistent M-key gridView toggle.
     if (this.gridView || this.altView) this.coordinateGridPass.draw(cam, zoom);
@@ -1514,6 +1535,7 @@ export class GPURenderer {
     this.samRadiusPass.dispose();
     this.crosshairPass.dispose();
     this.flashPass.dispose();
+    this.shockwavePass.dispose();
     this.structurePass.dispose();
     this.structureLevelPass.dispose();
     this.unitPass.dispose();
