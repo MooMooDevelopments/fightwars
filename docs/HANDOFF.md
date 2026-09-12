@@ -13,7 +13,7 @@ per-session resume file; this document is the map of everything that remains.
 | 1     | Foundation         | Done. Brand module, proprietary assets replaced, AGPL attribution, CI (tests, determinism, perf, licences, lint, maps).                                                                                                              |
 | 2     | Infrastructure     | Done except two blocked items (§6). API (`src/api/`): guest accounts, Glicko-2 ladders with seasons, ranked queues, profiles, clans, friends, public games; load harness; desync alerting; replay store; metrics; Postgres CI job.   |
 | 3     | Parity and repair  | Done. `docs/BASELINE-VERIFICATION.md`, rejoin repair, tests for every verb, core coverage floor in CI.                                                                                                                               |
-| 4     | Identity           | **In progress: 5 of 10 done, 3 part-done (see §3).** The visual direction is set and carried through: dark, map-first, players vivid and nations muted, one amber signal. Own face (Barlow Condensed/Barlow), own mark, own palette. |
+| 4     | Identity           | **In progress: 6 of 10 done, 2 part-done (see §3).** The visual direction is set and carried through: dark, map-first, players vivid and nations muted, one amber signal. Own face (Barlow Condensed/Barlow), own mark, own palette. |
 | 5     | Depth              | Not started. Every hook point is already written down in `docs/MECHANICS.md` "Gaps vs FightWars brief" (§01–§05).                                                                                                                    |
 | 6     | Modes and metagame | Ranked, seasons and clans (server side) exist from Phase 2; the rest not started.                                                                                                                                                    |
 | 7     | Hardening          | Determinism, load harness, desync alerting and licence gate exist; server-side intent validation, anti-automation, fog filtering, accessibility audit, i18n audit not started.                                                       |
@@ -59,23 +59,23 @@ where tokens must end up — "brand through configuration, not code"), `dataviz`
 chart, stat tile or sparkline, and on the finished work `impeccable` then
 `web-design-guidelines`. Never load `frontend-design` and `impeccable` together.
 
-**Status (end of session 7): 5 of 10 done, 3 part-done.**
+**Status (end of session 7): 6 of 10 done, 2 part-done.**
 
 Items 3 and 5 each had their main body built in session 7 and each has a named remainder,
 so neither is counted as finished. The remainder is written at the end of its section.
 
-| #   | Item                                                                                   | State                                                                |
-| --- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| 1   | Nation colours in OKLCH, three colourblind-safe palettes                               | **done**                                                             |
-| 2   | Wordmark, favicon, app icons, `og:image`, display font (and the renderer's MSDF atlas) | **done**                                                             |
-| 3   | Readable at every zoom (political blocks, halos, flashes)                              | **part-done** — blocks and borders; halos and flashes remain         |
-| 4   | Every number explained on hover                                                        | **done** for the pre-attack estimate; the live "cost so far" remains |
-| 5   | Feel: border wave, nuke flash + shake + ring + sound                                   | **part-done** — sound, flash, shake; border wave and ring remain     |
-| 6   | Radial menus, HUD, leaderboard, events feed                                            | **part-done** — palette and typography only                          |
-| 7   | Mobile first-class                                                                     | not started                                                          |
-| 8   | Onboarding: 90-second tutorial                                                         | not started                                                          |
-| 9   | Build queue, rally points, attack presets                                              | not started (keybind remapping already existed)                      |
-| 10  | Clan create form; guest-appropriate account page                                       | **done**                                                             |
+| #   | Item                                                                                   | State                                                                 |
+| --- | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| 1   | Nation colours in OKLCH, three colourblind-safe palettes                               | **done**                                                              |
+| 2   | Wordmark, favicon, app icons, `og:image`, display font (and the renderer's MSDF atlas) | **done**                                                              |
+| 3   | Readable at every zoom (political blocks, halos, flashes)                              | **part-done** — blocks and borders; halos and flashes remain          |
+| 4   | Every number explained on hover                                                        | **done** — estimate before, spend during (tiles conquered: see below) |
+| 5   | Feel: border wave, nuke flash + shake + ring + sound                                   | **part-done** — sound, flash, shake; border wave and ring remain      |
+| 6   | Radial menus, HUD, leaderboard, events feed                                            | **part-done** — palette and typography only                           |
+| 7   | Mobile first-class                                                                     | not started                                                           |
+| 8   | Onboarding: 90-second tutorial                                                         | not started                                                           |
+| 9   | Build queue, rally points, attack presets                                              | not started (keybind remapping already existed)                       |
+| 10  | Clan create form; guest-appropriate account page                                       | **done**                                                              |
 
 What the finished ones measure, and what each left behind, is in `BUILD-STATE.md` — it is kept
 current and is the place to look before re-deriving anything.
@@ -130,26 +130,25 @@ own hardware, or a GPU CI runner.
 
 ### 4 — The live "cost so far"
 
-`Config.attackLogic` already fills in an `AttackExplanation` and the hover tooltip renders it
-(`src/client/AttackCostEstimate.ts`, `PlayerInfoOverlay.renderAttackCost`). What remains is
-showing what an attack _has already_ cost while it runs.
+**Done (session 7).** A running attack shows what it has already cost beside what it has left —
+`↑ 18.7K −2.26K Madagascar` — with the hover explaining both halves.
 
-`AttackImpl` tracks only `_troops` and `_borderSize`, and `AttackUpdate` carries
-`{attackerID, targetID, troops, id, retreating}`. The obvious move — add `startTroops` and
-`tilesConquered` to `AttackUpdate` — is the wrong one: per-tick attack troop counts travel in a
-packed `Float64Array` lane (`packedAttackUpdates`, built in `GameUpdateUtils.ts`) precisely
-_because_ they change every tick for every live attack, while the attack arrays themselves are
-resent only when membership or order changes.
+The plan in the previous version of this section was right about where to put the value and
+wrong about what the value is. "Troops it launched with" goes **negative** the moment two
+attacks on the same target merge, which `AttackExecution` does routinely: the survivor absorbs
+the other's troops. So the sim tracks `troopsCommitted` — every troop ever put in, raised by a
+merge and untouched by losses — and the cost is `troopsCommitted - troops`. It rides the attack
+array as planned, since a merge is a membership change anyway.
 
-Split it by how often each value changes:
+**`tilesConquered` is not derivable client-side**, contrary to the old plan here. The client
+sees territory changes but cannot attribute them to one of a player's several concurrent
+attacks. Doing it properly means widening `packedAttackUpdates` — the one per-tick lane with a
+real bandwidth cost at 120 players — so it was left out rather than guessed. If someone wants
+it, that is the decision to take deliberately, not a client-side derivation to discover.
 
-- `startTroops` is fixed for the life of an attack → put it on the attack array, which is
-  already only resent on membership change. Costs nothing per tick.
-- Troops spent so far is then `startTroops - troops`, computed on the client from data it
-  already has. No protocol change at all.
-- `tilesConquered` does change per tick. Try deriving it client-side first (the client already
-  receives territory updates) before widening the packed lane — that lane is the one part of
-  this with a real bandwidth cost under 120 players.
+**Deliberately outgoing-only.** The defender already sees an incoming attack's live troop count,
+but what it has _cost_ the attacker is new information; handing it over is a balance decision
+for brief §8's fog filtering, not a legibility one.
 
 ### 5 — Feel
 

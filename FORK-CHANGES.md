@@ -376,3 +376,48 @@ is the gap this section closes.
 - `src/client/hud/GameRenderer.ts` — registers the controller.
 - `src/client/sound/Sounds.ts`, `src/client/controllers/SoundEffectController.ts`,
   `tests/client/controllers/SoundEffectController.test.ts` — the four orphan sound files.
+
+### The live "cost so far" (Phase 4 item 4, session 7)
+
+A running attack now shows what it has already cost, beside what it has left.
+
+#### Shared upstream files edited
+
+- `src/core/game/AttackImpl.ts`, `src/core/game/Game.ts` — `troopsCommitted()` and
+  `commitTroops()`. Committed is every troop ever put into the attack: it rises when another
+  attack on the same target merges in and is untouched by losses, so
+  `troopsCommitted - troops` is the cost. A plain "troops it launched with" would have gone
+  **negative** the moment two attacks combined, which `AttackExecution` does routinely.
+- `src/core/execution/AttackExecution.ts` — the merge calls `commitTroops` instead of
+  `setTroops(troops + other)`. Identical arithmetic for the live count; the determinism gate's
+  final hash is unchanged (`23404413546031824`), which is the evidence that it is.
+- `src/core/game/GameUpdates.ts`, `src/client/render/types/Renderer.ts` — `troopsCommitted` on
+  `AttackUpdate` / `AttackData`. It rides the attack **array**, not the packed per-tick lane:
+  it only moves when two attacks merge, which is a membership change, and the lane exists for
+  values that change every tick for every attack.
+- `src/core/game/GameUpdateUtils.ts` — `attackArrayMembershipEqual` compares it. A merge
+  changes membership anyway, so this is belt and braces, but it means the committed total
+  cannot go stale if deletion is ever deferred. Note the coupling it implies:
+  `packAttackTroopDeltas` only emits while the arrays are _not_ being resent, so a tick that
+  changes committed skips the lane and carries the fresh troop count on the array instead.
+- `src/core/game/PlayerImpl.ts` — both attack-array map sites.
+- `src/client/AttackCostEstimate.ts` — `attackSpend`, the display decision: null rather than a
+  number when there is nothing to show, so no "−0" appears beside a freshly launched attack
+  and no negative spend can reach the screen.
+- `src/client/hud/layers/AttacksDisplay.ts` — renders it on outgoing attacks, on players and on
+  wilderness. **Outgoing only:** the defender already sees an incoming attack's live troop
+  count, but what it has _cost_ the attacker is information they did not have, and handing it
+  over is a balance decision for brief §8's fog filtering rather than a legibility one.
+- `resources/lang/en.json` — `attack_cost.spent_so_far`, the hover explanation.
+- `tests/AttackImplBorder.test.ts`, `tests/GameUpdateUtils.test.ts`,
+  `tests/client/AttackCostEstimate.test.ts`, `tests/client/view/GameView.test.ts`,
+  `tests/perf/DiffPlayerUpdatePerf.ts` — the invariant through a merge, the array resend, the
+  display decision, and fixtures.
+
+#### Not done, and why
+
+`tilesConquered` — the other half of "what has this attack bought" — is **not** derivable on the
+client, contrary to the plan in `docs/HANDOFF.md` §3: the client sees territory changes but
+cannot attribute them to one of a player's several concurrent attacks. Sending it would mean
+widening `packedAttackUpdates`, the one per-tick lane with a real bandwidth cost under 120
+players, so it is deliberately left out rather than guessed at.

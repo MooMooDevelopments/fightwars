@@ -8,6 +8,7 @@ import {
   GameUpdateType,
   UnitIncomingUpdate,
 } from "../../../core/game/GameUpdates";
+import { attackSpend } from "../../AttackCostEstimate";
 import { Controller } from "../../Controller";
 import { themeProvider } from "../../theme/ThemeProvider";
 import {
@@ -255,6 +256,30 @@ export class AttacksDisplay extends LitElement implements Controller {
     );
   }
 
+  /**
+   * What the attack has cost so far, beside what it has left.
+   *
+   * Outgoing attacks only. The defender already sees an incoming attack's live
+   * troop count, but what it has *cost* the attacker is not something they had
+   * before, and handing it over is a balance decision rather than a legibility
+   * one — brief §8's fog filtering is where that belongs, not here.
+   *
+   * Nothing is drawn before the attack has spent anything: a "−0" beside every
+   * freshly launched attack is noise, and the row is already dense.
+   */
+  private renderSpent(attack: AttackUpdate) {
+    const spent = attackSpend(attack);
+    if (spent === null) return html``;
+    return html`<span
+      class="ml-1 text-xs text-ink-dim tabular-nums"
+      title=${translateText("attack_cost.spent_so_far", {
+        spent: renderTroops(spent),
+        committed: renderTroops(attack.troopsCommitted),
+      })}
+      >−${renderTroops(spent)}</span
+    >`;
+  }
+
   private renderOutgoingAttacks() {
     if (this.outgoingAttacks.length === 0) return html``;
 
@@ -271,6 +296,7 @@ export class AttacksDisplay extends LitElement implements Controller {
                   style="filter: brightness(0) saturate(100%) invert(62%) sepia(80%) saturate(500%) hue-rotate(175deg) brightness(100%)"
                 />↑</span
               ><span class="ml-1">${renderTroops(attack.troops)}</span>
+              ${this.renderSpent(attack)}
               <span class="truncate ml-1"
                 >${(
                   this.game.playerBySmallID(attack.targetID) as PlayerView
@@ -312,6 +338,7 @@ export class AttacksDisplay extends LitElement implements Controller {
                   style="filter: brightness(0) saturate(100%) invert(62%) sepia(80%) saturate(500%) hue-rotate(175deg) brightness(100%)"
                 />↑</span
               ><span class="ml-1">${renderTroops(landAttack.troops)}</span>
+              ${this.renderSpent(landAttack)}
               ${translateText("help_modal.ui_wilderness")}`,
             className:
               "text-left text-action-ink inline-flex items-center gap-0.5 lg:gap-1 min-w-0",

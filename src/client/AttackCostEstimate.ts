@@ -112,6 +112,27 @@ export function estimateAttackCost(
 }
 
 /** One line of the breakdown: a named multiplier and what it changes. */
+/**
+ * What a running attack has cost so far, or null when there is nothing worth
+ * showing.
+ *
+ * The estimate above answers "what would this cost"; this answers "what has it
+ * cost", which is the same question one tick later and the one a player asks
+ * while watching a front stall.
+ *
+ * Null rather than zero for a freshly launched attack: a "−0" beside every new
+ * attack is noise in a row that is already dense. Null also covers the moment
+ * between a merge raising the committed total and the live count catching up,
+ * which would otherwise read as a negative spend.
+ */
+export function attackSpend(attack: {
+  troops: number;
+  troopsCommitted: number;
+}): number | null {
+  const spent = attack.troopsCommitted - attack.troops;
+  return spent > 0 ? spent : null;
+}
+
 export interface AttackFactor {
   /** Translation key under `attack_cost.factor`. */
   key: string;

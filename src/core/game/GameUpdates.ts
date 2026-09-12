@@ -209,6 +209,17 @@ export interface AttackUpdate {
   attackerID: number;
   targetID: number;
   troops: number;
+  /**
+   * Every troop ever put into this attack, so the client can show what it has
+   * spent without a second per-tick number crossing the wire.
+   *
+   * It rides on the attack *array* rather than in `packedAttackUpdates`
+   * because it changes only when two attacks merge — which is a membership
+   * change, exactly when the arrays are resent anyway. The packed lane carries
+   * the live troop count every tick for every active attack; putting a
+   * near-constant in there would pay that cost forever.
+   */
+  troopsCommitted: number;
   id: string;
   retreating: boolean;
 }

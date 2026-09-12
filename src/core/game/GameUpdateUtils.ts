@@ -262,7 +262,12 @@ function attackArrayMembershipEqual(
       x.attackerID !== y.attackerID ||
       x.targetID !== y.targetID ||
       x.id !== y.id ||
-      x.retreating !== y.retreating
+      x.retreating !== y.retreating ||
+      // Compared even though a merge — the only thing that moves it — also
+      // deletes the absorbed attack and so changes membership anyway. Relying
+      // on that coincidence would leave the committed total one tick stale if
+      // deletion were ever deferred, and it costs nothing to not rely on it.
+      x.troopsCommitted !== y.troopsCommitted
     ) {
       return false;
     }

@@ -151,6 +151,7 @@
     },
     "speed": "Speed",
     "speed_unit": "tiles/s per 10 of front",
+    "spent_so_far": "Spent so far: {spent} of {committed} committed",
     "terrain": {
       "highland": "Highland",
       "mountain": "Mountain",

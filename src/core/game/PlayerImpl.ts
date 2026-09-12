@@ -331,6 +331,7 @@ export class PlayerImpl implements Player {
               attackerID: a.attacker().smallID(),
               targetID: a.target().smallID(),
               troops: a.troops(),
+              troopsCommitted: a.troopsCommitted(),
               id: a.id(),
               retreating: a.retreating(),
             } satisfies AttackUpdate;
@@ -345,6 +346,7 @@ export class PlayerImpl implements Player {
             attackerID: a.attacker().smallID(),
             targetID: a.target().smallID(),
             troops: a.troops(),
+            troopsCommitted: a.troopsCommitted(),
             id: a.id(),
             retreating: a.retreating(),
           } satisfies AttackUpdate;

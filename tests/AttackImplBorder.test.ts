@@ -61,6 +61,34 @@ describe("AttackImpl", () => {
     expect(a.borderSize()).toBe(0);
   });
 
+  it("counts what it cost as committed minus live, through a merge", () => {
+    // The number the HUD shows. Losses lower the live count and leave the
+    // committed total alone; a merge raises both, so the cost never goes
+    // negative when a second attack on the same target folds in — which is
+    // exactly what a plain "launched with" figure would have done.
+    const a = attack([]);
+    expect(a.troopsCommitted()).toBe(100);
+    expect(a.troopsCommitted() - a.troops()).toBe(0);
+
+    a.setTroops(70); // fighting
+    expect(a.troopsCommitted() - a.troops()).toBe(30);
+
+    a.commitTroops(50); // a second attack on the same target merges in
+    expect(a.troops()).toBe(120);
+    expect(a.troopsCommitted()).toBe(150);
+    expect(a.troopsCommitted() - a.troops()).toBe(30); // unchanged by the merge
+
+    a.setTroops(90);
+    expect(a.troopsCommitted() - a.troops()).toBe(60);
+  });
+
+  it("never reports a negative cost, even clamped at zero troops", () => {
+    const a = attack([]);
+    a.setTroops(-5);
+    expect(a.troops()).toBe(0);
+    expect(a.troopsCommitted() - a.troops()).toBe(100);
+  });
+
   it("clamps troops at zero and unlinks itself from both players on delete", () => {
     const a = attack([]);
     a.setTroops(-5);

@@ -39,6 +39,8 @@ export interface AttackData {
   attackerID: number;
   targetID: number;
   troops: number;
+  /** Every troop put into the attack; see AttackUpdate.troopsCommitted. */
+  troopsCommitted: number;
   id: string;
   retreating: boolean;
 }

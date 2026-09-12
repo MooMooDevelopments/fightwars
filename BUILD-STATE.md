@@ -48,9 +48,10 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   the untested verbs/bots/attack record have tests, and `src/core` coverage has a CI floor.
   Two Phase 2 items remain blocked here: Discord login (needs a Discord application
   id/secret only the owner can create) and the compose stack (no Docker on this box).
-- **Phase 4 (identity) is under way: 5 of 10 done, 3 part-done.** Done: nation colours + the
-  three dichromat palettes; the clan create form; the attack-cost breakdown on hover; the
-  display face and brand marks; the account page. Part-done: **item 3** has political blocks
+- **Phase 4 (identity) is under way: 6 of 10 done, 2 part-done.** Done: nation colours + the
+  three dichromat palettes; the clan create form; the attack-cost breakdown on hover **and the
+  live spend during an attack (item 4)**; the display face and brand marks; the account page.
+  Part-done: **item 3** has political blocks
   and borders that survive sub-pixel, but not the halo/flash legibility the brief also asks
   for; **item 5** has the sounds, the flash and the shake, but not the border wave or the nuke
   ring; **item 6** has had its palette and typography but not its layout or `dataviz` pass.
@@ -95,10 +96,11 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 - **`npm run perf:gate` also fails under load** (mean 11 ms against a budget of 8). A clean tree
   stashed to the same commit fails identically with the same final hash, so it is the machine.
   It passed at 2.46 ms earlier in the same session with nothing else running.
-- **Not verified, and it should be the next session's first five minutes:** nobody has watched
-  the screen shake actually move the camera. Build a silo, launch an atom bomb, watch. Its curve
-  and overlap rule are unit-tested and the wiring is three lines in `syncCamera`, but that is
-  not the same as having seen it.
+- **The shake is now verified** — the console can drive it directly
+  (`document.querySelector('build-menu').transformHandler.shake.add(60, performance.now())` in a
+  rAF loop), which beats staging a nuke. What has _not_ been watched is the flash and shake
+  firing from a real detonation, i.e. `ImpactFeedbackController` picking the event up. Build a
+  silo, launch an atom bomb; that is the remaining five minutes.
 - **The direction, stated once and carried through:** dark, map-first, the map the only
   saturated surface. Within that, one decision now encoded in every palette — **players are
   vivid, AI nations are muted**, so a glance separates people from scenery before any label

@@ -159,7 +159,7 @@ export class AttackExecution implements Execution {
         // Boat attacks (sourceTile is not null) are not combined with other attacks
         this.attack.sourceTile() === null
       ) {
-        this.attack.setTroops(this.attack.troops() + outgoing.troops());
+        this.attack.commitTroops(outgoing.troops());
         outgoing.delete();
       }
     }

@@ -187,12 +187,26 @@ describe("diffPlayerUpdate", () => {
   it("detects outgoingAttacks membership/retreating changes", () => {
     const prev = makePlayerUpdate({
       outgoingAttacks: [
-        { attackerID: 1, targetID: 2, troops: 10, id: "a", retreating: false },
+        {
+          attackerID: 1,
+          targetID: 2,
+          troops: 10,
+          troopsCommitted: 10,
+          id: "a",
+          retreating: false,
+        },
       ],
     });
     const next = makePlayerUpdate({
       outgoingAttacks: [
-        { attackerID: 1, targetID: 2, troops: 10, id: "a", retreating: true },
+        {
+          attackerID: 1,
+          targetID: 2,
+          troops: 10,
+          troopsCommitted: 10,
+          id: "a",
+          retreating: true,
+        },
       ],
     });
     const diff = diffPlayerUpdate(prev, next)!;
@@ -202,15 +216,49 @@ describe("diffPlayerUpdate", () => {
   it("ignores attack troop-count changes — they travel via packedAttackUpdates", () => {
     const prev = makePlayerUpdate({
       outgoingAttacks: [
-        { attackerID: 1, targetID: 2, troops: 10, id: "a", retreating: false },
+        {
+          attackerID: 1,
+          targetID: 2,
+          troops: 10,
+          troopsCommitted: 10,
+          id: "a",
+          retreating: false,
+        },
       ],
     });
     const next = makePlayerUpdate({
       outgoingAttacks: [
-        { attackerID: 1, targetID: 2, troops: 20, id: "a", retreating: false },
+        {
+          attackerID: 1,
+          targetID: 2,
+          troops: 20,
+          troopsCommitted: 10,
+          id: "a",
+          retreating: false,
+        },
       ],
     });
     expect(diffPlayerUpdate(prev, next)).toBeNull();
+  });
+
+  it("resends the attack array when troopsCommitted moves", () => {
+    // Only a merge moves it, and the client subtracts it from the live count
+    // to show what the attack has cost — a stale committed total would show a
+    // spend that never happened.
+    const attack = (troopsCommitted: number) => ({
+      attackerID: 1,
+      targetID: 2,
+      troops: 10,
+      troopsCommitted,
+      id: "a",
+      retreating: false,
+    });
+    const diff = diffPlayerUpdate(
+      makePlayerUpdate({ outgoingAttacks: [attack(10)] }),
+      makePlayerUpdate({ outgoingAttacks: [attack(30)] }),
+    )!;
+    expect(diff).not.toBeNull();
+    expect(diff.outgoingAttacks).toEqual([attack(30)]);
   });
 
   it("detects alliance list changes", () => {
@@ -256,14 +304,20 @@ describe("diffPlayerUpdate", () => {
 });
 
 describe("packAttackTroopDeltas", () => {
+  // troopsCommitted is deliberately NOT tied to troops: it only moves when two
+  // attacks merge, while troops falls every tick the attack is fighting. Tying
+  // them here would make every troop change look like a membership change and
+  // silently stop the packed lane from ever emitting.
   const attack = (
     troops: number,
     id = "a",
     retreating = false,
+    troopsCommitted = 100,
   ): AttackUpdate => ({
     attackerID: 1,
     targetID: 2,
     troops,
+    troopsCommitted,
     id,
     retreating,
   });

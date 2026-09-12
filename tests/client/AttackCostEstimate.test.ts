@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   AttackEstimate,
+  attackSpend,
   emptyExplanation,
   outnumberedBy,
   significantFactors,
@@ -99,5 +100,27 @@ describe("terrainKey", () => {
     [TerrainType.Mountain, "mountain"],
   ])("names %s", (terrain, expected) => {
     expect(terrainKey({ ...estimate(), terrain })).toBe(expected);
+  });
+});
+
+describe("attackSpend", () => {
+  test("is what the attack has lost, not what it launched with", () => {
+    expect(attackSpend({ troops: 4110, troopsCommitted: 20214 })).toBe(16104);
+  });
+
+  test("draws nothing for an attack that has not cost anything yet", () => {
+    // A "-0" beside every freshly launched attack is noise in a dense row.
+    expect(attackSpend({ troops: 500, troopsCommitted: 500 })).toBeNull();
+  });
+
+  test("draws nothing rather than a negative spend", () => {
+    // A merge raises the committed total and the live count together, but a
+    // reordered update could land one before the other; "-(-200)" must never
+    // reach the screen.
+    expect(attackSpend({ troops: 700, troopsCommitted: 500 })).toBeNull();
+  });
+
+  test("counts the whole stack once an attack is spent out", () => {
+    expect(attackSpend({ troops: 0, troopsCommitted: 9000 })).toBe(9000);
   });
 });

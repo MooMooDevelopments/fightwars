@@ -393,6 +393,18 @@ export interface Attack {
   attacker(): Player;
   troops(): number;
   setTroops(troops: number): void;
+  /**
+   * Every troop ever put into this attack: what it launched with, plus
+   * anything a later attack on the same target merged in. It only ever grows,
+   * so `troopsCommitted() - troops()` is what the attack has cost so far.
+   */
+  troopsCommitted(): number;
+  /**
+   * Merge `troops` in from another attack on the same target — raises the live
+   * count and the committed total together. Losses go through `setTroops`,
+   * which leaves the committed total alone; that asymmetry is the whole point.
+   */
+  commitTroops(troops: number): void;
   isActive(): boolean;
   delete(): void;
   // The tile the attack originated from, mostly used for boat attacks.

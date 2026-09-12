@@ -23,6 +23,7 @@ function makeAttacks(n: number): AttackUpdate[] {
     attackerID: 1,
     targetID: 2 + i,
     troops: 1000 + i,
+    troopsCommitted: 1000 + i,
     id: `attack-${i}`,
     retreating: false,
   }));

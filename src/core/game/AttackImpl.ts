@@ -17,7 +17,17 @@ export class AttackImpl implements Attack {
     private _sourceTile: TileRef | null,
     private _border: Set<number>,
     private _mg: GameImpl,
-  ) {}
+  ) {
+    this._troopsCommitted = _troops;
+  }
+
+  /**
+   * Every troop ever put into this attack. Grows only when another attack on
+   * the same target is merged in; combat losses leave it alone, which is what
+   * makes `_troopsCommitted - _troops` the attack's cost rather than a number
+   * that goes negative the moment two attacks combine.
+   */
+  private _troopsCommitted: number;
 
   sourceTile(): TileRef | null {
     return this._sourceTile;
@@ -34,6 +44,13 @@ export class AttackImpl implements Attack {
   }
   setTroops(troops: number) {
     this._troops = Math.max(0, troops);
+  }
+  troopsCommitted(): number {
+    return this._troopsCommitted;
+  }
+  commitTroops(troops: number) {
+    this._troops += troops;
+    this._troopsCommitted += troops;
   }
 
   isActive() {
