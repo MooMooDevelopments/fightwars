@@ -1,6 +1,6 @@
 # FightWars Build State
 
-Last session: 2026-09-12 (session 5) | Current phase: 4 (identity) under way — 3 of its 10 work items done, with two Phase 2 items still blocked on the owner/hardware | Build status: green
+Last session: 2026-09-12 (session 6) | Current phase: 4 (identity) — 5 of its 10 work items done and a 6th part-done, with two Phase 2 items still blocked on the owner/hardware | Build status: green
 
 Repo: `C:\Users\disbo\dev\fightwars` · `upstream` = openfrontio/OpenFrontIO (forked at
 `c77005586`, rebased onto `7d95251f1` the same day) · `origin` = github.com/MooMooDevelopments/fightwars
@@ -26,7 +26,7 @@ follows it). In the Claude desktop session the launch configs `fightwars-dev` /
 shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 `npm run load:test -- --clients 150 --map world --turns 600`.
 
-## Handoff — read this first (written 2026-09-12 at the end of session 5)
+## Handoff — read this first (written 2026-09-12 at the end of session 6)
 
 - **The plan for everything that remains (Phases 4–7 and the blocked items) is
   `docs/HANDOFF.md`.** This section is the per-session resume; that file is the map.
@@ -46,10 +46,12 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   the untested verbs/bots/attack record have tests, and `src/core` coverage has a CI floor.
   Two Phase 2 items remain blocked here: Discord login (needs a Discord application
   id/secret only the owner can create) and the compose stack (no Docker on this box).
-- **Phase 4 (identity) is under way: 3 of 10 work items done** (nation colours + the three
-  dichromat palettes; the clan create form; the attack-cost breakdown on hover). The other
-  seven are unstarted — see `docs/HANDOFF.md` §3 for the table, and "Phase 4 so far" below
-  for what the finished three measure and what they left behind.
+- **Phase 4 (identity) is under way: 5 of 10 done, 1 part-done.** Done: nation colours + the
+  three dichromat palettes; the clan create form; the attack-cost breakdown on hover; the
+  display face and brand marks; the account page. Part-done: the HUD/leaderboard item has had
+  its palette and typography but not its layout or `dataviz` pass. Untouched: renderer
+  legibility at zoom, feel/sound, mobile, the tutorial, and the build-queue / rally-point /
+  attack-preset intents. See `docs/HANDOFF.md` §3 for the table.
 - **The direction, stated once and carried through:** dark, map-first, the map the only
   saturated surface. Within that, one decision now encoded in every palette — **players are
   vivid, AI nations are muted**, so a glance separates people from scenery before any label

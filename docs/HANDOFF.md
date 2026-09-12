@@ -59,7 +59,7 @@ where tokens must end up — "brand through configuration, not code"), `dataviz`
 chart, stat tile or sparkline, and on the finished work `impeccable` then
 `web-design-guidelines`. Never load `frontend-design` and `impeccable` together.
 
-**Status (end of session 5): 3 of the 10 done.** The three marked DONE below are finished,
+**Status (end of session 6): 5 of the 10 done, 1 part-done.** The items marked DONE below are finished,
 tested and verified; `BUILD-STATE.md` carries their measured numbers and what each left
 behind. The direction was stated and is not reopened: dark, map-first, and _players vivid,
 nations muted_, which every palette now encodes.
