@@ -59,6 +59,13 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   max 2.71, 0/1800 ticks over the frame budget, view hash `0de99c33`. **Not comparable to
   session 7's baseline** (mean 0.99, p99 21.1, view hash `5333c99b`) — the view hash moved, so
   it is a different scenario, not a 4x win.
+- **`npm test` was fully green for the first time** — 488 + 67 files, 5860 + 673 tests, no
+  failures, on the same box that produced 1, 3 and 8 load-induced failures per run in session 7.
+  The likely cause is the upstream commit this session rebased onto: `tests/domTeardown.ts`
+  removes every element from `document.body` after each test, so a component still connected at
+  file teardown can no longer leave a timer armed that fires against a dead `document` and gets
+  reported against whichever file happened to be running. Treat the "not reliably green" note
+  below as probably fixed, but do not delete it until a few more full runs agree.
 - **Also `.claude/launch.json`**: the desktop session's working directory was the Claude Memories
   folder rather than the repo, so the launch configs there now call
   `npm --prefix C:/Users/disbo/dev/fightwars run dev`. The repo's own `.claude/launch.json`
