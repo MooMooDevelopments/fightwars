@@ -10,6 +10,7 @@ import "./components/clan/ClanBansView";
 import "./components/clan/ClanBrowseView";
 import type { BrowseState } from "./components/clan/ClanBrowseView";
 import "./components/clan/ClanCard";
+import "./components/clan/ClanCreateView";
 import "./components/clan/ClanDetailView";
 import "./components/clan/ClanDonationsView";
 import "./components/clan/ClanGameHistoryView";
@@ -32,6 +33,7 @@ import { translateText } from "./Utils";
 
 type View =
   | "list"
+  | "create"
   | "detail"
   | "manage"
   | "transfer"
@@ -287,6 +289,13 @@ export class ClanModal extends BaseModal {
         ariaLabel,
       });
     }
+    if (this.view === "create") {
+      return modalHeader({
+        title: translateText("clan_modal.create_title"),
+        onBack: () => (this.view = "list"),
+        ariaLabel,
+      });
+    }
     if (this.view === "manage") {
       return modalHeader({
         title: translateText("clan_modal.manage_clan"),
@@ -414,6 +423,26 @@ export class ClanModal extends BaseModal {
   private renderInner() {
     if (this.loading) {
       return this.renderLoadingSpinner();
+    }
+
+    if (this.view === "create") {
+      return html`<clan-create-view
+        @clan-created=${(e: CustomEvent<{ tag: string }>) => {
+          // Record the new membership locally, the same way @clan-joined
+          // does: getUserMe() memoises the profile for the session, so a
+          // refetch here would answer from a cache that predates the clan
+          // and the detail view would offer its own leader a Join button.
+          this.myClanRoles = new Map([
+            ...this.myClanRoles,
+            [e.detail.tag, "leader" as ClanRole],
+          ]);
+          this.detailCache = null;
+          // Straight into the new clan: the player is its leader, and the
+          // next thing they want is the page where they can invite people.
+          this.view = "list";
+          this.openDetail(e.detail.tag);
+        }}
+      ></clan-create-view>`;
     }
 
     if (this.view === "my-requests") {
@@ -808,12 +837,15 @@ export class ClanModal extends BaseModal {
           <p class="text-white/40 text-sm mb-4">
             ${translateText("clan_modal.no_clans")}
           </p>
-          <button
-            @click=${() => this.setActiveTab("browse")}
-            class="px-6 py-2 text-sm font-bold text-white uppercase tracking-wider bg-malibu-blue hover:bg-aquarius active:bg-malibu-blue/80 rounded-lg transition-all"
-          >
-            ${translateText("clan_modal.browse")}
-          </button>
+          <div class="flex flex-wrap items-center justify-center gap-3">
+            <button
+              @click=${() => this.setActiveTab("browse")}
+              class="px-6 py-2 text-sm font-bold text-white uppercase tracking-wider bg-malibu-blue hover:bg-aquarius active:bg-malibu-blue/80 rounded-lg transition-all"
+            >
+              ${translateText("clan_modal.browse")}
+            </button>
+            ${this.renderCreateButton()}
+          </div>
         </div>
       `;
     }
@@ -821,6 +853,9 @@ export class ClanModal extends BaseModal {
     return html`
       <div class="space-y-3">
         ${hasRequests ? this.renderPendingRequestsButton() : ""}
+        ${hasClans
+          ? ""
+          : html`<div class="pt-1">${this.renderCreateButton()}</div>`}
         ${this.myClans.map(
           (clan) => html`
             <clan-card
@@ -832,6 +867,22 @@ export class ClanModal extends BaseModal {
           `,
         )}
       </div>
+    `;
+  }
+
+  /**
+   * Offered only where a clan is missing — the one-clan-per-account rule
+   * makes a permanent "Create" tab a dead end for everyone who already has
+   * one.
+   */
+  private renderCreateButton() {
+    return html`
+      <button
+        @click=${() => (this.view = "create")}
+        class="px-6 py-2 text-sm font-bold uppercase tracking-wider text-white/80 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all"
+      >
+        ${translateText("clan_modal.create_submit")}
+      </button>
     `;
   }
 

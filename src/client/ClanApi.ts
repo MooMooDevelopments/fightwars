@@ -298,6 +298,66 @@ export async function leaveClan(
   }
 }
 
+/** Tag rules the server enforces (TAG_RE in src/api/ClanRoutes.ts). */
+export const CLAN_TAG_RE = /^[a-zA-Z0-9]{2,5}$/;
+export const CLAN_NAME_MAX = 35;
+export const CLAN_DESCRIPTION_MAX = 200;
+
+/**
+ * Create a clan, making the caller its leader. The server does both in one
+ * statement, so there is no state where a clan exists without a leader.
+ *
+ * Every rejection the player can act on is surfaced as its own message: a tag
+ * that is taken, a tag the filter rejects, a bad Discord invite, or already
+ * being in a clan. A generic "failed" here would leave them retyping the same
+ * form with no idea which field to change.
+ */
+export async function createClan(input: {
+  tag: string;
+  name: string;
+  description?: string;
+  isOpen?: boolean;
+  discordUrl?: string;
+}): Promise<ClanInfo | { error: string }> {
+  try {
+    const res = await clanFetch("/clans", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    if (res.status === 401 || res.status === 403) {
+      return { error: "clan_modal.create_sign_in" };
+    }
+    if (res.status === 409) {
+      const body = await res.json().catch(() => ({}));
+      const error = String((body as { error?: string }).error ?? "");
+      return {
+        error:
+          error === "tag taken"
+            ? "clan_modal.create_tag_taken"
+            : "clan_modal.create_already_member",
+      };
+    }
+    if (res.status === 400) {
+      const body = await res.json().catch(() => ({}));
+      const code = (body as { code?: string }).code;
+      if (code === "TAG_INVALID") return { error: "clan_modal.create_tag_bad" };
+      if (code === "DISCORD_INVALID")
+        return { error: "clan_modal.discord_invalid" };
+      return { error: "clan_modal.error_failed" };
+    }
+    if (!res.ok) return { error: "clan_modal.error_failed" };
+    const parsed = ClanInfoSchema.safeParse(await res.json());
+    if (!parsed.success) {
+      console.warn("createClan: Zod validation failed", parsed.error);
+      return { error: "clan_modal.error_failed" };
+    }
+    return parsed.data;
+  } catch {
+    return { error: "clan_modal.error_network" };
+  }
+}
+
 export async function updateClan(
   tag: string,
   patch: {
