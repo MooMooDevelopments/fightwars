@@ -13,8 +13,17 @@
  * it can be reasoned about and tested without a GL context, which is the only
  * part of the renderer that can be.
  *
- * `zoom` throughout is the camera's pixels-per-tile, clamped to [0.2, 20] by
- * Camera and TransformHandler alike.
+ * `zoom` throughout is CSS pixels per tile — `TransformHandler.scale`, clamped
+ * to [0.2, 20]. Deliberately not the camera's device-pixel zoom, which is that
+ * times the device pixel ratio: whether a player can read the map is a
+ * question about how big a tile is to the eye, and a CSS pixel is roughly the
+ * same physical size on every screen while a device pixel is not. Driving
+ * these thresholds off the device zoom would make a 2x display demand twice
+ * as much zooming out before the map became readable.
+ *
+ * The tap spacing is the exception, and takes the device pixel ratio: how many
+ * tiles fall under one *rendered* pixel is what decides how wide the taps have
+ * to spread to cover it.
  */
 
 /** Camera.zoom bounds, mirrored so the policy can be reasoned about alone. */
@@ -84,12 +93,14 @@ export function overviewFraction(zoom: number): number {
 }
 
 /**
- * @param zoom pixels per tile
+ * @param zoom CSS pixels per tile (`TransformHandler.scale`)
+ * @param devicePixelRatio rendered pixels per CSS pixel
  * @param baseFillAlpha `mapOverlay.territoryAlpha` — the opacity the fill has
  *   when zoomed in, which this only ever raises
  */
 export function zoomLegibility(
   zoom: number,
+  devicePixelRatio: number,
   baseFillAlpha: number,
 ): ZoomLegibility {
   const overview = overviewFraction(zoom);
@@ -98,8 +109,11 @@ export function zoomLegibility(
   }
 
   // Nine taps span three steps across, so a step of a third of the footprint
-  // covers the pixel without reaching past it into a neighbour's tiles.
-  const tilesPerPixel = 1 / Math.max(zoom, MIN_ZOOM);
+  // covers the pixel without reaching past it into a neighbour's tiles. The
+  // footprint here is the rendered pixel's, so a denser screen takes narrower
+  // taps for the same view.
+  const deviceZoom = Math.max(zoom, MIN_ZOOM) * Math.max(devicePixelRatio, 1);
+  const tilesPerPixel = 1 / deviceZoom;
   const politicalStep =
     tilesPerPixel < MIN_TILES_PER_PIXEL
       ? 0

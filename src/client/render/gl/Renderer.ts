@@ -1275,8 +1275,11 @@ export class GPURenderer {
     // How the map should be drawn at this zoom. Computed once and handed to
     // the fill and the outline together so the two agree about where a
     // country is; see ZoomLegibility for what the numbers mean.
+    // camera.zoom is device pixels per tile; the policy wants CSS pixels per
+    // tile and the ratio separately — see ZoomLegibility.
+    const dpr = renderDpr();
     const legibility = this.settings.mapOverlay.politicalZoom
-      ? zoomLegibility(zoom, this.settings.mapOverlay.territoryAlpha)
+      ? zoomLegibility(zoom / dpr, dpr, this.settings.mapOverlay.territoryAlpha)
       : {
           politicalStep: 0,
           decorFade: 0,

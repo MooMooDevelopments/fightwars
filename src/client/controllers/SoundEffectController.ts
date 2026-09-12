@@ -1,6 +1,9 @@
 import { EventBus } from "../../core/EventBus";
 import { MessageType, PlayerType, UnitType } from "../../core/game/Game";
-import { GameUpdateType } from "../../core/game/GameUpdates";
+import {
+  DisplayMessageUpdate,
+  GameUpdateType,
+} from "../../core/game/GameUpdates";
 import { Controller } from "../Controller";
 import { PlaySoundEffectEvent, SoundEffect } from "../sound/Sounds";
 import { SendSpawnIntentEvent } from "../Transport";
@@ -32,6 +35,25 @@ const STATION_CAPABLE_TYPES = new Set<UnitType>([
   UnitType.Port,
 ]);
 
+/**
+ * Shortest gap, in ticks, between two plays of the same combat sound.
+ *
+ * A warship fires as fast as it can reload and a fleet fires together, so
+ * shells arrive in bursts; SAMs launch one missile per incoming warhead, and a
+ * MIRV brings many. Unthrottled, either turns an engagement into a drone. Ten
+ * ticks is one second: fast enough to read as continuous fire, slow enough to
+ * stay a sound rather than a texture.
+ */
+const COMBAT_SOUND_INTERVAL_TICKS = 10;
+
+/**
+ * The same, for the two that report a loss rather than an exchange. Losing a
+ * warship or stopping a warhead is worth hearing every time it happens; the
+ * gap is only here to collapse the several that can land on one tick into the
+ * one event the player actually experienced.
+ */
+const LOSS_SOUND_INTERVAL_TICKS = 1;
+
 const NUKE_INBOUND_MESSAGES = new Set<MessageType>([
   MessageType.NUKE_INBOUND,
   MessageType.HYDROGEN_BOMB_INBOUND,
@@ -47,6 +69,8 @@ export class SoundEffectController implements Controller {
   // one when first seen (e.g. joining mid-game) stay silent.
   private hadTrainStation = new Map<number, boolean>();
   private lastTrainStationSweepTick = -Infinity;
+  /** Last tick each throttled combat sound was played on. */
+  private lastPlayedTick = new Map<SoundEffect, number>();
 
   constructor(
     private readonly game: GameView,
@@ -108,6 +132,22 @@ export class SoundEffectController implements Controller {
       this.lastNukeWarningSoundTick = tick;
       this.emit("nuke-warning");
     }
+
+    // A SAM that intercepts deletes both itself and the warhead, so from the
+    // client there is nothing to tell an intercept apart from a SAM that gave
+    // up and stood down. The message the interception already sends is the
+    // one unambiguous signal, and reading it here keeps this sound out of the
+    // simulation, which would otherwise need a new flag on the missile.
+    const messages = (updates[GameUpdateType.DisplayEvent] ??
+      []) as DisplayMessageUpdate[];
+    for (const m of messages) {
+      if (
+        m.messageType === MessageType.SAM_HIT &&
+        m.playerID === myPlayer.smallID()
+      ) {
+        this.emitThrottled("sam-hit", LOSS_SOUND_INTERVAL_TICKS);
+      }
+    }
   }
 
   private handleUnit(unit: UnitView): void {
@@ -116,6 +156,13 @@ export class SoundEffectController implements Controller {
     }
     if (STATION_CAPABLE_TYPES.has(unit.type())) {
       this.handleTrainStation(unit);
+    }
+    if (
+      !unit.isActive() &&
+      unit.type() === UnitType.Warship &&
+      unit.owner() === this.game.myPlayer()
+    ) {
+      this.emitThrottled("warship-lost", LOSS_SOUND_INTERVAL_TICKS);
     }
     switch (unit.type()) {
       case UnitType.AtomBomb:
@@ -155,6 +202,20 @@ export class SoundEffectController implements Controller {
         break;
       case UnitType.Warship:
         if (unit.owner() === myPlayer) this.emit("build-warship");
+        break;
+      // Shells and SAM missiles are scoped to the local player, unlike the
+      // nuke launches above. A nuke going up anywhere is everyone's business;
+      // a shell leaving someone else's warship on the far side of the map is
+      // not, and on a full lobby the two together would be constant.
+      case UnitType.Shell:
+        if (unit.owner() === myPlayer) {
+          this.emitThrottled("warship-shot", COMBAT_SOUND_INTERVAL_TICKS);
+        }
+        break;
+      case UnitType.SAMMissile:
+        if (unit.owner() === myPlayer) {
+          this.emitThrottled("sam-shoot", COMBAT_SOUND_INTERVAL_TICKS);
+        }
         break;
       case UnitType.City:
         if (unit.owner() === myPlayer) this.emit("build-city");
@@ -240,5 +301,14 @@ export class SoundEffectController implements Controller {
 
   private emit(sound: SoundEffect): void {
     this.eventBus.emit(new PlaySoundEffectEvent(sound));
+  }
+
+  /** Play `sound` unless it has already played within `intervalTicks`. */
+  private emitThrottled(sound: SoundEffect, intervalTicks: number): void {
+    const tick = this.game.ticks();
+    const last = this.lastPlayedTick.get(sound);
+    if (last !== undefined && tick - last < intervalTicks) return;
+    this.lastPlayedTick.set(sound, tick);
+    this.emit(sound);
   }
 }

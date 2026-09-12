@@ -17,6 +17,10 @@ export type SoundEffect =
   | "build-defense-post"
   | "build-warship"
   | "sam-built"
+  | "sam-shoot"
+  | "sam-hit"
+  | "warship-shot"
+  | "warship-lost"
   | "silo-built"
   | "message"
   | "click"
@@ -50,6 +54,10 @@ export const soundEffectUrls: ReadonlyMap<SoundEffect, string> = new Map([
   ["build-defense-post", assetUrl("sounds/effects/build-defense-post.mp3")],
   ["build-warship", assetUrl("sounds/effects/build-warship.mp3")],
   ["sam-built", assetUrl("sounds/effects/sam-built.mp3")],
+  ["sam-shoot", assetUrl("sounds/effects/sam-shoot.mp3")],
+  ["sam-hit", assetUrl("sounds/effects/sam-hit.mp3")],
+  ["warship-shot", assetUrl("sounds/effects/warship-shot.mp3")],
+  ["warship-lost", assetUrl("sounds/effects/warship-lost.mp3")],
   ["silo-built", assetUrl("sounds/effects/silo-built.mp3")],
   // Same morse-code cue as the alliance request, per the designer's notes.
   // One asset, two registry entries, rather than two identical files.
@@ -123,6 +131,10 @@ const CUE_CATEGORY: Record<SoundEffect, Exclude<CueCategory, "ambience">> = {
   "build-factory": "effects",
   "build-train-station": "effects",
   "sam-built": "effects",
+  "sam-shoot": "effects",
+  "sam-hit": "effects",
+  "warship-shot": "effects",
+  "warship-lost": "effects",
   "silo-built": "effects",
   "transport-ship": "effects",
   spawn: "effects",

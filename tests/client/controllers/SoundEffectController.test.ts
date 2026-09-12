@@ -292,4 +292,106 @@ describe("SoundEffectController", () => {
     tickWithUnits(city);
     expect(played).toEqual([]);
   });
+
+  describe("combat sounds", () => {
+    const me = { id: () => "me", smallID: () => 7 };
+
+    function makeCreated(id: number, type: UnitType, owner: unknown) {
+      return {
+        id: () => id,
+        type: () => type,
+        isActive: () => true,
+        reachedTarget: () => false,
+        createdAt: () => tick,
+        owner: () => owner,
+      };
+    }
+
+    beforeEach(() => {
+      game.myPlayer = () => me;
+    });
+
+    it("plays a shot for my own warship and nothing for anyone else's", () => {
+      tickWithUnits(makeCreated(1, UnitType.Shell, { id: () => "them" }));
+      expect(played).toEqual([]);
+
+      tickWithUnits(makeCreated(2, UnitType.Shell, me));
+      expect(played).toEqual(["warship-shot"]);
+    });
+
+    it("holds a fleet's fire to one sound per interval", () => {
+      // Six warships firing on the same tick is one volley, not six.
+      tickWithUnits(
+        ...Array.from({ length: 6 }, (_, i) =>
+          makeCreated(i, UnitType.Shell, me),
+        ),
+      );
+      expect(played).toEqual(["warship-shot"]);
+
+      tickWithUnits(makeCreated(10, UnitType.Shell, me));
+      expect(played).toEqual(["warship-shot"]);
+
+      tick += 10;
+      tickWithUnits(makeCreated(11, UnitType.Shell, me));
+      expect(played).toEqual(["warship-shot", "warship-shot"]);
+    });
+
+    it("plays a launch when my SAM fires", () => {
+      tickWithUnits(makeCreated(1, UnitType.SAMMissile, me));
+      expect(played).toEqual(["sam-shoot"]);
+    });
+
+    it("plays a loss when my warship dies, not when theirs does", () => {
+      const mine = {
+        id: () => 1,
+        type: () => UnitType.Warship,
+        isActive: () => false,
+        reachedTarget: () => false,
+        createdAt: () => 0,
+        owner: () => me,
+      };
+      const theirs = { ...mine, id: () => 2, owner: () => ({}) };
+
+      tickWithUnits(theirs);
+      expect(played).toEqual([]);
+
+      tickWithUnits(mine);
+      expect(played).toEqual(["warship-lost"]);
+    });
+
+    it("plays an intercept from the message, for my SAM only", () => {
+      // The interception deletes both missile and warhead, so the message is
+      // the only thing that distinguishes it from a SAM standing down.
+      const message = (playerID: number) => ({
+        messageType: MessageType.SAM_HIT,
+        playerID,
+      });
+
+      tick++;
+      game.updatesSinceLastTick = () => ({
+        [GameUpdateType.DisplayEvent]: [message(99)],
+      });
+      controller.tick();
+      expect(played).toEqual([]);
+
+      tick++;
+      game.updatesSinceLastTick = () => ({
+        [GameUpdateType.DisplayEvent]: [message(7)],
+      });
+      controller.tick();
+      expect(played).toEqual(["sam-hit"]);
+    });
+
+    it("collapses several intercepts on one tick into one sound", () => {
+      tick++;
+      game.updatesSinceLastTick = () => ({
+        [GameUpdateType.DisplayEvent]: Array.from({ length: 4 }, () => ({
+          messageType: MessageType.SAM_HIT,
+          playerID: 7,
+        })),
+      });
+      controller.tick();
+      expect(played).toEqual(["sam-hit"]);
+    });
+  });
 });
