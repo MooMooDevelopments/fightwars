@@ -1,0 +1,76 @@
+# FightWars — one-box deployment (Phase 2 of the brief).
+#
+#   docker compose up --build
+#
+# Services:
+#   game   — the game server image (master + workers behind nginx, see Dockerfile)
+#   api    — the FightWars API (accounts, ladder, replays) on 8787
+#   db     — Postgres for the API (the api falls back to embedded PGlite when
+#            DATABASE_URL is unset, so `db` is optional for a dev box)
+#   redis  — reserved for cross-host lobby discovery/presence (not yet wired)
+#
+# Regional pools are a matter of running this file per region with its own
+# CLUSTER_JSON; the API is shared.
+#
+# Not yet exercised in CI: Docker is unavailable on the development box this
+# was written on (BUILD-STATE.md, Phase 2).
+services:
+  game:
+    build: .
+    image: fightwars-game
+    depends_on:
+      - api
+    environment:
+      GAME_ENV: prod
+      DOMAIN: ${DOMAIN:-localhost}
+      API_KEY: ${API_KEY:?set API_KEY (shared with the api service)}
+      ADMIN_BOT_API_KEY: ${ADMIN_BOT_API_KEY:-}
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-1x00000000000000000000AA}
+      GIT_COMMIT: ${GIT_COMMIT:-compose}
+      CLUSTER_JSON: ${CLUSTER_JSON:-{"a":{"host":"localhost","color":"blue","numWorkers":2}}}
+      REPLAY_DIR: /data/replays
+      DESYNC_WEBHOOK_URL: ${DESYNC_WEBHOOK_URL:-}
+    volumes:
+      - replays:/data/replays
+    ports:
+      - "80:80"
+
+  api:
+    build: .
+    image: fightwars-game
+    command: ["npm", "run", "start:api"]
+    depends_on:
+      - db
+    environment:
+      GAME_ENV: prod
+      DOMAIN: ${DOMAIN:-localhost}
+      API_PORT: "8787"
+      API_KEY: ${API_KEY:?set API_KEY (shared with the game service)}
+      API_JWT_PRIVATE_KEY: ${API_JWT_PRIVATE_KEY:-}
+      API_CORS_ORIGINS: ${API_CORS_ORIGINS:-http://localhost}
+      DATABASE_URL: postgres://fightwars:${POSTGRES_PASSWORD:-fightwars}@db:5432/fightwars
+      TURNSTILE_SECRET: ${TURNSTILE_SECRET:-}
+    ports:
+      - "8787:8787"
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: fightwars
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fightwars}
+      POSTGRES_DB: fightwars
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fightwars"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+
+volumes:
+  pgdata:
+  replays:

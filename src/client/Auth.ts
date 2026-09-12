@@ -486,6 +486,11 @@ async function doRefreshJwt(): Promise<void> {
       signal: AbortSignal.timeout(10_000),
     });
     if (response.status !== 200) {
+      // FightWars: no session yet — every player is a guest account keyed
+      // by their persistent id, so mint one instead of giving up.
+      if (response.status === 401 && (await doGuestLogin())) {
+        return;
+      }
       console.error("Refresh failed", response);
       logOut();
       return;
@@ -500,6 +505,31 @@ async function doRefreshJwt(): Promise<void> {
     // if server unreachable, just clear jwt
     __jwt = null;
     return;
+  }
+}
+
+// FightWars guest session: POST /auth/guest with the locally stored
+// persistent id. The API answers like /auth/refresh (jwt + expiresIn) and
+// sets the refresh cookie, so later loads take the normal refresh path.
+async function doGuestLogin(): Promise<boolean> {
+  try {
+    const response = await fetch(getApiBase() + "/auth/guest", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ persistentId: getPersistentIDFromLocalStorage() }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (response.status !== 200) return false;
+    const { jwt, expiresIn } = await response.json();
+    if (typeof jwt !== "string" || typeof expiresIn !== "number") return false;
+    __expiresAt = Date.now() + expiresIn * 1000;
+    __jwt = jwt;
+    console.log("Guest session created");
+    return true;
+  } catch (e) {
+    console.error("Guest login failed", e);
+    return false;
   }
 }
 

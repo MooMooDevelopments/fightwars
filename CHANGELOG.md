@@ -5,6 +5,14 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
 
 ## Unreleased
 
+### Phase 2 — Infrastructure (2026-09-12)
+
+- Accounts: every player is now an account, created silently on first visit. No sign-up.
+- A ladder: finished multiplayer games rate everyone in them (Glicko-2), with public player
+  pages and a leaderboard per mode.
+- Replays are kept by the game server itself; a finished game can be replayed from its id.
+- Operators get a live metrics page and a desync alert that cannot be missed.
+
 ### Phase 1 — Foundation (2026-09-12)
 
 - FightWars is born as a fork of OpenFront. The title screen says so, the footer and loading

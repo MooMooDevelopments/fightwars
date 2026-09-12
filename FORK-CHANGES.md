@@ -123,3 +123,24 @@ shared upstream files are listed individually because each one is a future rebas
 - `src/server/Master.ts` — `GET /metrics` (serves that page) and
   `GET /metrics/worker/:index` (proxies each worker so the page works with or without nginx/vite).
 - `tests/server/TurnStats.test.ts`.
+
+### Accounts, ladder and the API service (Phase 2, 2026-09-12)
+
+- `src/api/` — new service (`npm run start:api`, dev on http://localhost:8787, which is the
+  issuer the game server and client already use when `DOMAIN=localhost`):
+  `Db.ts` (node-postgres or embedded PGlite), `Migrations.ts` (accounts, sessions, matches,
+  match_players, ratings), `Keys.ts` (Ed25519 JWTs + JWKS), `Accounts.ts` (guest accounts keyed
+  by persistent id, rotating refresh sessions), `Glicko2.ts` (rating), `Matches.ts` (record
+  ingest → ladder), `App.ts` (routes), `Server.ts`. Replaces the closed-source worker's
+  `/.well-known/jwks.json`, `/users/@me`, `/join_verify`, `/cosmetics.json`,
+  `/reserved_clan_tags`, `/custom_tribes`, `/matchmaking/checkin`, `/game/:id`, `/auth/refresh`,
+  plus new `/auth/guest`, `/public/player/:id`, `/public/leaderboard/:ladder`.
+- `package.json` — `pg` and `@electric-sql/pglite` dependencies (MIT / Apache-2.0);
+  `start:api`, `start:api-dev`; `dev` now also runs the API.
+- `src/server/Archive.ts` — after saving to the replay store, POSTs the record to the API
+  (`postRecordToApi`, skipped without `API_KEY` or with `ARCHIVE_TO_API=false`).
+- `src/client/Auth.ts` — `doGuestLogin()`: a 401 from `/auth/refresh` now mints a guest session
+  via `/auth/guest` before falling back to `logOut()`.
+- `docker-compose.yml` — game + api + postgres + redis (not yet run: no Docker on the dev box).
+- Tests: `tests/api/Api.test.ts` (every server-facing response parsed with the server's own
+  schemas), `tests/api/Glicko2.test.ts` (paper example), `tests/server/ArchiveToApi.test.ts`.

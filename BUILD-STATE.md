@@ -1,6 +1,6 @@
 # FightWars Build State
 
-Last session: 2026-09-12 (session 1) | Current phase: 2 | Build status: green
+Last session: 2026-09-12 (session 2) | Current phase: 2 | Build status: green
 
 Repo: `C:\Users\disbo\dev\fightwars` · `upstream` = openfrontio/OpenFrontIO (forked at
 `c77005586`, rebased onto `7d95251f1` the same day) · `origin` = github.com/MooMooDevelopments/fightwars
@@ -50,6 +50,15 @@ it: `npm run load:test -- --clients 150 --map world --turns 600`.
 - [x] Phase 2: server turn timing + live metrics — `TurnStats` in `GameServer.endTurn()`,
       `GET /w<N>/api/metrics`, dashboard at the master's `/metrics` (dev: http://localhost:3000/metrics).
       Verified under the 150-client load: see numbers below.
+- [x] Phase 2: **accounts, ladder and the API service** (`src/api/`, `npm run start:api`, part of
+      `npm run dev`): Ed25519 JWTs + JWKS, guest accounts keyed by persistent id with rotating
+      refresh cookies, `/users/@me`, `/join_verify`, catalogue stubs, match ingest → Glicko-2
+      ladders (ffa/team), `/public/player/:id`, `/public/leaderboard/:ladder`. Postgres via
+      `DATABASE_URL`, embedded PGlite otherwise. The game server pushes finished records to it;
+      the client mints a guest session on a 401. Verified end to end on the dev stack: guest
+      login → JWT join → the server fetched the JWKS and the profile from the API.
+- [x] Phase 2: `docker-compose.yml` (game + api + postgres + redis) — written, **not run**
+      (no Docker on the dev box).
 - [x] CI is live on GitHub: every job green on the first dispatched run (push-triggered runs
       appear with a few minutes of delay).
 
@@ -62,13 +71,13 @@ it: `npm run load:test -- --clients 150 --map world --turns 600`.
 1. **Rebase check** at session start: `git fetch upstream && git rebase upstream/main`; fix
    conflicts (expect some in `index.html`, nav bars, Footer, SoundManager — the brand sweep
    touched them); rerun all gates.
-2. **Phase 2 — accounts/ladder/clans backend.** Everything auth/stats/cosmetics is the
-   closed Cloudflare Worker (`docs/MECHANICS.md` §06.9). Design a minimal FightWars API
-   service (Node + Postgres): persistent-id accounts with optional Discord OAuth, match
-   results, Glicko-2 ratings, clans. Keep the dev-mode UUID token path working. This is the
-   biggest Phase 2 item.
-3. **Phase 2 — Docker/compose** with server + Postgres + Redis; regional pools are config
-   (`CLUSTER_JSON` already models instances/workers).
+2. **Phase 2 — finish the accounts backend:** Discord OAuth login attached to the same account
+   row (`/auth/discord`), clans (tables + `/clans/*` matching `ClanApiSchemas.ts`), friends,
+   ranked queue matchmaking (`/matchmaking/checkin` returning assignments; the worker already
+   consumes them), `/public/games` listing per `docs/API.md`, and ladder seasons. Then a
+   `PgDb` integration test against a real Postgres in CI (service container).
+3. **Phase 2 — run the compose stack** on a box with Docker; fix what breaks; then point the
+   desync webhook and the metrics dashboard at real alerting.
 4. **Phase 2 — load harness extensions:** `--server-pid` sampling is written but unmeasured;
    add a 500-lobby cluster run (needs multiple workers: the harness already follows
    `workerIndex` from `create_game`).
@@ -96,6 +105,15 @@ it: `npm run load:test -- --clients 150 --map world --turns 600`.
 - 2026-09-12 — CrazyGames SDK script stays (distribution platform, not ads); Turnstile stays.
 - 2026-09-12 — Upstream's PR-gate / issue-lifecycle bots and their scripts are gone; we do
   not run their process.
+- 2026-09-12 — The API is a second process in this repo (`src/api/`), not a separate repo, and
+  runs on 8787 because that is the issuer the game server already derives for `DOMAIN=localhost`.
+- 2026-09-12 — Ladder rating is Glicko-2 (tau 0.5) with one rating period per match: the winner
+  beats everyone, non-winners draw each other (records carry no finer placement). Guests
+  without a persistent id are stored but never rated.
+- 2026-09-12 — Dev/test database is PGlite (Postgres in WASM), production is node-postgres;
+  same SQL, one adapter (`src/api/Db.ts`).
+- 2026-09-12 — After every rebase on upstream, `origin/main` is force-pushed
+  (`--force-with-lease`): the branch is ours and the brief mandates the rebase.
 
 ## Known broken / deferred
 
@@ -104,7 +122,8 @@ it: `npm run load:test -- --clients 150 --map world --turns 600`.
   OpenFront chrome) — replace in Phase 4.
 - `win_modal.support_openfront` is the one locale key still carrying the upstream name
   (keys are frozen for Crowdin compatibility; value says FightWars).
-- `tests/client/InventoryModal.test.ts` times out under heavy CPU contention; passes alone.
+- `tests/client/InventoryModal.test.ts` and `MainInitialize.test.ts` time out under heavy CPU
+  contention (e.g. with the dev stack running); both pass alone. Run `npm test` on a quiet box.
 - `.gitmodules` references a `gatekeeper` submodule path that does not exist — stale
   upstream file, harmless.
 - Two browser tabs in one profile share `localStorage`; for a two-window test override
