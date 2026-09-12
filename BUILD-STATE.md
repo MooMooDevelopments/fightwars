@@ -28,6 +28,9 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 
 ## Handoff — read this first (written 2026-09-12 at the end of session 4)
 
+- **The plan for everything that remains (Phases 4–7 and the blocked items) is
+  `docs/HANDOFF.md`.** This section is the per-session resume; that file is the map.
+
 - Tree is clean and pushed; HEAD is on `origin/main`. Nothing is mid-flight, no background
   process is running, the dev stack is stopped.
 - **First commands:** `git fetch upstream && git rebase upstream/main` (then
