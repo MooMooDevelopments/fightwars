@@ -7,16 +7,16 @@ per-session resume file; this document is the map of everything that remains.
 
 ## 1. Where things stand
 
-| Phase | Brief section      | Status                                                                                                                                                                                                                                     |
-| ----- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 0     | Audit              | Done. `docs/MECHANICS.md` (every system, formula, file, hook point), determinism gate, solo win, two-window lobby.                                                                                                                         |
-| 1     | Foundation         | Done. Brand module, proprietary assets replaced, AGPL attribution, CI (tests, determinism, perf, licences, lint, maps).                                                                                                                    |
-| 2     | Infrastructure     | Done except two blocked items (§6). API (`src/api/`): guest accounts, Glicko-2 ladders with seasons, ranked queues, profiles, clans, friends, public games; load harness; desync alerting; replay store; metrics; Postgres CI job.         |
-| 3     | Parity and repair  | Done. `docs/BASELINE-VERIFICATION.md`, rejoin repair, tests for every verb, core coverage floor in CI.                                                                                                                                     |
-| 4     | Identity           | **In progress: 5 of 10 items done, 1 part-done (see §3).** The visual direction is set and carried through: dark, map-first, players vivid and nations muted, one amber signal. Own face (Barlow Condensed/Barlow), own mark, own palette. |
-| 5     | Depth              | Not started. Every hook point is already written down in `docs/MECHANICS.md` "Gaps vs FightWars brief" (§01–§05).                                                                                                                          |
-| 6     | Modes and metagame | Ranked, seasons and clans (server side) exist from Phase 2; the rest not started.                                                                                                                                                          |
-| 7     | Hardening          | Determinism, load harness, desync alerting and licence gate exist; server-side intent validation, anti-automation, fog filtering, accessibility audit, i18n audit not started.                                                             |
+| Phase | Brief section      | Status                                                                                                                                                                                                                               |
+| ----- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 0     | Audit              | Done. `docs/MECHANICS.md` (every system, formula, file, hook point), determinism gate, solo win, two-window lobby.                                                                                                                   |
+| 1     | Foundation         | Done. Brand module, proprietary assets replaced, AGPL attribution, CI (tests, determinism, perf, licences, lint, maps).                                                                                                              |
+| 2     | Infrastructure     | Done except two blocked items (§6). API (`src/api/`): guest accounts, Glicko-2 ladders with seasons, ranked queues, profiles, clans, friends, public games; load harness; desync alerting; replay store; metrics; Postgres CI job.   |
+| 3     | Parity and repair  | Done. `docs/BASELINE-VERIFICATION.md`, rejoin repair, tests for every verb, core coverage floor in CI.                                                                                                                               |
+| 4     | Identity           | **In progress: 5 of 10 done, 3 part-done (see §3).** The visual direction is set and carried through: dark, map-first, players vivid and nations muted, one amber signal. Own face (Barlow Condensed/Barlow), own mark, own palette. |
+| 5     | Depth              | Not started. Every hook point is already written down in `docs/MECHANICS.md` "Gaps vs FightWars brief" (§01–§05).                                                                                                                    |
+| 6     | Modes and metagame | Ranked, seasons and clans (server side) exist from Phase 2; the rest not started.                                                                                                                                                    |
+| 7     | Hardening          | Determinism, load harness, desync alerting and licence gate exist; server-side intent validation, anti-automation, fog filtering, accessibility audit, i18n audit not started.                                                       |
 
 Repo: `C:\Users\disbo\dev\fightwars` (`origin` = github.com/MooMooDevelopments/fightwars, public;
 `upstream` = openfrontio/OpenFrontIO). Brief:
@@ -59,15 +59,18 @@ where tokens must end up — "brand through configuration, not code"), `dataviz`
 chart, stat tile or sparkline, and on the finished work `impeccable` then
 `web-design-guidelines`. Never load `frontend-design` and `impeccable` together.
 
-**Status (end of session 6): 5 of 10 done, 1 part-done.**
+**Status (end of session 7): 5 of 10 done, 3 part-done.**
+
+Items 3 and 5 each had their main body built in session 7 and each has a named remainder,
+so neither is counted as finished. The remainder is written at the end of its section.
 
 | #   | Item                                                                                   | State                                                                |
 | --- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
 | 1   | Nation colours in OKLCH, three colourblind-safe palettes                               | **done**                                                             |
 | 2   | Wordmark, favicon, app icons, `og:image`, display font (and the renderer's MSDF atlas) | **done**                                                             |
-| 3   | Readable at every zoom (political blocks, halos, flashes)                              | not started                                                          |
+| 3   | Readable at every zoom (political blocks, halos, flashes)                              | **part-done** — blocks and borders; halos and flashes remain         |
 | 4   | Every number explained on hover                                                        | **done** for the pre-attack estimate; the live "cost so far" remains |
-| 5   | Feel: border wave, nuke flash + shake + ring + sound                                   | not started                                                          |
+| 5   | Feel: border wave, nuke flash + shake + ring + sound                                   | **part-done** — sound, flash, shake; border wave and ring remain     |
 | 6   | Radial menus, HUD, leaderboard, events feed                                            | **part-done** — palette and typography only                          |
 | 7   | Mobile first-class                                                                     | not started                                                          |
 | 8   | Onboarding: 90-second tutorial                                                         | not started                                                          |
@@ -79,14 +82,13 @@ current and is the place to look before re-deriving anything.
 
 ### Before starting any of the rest
 
-- **The client perf harness does not run.** `npm run perf:client` dies with
-  `ReferenceError: document is not defined` — `src/client/Api.ts` registers a
-  `session-cleared` listener at module scope and the script imports it into plain Node.
-  `perf:client-mem` and `perf:client-tick` both die with `spawn npx ENOENT`: they spawn
-  `npx vite` without `shell: true`, which does not work on Windows. Both breaks predate this
-  work (reproduced at `dfef14c60`). **Item 3's stated verification is therefore unavailable
-  until these are fixed**, and fixing them is the first task of that item, not an aside.
-  `npm run perf:gate` — the headless _simulation_ budget — is fine and unrelated.
+- **The client perf harness runs again (fixed in session 7).** `npm run perf:client` works;
+  its baseline is in `BUILD-STATE.md`. `perf:client-mem` and `perf:client-tick` no longer die
+  on Windows but still cannot run here — they need the run-openfront Chromium setup, which is
+  Linux-only. `npm run perf:gate`, the headless _simulation_ budget, is unrelated to all three
+  and fails on this box only under load.
+- **The browser pane renders WebGL2**, so appearance _is_ verifiable here — see `BUILD-STATE.md`
+  for the recipe and for how to A/B a graphics setting on one live game. Frame rate is not.
 - **The asset generators' tools are deliberately not dependencies.** `npm run atlas:generate`,
   `fonts:sync` and `marks:generate` each need a one-off `npm install --no-save …`, written in
   the header of the script itself. `msdf-bmfont-xml` pulls `canvas`, a native module every CI
@@ -110,16 +112,21 @@ caches. Much of the machinery this item wants already exists — `BorderComputeP
 `BorderStampPass`, `BorderScatterPass`, `SmallPlayerGlowPass`, `FalloutBloomPass`,
 `LightmapPass`, `NightCompositePass`.
 
-What is _not_ there: territory that reads as political blocks when zoomed out (today it is
-per-tile fill at every zoom), and a legibility pass over halos and flashes at small scale.
+**Done (session 7).** `src/client/render/gl/ZoomLegibility.ts` owns the thresholds; the shared
+chunk `shaders/shared/political-owner.glsl` resolves a pixel to whoever holds most of its
+footprint; the territory fill fades patterns, skins and the defence darken out over the same
+range and closes toward opaque; the border stamp takes the strongest border in the same
+footprint so a one-tile outline survives below a pixel. All of it is inert above one CSS pixel
+per tile, and `mapOverlay.politicalZoom` turns it off. Nothing touched the simulation and the
+determinism gate stayed green.
 
-Fix the perf harness first, take a baseline, then change one pass at a time. Nothing here
-touches the simulation — colours and geometry are render-only — so the determinism gate should
-stay green throughout. If it does not, something has leaked into the core.
+**What is still open on this item:** the brief also asks for a legibility pass over _halos and
+flashes_ at small scale — `SmallPlayerGlowPass` and `FalloutBloomPass` were not touched, and
+they have the same sub-pixel problem the border had. That is the natural next slice.
 
-**Still blocked:** real-GPU fps has never been measured. The Browser pane renders in software,
-so its numbers say nothing about a real machine. Needs the owner to run the dev client on their
-own hardware and report, or a GPU CI runner.
+**Still blocked:** real-GPU _fps_ has never been measured. The pane renders WebGL2, so
+appearance is verifiable here and was verified; frame timing is not. Needs the owner on their
+own hardware, or a GPU CI runner.
 
 ### 4 — The live "cost so far"
 
@@ -149,17 +156,20 @@ Split it by how often each value changes:
 `src/client/controllers/SoundEffectController.ts` plays effects, `src/client/sound/Sounds.ts`
 holds the `SoundEffect` union and the url map, `src/client/sound/SoundManager.ts` owns volume.
 
-Two concrete findings:
+**Done (session 7).** The four orphan sound files (`sam-hit`, `sam-shoot`, `warship-lost`,
+`warship-shot`) are wired and throttled; `src/client/ScreenShake.ts` and
+`src/client/render/gl/passes/FlashPass.ts` exist, driven by
+`src/client/controllers/ImpactFeedbackController.ts` off nuke detonations, scaled by warhead and
+by distance from the centre of the view.
 
-- **Four sound files ship and are never played.** `resources/sounds/effects/` contains
-  `sam-hit.mp3`, `sam-shoot.mp3`, `warship-lost.mp3` and `warship-shot.mp3`; none of the four
-  appears anywhere in `src/`, and none is in the `SoundEffect` union or `soundEffectUrls`.
-  Wiring them is the cheapest feel work available and costs no bytes.
-- **There is no screen shake and no nuke flash anywhere in the client.** Nothing matches
-  `shake`, and there is no flash pass — `CrosshairPass.triggerBlockedFlash` is a different
-  thing (a blocked-build indicator). Shake belongs on `TransformHandler` (`offsetX` /
-  `offsetY` / `scale`) as a decaying _render-time_ offset; it must never reach the simulation,
-  and it must not move the camera state the input handler reads back.
+**Verify this first, before anything else:** nobody has watched the screen shake actually move
+the camera. Build a silo, launch an atom bomb, look. The flash _was_ confirmed on a real GPU;
+the shake has unit tests for its curve and its overlap rule and three lines of wiring in
+`syncCamera`, which is not the same thing.
+
+**What is still open on this item:** the brief's **border wave** and the nuke **ring**. Neither
+was started. The ring is the easier of the two and belongs next to `FlashPass`; the border wave
+is a `BorderStampPass` animation driven by conquest events.
 
 Audio budget is 2 MB and `resources/sounds` is 1.5 MB, so ~500 KB of headroom. The music
 playlist is deliberately empty (`BRAND.assets.music`) until CC-licensed tracks exist.

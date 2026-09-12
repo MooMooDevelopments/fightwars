@@ -26,7 +26,7 @@ follows it). In the Claude desktop session the launch configs `fightwars-dev` /
 shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 `npm run load:test -- --clients 150 --map world --turns 600`.
 
-## Handoff — read this first (written 2026-09-12 at the end of session 6)
+## Handoff — read this first (written 2026-09-12 at the end of session 7)
 
 - **The plan for everything that remains (Phases 4–7 and the blocked items) is
   `docs/HANDOFF.md`.** This section is the per-session resume; that file is the map. Its §3
@@ -48,12 +48,57 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   the untested verbs/bots/attack record have tests, and `src/core` coverage has a CI floor.
   Two Phase 2 items remain blocked here: Discord login (needs a Discord application
   id/secret only the owner can create) and the compose stack (no Docker on this box).
-- **Phase 4 (identity) is under way: 5 of 10 done, 1 part-done.** Done: nation colours + the
+- **Phase 4 (identity) is under way: 5 of 10 done, 3 part-done.** Done: nation colours + the
   three dichromat palettes; the clan create form; the attack-cost breakdown on hover; the
-  display face and brand marks; the account page. Part-done: the HUD/leaderboard item has had
-  its palette and typography but not its layout or `dataviz` pass. Untouched: renderer
-  legibility at zoom, feel/sound, mobile, the tutorial, and the build-queue / rally-point /
-  attack-preset intents. See `docs/HANDOFF.md` §3 for the table.
+  display face and brand marks; the account page. Part-done: **item 3** has political blocks
+  and borders that survive sub-pixel, but not the halo/flash legibility the brief also asks
+  for; **item 5** has the sounds, the flash and the shake, but not the border wave or the nuke
+  ring; **item 6** has had its palette and typography but not its layout or `dataviz` pass.
+  Untouched: the live "cost so far" (item 4), mobile (7), the tutorial (8), and the
+  build-queue / rally-point / attack-preset intents (9, do last — the only one that touches the
+  simulation). See `docs/HANDOFF.md` §3.
+
+- **Session 7, in order, with what each left behind:**
+  1. **The client perf harness runs again.** `npm run perf:client` had never run — `src/client/Api.ts`
+     registers a `session-cleared` listener at module scope and WebGLFrameBuilder reached it
+     through Cosmetics, so importing the code under test threw `document is not defined`.
+     Fixed by splitting the cosmetics _cache_ into `src/client/CosmeticsCache.ts`, a leaf the
+     renderer can depend on without dragging in Api, Payments, InGameModal and lit-html.
+     `perf:client-mem` and `perf:client-tick` no longer `spawn npx ENOENT` on Windows, but
+     **still cannot be run here**: they need the run-openfront Chromium setup, which is
+     Linux-only (apt-get, .deb).
+     **Baseline, World / 400 bots / 1800 ticks:** main-thread burst mean 0.99 ms, p95 1.12 ms,
+     p99 21.1 ms, max 140 ms, 20/1800 ticks over the 16.7 ms frame budget. View hash `5333c99b`.
+  2. **Item 3, zoom legibility.** A pixel that covers several tiles now shows whoever holds
+     most of it, decoration fades out over the same range, and the outline uses the same
+     footprint so it survives below a pixel. Off above one CSS pixel per tile — verified
+     indistinguishable at 2.5 px/tile. `mapOverlay.politicalZoom` turns it off.
+  3. **Item 5, feel.** The four orphan sound files are wired; screen shake and a nuke flash
+     exist.
+
+- **The browser pane renders WebGL2.** This changes what is verifiable here: appearance can be
+  checked on a real GPU, and was, for both item 3 and the flash. Frame _rate_ still cannot —
+  the pane's timings say nothing about a real machine. Recipe: `npm run dev:alt` (port 3000 is
+  taken on this box by something else), open `http://localhost:9000`, click Solo, set
+  `document.querySelector('single-player-modal').bots = 400` before Start, and drive the camera
+  with `document.querySelector('build-menu').transformHandler` (`targetScale = null` first, or
+  the smoothing pulls your scale back).
+- **A/B a graphics setting on one live game** rather than comparing two: write
+  `localStorage["settings.graphics"]`, then dispatch
+  `event:user-settings-changed:settings.graphics`. ClientGameRunner re-resolves the settings
+  onto the renderer's live object. Worth knowing — the first before/after taken for item 3 was
+  confounded by a hundred ticks of bot consolidation and overstated the result.
+- **`npm test` is not reliably green on this box, and it is load, not code.** Runs this session
+  produced 1, 3 and 8 failures, never the same set; every failing file passes on its own. The
+  5-second default timeout is the thing that breaks — one full run logged 92 s of transform and
+  71 s of import. Check a failure in isolation before believing it.
+- **`npm run perf:gate` also fails under load** (mean 11 ms against a budget of 8). A clean tree
+  stashed to the same commit fails identically with the same final hash, so it is the machine.
+  It passed at 2.46 ms earlier in the same session with nothing else running.
+- **Not verified, and it should be the next session's first five minutes:** nobody has watched
+  the screen shake actually move the camera. Build a silo, launch an atom bomb, watch. Its curve
+  and overlap rule are unit-tested and the wiring is three lines in `syncCamera`, but that is
+  not the same as having seen it.
 - **The direction, stated once and carried through:** dark, map-first, the map the only
   saturated surface. Within that, one decision now encoded in every palette — **players are
   vivid, AI nations are muted**, so a glance separates people from scenery before any label
