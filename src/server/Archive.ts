@@ -6,11 +6,15 @@ import {
   ID,
   PartialGameRecord,
 } from "../core/Schemas";
-import { replacer } from "../core/Util";
 import { logger } from "./Logger";
+import { replayStore } from "./ReplayStore";
 import { ServerEnv } from "./ServerEnv";
 
 const log = logger.child({ component: "Archive" });
+
+// FightWars: records go to the configured ReplayStore (a local gzip file
+// per game by default) instead of straight to OpenFront's closed API.
+// See ReplayStore.ts.
 
 export async function archive(gameRecord: GameRecord) {
   try {
@@ -21,21 +25,12 @@ export async function archive(gameRecord: GameRecord) {
       });
       return;
     }
-    const url = `${ServerEnv.jwtIssuer()}/game/${gameRecord.info.gameID}`;
-    const response = await fetch(url, {
-      method: "POST",
-      body: JSON.stringify(gameRecord, replacer),
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": ServerEnv.apiKey(),
-      },
+    const store = replayStore();
+    await store.save(parsed.data);
+    log.info("archived game record", {
+      gameID: gameRecord.info.gameID,
+      store: store.kind,
     });
-    if (!response.ok) {
-      log.error(`error archiving game record: ${response.statusText}`, {
-        gameID: gameRecord.info.gameID,
-      });
-      return;
-    }
   } catch (error) {
     log.error(`error archiving game record: ${error}`, {
       gameID: gameRecord.info.gameID,
@@ -52,22 +47,7 @@ export async function readGameRecord(
       log.error(`invalid game ID: ${gameId}`);
       return null;
     }
-    const url = `${ServerEnv.jwtIssuer()}/game/${gameId}`;
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": ServerEnv.apiKey(),
-      },
-    });
-    const record = await response.json();
-    if (!response.ok) {
-      log.error(`error reading game record: ${response.statusText}`, {
-        gameID: gameId,
-      });
-      return null;
-    }
-    return GameRecordSchema.parse(record);
+    return await replayStore().load(gameId);
   } catch (error) {
     log.error(`error reading game record: ${error}`, {
       gameID: gameId,

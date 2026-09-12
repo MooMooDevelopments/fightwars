@@ -1413,12 +1413,20 @@ export class JoinLobbyModal extends BaseModal {
   ): Promise<
     "success" | "redirected" | "not_found" | "version_mismatch" | "error"
   > {
-    const archiveResponse = await fetch(`${getApiBase()}/game/${lobbyId}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    // FightWars: the game server keeps its own replays (ReplayStore); ask it
+    // first and fall back to the legacy API only when it has nothing.
+    let archiveResponse = await fetch(
+      `${ClientEnv.gameHttpBase(lobbyId)}/${ClientEnv.gameWorkerPath(lobbyId)}/api/replay/${lobbyId}`,
+      { method: "GET", headers: { "Content-Type": "application/json" } },
+    ).catch(() => null);
+    if (archiveResponse === null || archiveResponse.status !== 200) {
+      archiveResponse = await fetch(`${getApiBase()}/game/${lobbyId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    }
 
     if (archiveResponse.status === 404) {
       return "not_found";

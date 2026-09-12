@@ -96,3 +96,14 @@ shared upstream files are listed individually because each one is a future rebas
   the tally already finds out-of-sync clients (additive; nothing else changed).
 - `src/server/WorkerMetrics.ts` — `<prefix>.desync_events.total` observable gauge.
 - `tests/server/DesyncAlert.test.ts` — unit + turn-loop integration.
+
+### Replay persistence (Phase 2, 2026-09-12)
+
+- `src/server/ReplayStore.ts` — new: `ReplayStore` interface, `FileReplayStore` (gzip JSON per
+  game under `REPLAY_DIR`, default `./replays` in dev) and `ApiReplayStore` (upstream's
+  behaviour, used outside dev when `REPLAY_DIR` is unset).
+- `src/server/Archive.ts` — `archive()` / `readGameRecord()` now delegate to the store instead of
+  calling OpenFront's API directly (same validation and logging).
+- `src/server/Worker.ts` — new `GET /api/replay/:id` serving the stored record.
+- `src/client/JoinLobbyModal.ts` — replay lookup asks the game server first, then the legacy API.
+- `tests/server/ReplayStore.test.ts` — round-trip, missing, path-escape, store selection.

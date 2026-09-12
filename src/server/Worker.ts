@@ -20,6 +20,7 @@ import { generateID, replacer } from "../core/Util";
 import { CreateGameInputSchema } from "../core/WorkerSchemas";
 import { decodeClientMessage, encodeServerMessage } from "../core/ZbinWire";
 import { registerAdminBotRoutes } from "./AdminBotRoutes";
+import { readGameRecord } from "./Archive";
 import { censorPlayer } from "./Censor";
 import { Client } from "./Client";
 import { gameApiCors } from "./GameApiCors";
@@ -355,6 +356,22 @@ export async function startWorker() {
       return res.status(404).json({ error: "Game not found" });
     }
     res.json(game.gameInfo());
+  });
+
+  // FightWars: serve archived replays from the ReplayStore (Section 8 of the
+  // brief: every public match persisted as a replay). The client asks here
+  // first and falls back to the legacy API.
+  app.get("/api/replay/:id", async (req, res) => {
+    const parsedId = ID.safeParse(req.params.id);
+    if (!parsedId.success) {
+      return res.status(400).json({ error: "Invalid game id" });
+    }
+    const record = await readGameRecord(parsedId.data);
+    if (record === null) {
+      return res.status(404).json({ error: "Replay not found" });
+    }
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    res.type("application/json").send(JSON.stringify(record, replacer));
   });
 
   registerGamePreviewRoute({
