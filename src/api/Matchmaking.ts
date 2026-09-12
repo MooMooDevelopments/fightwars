@@ -21,6 +21,7 @@
 import type { Server as HttpServer, IncomingMessage } from "node:http";
 import type { Duplex } from "node:stream";
 import { WebSocket, WebSocketServer } from "ws";
+import { CloseCode } from "../core/CloseCodes";
 
 export type Mode = "1v1" | "2v2";
 
@@ -99,7 +100,8 @@ export class MatchmakingQueue {
     if (this.timer !== null) clearInterval(this.timer);
     this.timer = null;
     for (const mode of Object.keys(this.queues) as Mode[]) {
-      for (const e of this.queues[mode]) e.ws.close(1001, "shutdown");
+      for (const e of this.queues[mode])
+        e.ws.close(CloseCode.TryAgainLater, "shutdown");
       this.queues[mode] = [];
     }
   }
@@ -120,7 +122,7 @@ export class MatchmakingQueue {
         try {
           msg = JSON.parse(String(data));
         } catch {
-          ws.close(1008, "bad message");
+          ws.close(CloseCode.BadRequest, "bad message");
           return;
         }
         if (
@@ -132,7 +134,7 @@ export class MatchmakingQueue {
         }
         const who = await this.resolve(msg.jwt, mode);
         if (who === null) {
-          ws.close(1008, "unauthorized");
+          ws.close(CloseCode.Unauthorized, "unauthorized");
           return;
         }
         // One seat per account: a second tab replaces the first.
@@ -153,7 +155,8 @@ export class MatchmakingQueue {
 
   private remove(mode: Mode, persistentId: string): void {
     for (const e of this.queues[mode]) {
-      if (e.persistentId === persistentId) e.ws.close(1000, "replaced");
+      if (e.persistentId === persistentId)
+        e.ws.close(CloseCode.Normal, "replaced");
     }
     this.queues[mode] = this.queues[mode].filter(
       (e) => e.persistentId !== persistentId,

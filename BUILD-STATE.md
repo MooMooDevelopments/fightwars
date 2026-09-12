@@ -61,6 +61,9 @@ it: `npm run load:test -- --clients 150 --map world --turns 600`.
       existing client/worker contract; pairing by ladder rating with widening tolerance.
       Tested with real sockets. Not yet exercised in a browser (Ranked needs a JWT, which
       the guest flow now provides — try it next session with two browser profiles).
+- [x] Phase 2: player profiles, game history and the ranked leaderboard
+      (`src/api/ProfileRoutes.ts`) in the exact shapes the client's Api.ts parses, so the
+      in-game profile and leaderboard pages have a backend. Stats tree still empty.
 - [x] Phase 2: `docker-compose.yml` (game + api + postgres + redis) — written, **not run**
       (no Docker on the dev box).
 - [x] CI is live on GitHub: every job green on the first dispatched run (push-triggered runs
@@ -78,7 +81,8 @@ it: `npm run load:test -- --clients 150 --map world --turns 600`.
 2. **Phase 2 — finish the accounts backend:** Discord OAuth login attached to the same account
    row (`/auth/discord` — BLOCKED ON A DISCORD APPLICATION CLIENT ID/SECRET, which only the
    owner can create), clans (tables + `/clans/*` matching `ClanApiSchemas.ts`), friends,
-   `/public/games` listing per `docs/API.md`, ladder seasons, and a browser run of Ranked. Then a
+   `/public/games` listing per `docs/API.md`, the per-mode stats tree on profiles
+   (`PlayerStatsTreeSchema`), ladder seasons, and a browser run of Ranked. Then a
    `PgDb` integration test against a real Postgres in CI (service container).
 3. **Phase 2 — run the compose stack** on a box with Docker; fix what breaks; then point the
    desync webhook and the metrics dashboard at real alerting.

@@ -153,3 +153,13 @@ shared upstream files are listed individually because each one is a future rebas
   already speak. Rating-proximity pairing that widens with wait time; 2v2 teams balanced by
   rating sum. Attached to the API's HTTP server in `Server.ts`.
 - `tests/api/Matchmaking.test.ts` — real sockets + worker check-ins; pairing unit tests.
+
+### Player profiles and the ranked leaderboard (Phase 2, 2026-09-12)
+
+- `src/api/ProfileRoutes.ts` — new: `GET /public/player/:publicId` (`PlayerProfileSchema`, stats
+  tree empty for now), `GET /public/player/:publicId/games` (keyset-paginated history with the
+  client's `filter`/`type`/`cursor` parameters) and `GET /leaderboard/ranked?page=N`
+  (`RankedLeaderboardResponseSchema`; 1v1 from the ffa ladder, 2v2 from the team ladder).
+- `src/api/Matchmaking.ts` closes sockets through `CloseCode` only (the guard test in
+  `tests/CloseCodes.test.ts` enforces it across `src/`).
+- `tests/api/Profiles.test.ts` — every response parsed with the client's schemas.

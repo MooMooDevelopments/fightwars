@@ -31,7 +31,6 @@ import {
   createSession,
   ensureAccount,
   getAccount,
-  getAccountByPublicId,
   revokeSessions,
   rotateSession,
 } from "./Accounts";
@@ -40,6 +39,7 @@ import { loadSigningKeys, SigningKeys, signToken, verifyToken } from "./Keys";
 import { getMatchRecord, getRating, ingestMatch, leaderboard } from "./Matches";
 import { MatchmakingQueue, type Mode } from "./Matchmaking";
 import { migrate } from "./Migrations";
+import { registerProfileRoutes } from "./ProfileRoutes";
 
 const REFRESH_COOKIE = "fw_refresh";
 const JWT_TTL_SECONDS = 15 * 60;
@@ -414,27 +414,7 @@ export async function createApiApp(
     res.type("application/json").send(JSON.stringify(record, replacer));
   });
 
-  app.get("/public/player/:publicId", async (req, res) => {
-    const account = await getAccountByPublicId(db, req.params.publicId);
-    if (account === null) {
-      res.status(404).json({ error: "not found" });
-      return;
-    }
-    const [ffa, team] = await Promise.all([
-      getRating(db, account.persistent_id, "ffa"),
-      getRating(db, account.persistent_id, "team"),
-    ]);
-    const shape = (r: typeof ffa) =>
-      r === null
-        ? null
-        : { rating: r.rating, rd: r.rd, games: r.games, wins: r.wins };
-    res.json({
-      publicId: account.public_id,
-      username: account.username,
-      createdAt: account.created_at,
-      ratings: { ffa: shape(ffa), team: shape(team) },
-    });
-  });
+  registerProfileRoutes(app, db);
 
   app.get("/public/leaderboard/:ladder", async (req, res) => {
     const ladder = req.params.ladder;

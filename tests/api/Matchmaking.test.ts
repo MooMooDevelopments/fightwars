@@ -9,6 +9,7 @@ import {
   splitTeams,
   type QueueEntry,
 } from "../../src/api/Matchmaking";
+import { CloseCode } from "../../src/core/CloseCodes";
 
 const API_KEY = "test-api-key";
 let ctx: ApiContext;
@@ -123,7 +124,7 @@ describe("ranked matchmaking", () => {
       );
       ws.on("close", (c) => resolve(c));
     });
-    expect(code).toBe(1008);
+    expect(code).toBe(CloseCode.Unauthorized);
     expect(ctx.matchmaking.size("1v1")).toBe(0);
   });
 
