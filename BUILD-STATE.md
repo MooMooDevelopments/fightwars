@@ -1,6 +1,6 @@
 # FightWars Build State
 
-Last session: 2026-09-12 (session 2) | Current phase: 2 | Build status: green
+Last session: 2026-09-12 (session 3) | Current phase: 2 (accounts backend complete; two items blocked on the owner/hardware) | Build status: green
 
 Repo: `C:\Users\disbo\dev\fightwars` · `upstream` = openfrontio/OpenFrontIO (forked at
 `c77005586`, rebased onto `7d95251f1` the same day) · `origin` = github.com/MooMooDevelopments/fightwars
@@ -17,30 +17,40 @@ npm run licenses:check        # every prod dependency AGPL-compatible
 npm run perf:gate             # headless sim budgets (world, 150 bots)
 ```
 
-Dev server: `npm run dev` → http://localhost:9000 (Vite). In the Claude desktop session the
-launch config `fightwars-dev` (session `.claude/launch.json`) starts it. Load harness against
-it: `npm run load:test -- --clients 150 --map world --turns 600`.
+Dev server: `npm run dev` → http://localhost:9000 (Vite) + game server (master 3000, workers
+3001/3002) + API (8787). If something else holds 3000 (on this box the `vitality-web` Next
+dev server does), `npm run dev:alt` runs the master on 3200 (`MASTER_PORT`; Vite's proxy
+follows it). In the Claude desktop session the launch configs `fightwars-dev` /
+`fightwars-dev-alt` (session `.claude/launch.json`) start them — check
+`netstat -ano | findstr :3000` first: a master that cannot bind exits and the client then
+shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
+`npm run load:test -- --clients 150 --map world --turns 600`.
 
-## Handoff — read this first (written 2026-09-12 at the end of session 2)
+## Handoff — read this first (written 2026-09-12 at the end of session 3)
 
 - Tree is clean and pushed; HEAD is on `origin/main`. Nothing is mid-flight, no background
   process is running, the dev stack is stopped.
 - **First commands:** `git fetch upstream && git rebase upstream/main` (then
   `git push --force-with-lease origin main` — the branch is ours), `npm run inst` if
-  `package-lock.json` changed, then the gate block below. Expect rebase conflicts in the
-  brand-swept files (`index.html`, nav bars, `Footer.ts`, `SoundManager.ts`, `Auth.ts`).
-- **Then continue Phase 2 at "Next up" item 2**: clans first (biggest remaining gap in the
-  client's expectations — `src/core/ClanApiSchemas.ts` is the contract), then the per-mode
-  stats tree on profiles, then `/public/games`. Discord login is BLOCKED on a Discord
-  application client id/secret the owner must create — skip it until those exist.
-- `npm run dev` now starts three processes: Vite (9000), the game server (3000 + workers
-  3001/3002) and the API (8787). The API keeps its data in memory unless `PGLITE_DIR` or
-  `DATABASE_URL` is set, so a restart forgets accounts and ratings — set `PGLITE_DIR=.pglite`
-  in a local `.env` if you want them to persist between runs (gitignore it).
+  `package-lock.json` changed, then the gate block above. Expect rebase conflicts in the
+  brand-swept files and now also in `src/client/AccountIdentity.ts`, `ClanModal.ts`,
+  `ClanDetailView.ts` and the tests that pin the guest-is-signed-in rule.
+- **Phase 2's accounts backend is done** (clans, friends, public games, stats tree, seasons,
+  ranked verified in the browser, Postgres CI job). Two Phase 2 items remain and both are
+  blocked here: Discord login (needs a Discord application id/secret only the owner can
+  create) and the compose stack (no Docker on this box). Unless either unblocks, **continue
+  at "Next up" item 2**: the load-harness cluster run, then Phase 3.
+- **A two-player browser test** now needs no localStorage trick: open the second player at
+  `http://[::1]:9000` (a different origin, so its own persistent id and guest account; the
+  API's CORS default allows it). Vite listens on IPv6 loopback only, so `127.0.0.1` will not
+  connect. Ranked 1v1 was verified this way (see Done).
+- The API keeps its data in memory unless `PGLITE_DIR` or `DATABASE_URL` is set. The API
+  process is plain `tsx` with no watcher: after editing `src/api/**` restart the stack.
+- Clan creation has **no client UI** (upstream creates clans on its website). To seed one in
+  dev, POST to the API with the browser's persistent id as the bearer (dev accepts a raw id):
+  `curl -X POST localhost:8787/clans -H "Authorization: Bearer <player_persistent_id>" -H "Content-Type: application/json" -d '{"tag":"FWX","name":"Testers"}'`.
 - Known flaky under CPU contention only: `tests/client/InventoryModal.test.ts` and
   `MainInitialize.test.ts`. Run `npm test` on a quiet box; they pass alone every time.
-- Two browser tabs share `localStorage`; for a two-player test see the trick under
-  "Known broken / deferred". Ranked in the browser has not been tried yet.
 
 ## Done
 
@@ -89,6 +99,34 @@ it: `npm run load:test -- --clients 150 --map world --turns 600`.
       (no Docker on the dev box).
 - [x] CI is live on GitHub: every job green on the first dispatched run (push-triggered runs
       appear with a few minutes of delay).
+- [x] Phase 2: **clans** (`src/api/ClanRoutes.ts`, migration 0005): every route
+      `src/client/ClanApi.ts` calls — create/browse/detail/PATCH/disband, members with
+      per-bucket W/L and sorting, join/requests/approve/deny/withdraw, kick/promote/demote/
+      transfer, ban/unban, clan game history with cursor, the weighted-wins leaderboard from
+      `docs/API.md` (30-day half-life, 90-day window, 60 s cache), `/public/clan/:tag/exists`,
+      and a real `/reserved_clan_tags` (the game server now drops impersonated tags at join).
+      Verified in the real client: browse, my clans, detail, members (with stats), game history.
+- [x] Phase 2: **friends** (`src/api/FriendRoutes.ts`, migration 0006) per
+      `src/client/FriendsApi.ts`; `/users/@me` carries `clans`, `clanRequests`, `friends`.
+- [x] Phase 2: **public games** (`src/api/GamesRoutes.ts`): `/public/games` with the documented
+      filters and `Content-Range`; `/public/game/:id?turns=false`. `GET /game/:id` now scrubs
+      persistent ids and reports (it leaked them).
+- [x] Phase 2: **profile stats tree** (`src/api/StatsTree.ts`) in `PlayerStatsTreeSchema` shape
+      — bigint stats summed per type/mode/difficulty, ranked apart, recent form — plus clans
+      on the profile and real `playerTeams`/`rankedType`/`clanTag` in history. Migration 0004
+      adds those columns and backfills them from stored records (`tests/api/Migrations.test.ts`
+      proves the backfill). Verified in the client's profile modal.
+- [x] Phase 2: **ladder seasons** (migration 0007): `LADDER_SEASON` (default `1`) is the season
+      new results accrue to; `?season=` reads older ones on both leaderboards.
+- [x] Phase 2: **ranked in the browser**: two guests on two origins queued for 1v1, the API
+      paired them, both loaded the same game on worker 1 and simulated in lockstep.
+- [x] Phase 2: **CI "API on Postgres" job** — `tests/api` against a `postgres:16` service with a
+      database per test file (`tests/api/fixtures.ts`), so `PgDb` is exercised on every push.
+- [x] Client: FightWars guests count as signed in (`responseHasLinkedIdentity` is the one
+      gate: ranked, account button, lobby card, warnings, clan modal). The clan Donate button
+      and Donations tab sit behind `BRAND.monetisation.store` (they opened the store checkout).
+- [x] API serves `/news.json` and `/streams.json` from `resources/` (the menu 404'd on them),
+      answers errors as JSON, and its dev CORS list includes the loopback aliases.
 
 ## In progress
 
@@ -99,19 +137,20 @@ it: `npm run load:test -- --clients 150 --map world --turns 600`.
 1. **Rebase check** at session start: `git fetch upstream && git rebase upstream/main`; fix
    conflicts (expect some in `index.html`, nav bars, Footer, SoundManager — the brand sweep
    touched them); rerun all gates.
-2. **Phase 2 — finish the accounts backend:** Discord OAuth login attached to the same account
-   row (`/auth/discord` — BLOCKED ON A DISCORD APPLICATION CLIENT ID/SECRET, which only the
-   owner can create), clans (tables + `/clans/*` matching `ClanApiSchemas.ts`), friends,
-   `/public/games` listing per `docs/API.md`, the per-mode stats tree on profiles
-   (`PlayerStatsTreeSchema`), ladder seasons, and a browser run of Ranked. Then a
-   `PgDb` integration test against a real Postgres in CI (service container).
-3. **Phase 2 — run the compose stack** on a box with Docker; fix what breaks; then point the
-   desync webhook and the metrics dashboard at real alerting.
-4. **Phase 2 — load harness extensions:** `--server-pid` sampling is written but unmeasured;
+2. **Phase 2 — load harness extensions:** `--server-pid` sampling is written but unmeasured;
    add a 500-lobby cluster run (needs multiple workers: the harness already follows
-   `workerIndex` from `create_game`).
-5. Then Phase 3 (parity and repair) and on. Before Phase 4, load `frontend-design` for the
-   visual identity — the placeholder wordmark is deliberately plain.
+   `workerIndex` from `create_game`). Also confirm a finished ranked game ingests with
+   `rankedType` and rates on the ladder end to end (the browser run was stopped mid-game).
+3. **Blocked, owner action:** Discord OAuth login attached to the same account row
+   (`/auth/discord`) — needs a Discord application client id/secret. **Blocked, hardware:**
+   run `docker-compose.yml` on a box with Docker; fix what breaks; point the desync webhook
+   and the metrics dashboard at real alerting.
+4. Then Phase 3 (parity and repair): start with the rejoin path — a client that reloads
+   mid-game rejoins with `lastTurn 0` and logs `got wrong turn have turns 0, received turn N`
+   until it catches up (seen when a hot reload hit both ranked clients). Also the header's
+   account menu still offers Discord/Google login to guests; decide what a guest "account"
+   page should be. Before Phase 4, load `frontend-design` for the visual identity — the
+   placeholder wordmark is deliberately plain — and give clans a create form.
 
 ## Decisions made (never re-litigate these)
 
@@ -143,6 +182,20 @@ it: `npm run load:test -- --clients 150 --map world --turns 600`.
   same SQL, one adapter (`src/api/Db.ts`).
 - 2026-09-12 — After every rebase on upstream, `origin/main` is force-pushed
   (`--force-with-lease`): the branch is ours and the brief mandates the rebase.
+- 2026-09-12 — **A session is an account.** Every player is a guest account keyed by
+  persistent id, so the client's identity gate (`responseHasLinkedIdentity`) is true for any
+  `/users/@me` response; a linked Discord/Google/Steam login is an extra, not the threshold.
+- 2026-09-12 — One clan per account (primary key on `clan_members.persistent_id`); tags are
+  2–5 alphanumerics stored uppercase; leader > officer > member and you only act on ranks
+  below yours; clan currency does not exist (no store), so donations are empty and `donate`
+  is 400.
+- 2026-09-12 — Clan member stats and the clan leaderboard count only games played while
+  wearing the tag (`match_players.clan_tag`), and the leaderboard is public team games only,
+  per `docs/API.md`.
+- 2026-09-12 — Ladder seasons are an environment variable (`LADDER_SEASON`), not a table: a
+  new season is a deploy with a new value; old seasons stay readable by query.
+- 2026-09-12 — Public record routes (`/game/:id`, `/public/game/:id`) never carry persistent
+  ids or reports.
 
 ## Known broken / deferred
 
@@ -155,17 +208,24 @@ it: `npm run load:test -- --clients 150 --map world --turns 600`.
   contention (e.g. with the dev stack running); both pass alone. Run `npm test` on a quiet box.
 - `.gitmodules` references a `gatekeeper` submodule path that does not exist — stale
   upstream file, harmless.
-- Two browser tabs in one profile share `localStorage`; for a two-window test override
-  `Storage.prototype.getItem` for `player_persistent_id`/`username` in the second tab.
+- Two browser tabs in one profile share `localStorage`; use `http://[::1]:9000` for the
+  second player instead (see Handoff).
 - Client fps on a real GPU not measured (sandbox browser is software-rendered).
-- Ranked/matchmaking, cosmetics, auth and stats are non-functional without the closed API
-  (`docs/MECHANICS.md` §06.9) — Phase 2 item 4.
+- Linked logins (Discord/Google/Steam) are still non-functional: the account page offers
+  them and none is configured. Guests work everywhere else.
+- No clan-creation UI in the client (upstream's lives on its website). Seed via the API.
+- Rejoin after a mid-game reload logs `got wrong turn have turns 0, received turn N` until the
+  client catches up (Phase 3).
+- The discord card on a clan overview says "invite is no longer valid" for any invite the
+  browser cannot resolve against Discord's public API (offline / fake invite) — expected.
 
 ## Numbers last measured (2026-09-12, this machine, upstream 7d95251f1 + Phase 1)
 
 - Determinism test: **pass** — quick 3/3 in ~17 s; full (world, 150 bots, 8 humans,
   24 000 ticks, 5 processes) 3/3 in 206 s.
-- `npm test`: 451 + 63 files, 5471 + 655 tests, ~110 s.
+- `npm test` (session 3): 472 + 67 files, 5599 + 673 tests, ~160 s on a loaded box (the two
+  flaky client files time out under contention and pass alone). `tests/api` alone: 14 files,
+  220 tests, ~10 s on PGlite.
 - Server tick @150p (`perf:gate`, world, 150 bots, 1000 ticks, client-side sim cost):
   mean 2.6 ms, p95 4.6, p99 6.7, 0 ticks over the 100 ms turn budget. Budgets in
   `scripts/perfGate.ts`: mean ≤ 8, p95 ≤ 20, p99 ≤ 40.
