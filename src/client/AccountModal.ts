@@ -1,6 +1,7 @@
 import { html, nothing, TemplateResult } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { ClientEnv } from "src/client/ClientEnv";
+import { BRAND } from "../brand/Brand";
 import { PlayerStatsTree, UserMeResponse } from "../core/ApiSchemas";
 import { assetUrl } from "../core/AssetUrls";
 import { hasLinkedIdentity } from "./AccountIdentity";
@@ -38,6 +39,7 @@ import { desktopLinkGate, isDesktopShell } from "./DesktopShell";
 import { showInGameAlert } from "./InGameModal";
 import { consumeLinkResult } from "./LinkResult";
 import { consumeLoginResult, LoginResult } from "./LoginResult";
+import { storedUsername } from "./UsernameInput";
 import { playerProfileUrl } from "./utilities/PlayerProfileUrl";
 import { currentPagePath, translateText } from "./Utils";
 
@@ -686,7 +688,100 @@ export class AccountModal extends BaseModal {
     `;
   }
 
+  /** True when this deployment can sign anyone in with a provider at all. */
+  private hasAnyProvider(): boolean {
+    const { discord, google, steam } = BRAND.identity;
+    return discord || google || steam;
+  }
+
+  /**
+   * The account page for a player who has a session but no linked identity —
+   * which, with no providers configured, is everyone.
+   *
+   * FightWars treats a session as an account: a guest already has a persistent
+   * id, a name, a rating and a match history. The inherited page ignored all
+   * of that and showed a sign-in wall whose four buttons pointed at routes
+   * this API does not serve. So this says what the player actually has, and
+   * what its one real limitation is — it lives in this browser — rather than
+   * offering a sign-in that cannot happen.
+   */
+  private renderGuestAccount(): TemplateResult {
+    const player = this.userMeResponse?.player;
+    // /users/@me carries no username for a guest, so the name comes from
+    // where the rest of the client keeps it. Rendered only when there is one:
+    // an empty "NAME" row explains nothing.
+    const name = storedUsername();
+    return html`
+      <div class="flex items-center justify-center p-6 min-h-full">
+        <div
+          class="w-full max-w-md bg-white/5 rounded-2xl border border-white/10 p-8"
+        >
+          <div class="text-center mb-6">
+            <h2 class="text-2xl font-bold text-white">
+              ${translateText("account_modal.guest_title")}
+            </h2>
+            <p class="text-white/50 text-sm mt-2">
+              ${translateText("account_modal.guest_desc")}
+            </p>
+          </div>
+
+          ${player
+            ? html`<dl class="space-y-3 mb-6">
+                ${name === null
+                  ? nothing
+                  : html`<div
+                      class="flex items-center justify-between gap-4 bg-white/5 rounded-xl border border-white/10 px-4 py-3"
+                    >
+                      <dt
+                        class="text-xs uppercase tracking-wider text-white/40"
+                      >
+                        ${translateText("account_modal.guest_name")}
+                      </dt>
+                      <dd class="text-white font-bold truncate">${name}</dd>
+                    </div>`}
+                <div
+                  class="flex items-center justify-between gap-4 bg-white/5 rounded-xl border border-white/10 px-4 py-3"
+                >
+                  <dt class="text-xs uppercase tracking-wider text-white/40">
+                    ${translateText("account_modal.guest_id")}
+                  </dt>
+                  <dd
+                    class="text-white/70 font-mono text-xs truncate"
+                    translate="no"
+                  >
+                    ${player.publicId}
+                  </dd>
+                </div>
+              </dl>`
+            : nothing}
+          ${this.renderCurrency()}
+
+          <p
+            class="text-white/40 text-xs leading-relaxed border-t border-white/10 pt-5 mt-2"
+          >
+            ${translateText("account_modal.guest_warning")}
+          </p>
+
+          <div class="mt-6 text-center">
+            <button
+              @click="${this.handleLogout}"
+              class="text-[10px] font-bold text-white/20 hover:text-red-400 transition-colors uppercase tracking-widest pb-0.5"
+            >
+              ${translateText("account_modal.clear_session")}
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   private renderLoginOptions() {
+    // With no provider configured there is nothing to sign in *with*, and the
+    // player already has a guest account — so show them that instead of an
+    // empty wall.
+    if (!this.hasAnyProvider() && !BRAND.identity.email) {
+      return this.renderGuestAccount();
+    }
     // On the desktop shell both provider buttons open the shell's browser
     // link flow rather than an in-place OAuth redirect (see discordLogin /
     // googleLogin in Auth.ts), and the captions say so. Keyed on the shell
@@ -734,46 +829,50 @@ export class AccountModal extends BaseModal {
 
           <div class="space-y-6">
             <!-- Discord Login Button -->
-            <button
-              @click="${this.handleDiscordLogin}"
-              class="w-full px-6 py-4 text-white bg-[#5865F2] hover:bg-[#4752C4] border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5865F2] transition-colors duration-200 flex items-center justify-center gap-3 group relative overflow-hidden shadow-lg hover:shadow-[#5865F2]/20"
-            >
-              <img
-                src=${assetUrl("images/DiscordLogo.svg")}
-                alt="Discord"
-                class="w-6 h-6 relative z-10"
-              />
-              <span class="font-bold relative z-10 tracking-wide"
-                >${viaBrowser
-                  ? translateText("account_modal.desktop_login_discord")
-                  : translateText("main.login_discord") ||
-                    translateText("account_modal.link_discord")}</span
-              >
-            </button>
+            ${BRAND.identity.discord
+              ? html`<button
+                  @click="${this.handleDiscordLogin}"
+                  class="w-full px-6 py-4 text-white bg-[#5865F2] hover:bg-[#4752C4] border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#5865F2] transition-colors duration-200 flex items-center justify-center gap-3 group relative overflow-hidden shadow-lg hover:shadow-[#5865F2]/20"
+                >
+                  <img
+                    src=${assetUrl("images/DiscordLogo.svg")}
+                    alt="Discord"
+                    class="w-6 h-6 relative z-10"
+                  />
+                  <span class="font-bold relative z-10 tracking-wide"
+                    >${viaBrowser
+                      ? translateText("account_modal.desktop_login_discord")
+                      : translateText("main.login_discord") ||
+                        translateText("account_modal.link_discord")}</span
+                  >
+                </button>`
+              : nothing}
 
             <!-- Google Login Button (Google brand guidelines: white surface,
                  dark text, the multicolor "G" mark) -->
-            <button
-              @click="${this.handleGoogleLogin}"
-              class="w-full px-6 py-4 text-[#1f1f1f] bg-white hover:bg-[#f7f8f8] border border-[#dadce0] rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4285F4] transition-colors duration-200 flex items-center justify-center gap-3 group relative overflow-hidden shadow-lg"
-            >
-              <img
-                src=${assetUrl("images/GoogleLogo.svg")}
-                alt=${translateText("account_modal.google_alt")}
-                class="w-6 h-6 relative z-10"
-              />
-              <span class="font-bold relative z-10 tracking-wide"
-                >${viaBrowser
-                  ? translateText("account_modal.desktop_login_google")
-                  : translateText("main.login_google")}</span
-              >
-            </button>
+            ${BRAND.identity.google
+              ? html`<button
+                  @click="${this.handleGoogleLogin}"
+                  class="w-full px-6 py-4 text-[#1f1f1f] bg-white hover:bg-[#f7f8f8] border border-[#dadce0] rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4285F4] transition-colors duration-200 flex items-center justify-center gap-3 group relative overflow-hidden shadow-lg"
+                >
+                  <img
+                    src=${assetUrl("images/GoogleLogo.svg")}
+                    alt=${translateText("account_modal.google_alt")}
+                    class="w-6 h-6 relative z-10"
+                  />
+                  <span class="font-bold relative z-10 tracking-wide"
+                    >${viaBrowser
+                      ? translateText("account_modal.desktop_login_google")
+                      : translateText("main.login_google")}</span
+                  >
+                </button>`
+              : nothing}
 
             <!-- Sign in through Steam. Hidden inside the desktop shell: the
                  player is already signed in there through the native Steam
                  ticket, so the button would be a no-op that looks like an
                  option. -->
-            ${viaBrowser
+            ${viaBrowser || !BRAND.identity.steam
               ? nothing
               : html`<button
                   @click="${this.handleSteamLogin}"
@@ -785,19 +884,22 @@ export class AccountModal extends BaseModal {
                   >
                 </button>`}
 
-            <!-- Divider -->
-            <div class="flex items-center gap-4 py-2">
-              <div class="h-px bg-white/10 flex-1"></div>
-              <span
-                class="text-[10px] uppercase tracking-widest text-white/30 font-bold"
-              >
-                ${translateText("account_modal.or")}
-              </span>
-              <div class="h-px bg-white/10 flex-1"></div>
-            </div>
-
-            <!-- Email Recovery -->
-            <div class="space-y-3">${this.renderEmailField()}</div>
+            <!-- Email Recovery. The divider only earns its place when there
+                 is something above it to divide from. -->
+            ${BRAND.identity.email
+              ? html`${this.hasAnyProvider()
+                    ? html`<div class="flex items-center gap-4 py-2">
+                        <div class="h-px bg-white/10 flex-1"></div>
+                        <span
+                          class="text-[10px] uppercase tracking-widest text-white/30 font-bold"
+                        >
+                          ${translateText("account_modal.or")}
+                        </span>
+                        <div class="h-px bg-white/10 flex-1"></div>
+                      </div>`
+                    : nothing}
+                  <div class="space-y-3">${this.renderEmailField()}</div>`
+              : nothing}
           </div>
 
           <div class="mt-8 text-center border-t border-white/10 pt-6">

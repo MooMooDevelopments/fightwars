@@ -51,6 +51,24 @@ export const BRAND = {
     redditUrl: "",
     wikiUrl: "",
   },
+  /**
+   * Identity providers this deployment can actually sign a player in with.
+   *
+   * All false in FightWars: the API has no `/auth/login/*` routes, so the
+   * inherited Discord, Google and Steam buttons sent every player to a 404,
+   * and the magic-link form had nothing to post to. Turning one on means
+   * building its route first — the account page reads this and renders only
+   * what is here.
+   *
+   * Nothing is lost by having none: a session *is* an account here, so a
+   * player already has one. See the guest panel in AccountModal.
+   */
+  identity: {
+    discord: false,
+    google: false,
+    steam: false,
+    email: false,
+  },
   /** Desktop (Steam/Electron shell) identifiers. */
   desktop: {
     /** Custom URL scheme the desktop shell serves the app from. */

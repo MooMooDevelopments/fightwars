@@ -3,6 +3,21 @@ import type { UserMeResponse } from "../../src/core/ApiSchemas";
 
 // ─── Mocks (mirrors tests/client/clan/ClanModalTestUtils.ts factories) ──────
 
+// This file covers the provider sign-in screen, so it runs with every
+// provider switched on. FightWars ships with all of them off (the API serves
+// no /auth/login/* route), and that path — the guest account page — is
+// covered by AccountModalGuest.test.ts.
+vi.mock("../../src/brand/Brand", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/brand/Brand")>();
+  return {
+    ...actual,
+    BRAND: {
+      ...actual.BRAND,
+      identity: { discord: true, google: true, steam: true, email: true },
+    },
+  };
+});
+
 vi.mock("../../src/client/Api", () => ({
   getUserMe: vi.fn(async () => false as const),
   invalidateUserMe: vi.fn(),

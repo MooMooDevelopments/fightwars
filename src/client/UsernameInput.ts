@@ -39,6 +39,23 @@ interface LangSelectorLike {
 }
 
 const usernameKey: string = "username";
+
+/**
+ * The name this browser plays under, or null if none has been stored yet.
+ *
+ * Exported so anything that only wants to *show* the name — the account page,
+ * for one — can read it without holding a reference to the input element or
+ * re-deriving the storage key. The key is the single source of truth for it.
+ */
+export function storedUsername(): string | null {
+  try {
+    const value = localStorage.getItem(usernameKey);
+    return value === null || value === "" ? null : value;
+  } catch {
+    // Private mode, or storage blocked entirely.
+    return null;
+  }
+}
 const clanTagKey: string = "clanTag";
 const useVerifiedNameKey: string = "useVerifiedName";
 // "The stored username is one we generated, not one the player chose." Written
