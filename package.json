@@ -19,6 +19,7 @@
     "test:determinism": "vitest run tests/determinism.test.ts",
     "test:determinism:full": "cross-env DETERMINISM_MAP=world DETERMINISM_BOTS=150 DETERMINISM_HUMANS=8 DETERMINISM_TICKS=24000 vitest run tests/determinism.test.ts",
     "licenses:check": "tsx scripts/checkLicenses.ts",
+    "palettes:generate": "tsx scripts/generatePalettes.ts",
     "perf:gate": "tsx scripts/perfGate.ts",
     "load:test": "tsx tests/load/LoadTest.ts",
     "test:matchmaking": "node tests/matchmaking/contained.mjs",

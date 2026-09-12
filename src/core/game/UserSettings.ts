@@ -918,6 +918,17 @@ export class UserSettings {
     if (!raw) return {};
     try {
       const json: unknown = JSON.parse(raw);
+      // Legacy: a single "colorblind" palette preceded the three
+      // deficiency-specific ones. Rewrite before validating — an unknown
+      // enum member fails the whole parse, which would silently drop every
+      // other graphics setting the player had tuned.
+      if (
+        typeof json === "object" &&
+        json !== null &&
+        (json as { palette?: unknown }).palette === "colorblind"
+      ) {
+        (json as { palette?: unknown }).palette = "deuteranopia";
+      }
       const parsed = GraphicsOverridesSchema.safeParse(json);
       if (parsed.success) {
         const overrides = parsed.data;
@@ -928,7 +939,7 @@ export class UserSettings {
           json as { accessibility?: { colorblind?: unknown } }
         ).accessibility?.colorblind;
         if (overrides.palette === undefined && legacyColorblind === true) {
-          overrides.palette = "colorblind";
+          overrides.palette = "deuteranopia";
         }
         return overrides;
       }

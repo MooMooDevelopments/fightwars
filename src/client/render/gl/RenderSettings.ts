@@ -1,17 +1,27 @@
-import colorblindTheme from "./colorblind-theme.json";
+import { Vision } from "../../theme/Oklch";
 import defaultTheme from "./default-theme.json";
+import deuteranopiaTheme from "./deuteranopia-theme.json";
 import { PALETTE_NAMES } from "./GraphicsOverrides";
+import protanopiaTheme from "./protanopia-theme.json";
 import defaults from "./render-settings.json";
+import tritanopiaTheme from "./tritanopia-theme.json";
 
 /**
  * Theme data — player/team palettes and color-derivation knobs. Loaded from a
- * theme JSON file (default-theme.json or colorblind-theme.json) and combined
+ * theme JSON file (default-theme.json or one of the dichromat palettes) and
+ * combined
  * with render-settings.json at runtime so all graphics configuration flows
  * through one pipeline. Colors are hex strings; palettes are consumed by the
  * theme module (src/client/theme/), which generates team variations and
  * allocates player colors at runtime.
  */
 export interface ThemeSettings {
+  /**
+   * The vision this palette is laid out for. Drives the distance metric the
+   * color allocator uses, so "most distinct" means distinct to the player who
+   * picked this palette rather than to an unimpaired one.
+   */
+  vision: Vision;
   /**
    * Base color per colored team (keys match ColoredTeams). Per-player
    * variations are generated at runtime; Bot stays a single flat color.
@@ -424,10 +434,23 @@ export interface RenderSettings {
 
 export type ThemeName = (typeof PALETTE_NAMES)[number];
 
+/**
+ * A theme JSON, checked against ThemeSettings except for `vision`, which a
+ * JSON import widens to `string`. Palette.test.ts pins that each file's
+ * `vision` matches the palette it is registered under.
+ */
+function asTheme(
+  json: Omit<ThemeSettings, "vision"> & { vision: string },
+): ThemeSettings {
+  return json as ThemeSettings;
+}
+
 // Typed so tsc validates each theme JSON against the ThemeSettings shape.
 const THEMES: Record<ThemeName, ThemeSettings> = {
-  default: defaultTheme,
-  colorblind: colorblindTheme,
+  default: asTheme(defaultTheme),
+  deuteranopia: asTheme(deuteranopiaTheme),
+  protanopia: asTheme(protanopiaTheme),
+  tritanopia: asTheme(tritanopiaTheme),
 };
 
 /** Create fresh theme settings with defaults from the named theme JSON. */

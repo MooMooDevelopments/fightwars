@@ -113,43 +113,45 @@ describe("default theme team colors", () => {
   });
 });
 
-describe("colorblind theme", () => {
-  test("applies a palette distinct from the default theme", () => {
-    const defaultTheme = new SettingsTheme(createThemeSettings("default"));
-    const colorblind = new SettingsTheme(createThemeSettings("colorblind"));
+describe.each(["deuteranopia", "protanopia", "tritanopia"] as const)(
+  "%s theme",
+  (paletteName) => {
+    test("applies a palette distinct from the default theme", () => {
+      const defaultTheme = new SettingsTheme(createThemeSettings("default"));
+      const theme = new SettingsTheme(createThemeSettings(paletteName));
 
-    // At least one team's base color should differ — the colorblind theme
-    // swaps the team palettes for CVD-safe (Okabe-Ito) colors.
-    const teams = [
-      ColoredTeams.Blue,
-      ColoredTeams.Red,
-      ColoredTeams.Teal,
-      ColoredTeams.Purple,
-      ColoredTeams.Yellow,
-      ColoredTeams.Orange,
-      ColoredTeams.Green,
-    ];
-    const anyDifferent = teams.some(
-      (team) =>
-        !defaultTheme.teamColor(team).isEqual(colorblind.teamColor(team)),
-    );
-    expect(anyDifferent).toBe(true);
-  });
+      // At least one team's base color should differ — each dichromat theme
+      // lays its team colors out in that deficiency's color space.
+      const teams = [
+        ColoredTeams.Blue,
+        ColoredTeams.Red,
+        ColoredTeams.Teal,
+        ColoredTeams.Purple,
+        ColoredTeams.Yellow,
+        ColoredTeams.Orange,
+        ColoredTeams.Green,
+      ];
+      const anyDifferent = teams.some(
+        (team) => !defaultTheme.teamColor(team).isEqual(theme.teamColor(team)),
+      );
+      expect(anyDifferent).toBe(true);
+    });
 
-  test("scales border lightness relative to the fill", () => {
-    const colorblind = new SettingsTheme(createThemeSettings("colorblind"));
-    const fill = colord("#0072b2");
-    const border = colorblind.borderColor(fill);
-    expect(border.toHsl().l).toBeCloseTo(fill.toHsl().l * 0.6, 0);
-  });
-});
+    test("scales border lightness relative to the fill", () => {
+      const theme = new SettingsTheme(createThemeSettings(paletteName));
+      const fill = colord("#0072b2");
+      const border = theme.borderColor(fill);
+      expect(border.toHsl().l).toBeCloseTo(fill.toHsl().l * 0.6, 0);
+    });
+  },
+);
 
 // Tribes (bots) must be tellable from nations by territory color alone
 // (#4845). Colors are allocated through the runtime path
 // (SettingsTheme.territoryColor) rather than read off the theme JSON, so the
 // type dispatch is covered too. Drawing more players than any pool holds
 // exercises the full pool plus the recycling path.
-describe.each(["default", "colorblind"] as const)(
+describe.each(["default", "deuteranopia", "protanopia", "tritanopia"] as const)(
   "tribe vs nation territory colors — %s theme",
   (themeName) => {
     // territoryColor() only reads team/type/id from the player.

@@ -67,25 +67,25 @@ export function migrateLegacyGraphicsSettings(
   userSettings: UserSettings,
 ): void {
   if (userSettings.hasGraphicsPresets()) return;
-  // The old colorblind toggle stored only a boolean (surfaced as
-  // palette: "colorblind" by graphicsOverrides()); the Okabe-Ito friend-foe
-  // border colors it hardcoded are now override data carried by the
-  // Colorblind preset. Graft them onto any legacy colorblind config — not
-  // just palette-only ones — so those players keep the blue/orange borders
-  // alongside whatever else they customized.
+  // The old colorblind toggle stored only a boolean, and graphicsOverrides()
+  // now surfaces it as palette: "deuteranopia". The friend-foe border colors
+  // it hardcoded are override data carried by the Deuteranopia preset. Graft
+  // them onto any legacy colorblind config — not just palette-only ones — so
+  // those players keep distinguishable borders alongside whatever else they
+  // customized.
   let current = userSettings.graphicsOverrides();
-  const colorblind = BUILTIN_PRESETS.find(
-    (preset) => preset.nameKey === "graphics_setting.preset_colorblind",
+  const deuteranopia = BUILTIN_PRESETS.find(
+    (preset) => preset.nameKey === "graphics_setting.preset_deuteranopia",
   );
-  if (current.palette === "colorblind" && colorblind !== undefined) {
+  if (current.palette === "deuteranopia" && deuteranopia !== undefined) {
     current = {
       ...current,
       affiliation: {
-        ...colorblind.overrides.affiliation,
+        ...deuteranopia.overrides.affiliation,
         ...current.affiliation,
       },
       mapOverlay: {
-        ...colorblind.overrides.mapOverlay,
+        ...deuteranopia.overrides.mapOverlay,
         ...current.mapOverlay,
       },
     };

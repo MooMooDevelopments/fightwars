@@ -9,7 +9,32 @@ import {
   ThemeSettings,
 } from "../render/gl/RenderSettings";
 import { PlayerView } from "../view";
-import { ColorAllocator } from "./ColorAllocator";
+import { ColorAllocator, ColorDistance } from "./ColorAllocator";
+import { deltaE2000, Lab, rgbToLab } from "./DeltaE";
+import { simulateVision, Vision } from "./Oklch";
+
+/**
+ * Distance between two colours as a viewer with `vision` perceives them.
+ *
+ * The simulation and the Lab conversion are the expensive part, and the
+ * allocator asks for the same colours over and over while it searches, so
+ * each colour is converted once and cached by hex. The cache is per-theme and
+ * bounded by the palette size.
+ */
+function visionDistance(vision: Vision): ColorDistance {
+  const cache = new Map<string, Lab>();
+  const lab = (color: Colord): Lab => {
+    const hex = color.toHex();
+    let value = cache.get(hex);
+    if (value === undefined) {
+      const { r, g, b } = color.toRgb();
+      value = rgbToLab(simulateVision({ r, g, b }, vision));
+      cache.set(hex, value);
+    }
+    return value;
+  };
+  return (first, second) => deltaE2000(lab(first), lab(second));
+}
 
 /**
  * The color surface consumed by PlayerView and HUD components. Built from
@@ -93,8 +118,17 @@ export class SettingsTheme implements Theme {
     const nationColors = settings.nationColors.map(colord);
     const fallbackColors = settings.fallbackColors.map(colord);
 
-    this.humanColorAllocator = new ColorAllocator(humanColors, fallbackColors);
-    this.nationColorAllocator = new ColorAllocator(nationColors, nationColors);
+    const distance = visionDistance(settings.vision);
+    this.humanColorAllocator = new ColorAllocator(
+      humanColors,
+      fallbackColors,
+      distance,
+    );
+    this.nationColorAllocator = new ColorAllocator(
+      nationColors,
+      nationColors,
+      distance,
+    );
     this.teamPalettes = buildTeamPalettes(settings);
 
     this._focusedBorderColor = colord(settings.focusedBorderColor);

@@ -7,7 +7,11 @@
   {
     "nameKey": "graphics_setting.preset_night",
     "descKey": "graphics_setting.preset_night_desc",
-    "overrides": { "lighting": { "ambient": 0.36 } }
+    "overrides": {
+      "lighting": {
+        "ambient": 0.36
+      }
+    }
   },
   {
     "nameKey": "graphics_setting.preset_evans_pick",
@@ -42,18 +46,54 @@
     }
   },
   {
-    "nameKey": "graphics_setting.preset_colorblind",
-    "descKey": "graphics_setting.preset_colorblind_desc",
+    "nameKey": "graphics_setting.preset_deuteranopia",
+    "descKey": "graphics_setting.preset_deuteranopia_desc",
     "overrides": {
-      "palette": "colorblind",
+      "palette": "deuteranopia",
       "affiliation": {
-        "selfColor": "#0072b2",
-        "allyColor": "#56b4e9",
-        "enemyColor": "#d55e00"
+        "selfColor": "#1f4fd8",
+        "allyColor": "#5fe0ff",
+        "enemyColor": "#ffb000"
       },
       "mapOverlay": {
-        "friendlyTintColor": "#0072b2",
-        "embargoTintColor": "#d55e00",
+        "friendlyTintColor": "#1f4fd8",
+        "embargoTintColor": "#ffb000",
+        "friendlyTintRatio": 0.85,
+        "embargoTintRatio": 0.85
+      }
+    }
+  },
+  {
+    "nameKey": "graphics_setting.preset_protanopia",
+    "descKey": "graphics_setting.preset_protanopia_desc",
+    "overrides": {
+      "palette": "protanopia",
+      "affiliation": {
+        "selfColor": "#1f4fd8",
+        "allyColor": "#5fe0ff",
+        "enemyColor": "#ffb000"
+      },
+      "mapOverlay": {
+        "friendlyTintColor": "#1f4fd8",
+        "embargoTintColor": "#ffb000",
+        "friendlyTintRatio": 0.85,
+        "embargoTintRatio": 0.85
+      }
+    }
+  },
+  {
+    "nameKey": "graphics_setting.preset_tritanopia",
+    "descKey": "graphics_setting.preset_tritanopia_desc",
+    "overrides": {
+      "palette": "tritanopia",
+      "affiliation": {
+        "selfColor": "#1f4fd8",
+        "allyColor": "#5fe0ff",
+        "enemyColor": "#ffb000"
+      },
+      "mapOverlay": {
+        "friendlyTintColor": "#1f4fd8",
+        "embargoTintColor": "#ffb000",
         "friendlyTintRatio": 0.85,
         "embargoTintRatio": 0.85
       }
