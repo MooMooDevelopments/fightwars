@@ -357,14 +357,14 @@ describe("MatchmakingModal identity gate", () => {
     expect(showMessage).toHaveBeenCalledOnce();
   });
 
-  it("still rejects a session with no linked identity at all", async () => {
+  // FightWars: a guest session (nothing linked) is an account of its own, so
+  // it queues like any other. Upstream sent it to the account page.
+  it("admits a guest session with no linked identity", async () => {
     const modal = await openWith(userMe([], {} as UserMeResponse["user"]));
 
-    await vi.waitFor(() =>
-      expect(showPage).toHaveBeenCalledWith("page-account"),
-    );
-    expect(sockets).toHaveLength(0);
-    expect(modal.isOpen()).toBe(false);
+    await vi.waitFor(() => expect(sockets).toHaveLength(1));
+    expect(modal.isOpen()).toBe(true);
+    expect(showPage).not.toHaveBeenCalled();
   });
 });
 

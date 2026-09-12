@@ -86,15 +86,18 @@ describe("responseHasLinkedIdentity", () => {
     ["google", { google }, true],
     ["email", { email }, true],
     ["steam + discord", { steam, discord }, true],
-    ["no identities", {}, false],
+    // FightWars: a guest account (a session with nothing linked) is signed
+    // in — the API mints one per persistent id, so this is every new player.
+    ["no identities", {}, true],
   ])("%s -> %s", (_name, user, expected) => {
     expect(responseHasLinkedIdentity(res(user))).toBe(expected);
   });
 
-  // Behaviour change carried over from the retired hasLinkedAccount, which
-  // tested `email !== undefined` and so counted an empty string as an
-  // identity. hasLinkedIdentity does not, and this form inherits that.
-  it("does not count a present-but-empty email as an identity", () => {
-    expect(responseHasLinkedIdentity(res({ email: "" }))).toBe(false);
+  // An empty-string email is still not a *linked* identity (hasLinkedIdentity
+  // says so above) — but the session behind it is an account, so the
+  // response-level gate stays open. Only `false` (no session) closes it.
+  it("keeps a present-but-empty email signed in as a guest", () => {
+    expect(responseHasLinkedIdentity(res({ email: "" }))).toBe(true);
+    expect(hasLinkedIdentity({ email: "" })).toBe(false);
   });
 });

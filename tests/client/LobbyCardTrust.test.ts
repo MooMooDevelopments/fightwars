@@ -124,8 +124,10 @@ describe("viewerIsSignedIn", () => {
     expect(viewerIsSignedIn(me({ email: "a@b.c" }))).toBe(true);
   });
 
-  it("treats a guest session and a failed lookup as signed out", () => {
-    expect(viewerIsSignedIn(me({}))).toBe(false);
+  // FightWars: a guest session is an account (the API mints one per
+  // persistent id), so only a failed lookup reads as signed out.
+  it("treats a guest session as signed in and a failed lookup as signed out", () => {
+    expect(viewerIsSignedIn(me({}))).toBe(true);
     expect(viewerIsSignedIn(false)).toBe(false);
   });
 });

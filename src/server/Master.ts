@@ -207,7 +207,9 @@ export async function startMaster() {
     );
   });
 
-  const PORT = 3000;
+  // MASTER_PORT lets a dev box run the stack beside something else on 3000
+  // (vite.config.ts reads the same variable for its proxy targets).
+  const PORT = Number.parseInt(process.env.MASTER_PORT ?? "3000", 10);
   server.listen(PORT, () => {
     log.info(`Master HTTP server listening on port ${PORT}`);
   });

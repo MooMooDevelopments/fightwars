@@ -25,6 +25,8 @@
  *   GET  /api/health
  */
 import express, { type Express, type Request, type Response } from "express";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { z } from "zod";
 import { base64urlToUuid } from "../core/Base64";
 import { GameRecordSchema, ID, PersistentIdSchema } from "../core/Schemas";
@@ -118,7 +120,12 @@ export async function createApiApp(
   const secureCookies = !isDev;
   const apiKey = env.API_KEY ?? "";
   const corsOrigins = new Set(
-    (env.API_CORS_ORIGINS ?? "http://localhost:9000,http://localhost:3000")
+    // The loopback aliases give a dev box a second browser origin (its own
+    // localStorage, so its own guest account) for two-player tests.
+    (
+      env.API_CORS_ORIGINS ??
+      "http://localhost:9000,http://127.0.0.1:9000,http://[::1]:9000,http://localhost:3000"
+    )
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean),
@@ -381,6 +388,14 @@ export async function createApiApp(
     res.setHeader("Cache-Control", "public, max-age=60");
     res.json({ patterns: {}, flags: {}, effects: {} });
   });
+  // The menu's news box and the featured-stream card fetch these from the
+  // API; serve the bundled feeds so the client never sees a 404.
+  for (const feed of ["news.json", "streams.json"]) {
+    app.get(`/${feed}`, (_req, res) => {
+      res.setHeader("Cache-Control", "public, max-age=300");
+      res.type("application/json").send(bundledFeed(feed));
+    });
+  }
   app.get("/reserved_clan_tags", async (_req, res) => {
     res.setHeader("Cache-Control", "public, max-age=30");
     res.json(await reservedClanTags(db));
@@ -499,6 +514,24 @@ export async function createApiApp(
   );
 
   return { app, db, keys, issuer, audience, matchmaking };
+}
+
+const feedCache = new Map<string, string>();
+/** resources/<name>, read once; an empty object if the file is missing. */
+function bundledFeed(name: string): string {
+  let body = feedCache.get(name);
+  if (body === undefined) {
+    try {
+      body = readFileSync(
+        path.join(__dirname, "../../resources", name),
+        "utf8",
+      );
+    } catch {
+      body = name === "news.json" ? "[]" : "{}";
+    }
+    feedCache.set(name, body);
+  }
+  return body;
 }
 
 async function verifyTurnstile(

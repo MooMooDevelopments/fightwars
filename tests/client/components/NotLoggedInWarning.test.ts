@@ -12,7 +12,7 @@ const steamOnly = {
 } as unknown as UserMeResponse;
 
 // A session with no linked identity at all: /users/@me answered, but the
-// account is anonymous. This is the one case the warning exists for.
+// account is anonymous. Upstream warned here; FightWars treats it as signed in.
 const anonymous = {
   user: {},
   player: { publicId: "p" },
@@ -52,9 +52,11 @@ describe("not-logged-in-warning", () => {
     expect(await button()).not.toBeNull();
   });
 
-  it("warns once auth settles on an account with no linked identity", async () => {
+  // FightWars: the anonymous guest IS the account, so the warning stays
+  // hidden for it; only a missing session (above) warns.
+  it("renders nothing once auth settles on a guest account", async () => {
     fireUserMe(anonymous);
-    expect(await button()).not.toBeNull();
+    expect(await button()).toBeNull();
   });
 
   it("renders nothing once auth settles on a linked account", async () => {

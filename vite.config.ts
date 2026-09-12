@@ -287,8 +287,10 @@ export default defineConfig(({ mode }) => {
 
     define: {
       __ASSET_MANIFEST__: JSON.stringify(assetManifest),
+      // MASTER_PORT: the game server's master port (Master.ts reads it too),
+      // so a dev box can run the stack beside something else on 3000.
       "process.env.WEBSOCKET_URL": JSON.stringify(
-        isProduction ? "" : "localhost:3000",
+        isProduction ? "" : `localhost:${process.env.MASTER_PORT ?? "3000"}`,
       ),
       "process.env.GAME_ENV": JSON.stringify(isProduction ? "prod" : "dev"),
       // Empty when unset (and always empty under vitest, mirroring API_DOMAIN)
@@ -329,7 +331,7 @@ export default defineConfig(({ mode }) => {
       open: process.env.SKIP_BROWSER_OPEN !== "true",
       proxy: {
         "/lobbies": {
-          target: "ws://localhost:3000",
+          target: `ws://localhost:${process.env.MASTER_PORT ?? "3000"}`,
           ws: true,
           changeOrigin: true,
         },
@@ -352,7 +354,7 @@ export default defineConfig(({ mode }) => {
         },
         // API proxies
         "/api": {
-          target: "http://localhost:3000",
+          target: `http://localhost:${process.env.MASTER_PORT ?? "3000"}`,
           changeOrigin: true,
           secure: false,
         },
