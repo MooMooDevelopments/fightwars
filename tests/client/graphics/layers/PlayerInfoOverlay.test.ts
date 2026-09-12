@@ -39,7 +39,7 @@ vi.mock("../../../../src/client/hud/PlayerIcons", () => ({
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PlayerInfoOverlay } from "../../../../src/client/hud/layers/PlayerInfoOverlay";
-import { PlayerType } from "../../../../src/core/game/Game";
+import { PlayerType, TerrainType } from "../../../../src/core/game/Game";
 
 // Flattens the mocked-html template tree into one string for assertions.
 function flatten(node: unknown): string {
@@ -119,5 +119,71 @@ describe("PlayerInfoOverlay", () => {
     expect(out).toContain("Bob");
     expect(out).toContain("text-white");
     expect(out).not.toContain("text-green-500");
+  });
+
+  it("adds the attack-cost breakdown once a uiState is wired in", () => {
+    overlay.game = {
+      ...makeGame({
+        isFriendly: () => false,
+        isAlliedWith: () => false,
+        isOnSameTeam: () => false,
+        smallID: () => 1,
+        troops: () => 10_000,
+        numTilesOwned: () => 500,
+        type: () => PlayerType.Human,
+      }),
+      // The shared fixture is only rich enough for the name card; the cost
+      // estimate reads the defender's army and territory too.
+      owner: () => ({
+        ...hovered,
+        numTilesOwned: () => 400,
+        isTraitor: () => false,
+        isDisconnected: () => false,
+      }),
+      isLand: () => true,
+      terrainType: () => TerrainType.Plains,
+      hasUnitNearby: () => false,
+      hasFallout: () => false,
+      numTilesWithFallout: () => 0,
+      numLandTiles: () => 1,
+      config: () => ({
+        isUnitDisabled: () => true,
+        maxTroops: () => 1000,
+        defensePostRange: () => 10,
+        attackLogic: (
+          _input: unknown,
+          out: Record<string, number> | undefined,
+        ) => {
+          if (out !== undefined) out.troopRatio = 2;
+          return {
+            attackerTroopLoss: 12,
+            defenderTroopLoss: 3,
+            tickFraction: 0.5,
+          };
+        },
+      }),
+    } as never;
+    overlay.uiState = { attackRatio: 0.2 } as never;
+
+    overlay.maybeShow(10, 10);
+    const out = flatten(overlay.render());
+
+    expect(out).toContain("attack_cost.title");
+    expect(out).toContain("attack_cost.they_outnumber");
+  });
+
+  it("still shows the card when no uiState was wired in", () => {
+    // The breakdown is an extra; who owns the tile is the point of the card.
+    overlay.game = makeGame({
+      isFriendly: () => false,
+      isAlliedWith: () => false,
+      smallID: () => 1,
+    }) as never;
+
+    overlay.maybeShow(10, 10);
+    const out = flatten(overlay.render());
+
+    expect(out).toContain("Bob");
+    expect(out).not.toContain("attack_cost.title");
   });
 });

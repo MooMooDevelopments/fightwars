@@ -152,6 +152,9 @@ export function createRenderer(
   playerInfo.eventBus = eventBus;
   playerInfo.transform = transformHandler;
   playerInfo.game = game;
+  // The live attack ratio, so the hover cost reflects the slider rather than
+  // the last value written to settings.
+  playerInfo.uiState = uiState;
 
   const winModal = document.querySelector("win-modal") as WinModal;
   if (!(winModal instanceof WinModal)) {

@@ -102,6 +102,51 @@ export interface AttackLogicInput {
   borderSize: number;
 }
 
+/**
+ * Every named quantity that goes into an attack's cost, filled in by
+ * `attackLogic` when a caller asks for it.
+ *
+ * This exists so the client can *explain* a cost rather than restate it. The
+ * explanation is written by the same code that computes the result — an
+ * optional out-parameter rather than a second implementation — because a
+ * tooltip that quietly disagrees with the simulation is worse than no tooltip.
+ * `tests/AttackBreakdown.test.ts` recomposes the outputs from these fields and
+ * fails if the two ever part company.
+ *
+ * Every `…Mod` field is a multiplier: 1 means "does not apply".
+ */
+export interface AttackExplanation {
+  /** Terrain's base loss magnitude and base tile cost, before modifiers. */
+  terrainMag: number;
+  terrainTileCost: number;
+  /** Defender's defense post in range: raises losses, slows the advance. */
+  defensePostLossMod: number;
+  defensePostSpeedMod: number;
+  /** Fallout on the tile: same modifier applied to both. */
+  falloutMod: number;
+  /** Attacking a tribe costs the attacker less. */
+  botDefenderMod: number;
+  /** 0 when the defender is a disconnected teammate: nobody loses troops. */
+  disconnectedTeammateMod: number;
+  /** A traitor defends worse and falls faster. */
+  traitorLossMod: number;
+  traitorSpeedMod: number;
+  /** Big territories are cheaper to attack from and into. */
+  largeAttackerMod: number;
+  largeDefenderMod: number;
+  largeAttackerSpeedMod: number;
+  /** Defender army ÷ attacking stack. Below 1 means you outnumber them. */
+  troopRatio: number;
+  /** `troopRatio` after the clamp each half of the formula applies. */
+  clampedLossRatio: number;
+  /** Defender troops per tile — their land's packing density. */
+  defenderDensity: number;
+  /** Tick-fractions one tile costs before terrain and territory scaling. */
+  speedCost: number;
+  /** Tiles on the attack front this tick; the cost is shared across them. */
+  borderSize: number;
+}
+
 export interface AttackLogicResult {
   attackerTroopLoss: number;
   defenderTroopLoss: number;
@@ -126,18 +171,18 @@ const LARGE_TERRITORY_STEEPNESS = 2.5;
 const LARGE_ATTACKER_DEPTH = 0.7;
 const LARGE_DEFENDER_DEPTH = 0.3;
 const BOT_DEFENDER_LOSS_MULT = 0.7;
-const TERRA_NULLIUS_COST_SCALE = 2000;
-const TERRA_NULLIUS_MIN_COST = 5;
-const TERRA_NULLIUS_MAX_COST = 100;
+export const TERRA_NULLIUS_COST_SCALE = 2000;
+export const TERRA_NULLIUS_MIN_COST = 5;
+export const TERRA_NULLIUS_MAX_COST = 100;
 // Attacker loss = mag * clampedRatio * (BASE * largeAttackerBonus + DENSITY * troopsPerTile).
 // BASE is the old 0.48 ratio weight times the 0.965 large-defender sigmoid
 // tail that every defender used to get. DENSITY sets which stack size pays
 // the old 0.0052 density weight: at 0.0039 a stack of 3/4 the defender's
 // army matches the old cost, bigger stacks pay less, smaller pay more.
-const ATTACKER_LOSS_BASE = 0.463;
-const ATTACKER_LOSS_PER_DENSITY = 0.0039;
+export const ATTACKER_LOSS_BASE = 0.463;
+export const ATTACKER_LOSS_PER_DENSITY = 0.0039;
 // Speed divisor: 7.5 / 0.965, absorbing the same sigmoid tail.
-const SPEED_COST_DIVISOR = 7.77;
+export const SPEED_COST_DIVISOR = 7.77;
 // Speed-only: the attacker's territory bonus runs a touch deeper for speed
 // than the 0.7 loss depth above (floor 0.27x vs 0.3x). Paired with the 0.82
 // sub-parity floor on the ratio curve, an overwhelming push lands ~18%
@@ -852,18 +897,51 @@ export class Config {
    * budget; each tile consumes `tileCost`, scaled by how outnumbered the
    * attack is. The result reports that as a fraction of the tick.
    */
-  attackLogic(input: AttackLogicInput): AttackLogicResult {
+  /**
+   * Cost of taking one tile. Pass `out` to also receive the named factors
+   * behind the numbers (see {@link AttackExplanation}); omit it on the
+   * simulation's hot path, where nothing allocates.
+   */
+  attackLogic(
+    input: AttackLogicInput,
+    out?: AttackExplanation,
+  ): AttackLogicResult {
     const { attackTroops, attacker, defender } = input;
-    let { mag, tileCost } = terrainAttackBase(input.terrain);
+    const terrain = terrainAttackBase(input.terrain);
+    let { mag, tileCost } = terrain;
+    if (out !== undefined) {
+      out.terrainMag = terrain.mag;
+      out.terrainTileCost = terrain.tileCost;
+      out.defensePostLossMod = 1;
+      out.defensePostSpeedMod = 1;
+      out.falloutMod = 1;
+      out.botDefenderMod = 1;
+      out.disconnectedTeammateMod = 1;
+      out.traitorLossMod = 1;
+      out.traitorSpeedMod = 1;
+      out.largeAttackerMod = 1;
+      out.largeDefenderMod = 1;
+      out.largeAttackerSpeedMod = 1;
+      out.troopRatio = 0;
+      out.clampedLossRatio = 1;
+      out.defenderDensity = 0;
+      out.speedCost = 0;
+      out.borderSize = input.borderSize;
+    }
 
     if (defender !== null && input.defenderHasDefensePost) {
       mag *= this.defensePostDefenseBonus();
       tileCost *= this.defensePostSpeedBonus();
+      if (out !== undefined) {
+        out.defensePostLossMod = this.defensePostDefenseBonus();
+        out.defensePostSpeedMod = this.defensePostSpeedBonus();
+      }
     }
     if (input.falloutRatio !== null) {
       const fallout = this.falloutDefenseModifier(input.falloutRatio);
       mag *= fallout;
       tileCost *= fallout;
+      if (out !== undefined) out.falloutMod = fallout;
     }
 
     if (defender === null) {
@@ -883,6 +961,7 @@ export class Config {
     if (defender.isDisconnectedTeammate) {
       // No troop loss if defender is disconnected and on same team
       mag = 0;
+      if (out !== undefined) out.disconnectedTeammateMod = 0;
     }
     if (
       (attacker.type === PlayerType.Human ||
@@ -890,6 +969,7 @@ export class Config {
       defender.type === PlayerType.Bot
     ) {
       mag *= BOT_DEFENDER_LOSS_MULT;
+      if (out !== undefined) out.botDefenderMod = BOT_DEFENDER_LOSS_MULT;
     }
 
     // Big territories are cheaper and faster to attack from and into, so
@@ -932,6 +1012,17 @@ export class Config {
       attacker.numTiles,
       LARGE_ATTACKER_SPEED_DEPTH,
     );
+    if (out !== undefined) {
+      out.traitorLossMod = traitorLossMod;
+      out.traitorSpeedMod = traitorCostMod;
+      out.largeAttackerMod = largeAttackerBonus;
+      out.largeDefenderMod = largeDefenderBonus;
+      out.largeAttackerSpeedMod = largeAttackerSpeedBonus;
+      out.troopRatio = troopRatio;
+      out.clampedLossRatio = within(troopRatio, 0.6, 2);
+      out.defenderDensity = defenderTroopLoss;
+      out.speedCost = speedCost;
+    }
     return {
       attackerTroopLoss,
       defenderTroopLoss,

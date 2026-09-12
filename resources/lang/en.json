@@ -133,6 +133,30 @@
   "account_settings_modal": {
     "title": "Account Settings"
   },
+  "attack_cost": {
+    "factor": {
+      "defense_post": "Defense post",
+      "defense_post_speed": "Defense post (speed)",
+      "fallout": "Fallout",
+      "their_size": "Their territory",
+      "traitor": "Traitor",
+      "traitor_speed": "Traitor (speed)",
+      "tribe": "Tribe",
+      "your_size": "Your territory"
+    },
+    "speed": "Speed",
+    "speed_unit": "tiles/s per 10 of front",
+    "terrain": {
+      "highland": "Highland",
+      "mountain": "Mountain",
+      "plains": "Plains"
+    },
+    "they_lose": "They lose",
+    "they_outnumber": "Their army outnumbers your stack {times}x",
+    "title": "If you attack",
+    "you_lose": "You lose",
+    "you_outnumber": "Your stack outnumbers their army {times}x"
+  },
   "ban_notice": {
     "appeal": "If you believe this is a mistake, contact us on Discord.",
     "category": {

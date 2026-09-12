@@ -11,6 +11,12 @@ import {
 } from "../../../core/game/Game";
 import { TileRef } from "../../../core/game/GameMap";
 import { AllianceView } from "../../../core/game/GameUpdates";
+import {
+  AttackEstimate,
+  estimateAttackCost,
+  significantFactors,
+  terrainKey,
+} from "../../AttackCostEstimate";
 import { Controller } from "../../Controller";
 import {
   ContextMenuEvent,
@@ -19,6 +25,7 @@ import {
 } from "../../InputHandler";
 import { themeProvider } from "../../theme/ThemeProvider";
 import { TransformHandler } from "../../TransformHandler";
+import { UIState } from "../../UIState";
 import {
   getTranslatedPlayerTeamLabel,
   renderDuration,
@@ -80,6 +87,9 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
   @property({ type: Object })
   public transform!: TransformHandler;
 
+  @property({ type: Object })
+  public uiState!: UIState;
+
   @state()
   private player: PlayerView | null = null;
 
@@ -88,6 +98,14 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
 
   @state()
   private unit: UnitView | null = null;
+
+  /**
+   * What attacking the hovered tile would cost. Recomputed on each hover
+   * rather than each tick: the inputs move slowly and the tooltip is read,
+   * not watched.
+   */
+  @state()
+  private attackEstimate: AttackEstimate | null = null;
 
   @state()
   private _isInfoVisible: boolean = false;
@@ -136,6 +154,7 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
     this.setVisible(false);
     this.unit = null;
     this.player = null;
+    this.attackEstimate = null;
   }
 
   public maybeShow(x: number, y: number) {
@@ -155,6 +174,13 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
       this.player.profile().then((p) => {
         this.playerProfile = p;
       });
+      // The cost breakdown is an extra on top of the card, so a missing
+      // uiState drops the breakdown rather than the whole overlay: knowing
+      // who owns the tile matters more than knowing what taking it costs.
+      this.attackEstimate =
+        this.uiState === undefined
+          ? null
+          : estimateAttackCost(this.game, tile, this.uiState.attackRatio);
       this.setVisible(true);
     } else if (!this.game.isLand(tile)) {
       const units = this.game
@@ -638,6 +664,86 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
     `;
   }
 
+  /**
+   * What attacking this tile would cost, with the reasons behind it.
+   *
+   * The two troop figures are per tile taken, which is the comparison that
+   * decides an attack: what a tile costs you against what it costs them. The
+   * speed is quoted for a ten-tile front because a single-tile front is not a
+   * shape anyone attacks in, and the factor list names only the modifiers
+   * actually in play — a row saying "terrain ×1.0" explains nothing.
+   */
+  private renderAttackCost(estimate: AttackEstimate) {
+    const factors = significantFactors(estimate);
+    const perTenTiles = estimate.tilesPerSecondPerFrontTile * 10;
+    const ratio = estimate.explanation.troopRatio;
+
+    return html`
+      <div class="border-t border-white/10 px-2 py-1.5 text-sm">
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-white/50 text-xs uppercase tracking-wider">
+            ${translateText("attack_cost.title")}
+          </span>
+          <span class="text-white/40 text-xs">
+            ${translateText(`attack_cost.terrain.${terrainKey(estimate)}`)}
+          </span>
+        </div>
+        <div class="flex flex-wrap gap-x-4 gap-y-0.5 mt-1">
+          <span>
+            ${translateText("attack_cost.you_lose")}
+            <span class="font-bold text-red-300"
+              >${renderTroops(estimate.result.attackerTroopLoss)}</span
+            >
+          </span>
+          ${estimate.unclaimed
+            ? ""
+            : html`<span>
+                ${translateText("attack_cost.they_lose")}
+                <span class="font-bold text-green-300"
+                  >${renderTroops(estimate.result.defenderTroopLoss)}</span
+                >
+              </span>`}
+          <span>
+            ${translateText("attack_cost.speed")}
+            <span class="font-bold"
+              >${perTenTiles >= 10
+                ? perTenTiles.toFixed(0)
+                : perTenTiles.toFixed(1)}</span
+            >
+            ${translateText("attack_cost.speed_unit")}
+          </span>
+        </div>
+        ${estimate.unclaimed || ratio <= 0
+          ? ""
+          : html`<div class="text-xs text-white/50 mt-0.5">
+              ${ratio < 1
+                ? translateText("attack_cost.you_outnumber", {
+                    times: (1 / ratio).toFixed(1),
+                  })
+                : translateText("attack_cost.they_outnumber", {
+                    times: ratio.toFixed(1),
+                  })}
+            </div>`}
+        ${factors.length === 0
+          ? ""
+          : html`<div class="flex flex-wrap gap-x-3 text-xs text-white/60 mt-1">
+              ${factors.map(
+                (factor) =>
+                  html`<span>
+                    ${translateText(`attack_cost.factor.${factor.key}`)}
+                    <span
+                      class=${factor.value > 1
+                        ? "text-red-300"
+                        : "text-green-300"}
+                      >×${factor.value.toFixed(2)}</span
+                    >
+                  </span>`,
+              )}
+            </div>`}
+      </div>
+    `;
+  }
+
   render() {
     if (!this._isActive) {
       return html``;
@@ -658,6 +764,9 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
           class="bg-gray-800/92 backdrop-blur-sm shadow-xs min-[1200px]:rounded-lg sm:rounded-b-lg shadow-lg text-white text-lg lg:text-base w-full sm:w-[500px] overflow-hidden ${containerClasses}"
         >
           ${this.player ? this.renderPlayerInfo(this.player) : ""}
+          ${this.player && this.attackEstimate
+            ? this.renderAttackCost(this.attackEstimate)
+            : ""}
           ${this.unit ? this.renderUnitInfo(this.unit) : ""}
         </div>
       </div>
