@@ -164,9 +164,18 @@ export function createFullscreenQuad(
   return vao;
 }
 
+/** Marker a shader puts where shared GLSL chunks should be spliced in. */
+const CHUNK_MARKER = "// #chunks";
+
 /**
- * Inject `#define` constants into a GLSL shader source string.
- * Inserts definitions immediately after the `#version` line.
+ * Inject `#define` constants into a GLSL shader source string, and splice in
+ * any shared GLSL chunks.
+ *
+ * Definitions go immediately after the `#version` line. Chunks replace the
+ * `// #chunks` marker instead, because a chunk that uses `usampler2D` has to
+ * come after the shader's own `precision` declaration for it — and that comes
+ * after `#version`. A shader that passes chunks must carry the marker; one
+ * that passes none is left exactly as it was.
  *
  * Usage:
  *   shaderSrc(blurFrag, { PALETTE_SIZE: 4096 })
@@ -175,11 +184,20 @@ export function createFullscreenQuad(
 export function shaderSrc(
   source: string,
   defines: Record<string, number>,
+  chunks: string[] = [],
 ): string {
   const defs = Object.entries(defines)
     .map(([k, v]) => `#define ${k} ${v}`)
     .join("\n");
-  return source.replace("#version 300 es", `#version 300 es\n${defs}`);
+  const out = source.replace("#version 300 es", `#version 300 es\n${defs}`);
+  if (chunks.length === 0) return out;
+  if (!out.includes(CHUNK_MARKER)) {
+    throw new Error(
+      `shaderSrc was given ${chunks.length} chunk(s) but the shader has no ` +
+        `"${CHUNK_MARKER}" marker to splice them into`,
+    );
+  }
+  return out.replace(CHUNK_MARKER, chunks.join("\n"));
 }
 
 export interface RenderTarget {

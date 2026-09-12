@@ -85,6 +85,7 @@ import {
   type GPUResources,
 } from "./utils/GpuResources";
 import { HeatManager } from "./utils/HeatManager";
+import { zoomLegibility } from "./ZoomLegibility";
 
 /** Ghost types that trigger SAM radius overlay (matches upstream SAMRadiusLayer). */
 const SAM_RADIUS_GHOST_TYPES = new Set([
@@ -1270,6 +1271,20 @@ export class GPURenderer {
   private renderFrame(): void {
     const cam = this.camera.getMatrix();
     const zoom = this.camera.zoom;
+
+    // How the map should be drawn at this zoom. Computed once and handed to
+    // the fill and the outline together so the two agree about where a
+    // country is; see ZoomLegibility for what the numbers mean.
+    const legibility = this.settings.mapOverlay.politicalZoom
+      ? zoomLegibility(zoom, this.settings.mapOverlay.territoryAlpha)
+      : {
+          politicalStep: 0,
+          decorFade: 0,
+          fillAlpha: this.settings.mapOverlay.territoryAlpha,
+        };
+    this.territoryPass.setLegibility(legibility);
+    this.borderStampPass.setPoliticalStep(legibility.politicalStep);
+
     const cw = this.canvas.width;
     const ch = this.canvas.height;
     const compositingActive = this.isLightCompositingActive();

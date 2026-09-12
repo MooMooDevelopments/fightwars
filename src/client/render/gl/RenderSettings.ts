@@ -146,6 +146,13 @@ export interface RenderSettings {
     territorySaturation: number;
     /** Absolute opacity of the territory fill. 1 = fully opaque (terrain hidden), ~0.588 = default. */
     territoryAlpha: number;
+    /**
+     * Redraw territory as political blocks once a pixel covers more than one
+     * tile — see ZoomLegibility. Costs nine texture fetches per pixel while
+     * zoomed out and nothing at all while zoomed in; off restores the plain
+     * point sample for machines that cannot spare them.
+     */
+    politicalZoom: boolean;
     coordinateGridOpacity: number;
     staleNukeBase: number;
     staleNukeVariation: number;

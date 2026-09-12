@@ -29,6 +29,10 @@ uniform float uSaturation;         // 1 = full color, 0 = grayscale
 uniform float uTerritoryAlpha;     // absolute fill opacity; 1 = fully opaque
 uniform sampler2D uAffiliation;    // RGBA8 — alt-view relation colors (row 0)
 uniform float uAltFillAlpha;       // alt-view translucent fill opacity
+uniform int uPoliticalStep;        // tap spacing in tiles; 0 = point sample
+uniform float uDecorFade;          // 0 = patterns and skins as drawn, 1 = flat
+
+// #chunks
 
 in vec2 vWorldPos;
 out vec4 fragColor;
@@ -39,7 +43,13 @@ void main() {
     discard;
 
   uint raw = texelFetch(uTileTex, tc, 0).r;
-  uint owner = raw & uint(OWNER_MASK);
+  // Zoomed out, the pixel's owner is whoever holds most of the pixel, not
+  // whoever holds the tile its centre happens to land on.
+  uint owner = uPoliticalStep > 0
+    ? politicalOwner(uTileTex, tc, uPoliticalStep, ivec2(uMapSize))
+    : raw & uint(OWNER_MASK);
+  // Fallout stays a point sample: it is an event on the ground rather than a
+  // holding, and spreading it over a footprint would overstate it.
   bool fallout = (raw & (1u << FALLOUT_BIT)) != 0u;
 
   if (owner == 0u && !fallout) discard;
@@ -68,8 +78,13 @@ void main() {
 
   // uShowPatterns gates both skins and patterns — they're the same
   // "decorate the territory fill" feature from the user's perspective.
+  // uDecorFade gates them again by zoom: both are per-tile detail, so below a
+  // pixel per tile they stop being decoration and become the noise that keeps
+  // a large holding from reading as one colour. The flat palette colour is
+  // kept so the decorated colour can be mixed back toward it.
+  vec3 flat_ = color.rgb;
   uint skinLayerPlus1 =
-    uShowPatterns == 1
+    uShowPatterns == 1 && uDecorFade < 1.0
       ? texelFetch(uSkinLayer, ivec2(int(owner), 0), 0).r
       : 0u;
   if (skinLayerPlus1 > 0u) {
@@ -90,7 +105,7 @@ void main() {
     // opaque pixels show the skin (tinted by team color in team games).
     vec3 skinColor = (uIsTeamMode == 1) ? color.rgb * skin.rgb : skin.rgb;
     color.rgb = mix(color.rgb, skinColor, skinAlpha);
-  } else if (uShowPatterns == 1) {
+  } else if (uShowPatterns == 1 && uDecorFade < 1.0) {
     vec4 meta = texelFetch(uPatternMeta, ivec2(int(owner), 0), 0);
     if (meta.r > 0.0) {
       int pWidth = int(meta.g);
@@ -113,6 +128,11 @@ void main() {
     }
   }
 
+  // Fade whatever decoration survived back toward the flat national colour.
+  if (uDecorFade > 0.0) {
+    color.rgb = mix(color.rgb, flat_, uDecorFade);
+  }
+
   // Hover highlight: boost contrast on the hovered player's tiles, pushing
   // channels away from mid-gray. uHighlightBrighten is the strength; 0 disables.
   if (uHighlightOwner != 0u && owner == uHighlightOwner && uHighlightBrighten > 0.0) {
@@ -125,9 +145,12 @@ void main() {
   // BorderStampPass instead. Coverage is tested first so the (rarer) defended
   // tiles are the only ones that pay for the extra border fetch (&& short-
   // circuits in GLSL ES 3.00; texelFetch is derivative-free so this is safe).
-  if (texelFetch(uDefenseCoverageTex, tc, 0).r > 0.5 &&
+  // It also fades out with zoom, for the same reason patterns do: a per-tile
+  // darken read at less than a pixel per tile is speckle, not information.
+  if (uDecorFade < 1.0 &&
+      texelFetch(uDefenseCoverageTex, tc, 0).r > 0.5 &&
       texelFetch(uBorderTex, tc, 0).r <= 0.25) {
-    color.rgb *= uDefenseDarken;
+    color.rgb *= mix(uDefenseDarken, 1.0, uDecorFade);
   }
 
   // Adjust how saturated the fill is by blending toward its luminance.

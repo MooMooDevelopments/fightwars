@@ -50,6 +50,7 @@ export const GraphicsOverridesSchema = z
         highlightThicken: z.number(),
         territorySaturation: z.number(),
         territoryAlpha: z.number(),
+        politicalZoom: z.boolean(),
         coordinateGridOpacity: z.number(),
         // "#rrggbb" hex string; overrides the lingering fallout ground tint
         // left on territory after a nuke.

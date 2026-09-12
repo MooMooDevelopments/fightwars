@@ -316,3 +316,31 @@ is the gap this section closes.
   Payments and InGameModal, and through them lit-html, which touches the DOM at module scope.
 - `src/client/WebGLFrameBuilder.ts` — reads the cache from the leaf module, so the renderer no
   longer depends on the store. Behaviour is unchanged; this is an import-graph change.
+
+### Readable at every zoom (Phase 4 item 3, session 7)
+
+#### FightWars-only files added
+
+- `src/client/render/gl/ZoomLegibility.ts` — the thresholds that decide how the map is drawn at
+  the zoom it is being viewed at, and nothing else. Kept out of the passes because it is the only
+  part of this that can be tested without a GL context.
+- `src/client/render/gl/shaders/shared/political-owner.glsl` — nine taps over a pixel's own
+  footprint, majority owner wins. Shared by the fill and the outline so the two agree.
+- `tests/client/ZoomLegibility.test.ts`.
+
+#### Shared upstream files edited
+
+- `src/client/render/gl/shaders/map-overlay/territory.frag.glsl` — resolves the owner over the
+  pixel footprint when a pixel covers more than one tile, fades patterns, skins and the defence
+  darken out as it does, and closes the fill toward opaque. All three are per-tile detail that
+  becomes noise below a pixel per tile.
+- `src/client/render/gl/shaders/day-night/border-stamp.frag.glsl` — takes the strongest border in
+  the same footprint, so a one-tile outline survives below a pixel instead of vanishing.
+- `src/client/render/gl/passes/{TerritoryPass,BorderStampPass}.ts` — the uniforms for both.
+- `src/client/render/gl/Renderer.ts` — computes the policy once a frame and hands it to both.
+- `src/client/render/gl/utils/GlUtils.ts` — `shaderSrc` can splice shared GLSL chunks at a
+  `// #chunks` marker. Not after `#version` like the defines: a chunk using `usampler2D` has to
+  follow the shader's `precision` declaration for it.
+- `src/client/render/gl/RenderSettings.ts`, `render-settings.json`, `GraphicsOverrides.ts` —
+  `mapOverlay.politicalZoom`, default on. Nine fetches per pixel while zoomed out and none while
+  zoomed in, so a machine that cannot spare them can have the plain point sample back.

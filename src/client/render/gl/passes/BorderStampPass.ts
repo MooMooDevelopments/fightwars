@@ -13,6 +13,7 @@ import { TILE_DEFINES } from "../utils/TileCodec";
 
 import borderStampFragSrc from "../shaders/day-night/border-stamp.frag.glsl?raw";
 import borderStampVertSrc from "../shaders/day-night/border-stamp.vert.glsl?raw";
+import politicalOwnerChunk from "../shaders/shared/political-owner.glsl?raw";
 
 export class BorderStampPass {
   private gl: WebGL2RenderingContext;
@@ -30,6 +31,8 @@ export class BorderStampPass {
   private uEmbargoTint: WebGLUniformLocation;
   private uFriendlyTint: WebGLUniformLocation;
   private uAltView: WebGLUniformLocation;
+  private uPoliticalStep: WebGLUniformLocation;
+  private politicalStep = 0;
 
   private vao: WebGLVertexArrayObject;
   private tileTex: WebGLTexture;
@@ -59,10 +62,14 @@ export class BorderStampPass {
     this.program = createProgram(
       gl,
       borderStampVertSrc,
-      shaderSrc(borderStampFragSrc, {
-        PALETTE_SIZE: getPaletteSize(),
-        ...TILE_DEFINES,
-      }),
+      shaderSrc(
+        borderStampFragSrc,
+        {
+          PALETTE_SIZE: getPaletteSize(),
+          ...TILE_DEFINES,
+        },
+        [politicalOwnerChunk],
+      ),
     );
     this.uCam = gl.getUniformLocation(this.program, "uCamera")!;
     this.uMapSize = gl.getUniformLocation(this.program, "uMapSize")!;
@@ -85,6 +92,10 @@ export class BorderStampPass {
     this.uEmbargoTint = gl.getUniformLocation(this.program, "uEmbargoTint")!;
     this.uFriendlyTint = gl.getUniformLocation(this.program, "uFriendlyTint")!;
     this.uAltView = gl.getUniformLocation(this.program, "uAltView")!;
+    this.uPoliticalStep = gl.getUniformLocation(
+      this.program,
+      "uPoliticalStep",
+    )!;
 
     gl.useProgram(this.program);
     gl.uniform1i(gl.getUniformLocation(this.program, "uTileTex"), 0);
@@ -98,6 +109,13 @@ export class BorderStampPass {
 
   setAltView(active: boolean): void {
     this.altView = active;
+  }
+  /**
+   * Tap spacing in tiles for the political resolve, from ZoomLegibility. 0
+   * means a tile is at least a pixel across and the point sample stands.
+   */
+  setPoliticalStep(step: number): void {
+    this.politicalStep = step;
   }
   setAffiliationTex(tex: WebGLTexture): void {
     this.affiliationTex = tex;
@@ -131,6 +149,7 @@ export class BorderStampPass {
       mo.friendlyTintB,
     );
     gl.uniform1i(this.uAltView, this.altView ? 1 : 0);
+    gl.uniform1i(this.uPoliticalStep, this.politicalStep);
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.tileTex);

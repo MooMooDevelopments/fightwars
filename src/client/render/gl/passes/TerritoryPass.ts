@@ -13,12 +13,14 @@
  */
 
 import type { RenderSettings } from "../RenderSettings";
+import type { ZoomLegibility } from "../ZoomLegibility";
 import { getPaletteSize } from "../utils/ColorUtils";
 import { createMapQuad, createProgram, shaderSrc } from "../utils/GlUtils";
 import { FALLOUT_BIT, OWNER_MASK, TILE_DEFINES } from "../utils/TileCodec";
 
 import overlayVertSrc from "../shaders/map-overlay/overlay.vert.glsl?raw";
 import territoryFragSrc from "../shaders/map-overlay/territory.frag.glsl?raw";
+import politicalOwnerChunk from "../shaders/shared/political-owner.glsl?raw";
 import { TileScatterPass } from "./TileScatterPass";
 
 export class TerritoryPass {
@@ -43,6 +45,13 @@ export class TerritoryPass {
   private uSaturation: WebGLUniformLocation;
   private uTerritoryAlpha: WebGLUniformLocation;
   private uAltFillAlpha: WebGLUniformLocation;
+  private uPoliticalStep: WebGLUniformLocation;
+  private uDecorFade: WebGLUniformLocation;
+  private legibility: ZoomLegibility = {
+    politicalStep: 0,
+    decorFade: 0,
+    fillAlpha: 1,
+  };
   private highlightOwner = 0;
   private isTeamMode = false;
 
@@ -139,10 +148,14 @@ export class TerritoryPass {
     this.program = createProgram(
       gl,
       overlayVertSrc,
-      shaderSrc(territoryFragSrc, {
-        PALETTE_SIZE: getPaletteSize(),
-        ...TILE_DEFINES,
-      }),
+      shaderSrc(
+        territoryFragSrc,
+        {
+          PALETTE_SIZE: getPaletteSize(),
+          ...TILE_DEFINES,
+        },
+        [politicalOwnerChunk],
+      ),
     );
     this.uCamera = gl.getUniformLocation(this.program, "uCamera")!;
     this.uMapSize = gl.getUniformLocation(this.program, "uMapSize")!;
@@ -183,6 +196,11 @@ export class TerritoryPass {
       "uTerritoryAlpha",
     )!;
     this.uAltFillAlpha = gl.getUniformLocation(this.program, "uAltFillAlpha")!;
+    this.uPoliticalStep = gl.getUniformLocation(
+      this.program,
+      "uPoliticalStep",
+    )!;
+    this.uDecorFade = gl.getUniformLocation(this.program, "uDecorFade")!;
 
     gl.useProgram(this.program);
     gl.uniform1i(gl.getUniformLocation(this.program, "uTileTex"), 0);
@@ -380,6 +398,15 @@ export class TerritoryPass {
     return "none";
   }
 
+  /**
+   * How the map should be drawn at the zoom it is being viewed at — see
+   * ZoomLegibility. Pushed every frame by the renderer; the pass only holds
+   * the last value so `draw` has it.
+   */
+  setLegibility(legibility: ZoomLegibility): void {
+    this.legibility = legibility;
+  }
+
   setAltView(active: boolean): void {
     this.altView = active;
   }
@@ -450,7 +477,9 @@ export class TerritoryPass {
     gl.uniform1i(this.uIsTeamMode, this.isTeamMode ? 1 : 0);
     gl.uniform1f(this.uDefenseDarken, mo.territoryDefenseDarken);
     gl.uniform1f(this.uSaturation, mo.territorySaturation);
-    gl.uniform1f(this.uTerritoryAlpha, mo.territoryAlpha);
+    gl.uniform1f(this.uTerritoryAlpha, this.legibility.fillAlpha);
+    gl.uniform1i(this.uPoliticalStep, this.legibility.politicalStep);
+    gl.uniform1f(this.uDecorFade, this.legibility.decorFade);
     gl.uniform1f(this.uAltFillAlpha, this.settings.altView.fillAlpha);
 
     gl.activeTexture(gl.TEXTURE0);
