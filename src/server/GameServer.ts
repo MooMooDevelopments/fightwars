@@ -57,6 +57,7 @@ import { Client } from "./Client";
 import { applyGameConfigPatch, hostCheatsEnabled } from "./ConfigPatch";
 import { LiveStatsVote, WinnerVote } from "./Consensus";
 import { fetchCustomTribes } from "./CustomTribes";
+import { alertDesync } from "./DesyncAlert";
 import { DesyncDetector } from "./DesyncDetector";
 import {
   authorizeIntent,
@@ -1812,6 +1813,16 @@ export class GameServer {
       this.turns[turn].hash = mostCommonHash;
       return;
     }
+
+    // FightWars: a desync must never be silent (BUILD-STATE Phase 2).
+    alertDesync(this.log, {
+      gameID: this.id,
+      turn,
+      mostCommonHash,
+      outOfSyncClientIDs: outOfSyncClients.map((c) => c.clientID),
+      totalActiveClients: this.clients.active().length,
+      gitCommit: this.deps.telemetryBuildHash,
+    });
 
     const serverDesync = ServerDesyncSchema.safeParse({
       type: "desync",

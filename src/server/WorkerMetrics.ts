@@ -4,6 +4,7 @@ import {
   PeriodicExportingMetricReader,
 } from "@opentelemetry/sdk-metrics";
 import * as dotenv from "dotenv";
+import { desyncEventCount } from "./DesyncAlert";
 import { GameManager } from "./GameManager";
 import { ATTR_PREFIX, getOtelResource, getPromLabels } from "./OtelResource";
 import { ServerEnv } from "./ServerEnv";
@@ -63,6 +64,15 @@ export function initWorkerMetrics(gameManager: GameManager): void {
     },
   );
 
+  // FightWars: every desync event alerted since the worker started (a
+  // counter, unlike desyncs.gauge which tracks active games only).
+  const desyncEventsGauge = meter.createObservableGauge(
+    `${ATTR_PREFIX}.desync_events.total`,
+    {
+      description: "Desync events alerted on this worker since start",
+    },
+  );
+
   const memoryUsageGauge = meter.createObservableGauge(
     `${ATTR_PREFIX}.memory_usage.bytes`,
     {
@@ -83,6 +93,10 @@ export function initWorkerMetrics(gameManager: GameManager): void {
   desyncsGauge.addCallback((result) => {
     const count = gameManager.desyncCount();
     result.observe(count, getPromLabels());
+  });
+
+  desyncEventsGauge.addCallback((result) => {
+    result.observe(desyncEventCount(), getPromLabels());
   });
 
   memoryUsageGauge.addCallback((result) => {

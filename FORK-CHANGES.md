@@ -87,3 +87,12 @@ shared upstream files are listed individually because each one is a future rebas
 - `scripts/pr-gate/`, `scripts/issue-lifecycle/`, `tests/PrGateRules.test.ts` — deleted with the
   workflows they served; `tsconfig.json` now includes `scripts/**/*` so the two FightWars
   scripts are type-checked and lintable.
+
+### Desync alerting (Phase 2, 2026-09-12)
+
+- `src/server/DesyncAlert.ts` — new: error-level structured log on the first desync per game
+  (warn on repeats), a process-wide event counter, optional `DESYNC_WEBHOOK_URL` POST.
+- `src/server/GameServer.ts` — one call to `alertDesync()` in `handleSynchronization()` where
+  the tally already finds out-of-sync clients (additive; nothing else changed).
+- `src/server/WorkerMetrics.ts` — `<prefix>.desync_events.total` observable gauge.
+- `tests/server/DesyncAlert.test.ts` — unit + turn-loop integration.
