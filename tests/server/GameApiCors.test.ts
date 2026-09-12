@@ -10,7 +10,7 @@ import {
 import { stripWorkerPrefix } from "../../src/server/WorkerPathPrefix";
 
 // The game server's /api routes are same-origin for the web client, but the
-// desktop app loads its renderer from app://openfront and so reaches them
+// desktop app loads its renderer from app://fightwars and so reaches them
 // cross-origin. A POST carrying Authorization + Content-Type is not a simple
 // request, so the browser preflights it: without these headers the desktop
 // cannot create a lobby, join by id, or poll for a game at all.
@@ -28,7 +28,7 @@ describe("applyGameApiCorsHeaders", () => {
   test("allows the desktop app origin", () => {
     const { headers, setHeader } = collect();
     applyGameApiCorsHeaders(DESKTOP_APP_ORIGIN, setHeader);
-    expect(headers.get("Access-Control-Allow-Origin")).toBe("app://openfront");
+    expect(headers.get("Access-Control-Allow-Origin")).toBe("app://fightwars");
   });
 
   test("advertises the methods and headers the game API actually uses", () => {
@@ -73,7 +73,7 @@ describe("applyGameApiCorsHeaders", () => {
 
   test("does not allow a lookalike of the desktop origin", () => {
     const { headers, setHeader } = collect();
-    applyGameApiCorsHeaders("app://openfront.evil.example", setHeader);
+    applyGameApiCorsHeaders("app://fightwars.evil.example", setHeader);
     expect(headers.has("Access-Control-Allow-Origin")).toBe(false);
   });
 
@@ -252,7 +252,7 @@ describe("gameApiCors middleware, mounted on a real Express app", () => {
 
     expect(res.status).toBe(204);
     expect(res.headers.get("access-control-allow-origin")).toBe(
-      "app://openfront",
+      "app://fightwars",
     );
     expect(
       res.headers.get("access-control-allow-headers")?.toLowerCase(),
@@ -268,7 +268,7 @@ describe("gameApiCors middleware, mounted on a real Express app", () => {
 
     expect(res.status).toBe(200);
     expect(res.headers.get("access-control-allow-origin")).toBe(
-      "app://openfront",
+      "app://fightwars",
     );
     expect(routeHits).toEqual(["create_game"]);
   });
@@ -282,7 +282,7 @@ describe("gameApiCors middleware, mounted on a real Express app", () => {
 
     expect(res.status).toBe(200);
     expect(res.headers.get("access-control-allow-origin")).toBe(
-      "app://openfront",
+      "app://fightwars",
     );
     expect(routeHits).toEqual(["exists"]);
   });
@@ -298,7 +298,7 @@ describe("gameApiCors middleware, mounted on a real Express app", () => {
 
     expect(res.status).toBe(404);
     expect(res.headers.get("access-control-allow-origin")).toBe(
-      "app://openfront",
+      "app://fightwars",
     );
     expect(routeHits).toEqual([]);
   });
@@ -314,7 +314,7 @@ describe("gameApiCors middleware, mounted on a real Express app", () => {
 
     expect(res.status).toBe(400);
     expect(res.headers.get("access-control-allow-origin")).toBe(
-      "app://openfront",
+      "app://fightwars",
     );
   });
 

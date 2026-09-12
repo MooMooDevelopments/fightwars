@@ -1,10 +1,11 @@
+import { desktopBridge } from "./DesktopShell";
 // The renderer half of the desktop shell's display-preferences bridge
 // (OPE-173). Window mode and monitor selection are owned by the Electron
 // shell rather than by browser storage: the mode has to be decided by the
 // BrowserWindow constructor, which is well before any renderer exists to read
 // localStorage.
 //
-// openfront-desktop's `src/main/displayTypes.ts` is the SOURCE OF TRUTH for
+// The desktop shell repo's `src/main/displayTypes.ts` is the SOURCE OF TRUTH for
 // every shape below. The two repositories cannot import from each other -- the
 // client is a submodule built from a public AGPL repo -- so these are mirrored
 // by hand, the same arrangement `DesktopUpdateState` in DesktopShell.ts
@@ -86,7 +87,7 @@ type DisplayBridgeHolder = { display?: unknown };
  */
 export function desktopDisplay(): DesktopDisplayBridge | null {
   if (typeof window === "undefined") return null;
-  const desktop = window.openfrontDesktop as DisplayBridgeHolder | undefined;
+  const desktop = desktopBridge() as DisplayBridgeHolder | undefined;
   const display = desktop?.display as Partial<DesktopDisplayBridge> | undefined;
   if (
     typeof display?.getPrefs !== "function" ||

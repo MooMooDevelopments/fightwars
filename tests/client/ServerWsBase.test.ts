@@ -6,7 +6,7 @@ import { deriveServerWsBase } from "../../src/client/ClientEnv";
 //
 // The web build injects no serverHost, so it must keep the historical
 // same-origin behaviour (derive scheme + host from window.location). The
-// desktop app loads from app://openfront — where location.host is not a real
+// desktop app loads from app://fightwars — where location.host is not a real
 // server — and injects an EXPLICIT game-server host (the host is branch-variable
 // on dev and not derivable from the API audience), which is targeted over TLS.
 describe("deriveServerWsBase", () => {

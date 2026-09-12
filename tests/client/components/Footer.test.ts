@@ -26,7 +26,7 @@ describe("page-footer version line", () => {
 
   afterEach(() => {
     footer?.remove();
-    window.openfrontDesktop = undefined;
+    window.fightwarsDesktop = undefined;
     delete (window as { BOOTSTRAP_CONFIG?: unknown }).BOOTSTRAP_CONFIG;
     ClientEnv.reset();
   });
@@ -39,7 +39,7 @@ describe("page-footer version line", () => {
   }
 
   it("renders the game version on the web, with no Steam subtext", async () => {
-    window.openfrontDesktop = undefined;
+    window.fightwarsDesktop = undefined;
     await mount();
 
     const line = footer.querySelector(".footer-version");
@@ -47,7 +47,7 @@ describe("page-footer version line", () => {
   });
 
   it("appends the shell version inside the desktop shell", async () => {
-    window.openfrontDesktop = {
+    window.fightwarsDesktop = {
       version: () => Promise.resolve("0.2.0"),
     };
     await mount();
@@ -72,7 +72,7 @@ describe("page-footer version line", () => {
       instanceId: "test",
       gitCommit: SHA,
     };
-    window.openfrontDesktop = undefined;
+    window.fightwarsDesktop = undefined;
     await mount();
 
     const line = footer.querySelector(".footer-version");
@@ -82,7 +82,7 @@ describe("page-footer version line", () => {
   // The bridge lives in a separate private repo, so the footer must degrade to
   // the game version alone rather than render a broken label.
   it("falls back to the game version when the bridge rejects", async () => {
-    window.openfrontDesktop = {
+    window.fightwarsDesktop = {
       version: () => Promise.reject(new Error("boom")),
     };
     await mount();

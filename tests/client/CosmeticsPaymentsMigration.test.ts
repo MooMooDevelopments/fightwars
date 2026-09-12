@@ -193,14 +193,14 @@ describe("purchaseCosmetic dollar path", () => {
     /** The desktop shell with its Steam bridge: the device that can check
      *  out on the Steam rail. */
     function installSteamShell() {
-      (window as unknown as { openfrontDesktop?: unknown }).openfrontDesktop = {
+      (window as unknown as { fightwarsDesktop?: unknown }).fightwarsDesktop = {
         steam: {},
       };
     }
 
     afterEach(() => {
-      delete (window as unknown as { openfrontDesktop?: unknown })
-        .openfrontDesktop;
+      delete (window as unknown as { fightwarsDesktop?: unknown })
+        .fightwarsDesktop;
     });
 
     it("a Steam-billed subscriber in a plain browser is refused before the confirm — no Stripe checkout is minted", async () => {

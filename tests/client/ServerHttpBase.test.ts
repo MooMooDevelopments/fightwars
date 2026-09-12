@@ -54,7 +54,7 @@ describe("deriveServerHttpBase", () => {
 
     it("never falls through to the desktop app:// origin", () => {
       // The bug this fixes: relative /api fetches resolved against
-      // app://openfront, which serves local files and 404s every API route.
+      // app://fightwars, which serves local files and 404s every API route.
       expect(
         deriveServerHttpBase("openfront.io", "app:", "openfront"),
       ).not.toContain("openfront/");

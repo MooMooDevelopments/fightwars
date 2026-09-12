@@ -1,5 +1,6 @@
 import { html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { BRAND } from "../../brand/Brand";
 import { Product } from "../../core/CosmeticSchemas";
 import type { InsufficientCurrency, PurchaseResult } from "../Cosmetics";
 import { showInGameAlert } from "../InGameModal";
@@ -414,6 +415,9 @@ export class PurchaseButton extends LitElement {
   }
 
   render() {
+    // No store, no purchase affordance anywhere it is embedded.
+    if (!BRAND.monetisation.store) return nothing;
+
     const hasDollar = this.offersDollar;
     const hasHard = this.offersHard;
     const hasSoft = this.offersSoft;

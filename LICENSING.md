@@ -64,6 +64,28 @@ This document provides comprehensive licensing information for the OpenFront.io 
   - Copyright notice preservation requirement in visible locations
   - Prohibition of misrepresentation for modified versions
 
+### Phase 6: FightWars fork
+
+- **Starting After:** 7d95251f1 (upstream OpenFrontIO main, September 12, 2026)
+- **Date:** September 12, 2026
+- **Licenses:**
+  - **Code:** AGPL v3.0 with OpenFront's Section 7 additional terms (unchanged)
+  - **Open Assets (/resources):** Creative Commons BY-SA 4.0 (unchanged)
+  - **Proprietary Assets:** none. The `/proprietary` directory was removed from the fork; every
+    all-rights-reserved OpenFront asset (font, logos, favicon, music and the game-start alert) was
+    replaced with FightWars assets under CC BY-SA 4.0.
+- **Copyright Holders:** OpenFront Inc. and Contributors (upstream code and assets); FightWars
+  contributors for changes made in this fork
+- **Changes:**
+  - FightWars is a modified version of OpenFront. Per Section 7(b) the notice
+    "© OpenFront and Contributors" is preserved in the footer and on the loading screen; per
+    Section 7(c) the product is titled "FightWars" and states "Based on OpenFront" on the title
+    screen. FightWars is not endorsed by OpenFront Inc.
+  - Per AGPL Section 13 the complete corresponding source of the running version is offered from
+    the in-game About panel (see `src/brand/Brand.ts` → `repoUrl`).
+  - Every production dependency is checked against an AGPL-compatible allowlist in CI
+    (`scripts/checkLicenses.ts`).
+
 ## Important Notes
 
 ### For Code:
@@ -94,7 +116,7 @@ All assets included in this repository (graphics, sounds, music, models) are lic
 - Premium skins, models, and textures
 - Sound effects and music accessed via API
 - Any assets not explicitly included in this repository
-- Any asset in the proprietary/ folder
+- (Upstream only) any asset in OpenFront's proprietary/ folder — not present in the FightWars fork
 
 These external assets are:
 

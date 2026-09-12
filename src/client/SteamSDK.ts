@@ -1,4 +1,5 @@
-// Mirrors SteamTicketResult in openfront-desktop's src/main/steam.ts. The two
+import { desktopBridge } from "./DesktopShell";
+// Mirrors SteamTicketResult in the desktop shell repo's src/main/steam.ts. The two
 // repositories cannot import from each other, so this is a hand-kept copy; if
 // you change one, change the other.
 export type SteamTicketFailure = "unavailable" | "timeout" | "error";
@@ -12,14 +13,12 @@ interface SteamBridge {
   getUser(): Promise<{ steamId: string; name: string } | null>;
 }
 
-// window.openfrontDesktop is declared `unknown` by DesktopShell.ts (kept loose
+// The desktop bridge is typed `unknown` by DesktopShell.ts (kept loose
 // there on purpose). We know the shape the Electron preload exposes, so narrow
 // it locally rather than re-declaring the global (a second `declare global`
 // with a different type triggers TS2717).
 function steamBridge(): SteamBridge | undefined {
-  const desktop = window.openfrontDesktop as
-    | { steam?: SteamBridge }
-    | undefined;
+  const desktop = desktopBridge() as { steam?: SteamBridge } | undefined;
   return desktop?.steam;
 }
 

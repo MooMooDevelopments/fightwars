@@ -1,12 +1,13 @@
 import type { NextFunction, Request, Response } from "express";
+import { BRAND } from "../brand/Brand";
 import { ServerEnv } from "./ServerEnv";
 
 /**
  * Origin the desktop app's renderer runs from. It loads from a privileged
- * custom scheme rather than https, so `app://openfront` is a real, fixed
+ * custom scheme rather than https, so BRAND.desktop.scheme is a real, fixed
  * origin — see the desktop repo's `src/main/protocol.ts`.
  */
-export const DESKTOP_APP_ORIGIN = "app://openfront";
+export const DESKTOP_APP_ORIGIN: string = BRAND.desktop.scheme;
 
 function isAllowedOrigin(origin: string): boolean {
   if (origin === DESKTOP_APP_ORIGIN) return true;

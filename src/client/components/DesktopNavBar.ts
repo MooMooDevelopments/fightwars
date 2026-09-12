@@ -1,5 +1,6 @@
-import { LitElement, html } from "lit";
+import { LitElement, html, nothing } from "lit";
 import { customElement } from "lit/decorators.js";
+import { BRAND } from "../../brand/Brand";
 import { assetUrl } from "../../core/AssetUrls";
 import "./NavAccountMenu";
 import { NavNotificationsController } from "./NavNotificationsController";
@@ -58,14 +59,21 @@ export class DesktopNavBar extends LitElement {
           <div class="h-8">
             <img
               class="block h-full aspect-[1364/259]"
-              src=${assetUrl("images/OpenFrontLogo.svg")}
-              alt="OpenFront"
+              src=${assetUrl(BRAND.assets.logo)}
+              alt=${BRAND.name}
             />
           </div>
           <div
             id="game-version"
             class="l-header__highlightText text-center"
           ></div>
+          <a
+            href=${BRAND.upstream.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-[10px] text-white/40 hover:text-white/70 transition-colors"
+            >${BRAND.upstream.basedOn}</a
+          >
         </div>
         <button
           class="nav-menu-item ${currentPage === "page-play"
@@ -75,33 +83,35 @@ export class DesktopNavBar extends LitElement {
           data-i18n="main.play"
         ></button>
         <!-- Desktop Navigation Menu Items -->
-        <div class="relative no-crazygames">
-          <button
-            class="nav-menu-item ${currentPage === "page-item-store"
-              ? "active"
-              : ""} text-white/70 hover:text-malibu-blue  font-medium tracking-wider uppercase cursor-pointer transition-colors [&.active]:text-malibu-blue "
-            data-page="page-item-store"
-            data-i18n="main.store"
-            @click=${this._notifications.onStoreClick}
-          ></button>
-          ${this._notifications.showStoreDot()
-            ? html`
-                <span
-                  class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping"
-                ></span>
-                <span
-                  class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"
-                ></span>
-              `
-            : ""}
-        </div>
-        <button
-          class="nav-menu-item ${currentPage === "page-inventory"
-            ? "active"
-            : ""} text-white/70 hover:text-malibu-blue font-medium tracking-wider uppercase cursor-pointer transition-colors [&.active]:text-malibu-blue"
-          data-page="page-inventory"
-          data-i18n="main.inventory"
-        ></button>
+        ${BRAND.monetisation.store
+          ? html`<div class="relative no-crazygames">
+                <button
+                  class="nav-menu-item ${currentPage === "page-item-store"
+                    ? "active"
+                    : ""} text-white/70 hover:text-malibu-blue  font-medium tracking-wider uppercase cursor-pointer transition-colors [&.active]:text-malibu-blue "
+                  data-page="page-item-store"
+                  data-i18n="main.store"
+                  @click=${this._notifications.onStoreClick}
+                ></button>
+                ${this._notifications.showStoreDot()
+                  ? html`
+                      <span
+                        class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping"
+                      ></span>
+                      <span
+                        class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"
+                      ></span>
+                    `
+                  : ""}
+              </div>
+              <button
+                class="nav-menu-item ${currentPage === "page-inventory"
+                  ? "active"
+                  : ""} text-white/70 hover:text-malibu-blue font-medium tracking-wider uppercase cursor-pointer transition-colors [&.active]:text-malibu-blue"
+                data-page="page-inventory"
+                data-i18n="main.inventory"
+              ></button>`
+          : nothing}
         <button
           class="nav-menu-item text-white/70 hover:text-malibu-blue  font-medium tracking-wider uppercase cursor-pointer transition-colors [&.active]:text-malibu-blue "
           data-page="page-leaderboard"

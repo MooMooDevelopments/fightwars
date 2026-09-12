@@ -1,5 +1,6 @@
 import { LitElement, html } from "lit";
 import { customElement, state } from "lit/decorators.js";
+import { BRAND } from "../brand/Brand";
 import { translateText } from "./Utils";
 
 @customElement("game-starting-modal")
@@ -27,10 +28,10 @@ export class GameStartingModal extends LitElement {
         <div
           class="text-base font-medium tracking-wider uppercase text-white/40 mb-3"
         >
-          ${translateText("main.copyright")}
+          ${BRAND.upstream.copyright}
         </div>
         <a
-          href="https://github.com/openfrontio/OpenFrontIO/blob/main/CREDITS.md"
+          href="${BRAND.upstream.url}/blob/main/CREDITS.md"
           target="_blank"
           rel="noopener noreferrer"
           class="block mb-4 text-lg font-medium tracking-wider uppercase text-malibu-blue no-underline transition-colors duration-200 hover:text-aquarius"

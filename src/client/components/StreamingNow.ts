@@ -16,7 +16,7 @@ export function formatViewers(n: number): string {
 }
 
 // Homepage "Streaming Now" panel: a fixed-size bubble showing who is live playing
-// OpenFront, fed by the shared streams feed. Every entry has been verified live
+// the game, fed by the shared streams feed. Every entry has been verified live
 // server-side (Twitch via Helix, YouTube via videos.list), so nothing here decides
 // liveness or fetches from a platform to find out. Streamers are compact cards in a
 // horizontal slider, so the bubble never grows with the count. Stays hidden until there

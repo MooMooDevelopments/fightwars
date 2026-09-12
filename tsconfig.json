@@ -26,10 +26,10 @@
     "src/**/*",
     "zbin/**/*",
     "resources/**/*",
-    "proprietary/**/*",
     "generated/**/*",
     "tests/**/*",
     "src/scripts",
+    "scripts/**/*",
     "vite.config.ts"
   ],
   "exclude": ["node_modules"]

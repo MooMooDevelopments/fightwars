@@ -1,5 +1,6 @@
 import { html, LitElement, TemplateResult } from "lit";
 import { customElement, state } from "lit/decorators.js";
+import { BRAND } from "../../../brand/Brand";
 import {
   getGamesPlayed,
   homeHref,
@@ -115,11 +116,17 @@ export class WinModal extends LitElement implements Controller {
 
   innerHtml() {
     // The Steam desktop build has nothing to wishlist — fall through to the
-    // other promos so the box is never empty.
-    const canWishlist = !steamSDK.isOnSteam();
+    // other promos so the box is never empty. Each promo also needs its BRAND
+    // switch on: no Steam wishlist, store nudge or Discord link unless the
+    // brand has one, with the tutorial video as the last resort.
+    const canWishlist = BRAND.monetisation.steam && !steamSDK.isOnSteam();
+    const canDiscord = BRAND.community.discordUrl !== "";
+    const canStore = BRAND.monetisation.store;
+    const fallback = () =>
+      canDiscord ? this.discordDisplay() : this.renderYoutubeTutorial();
 
     if (isInIframe()) {
-      return canWishlist ? this.steamWishlist() : this.discordDisplay();
+      return canWishlist ? this.steamWishlist() : fallback();
     }
 
     if (!this.isWin && getGamesPlayed() < 3) {
@@ -127,8 +134,8 @@ export class WinModal extends LitElement implements Controller {
     }
     if (this.rand < 0.25 && canWishlist) {
       return this.steamWishlist();
-    } else if (this.rand < 0.5) {
-      return this.discordDisplay();
+    } else if (this.rand < 0.5 || !canStore) {
+      return fallback();
     } else {
       return this.renderPatternButton();
     }
@@ -176,6 +183,10 @@ export class WinModal extends LitElement implements Controller {
   }
 
   async loadPatternContent() {
+    if (!BRAND.monetisation.store) {
+      this.patternContent = html``;
+      return;
+    }
     const me = await getUserMe();
     const cosmetics = await fetchCosmetics();
 
@@ -242,7 +253,7 @@ export class WinModal extends LitElement implements Controller {
           ${translateText("win_modal.discord_description")}
         </p>
         <a
-          href="https://discord.com/invite/openfront"
+          href=${BRAND.community.discordUrl}
           target="_blank"
           rel="noopener noreferrer"
           class="inline-block px-6 py-3 bg-indigo-600 text-white rounded-sm font-semibold transition-all duration-200 hover:bg-indigo-700 hover:-translate-y-px no-underline"

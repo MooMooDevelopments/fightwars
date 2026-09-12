@@ -29,9 +29,10 @@ export interface AdGatekeeperOptions {
  * blocker-free. `canShowAds` is true only in 'clear'; 'blocked' is terminal.
  *
  * Orthogonal to `window.adsEnabled` (the entitlement gate for adfree /
- * CrazyGames users). Construct/start it only for ad-eligible users — paid /
- * adfree users never build one, so no bait element or polling runs for them.
- * A fast external signal (e.g. Admiral's `measure.detected`) feeds `seed()`.
+ * CrazyGames users, and BRAND.monetisation.ads above it). Start it only for
+ * ad-eligible users — paid / adfree users, and every user when ads are off in
+ * BRAND, never start one, so no bait element or polling runs for them.
+ * A fast external signal from an ad-recovery vendor may feed `seed()`.
  */
 export class AdGatekeeper {
   private state: AdblockState | null = null;
@@ -78,9 +79,9 @@ export class AdGatekeeper {
   }
 
   /**
-   * Feed an external adblock reading (e.g. Admiral's `measure.detected`) into
-   * the state machine as a fast, reliable signal. Ignored until started and
-   * once 'blocked' has latched.
+   * Feed an external adblock reading (e.g. an ad-recovery vendor's detection
+   * callback) into the state machine as a fast, reliable signal. Ignored
+   * until started and once 'blocked' has latched.
    */
   seed(blocked: boolean): void {
     if (!this.started) return;

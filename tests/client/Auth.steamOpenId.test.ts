@@ -66,7 +66,7 @@ beforeEach(async () => {
 
 afterEach(() => {
   Object.defineProperty(window, "location", realLocationDescriptor);
-  delete (window as { openfrontDesktop?: unknown }).openfrontDesktop;
+  delete (window as { fightwarsDesktop?: unknown }).fightwarsDesktop;
 });
 
 describe("steamLogin", () => {
@@ -83,7 +83,7 @@ describe("steamLogin", () => {
   // here would be a bug that only shows up inside the shell.
   it("never opens the desktop link gate", () => {
     const showLinkGate = vi.fn(async () => undefined);
-    (window as unknown as { openfrontDesktop: unknown }).openfrontDesktop = {
+    (window as unknown as { fightwarsDesktop: unknown }).fightwarsDesktop = {
       showLinkGate,
     };
 

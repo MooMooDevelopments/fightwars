@@ -1,5 +1,6 @@
-import { html, LitElement, TemplateResult } from "lit";
+import { html, LitElement, nothing, TemplateResult } from "lit";
 import { customElement } from "lit/decorators.js";
+import { BRAND } from "../../brand/Brand";
 import { assetUrl } from "../../core/AssetUrls";
 import { NavNotificationsController } from "./NavNotificationsController";
 
@@ -86,14 +87,21 @@ export class MobileNavBar extends LitElement {
         >
           <div class="flex flex-col items-center gap-1">
             <img
-              src=${assetUrl("images/OpenFrontLogo.svg")}
-              alt="OpenFront"
+              src=${assetUrl(BRAND.assets.logo)}
+              alt=${BRAND.name}
               class="w-auto h-auto max-w-[220px] max-h-[4.5rem]"
             />
             <div
               id="game-version"
               class="l-header__highlightText text-center"
             ></div>
+            <a
+              href=${BRAND.upstream.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-[10px] text-white/40 hover:text-white/70 transition-colors"
+              >${BRAND.upstream.basedOn}</a
+            >
           </div>
         </div>
         <!-- Mobile Navigation Menu Items (same order as the desktop bar) -->
@@ -102,23 +110,25 @@ export class MobileNavBar extends LitElement {
           data-page="page-play"
           data-i18n="main.play"
         ></button>
-        <div
-          class="no-crazygames nav-menu-item flex items-center w-full cursor-pointer"
-          data-page="page-item-store"
-          @click=${this._notifications.onStoreClick}
-        >
-          <button class="${MOBILE_ITEM}" data-i18n="main.store"></button>
-          ${this._notifications.showStoreDot()
-            ? this._renderDot("bg-red-500")
-            : ""}
-        </div>
-        <button
-          class="${MOBILE_ITEM} ${currentPage === "page-inventory"
-            ? "active"
-            : ""}"
-          data-page="page-inventory"
-          data-i18n="main.inventory"
-        ></button>
+        ${BRAND.monetisation.store
+          ? html`<div
+                class="no-crazygames nav-menu-item flex items-center w-full cursor-pointer"
+                data-page="page-item-store"
+                @click=${this._notifications.onStoreClick}
+              >
+                <button class="${MOBILE_ITEM}" data-i18n="main.store"></button>
+                ${this._notifications.showStoreDot()
+                  ? this._renderDot("bg-red-500")
+                  : ""}
+              </div>
+              <button
+                class="${MOBILE_ITEM} ${currentPage === "page-inventory"
+                  ? "active"
+                  : ""}"
+                data-page="page-inventory"
+                data-i18n="main.inventory"
+              ></button>`
+          : nothing}
         <button
           class="${MOBILE_ITEM}"
           data-page="page-leaderboard"

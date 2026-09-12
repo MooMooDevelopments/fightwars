@@ -63,7 +63,7 @@ describe("Steam login", () => {
   // exercise SteamSDK's normalisation end-to-end through Auth.ts, so they
   // mock the raw bridge rather than steamSDK.getTicket directly.
   it("signs in via /auth/steam when the bridge returns a legacy string ticket", async () => {
-    (window as any).openfrontDesktop = {
+    (window as any).fightwarsDesktop = {
       steam: {
         getAuthTicket: vi.fn().mockResolvedValue("legacyhexticket"),
         getUser: vi.fn(),
@@ -91,12 +91,12 @@ describe("Steam login", () => {
       expect(header).toBe(`Bearer ${jwt}`);
       expect(getDesktopSessionState()).toEqual({ status: "signed-in" });
     } finally {
-      delete (window as any).openfrontDesktop;
+      delete (window as any).fightwarsDesktop;
     }
   });
 
   it("yields signed-out/steam-unavailable without throwing when the bridge returns a legacy null", async () => {
-    (window as any).openfrontDesktop = {
+    (window as any).fightwarsDesktop = {
       steam: {
         getAuthTicket: vi.fn().mockResolvedValue(null),
         getUser: vi.fn(),
@@ -113,7 +113,7 @@ describe("Steam login", () => {
         reason: "steam-unavailable",
       });
     } finally {
-      delete (window as any).openfrontDesktop;
+      delete (window as any).fightwarsDesktop;
     }
   });
 
@@ -196,7 +196,7 @@ describe("Steam login", () => {
   // end, not just at the SDK, because it is /auth/steam that would receive it.
   it("never POSTs /auth/steam for a malformed success from the bridge", async () => {
     vi.spyOn(steamSDK, "isOnSteam").mockReturnValue(true);
-    (window as any).openfrontDesktop = {
+    (window as any).fightwarsDesktop = {
       steam: {
         getAuthTicket: vi.fn().mockResolvedValue({ ok: true, ticket: 1234 }),
         getUser: vi.fn(),

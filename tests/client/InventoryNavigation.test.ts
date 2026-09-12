@@ -12,6 +12,19 @@ import { PlayPage } from "../../src/client/components/PlayPage";
 import type { UserMeResponse } from "../../src/core/ApiSchemas";
 import type { Cosmetics } from "../../src/core/CosmeticSchemas";
 
+// FightWars ships with the store off (BRAND.monetisation.store === false), so
+// the purchase UI renders nothing by default. This suite covers the store
+// code paths themselves, so run it with the switch on.
+vi.mock("../../src/brand/Brand", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/brand/Brand")>();
+  return {
+    BRAND: {
+      ...actual.BRAND,
+      monetisation: { ...actual.BRAND.monetisation, store: true },
+    },
+  };
+});
+
 if (!("ResizeObserver" in globalThis)) {
   class ResizeObserverStub {
     observe() {}

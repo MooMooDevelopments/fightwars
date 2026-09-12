@@ -475,7 +475,7 @@ export async function updateUsername(
 }
 
 // GET /creators/code/:code — public lookup for a creator by their code
-// (Creator Code programme), e.g. to preview/prefill an openfront.io/c/CODE
+// (Creator Code programme), e.g. to preview/prefill a <site>/c/CODE
 // share link before binding. No auth. 404 means the code doesn't resolve to
 // any (active) creator; folds into null along with every other failure —
 // callers can't act on the difference.

@@ -1,4 +1,5 @@
 import version from "resources/version.txt?raw";
+import { BRAND } from "../brand/Brand";
 import { ClientEnv } from "./ClientEnv";
 
 // A build HAS a version only if it was tagged. resources/version.txt ships as
@@ -92,7 +93,8 @@ export function renderNavVersion(root: ParentNode = document): number {
   const elements = root.querySelectorAll(NAV_VERSION_SELECTOR);
   const label = taggedGameVersion(version);
   elements.forEach((el) => {
-    (el as HTMLElement).style.fontFamily = '"OpenFront", Inter, sans-serif';
+    (el as HTMLElement).style.fontFamily =
+      `"${BRAND.assets.displayFontFamily}", Inter, sans-serif`;
     el.textContent = label;
   });
   return elements.length;

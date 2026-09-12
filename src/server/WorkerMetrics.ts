@@ -5,7 +5,7 @@ import {
 } from "@opentelemetry/sdk-metrics";
 import * as dotenv from "dotenv";
 import { GameManager } from "./GameManager";
-import { getOtelResource, getPromLabels } from "./OtelResource";
+import { ATTR_PREFIX, getOtelResource, getPromLabels } from "./OtelResource";
 import { ServerEnv } from "./ServerEnv";
 
 dotenv.config();
@@ -43,25 +43,28 @@ export function initWorkerMetrics(gameManager: GameManager): void {
 
   // Create observable gauges
   const activeGamesGauge = meter.createObservableGauge(
-    "openfront.active_games.gauge",
+    `${ATTR_PREFIX}.active_games.gauge`,
     {
       description: "Number of active games on this worker",
     },
   );
 
   const connectedClientsGauge = meter.createObservableGauge(
-    "openfront.connected_clients.gauge",
+    `${ATTR_PREFIX}.connected_clients.gauge`,
     {
       description: "Number of connected clients on this worker",
     },
   );
 
-  const desyncsGauge = meter.createObservableGauge("openfront.desyncs.gauge", {
-    description: "Number of detected desyncs on active games on this worker",
-  });
+  const desyncsGauge = meter.createObservableGauge(
+    `${ATTR_PREFIX}.desyncs.gauge`,
+    {
+      description: "Number of detected desyncs on active games on this worker",
+    },
+  );
 
   const memoryUsageGauge = meter.createObservableGauge(
-    "openfront.memory_usage.bytes",
+    `${ATTR_PREFIX}.memory_usage.bytes`,
     {
       description: "Current memory usage of the worker process in bytes",
     },

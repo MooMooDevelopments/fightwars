@@ -58,7 +58,7 @@ export interface BootInterruptInputs {
  *
  * `pathname === "/"` alone is wrong in the Steam build, and silently so. The
  * desktop shell serves the renderer from its own privileged scheme at
- * `app://openfront/index.html` (openfront-desktop src/main/protocol.ts,
+ * `<BRAND.desktop.scheme>/index.html` (desktop shell repo src/main/protocol.ts,
  * GAME_URL), so the pathname there is ALWAYS "/index.html" and a bare "/" test
  * is never true. That is not new — the TEMPORARY#### rename prompt and the
  * unclaimed-rewards popup have both been dead on Steam for the same reason —

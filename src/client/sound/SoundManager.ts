@@ -1,4 +1,5 @@
 import { Howl } from "howler";
+import { BRAND } from "../../brand/Brand";
 import { assetUrl } from "../../core/AssetUrls";
 import { EventBus } from "../../core/EventBus";
 import { AudioMixer, PlayableCategory } from "./AudioMixer";
@@ -31,22 +32,27 @@ export class SoundManager {
     private readonly eventBus: EventBus,
     private readonly mixer: AudioMixer,
   ) {
-    this.safely("initialize background music", () => {
-      // One track that keeps looping — including through the victory and
-      // defeat cues — so a game never hard-cuts to silence, per the sound
-      // designer's note. The menu theme (MenuMusic.ts) covers the home page.
-      this.backgroundMusic = new Howl({
-        src: [assetUrl("sounds/music/gameplay.mp3")],
-        loop: true,
-        volume: 0,
-        // Stream it. Howler's default Web Audio path XHRs the whole file and
-        // decodes it to PCM before the first note, and this track is 4.6 MB,
-        // so play() queued behind tens of seconds of silence at game start on
-        // a slow connection. Cues and ambience stay on Web Audio.
-        html5: true,
+    // The track is whatever BRAND ships; null means no music at all, and
+    // every method below tolerates the Howl being absent.
+    const track = BRAND.assets.gameplayMusic;
+    if (track !== null) {
+      this.safely("initialize background music", () => {
+        // One track that keeps looping — including through the victory and
+        // defeat cues — so a game never hard-cuts to silence, per the sound
+        // designer's note. The menu theme (MenuMusic.ts) covers the home page.
+        this.backgroundMusic = new Howl({
+          src: [assetUrl(track)],
+          loop: true,
+          volume: 0,
+          // Stream it. Howler's default Web Audio path XHRs the whole file and
+          // decodes it to PCM before the first note, and this track is 4.6 MB,
+          // so play() queued behind tens of seconds of silence at game start on
+          // a slow connection. Cues and ambience stay on Web Audio.
+          html5: true,
+        });
+        this.mixer.register(this.backgroundMusic, "music");
       });
-      this.mixer.register(this.backgroundMusic, "music");
-    });
+    }
 
     this.onPlaySoundEffect = (e) => this.mixer.play(e.effect);
     this.onSetAmbience = (e) => this.setAmbience(e.track, e.gain);

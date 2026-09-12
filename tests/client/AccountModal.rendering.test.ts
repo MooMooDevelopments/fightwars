@@ -96,7 +96,7 @@ describe("AccountModal — rendering", () => {
   afterEach(() => {
     document.body.removeChild(modal);
     vi.clearAllMocks();
-    delete (window as { openfrontDesktop?: unknown }).openfrontDesktop;
+    delete (window as { fightwarsDesktop?: unknown }).fightwarsDesktop;
   });
 
   // Directly install a resolved userMeResponse and flip off the loading state,
@@ -183,7 +183,7 @@ describe("AccountModal — rendering", () => {
   });
 
   // Desktop re-entry to the account-linking gate. The Electron preload exposes
-  // `window.openfrontDesktop.showLinkGate()` for exactly this purpose; it is
+  // `window.fightwarsDesktop.showLinkGate()` for exactly this purpose; it is
   // absent entirely on plain web, which is the signal the action guards on.
   describe("desktop link-gate action", () => {
     function findLinkGateButton(): HTMLButtonElement | undefined {
@@ -194,7 +194,7 @@ describe("AccountModal — rendering", () => {
 
     it("renders and calls showLinkGate() when the desktop bridge is present", async () => {
       const showLinkGate = vi.fn(async () => undefined);
-      (window as unknown as { openfrontDesktop: unknown }).openfrontDesktop = {
+      (window as unknown as { fightwarsDesktop: unknown }).fightwarsDesktop = {
         showLinkGate,
       };
 
@@ -235,7 +235,7 @@ describe("AccountModal — rendering", () => {
     // actually call, not a sibling property. A bridge exposing `linkGate` but
     // no callable `showLinkGate` must not render a dead button.
     it("does not render when the bridge exists but showLinkGate is not a function", async () => {
-      (window as unknown as { openfrontDesktop: unknown }).openfrontDesktop = {
+      (window as unknown as { fightwarsDesktop: unknown }).fightwarsDesktop = {
         linkGate: { open: vi.fn() },
       };
 
@@ -292,7 +292,7 @@ describe("AccountModal — rendering", () => {
   });
 
   // OPE-343. On the desktop shell the provider buttons cannot run an OAuth
-  // redirect (the redirect_uri would be app://openfront), so Auth.ts routes
+  // redirect (the redirect_uri would be app://fightwars), so Auth.ts routes
   // them through the shell's browser link flow -- and the captions must say
   // so, keyed on the same bridge check Auth.ts routes on. On the web the
   // login screen is untouched.
@@ -304,7 +304,7 @@ describe("AccountModal — rendering", () => {
     }
 
     it("captions the provider buttons as continuing in the browser when the bridge is present", async () => {
-      (window as unknown as { openfrontDesktop: unknown }).openfrontDesktop = {
+      (window as unknown as { fightwarsDesktop: unknown }).fightwarsDesktop = {
         showLinkGate: vi.fn(async () => undefined),
       };
       modal.open();
@@ -340,7 +340,7 @@ describe("AccountModal — rendering", () => {
     // update prompt), so the web caption is wrong on every shell, bridge or
     // not.
     it("keeps the browser captions when the bridge lacks showLinkGate", async () => {
-      (window as unknown as { openfrontDesktop: unknown }).openfrontDesktop = {
+      (window as unknown as { fightwarsDesktop: unknown }).fightwarsDesktop = {
         linkGate: {},
       };
       modal.open();
@@ -356,7 +356,7 @@ describe("AccountModal — rendering", () => {
     // and its caption says so. Matched on the whole caption, since the web
     // key is a prefix of the desktop one.
     it("captions the Google link button as opening the website on desktop", async () => {
-      (window as unknown as { openfrontDesktop: unknown }).openfrontDesktop = {
+      (window as unknown as { fightwarsDesktop: unknown }).fightwarsDesktop = {
         showLinkGate: vi.fn(async () => undefined),
       };
       await setLoggedInUser(
@@ -466,7 +466,7 @@ describe("AccountModal — rendering", () => {
   it("offers no Steam sign-in or link inside the desktop shell", async () => {
     // A shell player already holds the Steam identity through the native
     // ticket, so both surfaces would be no-ops that look like options.
-    (window as unknown as { openfrontDesktop: unknown }).openfrontDesktop = {};
+    (window as unknown as { fightwarsDesktop: unknown }).fightwarsDesktop = {};
     await setLoggedInUser(
       makeUserMe({
         discord: {

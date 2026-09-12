@@ -6,6 +6,7 @@ import {
   type PaymentsCheckoutRequest,
   type PaymentsCheckoutResult,
 } from "./Api";
+import { desktopBridge } from "./DesktopShell";
 import { showToast, translateText } from "./Utils";
 
 export type { PaymentsProvider };
@@ -60,13 +61,13 @@ export interface SteamMicroTxnBridge {
   consumePending(): Promise<MicroTxnAuthorization[]>;
 }
 
-// window.openfrontDesktop is declared `unknown` by DesktopShell.ts (kept loose
+// The desktop bridge is typed `unknown` by DesktopShell.ts (kept loose
 // there on purpose), so narrow it locally -- same convention SteamSDK.ts
 // follows, and for the same reason (a second `declare global` with a different
 // type triggers TS2717).
 function steamBridge(): { microTxn?: SteamMicroTxnBridge } | undefined {
   if (typeof window === "undefined") return undefined;
-  const desktop = window.openfrontDesktop as
+  const desktop = desktopBridge() as
     | { steam?: { microTxn?: SteamMicroTxnBridge } }
     | undefined;
   return desktop?.steam;

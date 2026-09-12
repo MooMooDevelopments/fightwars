@@ -8,7 +8,7 @@
  * Includes orientation computation, construction animation, and a per-tile
  * Uint8Array ready for GPU upload.
  *
- * Ported verbatim from openfront-workspace/packages/shim/src/railroad-cache.ts;
+ * Ported verbatim from the upstream workspace's packages/shim/src/railroad-cache.ts;
  * only imports changed (types come from src/core/game/GameUpdates instead of
  * the shim's local types module).
  */

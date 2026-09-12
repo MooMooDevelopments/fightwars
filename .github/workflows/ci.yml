@@ -7,6 +7,9 @@ on:
   pull_request:
   push:
     branches: [main]
+  schedule:
+    # Nightly: the full 40-minute-match determinism run.
+    - cron: "0 3 * * *"
 
 permissions: {}
 
@@ -24,12 +27,14 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 24
-      - run: npm ci
+          cache: "npm"
+      - run: npm ci --ignore-scripts
       - run: npm run build-prod
       - uses: actions/upload-artifact@v7
         with:
           path: out/index.html
           retention-days: 1
+
   test:
     name: 🔬 Test
     runs-on: ubuntu-latest
@@ -43,8 +48,62 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 24
-      - run: npm ci
+          cache: "npm"
+      - run: npm ci --ignore-scripts
       - run: npm run test:coverage
+
+  determinism:
+    # THE gate. Two processes replay one intent log and must produce
+    # byte-identical state digests. See tests/determinism.test.ts.
+    name: 🔁 Determinism
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: "npm"
+      - run: npm ci --ignore-scripts
+      - name: Quick mode (every push)
+        if: github.event_name != 'schedule'
+        run: npm run test:determinism
+      - name: Full 40-minute match (nightly)
+        if: github.event_name == 'schedule'
+        run: npm run test:determinism:full
+
+  perf:
+    # Fails when the headless sim regresses past the budgets in
+    # scripts/perfGate.ts. Numbers are recorded in BUILD-STATE.md.
+    name: ⏱️ Perf gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: "npm"
+      - run: npm ci --ignore-scripts
+      - run: npm run perf:gate
+
+  licenses:
+    # Every shipped dependency must be AGPL-3.0-compatible.
+    name: ⚖️ Dependency licences
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: "npm"
+      - run: npm ci --ignore-scripts
+      - run: npm run licenses:check
 
   lint:
     name: 🔍 Lint
@@ -56,7 +115,7 @@ jobs:
         with:
           node-version: "24"
           cache: "npm"
-      - run: npm ci
+      - run: npm ci --ignore-scripts
       - run: npm run lint:github
 
   prettier:
@@ -69,7 +128,7 @@ jobs:
         with:
           node-version: "24"
           cache: "npm"
-      - run: npm ci
+      - run: npm ci --ignore-scripts
       - run: npx prettier --check .
 
   gen-maps:
@@ -86,7 +145,7 @@ jobs:
         with:
           go-version-file: map-generator/go.mod
           cache-dependency-path: map-generator/go.sum
-      - run: npm ci
+      - run: npm ci --ignore-scripts
       - run: npm run gen-maps
       - name: Check for diff
         run: |

@@ -3,6 +3,19 @@ import "../../src/client/components/CustomCurrencyCard";
 import type { CustomCurrencyCard } from "../../src/client/components/CustomCurrencyCard";
 import { startPurchase } from "../../src/client/Payments";
 
+// FightWars ships with the store off (BRAND.monetisation.store === false), so
+// the purchase UI renders nothing by default. This suite covers the store
+// code paths themselves, so run it with the switch on.
+vi.mock("../../src/brand/Brand", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/brand/Brand")>();
+  return {
+    BRAND: {
+      ...actual.BRAND,
+      monetisation: { ...actual.BRAND.monetisation, store: true },
+    },
+  };
+});
+
 vi.mock("../../src/client/Payments", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../src/client/Payments")>()),
   startPurchase: vi.fn(),

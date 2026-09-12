@@ -1,5 +1,6 @@
 import { LitElement, html } from "lit";
 import { customElement } from "lit/decorators.js";
+import { BRAND } from "../../../brand/Brand";
 import { adGatekeeper } from "../../AdGatekeeper";
 import { Controller } from "../../Controller";
 import { GameView } from "../../view";
@@ -28,6 +29,7 @@ export class InGamePromo extends LitElement implements Controller {
   init() {}
 
   tick() {
+    if (!BRAND.monetisation.ads) return;
     if (!this.game.inSpawnPhase()) {
       if (!this.bottomRailDestroyed) {
         this.bottomRailDestroyed = true;
@@ -53,6 +55,7 @@ export class InGamePromo extends LitElement implements Controller {
   }
 
   private showAd(): void {
+    if (!BRAND.monetisation.ads) return;
     if (window.innerWidth < 1100) return;
     if (window.innerHeight < 750) return;
 
@@ -118,6 +121,7 @@ export class InGamePromo extends LitElement implements Controller {
   }
 
   public hideAd(): void {
+    if (!BRAND.monetisation.ads) return;
     if (this.adGateOff) {
       this.adGateOff();
       this.adGateOff = null;

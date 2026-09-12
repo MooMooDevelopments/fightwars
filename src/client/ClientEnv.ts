@@ -392,11 +392,11 @@ export class ClientEnv {
  * from /cluster.json) changes this function and both bases follow.
  *
  * When an explicit `serverHost` is configured, target it over TLS. Only the
- * desktop app sets this: it loads the renderer from `app://openfront`, where
- * `window.location.host` is just "openfront" (not a real server), and the
+ * desktop app sets this: it loads the renderer from the app:// scheme
+ * (BRAND.desktop.scheme), where `window.location.host` is no real server, and the
  * game-server host is NOT derivable from the API audience — it is the bare
- * audience host in prod (`openfront.io`) but a branch-variable subdomain on
- * dev/staging (default `main.openfront.dev`, or `<branch>.openfront.dev`). So
+ * audience host in prod (the apex domain) but a branch-variable subdomain on
+ * dev/staging (default `main.<dev domain>`, or `<branch>.<dev domain>`). So
  * the host is injected explicitly rather than derived.
  *
  * When no `serverHost` is configured — the normal web build — the game server

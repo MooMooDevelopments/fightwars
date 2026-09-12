@@ -310,7 +310,7 @@ export function stateDigest(game: Game): string {
  * from its own PseudoRandom, seeded from the run seed, so a given seed always
  * produces the same intent log for the same code.
  */
-class ScriptedHuman {
+export class ScriptedHuman {
   private rng: PseudoRandom;
   private nextActionTick = 0;
 

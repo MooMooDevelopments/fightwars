@@ -1,5 +1,5 @@
 {
-  "name": "openfront-client",
+  "name": "fightwars",
   "scripts": {
     "build-dev": "concurrently \"tsc --noEmit\" \"vite build --mode development\"",
     "build-prod": "concurrently --kill-others-on-fail \"tsc --noEmit\" \"vite build\" && tsx scripts/buildAssetHashes.ts",
@@ -15,6 +15,9 @@
     "test": "vitest run && vitest run tests/server",
     "test:determinism": "vitest run tests/determinism.test.ts",
     "test:determinism:full": "cross-env DETERMINISM_MAP=world DETERMINISM_BOTS=150 DETERMINISM_HUMANS=8 DETERMINISM_TICKS=24000 vitest run tests/determinism.test.ts",
+    "licenses:check": "tsx scripts/checkLicenses.ts",
+    "perf:gate": "tsx scripts/perfGate.ts",
+    "load:test": "tsx tests/load/LoadTest.ts",
     "test:matchmaking": "node tests/matchmaking/contained.mjs",
     "test:matchmaking:e2e": "node tests/matchmaking/e2e.mjs",
     "test:matchmaking:cancel": "node tests/matchmaking/e2e-cancel.mjs",

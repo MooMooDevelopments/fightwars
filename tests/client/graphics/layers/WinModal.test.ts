@@ -9,6 +9,20 @@ import "../../../../src/client/hud/layers/WinModal";
 import type { WinModal } from "../../../../src/client/hud/layers/WinModal";
 import { RankedType } from "../../../../src/core/game/Game";
 
+// FightWars ships with the store off (BRAND.monetisation.store === false), so
+// the purchase UI renders nothing by default. This suite covers the store
+// code paths themselves, so run it with the switch on.
+vi.mock("../../../../src/brand/Brand", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../../../../src/brand/Brand")>();
+  return {
+    BRAND: {
+      ...actual.BRAND,
+      monetisation: { ...actual.BRAND.monetisation, store: true },
+    },
+  };
+});
+
 vi.mock("../../../../src/client/Utils", () => ({
   translateText: vi.fn((key: string) => {
     const translations: Record<string, string> = {

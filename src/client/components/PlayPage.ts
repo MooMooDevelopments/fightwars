@@ -1,5 +1,6 @@
-import { LitElement, html } from "lit";
+import { LitElement, html, nothing } from "lit";
 import { customElement } from "lit/decorators.js";
+import { BRAND } from "../../brand/Brand";
 import { assetUrl } from "../../core/AssetUrls";
 import "./CosmeticBackground";
 import "./NavAccountMenu";
@@ -59,8 +60,8 @@ export class PlayPage extends LitElement {
               class="col-start-2 flex items-center justify-center text-malibu-blue min-w-0"
             >
               <img
-                src=${assetUrl("images/OpenFrontLogo.svg")}
-                alt="OpenFront"
+                src=${assetUrl(BRAND.assets.logo)}
+                alt=${BRAND.name}
                 class="h-full w-auto"
               />
             </div>
@@ -120,10 +121,12 @@ export class PlayPage extends LitElement {
         <game-mode-selector></game-mode-selector>
 
         <!-- Desktop gets the compact footer button instead. -->
-        <steam-wishlist
-          campaign="home_mobile"
-          class="block px-2 pb-4 lg:hidden"
-        ></steam-wishlist>
+        ${BRAND.monetisation.steam
+          ? html`<steam-wishlist
+              campaign="home_mobile"
+              class="block px-2 pb-4 lg:hidden"
+            ></steam-wishlist>`
+          : nothing}
       </div>
     `;
   }

@@ -94,7 +94,7 @@ const BUTTON_BASE =
  *
  * Security note — this is the point of the whole component. The link token
  * is opaque and carries nothing about either account, and on a shared
- * machine the browser may be logged into someone else's OpenFront session.
+ * machine the browser may be logged into someone else's game session.
  * So the two names shown here come from two different, specific places, and
  * mixing them up is the defect this component exists to avoid:
  *   - the Steam persona comes from GET /auth/steam/link_ticket/:token

@@ -1,31 +1,37 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="proprietary/images/OpenFrontLogoDark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="proprietary/images/OpenFrontLogo.svg">
-    <img src="proprietary/images/OpenFrontLogo.svg" alt="OpenFrontIO Logo" width="300">
+    <source media="(prefers-color-scheme: dark)" srcset="resources/images/FightWarsLogo.svg">
+    <source media="(prefers-color-scheme: light)" srcset="resources/images/FightWarsLogoDark.svg">
+    <img src="resources/images/FightWarsLogo.svg" alt="FightWars logo" width="300">
   </picture>
 </p>
 
-[OpenFront.io](https://openfront.io/) is an online real-time strategy game focused on territorial control and alliance building. Players compete to expand their territory, build structures, and form strategic alliances in various maps based on real-world geography.
+**FightWars** is a real-time multiplayer strategy game of territorial conquest: spawn, expand,
+build, ally, betray, and take the map before it takes you.
 
-This is a fork/rewrite of WarFront.io. Credit to https://github.com/WarFrontIO.
+FightWars is **based on [OpenFront](https://github.com/openfrontio/OpenFrontIO)** (which is itself a
+fork/rewrite of WarFront.io — credit to https://github.com/WarFrontIO). It is not endorsed by
+OpenFront Inc. Everything that makes it FightWars — the supply-line, terrain, economy, diplomacy,
+doctrine and mode systems — is documented as it lands in `CHANGELOG.md`; the build log lives in
+`BUILD-STATE.md`, every divergence from upstream in `FORK-CHANGES.md`, and the mechanics
+inventory in `docs/MECHANICS.md`.
 
-![CI](https://github.com/openfrontio/OpenFrontIO/actions/workflows/ci.yml/badge.svg)
-[![Crowdin](https://badges.crowdin.net/openfront-mls/localized.svg)](https://crowdin.com/project/openfront-mls)
-[![CLA assistant](https://cla-assistant.io/readme/badge/openfrontio/OpenFrontIO)](https://cla-assistant.io/openfrontio/OpenFrontIO)
+![CI](https://github.com/MooMooDevelopments/fightwars/actions/workflows/ci.yml/badge.svg)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Assets: CC BY-SA 4.0](https://img.shields.io/badge/Assets-CC%20BY--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
 
 ## License
 
-OpenFront source code is licensed under the **GNU Affero General Public License v3.0**
+FightWars source code, like the OpenFront source it is based on, is licensed under the **GNU Affero General Public License v3.0**, with OpenFront's Section 7 additional terms.
 
 Current copyright notices appear in:
 
 - Footer: "© OpenFront and Contributors"
 - Loading screen: "© OpenFront and Contributors"
 
-Modified versions must preserve these notices in reasonably visible locations.
+Modified versions must preserve these notices in reasonably visible locations. FightWars does, and
+additionally shows "Based on OpenFront" on the title screen and offers its complete source from the
+in-game About panel (AGPL §13).
 
 See the [LICENSE](LICENSE) for complete requirements.
 

@@ -4,7 +4,7 @@
     "cancel_subscription_confirm": "Cancel your subscription? You may lose access immediately.",
     "cancel_subscription_confirm_steam": "Your subscription stays active until {date}. Steam subscriptions can't be reactivated once cancelled — to subscribe again you'd buy a new one.",
     "cancel_subscription_confirm_steam_no_date": "Your subscription stays active until the end of the period you've paid for. Steam subscriptions can't be reactivated once cancelled — to subscribe again you'd buy a new one.",
-    "cancel_subscription_failed": "Failed to cancel subscription. Please try again, or manage your billing on the OpenFront website.",
+    "cancel_subscription_failed": "Failed to cancel subscription. Please try again, or manage your billing on the FightWars website.",
     "cancel_subscription_success": "Subscription canceled. Your account now shows your current access.",
     "cancel_subscription_success_steam": "Cancelled — active until {date}.",
     "cancel_subscription_success_steam_no_date": "Cancelled — active until the end of the period you've paid for.",
@@ -17,7 +17,7 @@
     "delete_account_confirm_button": "Permanently Delete",
     "delete_account_confirm_word": "DELETE",
     "delete_account_desc": "Permanently delete your account and all of its data.",
-    "delete_account_failed": "Delete failed, please contact support at support@openfront.io",
+    "delete_account_failed": "Delete failed, please contact support",
     "delete_account_rate_limited": "Account deletion is temporarily unavailable, please try again later.",
     "delete_account_scheduled": "Your account will be deleted in 24 hours. If you change your mind, please contact support to cancel.",
     "delete_account_title": "Delete account",
@@ -26,7 +26,7 @@
     "desktop_login_discord": "Continue with Discord in your browser",
     "desktop_login_google": "Continue with Google in your browser",
     "desktop_login_needs_update": "Signing in needs a newer version of the desktop app. Restart Steam to update, then try again.",
-    "desktop_sign_in_desc": "Signing in opens the OpenFront website in your browser. Sign in there, confirm the link to your Steam account, and the game will pick it up.",
+    "desktop_sign_in_desc": "Signing in opens the FightWars website in your browser. Sign in there, confirm the link to your Steam account, and the game will pick it up.",
     "email_placeholder": "Enter your email address",
     "enter_email_address": "Please enter an email address",
     "failed_to_send_recovery_email": "Failed to send recovery email",
@@ -44,7 +44,7 @@
     "link_google_already_linked": "That Google account is already linked to another player.",
     "link_google_error": "Couldn't link your Google account. Please make sure you're signed in and try again.",
     "link_google_failed": "Couldn't start Google linking. Please try again.",
-    "link_google_on_web": "Link Google on the OpenFront website",
+    "link_google_on_web": "Link Google on the FightWars website",
     "link_google_success": "Google account linked.",
     "link_steam": "Link Steam Account",
     "link_steam_error": "Couldn't link your Steam account. Please make sure you're signed in and try again.",
@@ -58,13 +58,13 @@
     "login_deleted": "This account has been deleted.",
     "login_email_exists": "You already have an account with this email. Sign in to it, then link this account in settings.",
     "login_error": "We couldn't verify that sign-in. Please try again.",
-    "login_no_account": "No OpenFront account uses this Steam account yet. Sign in with your existing account and link Steam from settings, or launch the game on Steam.",
+    "login_no_account": "No FightWars account uses this Steam account yet. Sign in with your existing account and link Steam from settings, or launch the game on Steam.",
     "manage_subscription": "Manage",
     "manage_subscription_on_steam": "Billed through Steam. Manage opens your Steam subscriptions page.",
     "manage_subscription_on_steam_ending": "Cancelled — active until {date}. Manage opens your Steam subscriptions page.",
     "manage_subscription_on_steam_ending_no_date": "Cancelled — active until the end of the period you've paid for. Manage opens your Steam subscriptions page.",
     "manage_subscription_on_steam_no_tier_change": "Billed through Steam. Manage opens your Steam subscriptions page. To switch tiers, cancel and subscribe to the new tier after your current month ends.",
-    "manage_subscription_on_web": "Manage or change your billing on the OpenFront website.",
+    "manage_subscription_on_web": "Manage or change your billing on the FightWars website.",
     "marketing_desc": "Occasional news, events, and game updates. Unsubscribe anytime.",
     "marketing_no_email": "Link an email to your account to subscribe to updates.",
     "marketing_no_email_steam": "Steam doesn't share your email address with us, so there's nothing to send updates to.",
@@ -593,8 +593,8 @@
     "spectating": "Spectating"
   },
   "desktop_session": {
-    "generic": "Couldn't sign in to your OpenFront account",
-    "network": "Can't reach OpenFront. Check your connection.",
+    "generic": "Couldn't sign in to your FightWars account",
+    "network": "Can't reach FightWars. Check your connection.",
     "retry": "Retry",
     "retrying": "Signing in…",
     "steam_backend": "Steam is having trouble signing you in. Try again shortly.",
@@ -924,7 +924,7 @@
     "preset_colorblind_desc": "Colorblind-friendly territory and border colors",
     "preset_custom": "Custom",
     "preset_default": "Default",
-    "preset_default_desc": "The standard OpenFront look",
+    "preset_default_desc": "The standard FightWars look",
     "preset_delete_confirm": "Delete preset \"{name}\"?",
     "preset_evans_pick": "Evan's Pick",
     "preset_evans_pick_desc": "The settings Evan actually plays with",
@@ -1042,7 +1042,7 @@
     "radial_title": "Radial menu",
     "table_action": "Action",
     "table_key": "Key",
-    "troubleshooting_desc": "If you experience performance issues, crashes, or other problems while playing OpenFront, please visit our Troubleshooting page for help diagnosing and fixing common issues:",
+    "troubleshooting_desc": "If you experience performance issues, crashes, or other problems while playing FightWars, please visit our Troubleshooting page for help diagnosing and fixing common issues:",
     "ui_attack_ratio": "Attack ratio - The amount of troops that will be used when you attack. You can adjust the attack ratio using the slider. Having more attacking troops than defending troops will make you lose fewer troops in the attack, while having less will increase the damage dealt to your attacking troops. The effect doesn't go beyond ratios of 2:1.",
     "ui_control": "Control panel",
     "ui_control_desc": "The control panel contains the following elements:",
@@ -1062,7 +1062,7 @@
     "ui_wilderness": "Wilderness",
     "ui_your_team": "Your team:",
     "video_tutorial": "Video Tutorial",
-    "video_tutorial_title": "OpenFront.io Tutorial"
+    "video_tutorial_title": "FightWars Tutorial"
   },
   "host_modal": {
     "anonymous_players": "Anonymous players",
@@ -1134,14 +1134,14 @@
     "got_it": "Got it",
     "how": "How",
     "later": "Later",
-    "modal_desc": "Your browser doesn't support fullscreen, but you can add OpenFront to your Home Screen for an immersive experience:",
+    "modal_desc": "Your browser doesn't support fullscreen, but you can add FightWars to your Home Screen for an immersive experience:",
     "modal_title": "Fullscreen on iOS",
     "never": "Never",
     "step_add_to_home_label": "Add to Home Screen",
     "step_open": "Open from your Home Screen — launches fullscreen without the address bar",
     "step_scroll_and_tap": "Scroll down and tap",
     "step_share": "Tap the Share button in your browser",
-    "text": "For fullscreen, add OpenFront to your Home Screen"
+    "text": "For fullscreen, add FightWars to your Home Screen"
   },
   "kick_reason": {
     "admin": "Kicked by an admin",
@@ -1220,7 +1220,7 @@
   "main": {
     "account": "Account",
     "clans": "Clans",
-    "copyright": "© OpenFront™ and Contributors",
+    "copyright": "© OpenFront and Contributors",
     "create": "Create Lobby",
     "discord_avatar_alt": "Discord profile avatar",
     "github": "GitHub",
@@ -1242,7 +1242,7 @@
     "solo": "Solo",
     "store": "Store",
     "terms_of_service": "Terms of Service",
-    "title": "OpenFront (ALPHA)",
+    "title": "FightWars",
     "troubleshooting": "Troubleshooting",
     "tutorial": "Tutorial",
     "user_avatar_alt": "{username}'s avatar",
@@ -1415,7 +1415,7 @@
     "dismiss": "Dismiss",
     "error": "Couldn't save that. Please try again.",
     "no": "No thanks",
-    "title": "Keep up with OpenFront?",
+    "title": "Keep up with FightWars?",
     "yes": "Yes please"
   },
   "matchmaking_modal": {
@@ -1475,7 +1475,7 @@
   },
   "news_box": {
     "dismiss": "Dismiss",
-    "firefox_warning": "OpenFront.io doesn't perform well with [Firefox-based browsers](https://simple.wikipedia.org/wiki/Web_browsers_based_on_Firefox). We recommend you to use a [Chromium-based browser](https://en.wikipedia.org/wiki/Chromium_(web_browser)#Browsers_based_on_Chromium) for best performance.",
+    "firefox_warning": "FightWars doesn't perform well with [Firefox-based browsers](https://simple.wikipedia.org/wiki/Web_browsers_based_on_Firefox). We recommend you to use a [Chromium-based browser](https://en.wikipedia.org/wiki/Chromium_(web_browser)#Browsers_based_on_Chromium) for best performance.",
     "go_to_item": "Go to item {num}",
     "news": "NEWS",
     "tournament": "TOURNAMENT",
@@ -1713,9 +1713,9 @@
     "waiting_for_players": "Waiting for players"
   },
   "purchase_nudge": {
-    "body": "Looks like you enjoy playing OpenFront! Please consider supporting us by making a purchase — any purchase makes you ad-free for life.",
+    "body": "Looks like you enjoy playing FightWars! Please consider supporting us by making a purchase — any purchase makes you ad-free for life.",
     "close": "Close",
-    "title": "Enjoying OpenFront?",
+    "title": "Enjoying FightWars?",
     "visit_store": "Visit store"
   },
   "radial_menu": {
@@ -1778,7 +1778,7 @@
     "reason_expired": "This link has expired. Please try again from Steam.",
     "reason_rate_limited": "Too many attempts. Please wait {seconds, plural, =0 {a moment} one {# second} other {# seconds}} and try again.",
     "reason_steam_has_progress": "This Steam account already has its own progress and can't be merged.",
-    "reason_steam_linked_elsewhere": "This Steam account is already linked to a different OpenFront account.",
+    "reason_steam_linked_elsewhere": "This Steam account is already linked to a different FightWars account.",
     "success": "Your Steam account is now linked.",
     "title": "Link Steam Account"
   },
@@ -1788,9 +1788,9 @@
   },
   "steam_wishlist": {
     "cta": "Wishlist now",
-    "on_steam": "OpenFront on Steam",
+    "on_steam": "FightWars on Steam",
     "release": "Available Q3 2026",
-    "title": "Wishlist OpenFront on Steam!"
+    "title": "Wishlist FightWars on Steam!"
   },
   "store": {
     "already_owned": "You already own this item. Nothing was charged.",
@@ -1867,7 +1867,7 @@
     "subscription_purchase_success": "Subscription activated!",
     "subscriptions": "Subscriptions",
     "switch_button": "Switch",
-    "tier_change_steam_needs_desktop": "Your subscription is billed through Steam. Change it from the OpenFront app on Steam, or manage it in your Steam account settings.",
+    "tier_change_steam_needs_desktop": "Your subscription is billed through Steam. Change it from the FightWars app on Steam, or manage it in your Steam account settings.",
     "tier_change_unavailable_steam": "To switch tiers on Steam, cancel your subscription in your Steam account settings and subscribe to the new tier after your current month ends.",
     "title": "Store",
     "tribe_boost_button": "Boost",
@@ -1944,7 +1944,7 @@
     "browser": "Browser",
     "canvas_2d_no_gpu": "Canvas 2D (no GPU)",
     "charging": "Charging",
-    "chromium_tip": "OpenFront runs best on Chromium-based browsers.",
+    "chromium_tip": "FightWars runs best on Chromium-based browsers.",
     "copied_to_clipboard": "Info copied to the clipboard! Feel free to share it on our Discord if you need help.",
     "device_pixel_ratio": "Device Pixel Ratio",
     "environment": "Environment",
@@ -2035,8 +2035,8 @@
     "warship": "Warship"
   },
   "update_available": {
-    "desktop": "A new version of OpenFront is available. It will download in the background; reload from the update bar once it is ready.",
-    "message": "A new version of OpenFront is available. The page will now refresh to update."
+    "desktop": "A new version of FightWars is available. It will download in the background; reload from the update bar once it is ready.",
+    "message": "A new version of FightWars is available. The page will now refresh to update."
   },
   "user_setting": {
     "alert_frame_desc": "Toggle the alert frame. When enabled, the frame will be displayed when you are betrayed or attacked over land.",
@@ -2259,7 +2259,7 @@
     "other_won": "{player} has won!",
     "requeue": "Play Again",
     "spectate": "Spectate",
-    "support_openfront": "Support OpenFront!",
+    "support_openfront": "Support FightWars!",
     "territory_pattern": "Purchase a territory skin to go ad-free!",
     "you_won": "You Won!",
     "your_team": "Your team won!",

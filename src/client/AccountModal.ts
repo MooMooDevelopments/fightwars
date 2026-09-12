@@ -274,7 +274,7 @@ export class AccountModal extends BaseModal {
   }
 
   // Re-entry to the desktop shell's account-linking gate shown at first
-  // launch. Absent entirely on plain web (no window.openfrontDesktop there),
+  // launch. Absent entirely on plain web (no desktop bridge on window there),
   // present whenever the desktop bridge exposes a callable showLinkGate —
   // see desktopLinkGate() in DesktopShell.ts for why the guard is scoped
   // that way. Needed because the desktop app's menu bar will eventually be

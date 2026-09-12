@@ -15,7 +15,7 @@ vi.mock("../../src/client/InGameModal", () => ({
 
 // The three provider call sites in Auth.ts, in both directions (OPE-343).
 //
-// On the desktop shell `window.location.href` is `app://openfront/...`, so
+// On the desktop shell `window.location.href` is `app://fightwars/...`, so
 // the OAuth redirect_uri the web path builds is one the API's allowlist
 // refuses -- the player got a browser tab showing a bare JSON 400. There the
 // call sites must go through the shell's browser link flow (the bridge's
@@ -64,7 +64,7 @@ const realLocationDescriptor = Object.getOwnPropertyDescriptor(
 // What a real desktop launch reports. Only href matters to the code under
 // test, but it must be the shell's own origin: that is the value that used to
 // leak into redirect_uri.
-const DESKTOP_HREF = "app://openfront/index.html#modal=account";
+const DESKTOP_HREF = "app://fightwars/index.html#modal=account";
 const WEB_HREF = "https://openfront.dev/#modal=account";
 
 function stubLocation(href: string): { href: string } {
@@ -88,7 +88,7 @@ beforeEach(async () => {
 
 afterEach(() => {
   Object.defineProperty(window, "location", realLocationDescriptor);
-  delete (window as { openfrontDesktop?: unknown }).openfrontDesktop;
+  delete (window as { fightwarsDesktop?: unknown }).fightwarsDesktop;
 });
 
 describe("provider login on the desktop shell", () => {
@@ -99,7 +99,7 @@ describe("provider login on the desktop shell", () => {
 
   beforeEach(() => {
     showLinkGate = vi.fn(async () => undefined);
-    (window as unknown as { openfrontDesktop: unknown }).openfrontDesktop = {
+    (window as unknown as { fightwarsDesktop: unknown }).fightwarsDesktop = {
       showLinkGate,
     };
     location = stubLocation(DESKTOP_HREF);
@@ -228,7 +228,7 @@ describe("provider login on the desktop shell", () => {
   // app:// redirect that was the original bug.
   describe("on a shell without showLinkGate", () => {
     beforeEach(() => {
-      (window as unknown as { openfrontDesktop: unknown }).openfrontDesktop = {
+      (window as unknown as { fightwarsDesktop: unknown }).fightwarsDesktop = {
         linkGate: {},
       };
     });

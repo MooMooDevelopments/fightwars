@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { BRAND } from "../brand/Brand";
 import { buildAssetUrl } from "../core/AssetUrls";
 import { ClanTagSchema, GameInfo, UsernameSchema } from "../core/Schemas";
 import { formatPlayerDisplayName } from "../core/Util";
@@ -213,7 +214,7 @@ export async function buildPreview(
     ? `${mode ?? "Game"} on ${map ?? "Unknown Map"}${gameTypeLabel}`
     : mode && map
       ? `${mode} on ${map}${gameTypeLabel}`
-      : "OpenFront Game";
+      : `${BRAND.name} Game`;
 
   let description: string;
   if (isFinished) {

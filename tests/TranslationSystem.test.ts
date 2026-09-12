@@ -51,6 +51,11 @@ const IGNORED_UNUSED_KEY_PATTERNS: RegExp[] = [
   // out of resources/lang/*.json and emits per-language files next to that
   // page. They live here so Crowdin picks them up like any other string.
   /^desktop_gate\./,
+  // The upstream copyright notice is an AGPL §7 attribution rendered
+  // verbatim from BRAND.upstream.copyright (Footer, GameStartingModal, Help)
+  // rather than translated. The key stays in the locale files (keys are never
+  // renamed or removed) so other languages keep their existing entry.
+  /^main\.copyright$/,
 ];
 
 type NestedTranslations = Record<string, unknown>;

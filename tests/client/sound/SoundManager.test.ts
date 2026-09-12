@@ -1,5 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+// Upstream's music suite, run against a brand that ships the tracks. The
+// fork's own BRAND names none (see SoundManagerNoMusic.test.ts for that case).
+vi.mock("../../../src/brand/Brand", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("../../../src/brand/Brand")>();
+  return {
+    ...mod,
+    BRAND: {
+      ...mod.BRAND,
+      assets: {
+        ...mod.BRAND.assets,
+        gameplayMusic: "sounds/music/gameplay.mp3",
+        menuMusic: "sounds/music/menu-theme.mp3",
+      },
+    },
+  };
+});
+
 const howlInstances: any[] = [];
 let nextPlayId = 1;
 const { howlerVolume } = vi.hoisted(() => ({ howlerVolume: vi.fn() }));

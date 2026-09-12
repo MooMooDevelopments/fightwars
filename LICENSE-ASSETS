@@ -17,6 +17,10 @@ or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
 
 ## Proprietary Assets (/proprietary) - All Rights Reserved
 
+**FightWars fork note:** the `/proprietary` directory does not exist in this fork. Every asset
+it contained upstream was replaced with a FightWars asset under CC BY-SA 4.0 (see
+`LICENSING.md`, Phase 6). The section below is preserved to document upstream's terms.
+
 Assets in the `/proprietary` directory are:
 - Copyright © 2024-2026 OpenFront Inc. and Contributors
 - All Rights Reserved

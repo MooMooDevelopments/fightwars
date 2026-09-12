@@ -2,6 +2,7 @@ import { Howl } from "howler";
 import { html, TemplateResult } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
 import { ClientEnv } from "src/client/ClientEnv";
+import { BRAND } from "../brand/Brand";
 import {
   calculateServerTimeOffset,
   getMapName,
@@ -222,7 +223,7 @@ export class JoinLobbyModal extends BaseModal {
 
   private loadStartAlertSound(): Howl {
     this.startAlertSound ??= new Howl({
-      src: [assetUrl("sounds/effects/game-start-alert.mp3")],
+      src: [assetUrl(BRAND.assets.gameStartAlert)],
     });
     return this.startAlertSound;
   }

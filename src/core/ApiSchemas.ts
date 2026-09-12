@@ -405,7 +405,7 @@ export type PutUsernameResponse = z.infer<typeof PutUsernameResponseSchema>;
 
 // GET /creators/code/:code — public creator-code lookup (Creator Code
 // programme; no auth). Used to preview/validate a code before binding, e.g.
-// from an openfront.io/c/CODE share link. `status` is the creator's account
+// from a <site>/c/CODE share link. `status` is the creator's account
 // state; today the endpoint only ever resolves an "active" creator (a
 // suspended/terminated/unknown code 404s), but the field is kept here to
 // mirror the server's row shape rather than assume that never changes.

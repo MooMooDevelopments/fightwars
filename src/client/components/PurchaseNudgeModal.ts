@@ -1,5 +1,6 @@
 import { html, LitElement, nothing } from "lit";
 import { customElement, state } from "lit/decorators.js";
+import { BRAND } from "../../brand/Brand";
 import type { UserMeResponse } from "../../core/ApiSchemas";
 import { crazyGamesSDK } from "../CrazyGamesSDK";
 import { isDesktopShell } from "../DesktopShell";
@@ -25,7 +26,7 @@ export class PurchaseNudgeModal extends LitElement {
   @state() private isVisible = false;
 
   private onUserMeResponse = (event: Event) => {
-    if (this.isVisible) return;
+    if (!BRAND.monetisation.store || this.isVisible) return;
     const detail = (event as CustomEvent<UserMeResponse | false>).detail;
     if (detail !== false && detail.player.adfree === true) {
       // Already purchased: latch the flag now so that a later logged-out

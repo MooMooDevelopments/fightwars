@@ -1,6 +1,7 @@
 import ejs from "ejs";
 import type { Response } from "express";
 import fs from "fs/promises";
+import { BRAND } from "../brand/Brand";
 import { buildAssetUrl } from "../core/AssetUrls";
 import { setNoStoreHeaders } from "./NoStoreHeaders";
 import { getRuntimeAssetManifest } from "./RuntimeAssetManifest";
@@ -102,11 +103,15 @@ export async function renderHtmlContent(
       cdnBase,
     ),
     desktopLogoImageUrl: buildAssetUrl(
-      "images/OpenFront.png",
+      BRAND.assets.logoPng,
       assetManifest,
       cdnBase,
     ),
-    mobileLogoImageUrl: buildAssetUrl("images/OF.png", assetManifest, cdnBase),
+    mobileLogoImageUrl: buildAssetUrl(
+      BRAND.assets.iconPng,
+      assetManifest,
+      cdnBase,
+    ),
   });
 }
 

@@ -62,7 +62,7 @@ function fakeBridge(initial = snapshot("borderless")) {
   return {
     bridge,
     install() {
-      window.openfrontDesktop = { shell: { api: 3 }, display: bridge };
+      window.fightwarsDesktop = { shell: { api: 3 }, display: bridge };
     },
     push(next: DesktopDisplaySnapshot) {
       for (const cb of [...listeners]) cb(next);
@@ -105,7 +105,7 @@ function clickFullscreen(el: TestSidebar): void {
 // tests/domTeardown.ts, which runs after this file's own hooks. Only the
 // globals this file installs need undoing here.
 afterEach(() => {
-  window.openfrontDesktop = undefined;
+  window.fightwarsDesktop = undefined;
   vi.useRealTimers();
 });
 
@@ -135,13 +135,13 @@ describe("GameRightSidebar fullscreen button", () => {
   });
 
   afterEach(() => {
-    window.openfrontDesktop = undefined;
+    window.fightwarsDesktop = undefined;
     vi.useRealTimers();
   });
 
   // The web build, and any shell older than the display bridge. Unchanged.
   it("uses HTML fullscreen with no desktop shell", async () => {
-    window.openfrontDesktop = undefined;
+    window.fightwarsDesktop = undefined;
     const el = await mount();
 
     clickFullscreen(el);
@@ -150,7 +150,7 @@ describe("GameRightSidebar fullscreen button", () => {
   });
 
   it("leaves HTML fullscreen the same way on the web", async () => {
-    window.openfrontDesktop = undefined;
+    window.fightwarsDesktop = undefined;
     const el = await mount();
     (document as { fullscreenElement: Element | null }).fullscreenElement =
       document.documentElement;
@@ -224,7 +224,7 @@ describe("GameRightSidebar fullscreen button", () => {
   });
 
   it("still tracks HTML fullscreen changes on the web", async () => {
-    window.openfrontDesktop = undefined;
+    window.fightwarsDesktop = undefined;
     const el = await mount();
     expect(fullscreenButton(el).src).not.toContain("ExitFullscreen");
 
@@ -264,7 +264,7 @@ describe("GameRightSidebar fullscreen button", () => {
   // A shell that can read and write but never pushes.
   it("works against a bridge with no subscribe", async () => {
     const fake = fakeBridge(snapshot("borderless"));
-    window.openfrontDesktop = {
+    window.fightwarsDesktop = {
       display: {
         getPrefs: fake.bridge.getPrefs,
         setPrefs: fake.bridge.setPrefs,

@@ -41,7 +41,7 @@ function setSessionState(state: DesktopSessionState): void {
 }
 
 // On the desktop shell a provider login cannot be an OAuth redirect: the
-// redirect_uri would be this window's own `app://openfront/...` URL, which
+// redirect_uri would be this window's own app:// (BRAND.desktop.scheme) URL, which
 // the API's allowlist refuses (rightly -- the shell registers no scheme
 // handler, so a browser-completed OAuth flow would have nowhere to return
 // to). The player used to get a browser tab showing a bare JSON 400.
@@ -112,7 +112,7 @@ export function steamLogin() {
 }
 
 // The website's account-settings page, for the desktop shell to open in the
-// browser. Never from window.location, which is app://openfront in the shell.
+// browser. Never from window.location, which is the app:// origin in the shell.
 //
 // ClientEnv.siteOrigin() -- the host the shell injects as serverHost, whose
 // values are exactly the sites. NOT serverHttpBase(): that answers with
@@ -153,7 +153,7 @@ function desktopWebAccountSettingsUrl(): string {
 export async function linkGoogle(): Promise<boolean> {
   if (isDesktopShell()) {
     // Routed to the system browser by the shell's window-open policy
-    // (openfront-desktop's navigationPolicy.ts), like every https link.
+    // (the desktop shell repo's navigationPolicy.ts), like every https link.
     window.open(
       desktopWebAccountSettingsUrl(),
       "_blank",
@@ -554,7 +554,7 @@ async function doCrazyGamesLogin(token: string): Promise<void> {
 }
 
 // Exchange a Steam Web-API ticket for our session. Like CrazyGames, the
-// refresh cookie isn't usable from app://openfront (cross-site), so we
+// refresh cookie isn't usable from the app:// origin (cross-site), so we
 // re-exchange a fresh ticket on expiry rather than hitting /auth/refresh.
 async function doSteamLogin(ticket: string): Promise<void> {
   try {
@@ -579,7 +579,7 @@ async function doSteamLogin(ticket: string): Promise<void> {
       // which is Steam's backend rather than anything the player did. Any
       // other status (a Cloudflare WAF 403, a 429) still reached the server
       // -- it is not a transport failure, so it must not render "Can't reach
-      // OpenFront. Check your connection." Fold it into "steam-error", the
+      // <game>. Check your connection." Fold it into "steam-error", the
       // generic bucket, rather than "network".
       setSessionState({
         status: "signed-out",

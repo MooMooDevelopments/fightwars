@@ -18,6 +18,19 @@ import {
   UserSettings,
 } from "../../src/core/game/UserSettings";
 
+// FightWars ships with the store off (BRAND.monetisation.store === false), so
+// the purchase UI renders nothing by default. This suite covers the store
+// code paths themselves, so run it with the switch on.
+vi.mock("../../src/brand/Brand", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/brand/Brand")>();
+  return {
+    BRAND: {
+      ...actual.BRAND,
+      monetisation: { ...actual.BRAND.monetisation, store: true },
+    },
+  };
+});
+
 vi.mock("../../src/client/Cosmetics", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../src/client/Cosmetics")>()),
   fetchCosmetics: vi.fn(),
@@ -966,7 +979,7 @@ describe("StoreModal on the Steam rail", () => {
         > => [],
       ),
     };
-    (window as any).openfrontDesktop = { steam: { microTxn } };
+    (window as any).fightwarsDesktop = { steam: { microTxn } };
     return microTxn;
   }
 
@@ -984,7 +997,7 @@ describe("StoreModal on the Steam rail", () => {
   afterEach(() => {
     store?.remove();
     store = undefined;
-    delete (window as any).openfrontDesktop;
+    delete (window as any).fightwarsDesktop;
     localStorage.clear();
   });
 

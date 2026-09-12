@@ -2,6 +2,19 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PurchaseButton } from "../../src/client/components/PurchaseButton";
 import { alignPurchaseRows } from "../../src/client/components/PurchaseButton";
 
+// FightWars ships with the store off (BRAND.monetisation.store === false), so
+// the purchase UI renders nothing by default. This suite covers the store
+// code paths themselves, so run it with the switch on.
+vi.mock("../../src/brand/Brand", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/brand/Brand")>();
+  return {
+    BRAND: {
+      ...actual.BRAND,
+      monetisation: { ...actual.BRAND.monetisation, store: true },
+    },
+  };
+});
+
 vi.mock("../../src/client/InGameModal", () => ({
   showInGameAlert: vi.fn().mockResolvedValue(true),
   showInGameConfirm: vi.fn().mockResolvedValue(true),

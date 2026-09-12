@@ -7,6 +7,7 @@ import {
 import { OpenTelemetryTransportV3 } from "@opentelemetry/winston-transport";
 import * as dotenv from "dotenv";
 import winston from "winston";
+import { BRAND } from "../brand/Brand";
 import { getOtelResource } from "./OtelResource";
 import { ServerEnv } from "./ServerEnv";
 dotenv.config();
@@ -55,7 +56,7 @@ const logger = winston.createLogger({
     winston.format.json(),
   ),
   defaultMeta: {
-    service: "openfront",
+    service: BRAND.telemetry.serviceName,
     environment: ServerEnv.gameEnvName(),
   },
   transports: [

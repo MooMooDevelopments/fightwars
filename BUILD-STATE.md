@@ -1,124 +1,140 @@
 # FightWars Build State
 
-Last session: 2026-09-12 (session 1) | Current phase: 1 | Build status: green
+Last session: 2026-09-12 (session 1) | Current phase: 2 | Build status: green
 
 Repo: `C:\Users\disbo\dev\fightwars` · `upstream` = openfrontio/OpenFrontIO (forked at
-`c77005586`, 2026-09-12) · `origin` = github.com/MooMooDevelopments/fightwars (**private for
-now — see Known broken / deferred**).
+`c77005586`, rebased onto `7d95251f1` the same day) · `origin` = github.com/MooMooDevelopments/fightwars
+(public since the end of session 1).
 
-Gates (run all four before advancing; every one was green at the end of session 1):
+Gates (run all before advancing; every one was green at the end of session 1):
 
 ```
-npm test                      # full suite incl. the determinism gate (~2.5 min; 1 client UI test
-                              # file times out under heavy CPU contention — passes in isolation)
+npm test                      # full suite incl. the determinism gate (~2 min)
 npm run test:determinism      # the gate alone, quick mode (~17 s)
 npm run test:determinism:full # 24000-tick world match, 150 bots, 8 humans (~3.5 min)
-npm run lint && npx prettier --check .
+npm run lint && npx prettier --check . && npx tsc --noEmit
+npm run licenses:check        # every prod dependency AGPL-compatible
+npm run perf:gate             # headless sim budgets (world, 150 bots)
 ```
 
-Dev server: `npm run dev` → http://localhost:9000 (Vite, not Webpack). In the Claude desktop
-session the launch config `fightwars-dev` (in the session's `.claude/launch.json`) starts it.
+Dev server: `npm run dev` → http://localhost:9000 (Vite). In the Claude desktop session the
+launch config `fightwars-dev` (session `.claude/launch.json`) starts it. Load harness against
+it: `npm run load:test -- --clients 150 --map world --turns 600`.
 
 ## Done
 
-- [x] Phase 0: forked, `upstream` remote, deps installed with `npm run inst`, baseline
-      `npm test` / lint / prettier all green on upstream `c77005586`.
-- [x] Phase 0: mechanics inventory at `docs/MECHANICS.md` (302 KB, six sections, every
-      formula with `file:line`, gaps vs the brief with hook points).
-- [x] Phase 0: determinism test at `tests/determinism.test.ts` +
-      `tests/determinism/DeterminismRunner.ts` — green in quick mode and in full-match mode.
-      Two negative controls (different seed diverges; one dropped intent diverges) both pass,
-      so the gate has been watched to fail.
-- [x] Phase 0: singleplayer match played to the win condition in the real client (Onion map,
-      "You Won!" at tick 18,899 holding 208,228 of 210,555 land tiles).
-- [x] Phase 0: two-window private lobby works (two clients, distinct persistent IDs, same game
-      `aeWLK76Jmg`, identical state on both clients at tick 902 after the host's attack; no
-      desync logged by the server).
-- [x] `FORK-CHANGES.md`, `BUILD-STATE.md` created.
+- [x] Phase 0: audit — `docs/MECHANICS.md`, determinism gate, solo match won in the client,
+      two-window private lobby verified in lockstep (see session-1 notes below).
+- [x] Phase 1: brand extracted to `src/brand/Brand.ts`; every product string, logo, community
+      link, telemetry name, desktop identifier and monetisation switch reads from it
+      (`tests/Brand.test.ts` enforces it).
+- [x] Phase 1: all 17 all-rights-reserved `proprietary/` assets removed and replaced (SVG
+      wordmarks, favicon, PNG app icons generated in Node, Overpass as display font, synthesised
+      lobby-start chime, no music). Overlay removed from vite/Dockerfile/tsconfig.
+- [x] Phase 1: licence compliance — AGPL §7(b) copyright in footer + loading screen, §7(c)
+      "Based on OpenFront" on the title screen, §13 source link in footer + Help/About;
+      `LICENSING.md` Phase 6 entry; `README.md` rewritten; dependency licence gate
+      (`scripts/checkLicenses.ts`, 181 prod packages, all compatible).
+- [x] Phase 1: ads, ad-block gate, tracking beacons and store/Steam prompts removed or gated
+      off (`index.html` clean; `Admiral.ts` deleted).
+- [x] Phase 1: CI — `ci.yml` runs build, tests+coverage, determinism (quick on push, full
+      nightly), perf gate, licence gate, lint, prettier, gen-maps. Upstream deploy/release/bot
+      workflows and their scripts deleted.
+- [x] Phase 2 (early): load harness `tests/load/LoadTest.ts` — 150 real-protocol clients in
+      one lobby and a multi-lobby mode; both pass against the dev server.
 
 ## In progress
 
-- [ ] Nothing mid-flight. Phase 1 has not started.
+- [ ] Nothing mid-flight. The tree is committed and green.
 
 ## Next up (concrete, ordered)
 
-1. **Phase 1 — rebase check:** `git fetch upstream && git rebase upstream/main` (nothing to
-   rebase yet; do it anyway to start the habit, resolve nothing).
-2. **Phase 1 — brand module.** Create `src/brand/` (name, tagline, logo paths, favicon,
-   colour tokens, footer attribution, repo URL) and route every brand string through it.
-   `docs/MECHANICS.md` §06.10 lists the ~52 source files, `index.html`, `manifest.json` and
-   28 `en.json` keys that carry "OpenFront". The win modal advertises OpenFront on Steam and
-   `src/client/Admiral.ts:45` loads an `introjava.com` ad script — both go.
-3. **Phase 1 — replace the 17 `proprietary/` assets** (font, logos, favicon, seven music/SFX
-   files). They are all-rights-reserved and may not be used outside OpenFront. Ship
-   placeholders under `resources/` (CC BY-SA compatible) until real FightWars art exists;
-   remove the `proprietary/` overlay from the build.
-4. **Phase 1 — licence compliance.** Keep `LICENSE` (AGPL-3.0) and `LICENSE-ASSETS`; add
-   FightWars to `LICENSING.md` timeline; "Based on OpenFront" on the title screen, "©
-   OpenFront and Contributors" in footer + loading screen; in-game About panel links to the
-   public repo. Add a dependency licence check (`license-checker` or similar) that fails CI on
-   anything AGPL-incompatible.
-5. **Phase 1 — CI.** `.github/workflows/` runs build, vitest+coverage, lint, prettier, gen-maps
-   drift today. Add the determinism gate as its own job (quick mode on every push; full mode
-   nightly or on `main`) and a perf job that runs `npm run perf:game` and fails on regression
-   against the numbers below.
-6. **Phase 1 — flip the repo public** once 2–4 are done (see deferred note).
-7. Then Phase 2 (Section 8 infrastructure). Note before starting: auth, stats, cosmetics,
-   matchmaking check-in and the match archive all live in OpenFront's closed-source API
-   (`docs/MECHANICS.md` §06.9). FightWars needs its own — Postgres + a small API service — and
-   the archive path is the only place replays are stored, so replay persistence is Phase 2
-   work, not Phase 6.
+1. **Rebase check** at session start: `git fetch upstream && git rebase upstream/main`; fix
+   conflicts (expect some in `index.html`, nav bars, Footer, SoundManager — the brand sweep
+   touched them); rerun all gates.
+2. **Phase 2 — desync alerting.** `src/server/GameServer.ts` ~1805-1840 records desyncs and
+   sends the client a message; add an error-level structured log with game id, turn and
+   client count, a `desync` counter metric in `WorkerMetrics.ts`, and an optional webhook
+   (`DESYNC_WEBHOOK_URL`) so a silent desync is impossible. Test in `tests/server/`.
+3. **Phase 2 — replay persistence without the closed API.** `src/server/Archive.ts` posts
+   records to `/game/:id` on OpenFront's API and has no local fallback. Add a `ReplayStore`
+   interface with a filesystem implementation (`REPLAY_DIR`, one gzip JSON per game:
+   map id, seed, ordered intent log) and later a Postgres one; wire `GET /api/game/:id` to
+   read from it so the client's replay viewer works locally.
+4. **Phase 2 — accounts/ladder/clans backend.** Everything auth/stats/cosmetics is the
+   closed Cloudflare Worker (`docs/MECHANICS.md` §06.9). Design a minimal FightWars API
+   service (Node + Postgres): persistent-id accounts with optional Discord OAuth, match
+   results, Glicko-2 ratings, clans. Keep the dev-mode UUID token path working. This is the
+   biggest Phase 2 item; do 2 and 3 first.
+5. **Phase 2 — Docker/compose** with server + Postgres + Redis; regional pools are config
+   (`CLUSTER_JSON` already models instances/workers).
+6. **Phase 2 — load harness extensions:** `--server-pid` sampling is written but unmeasured;
+   add a 500-lobby cluster run (needs multiple workers: the harness already follows
+   `workerIndex` from `create_game`).
+7. Then Phase 3 (parity and repair) and on. Before Phase 4, load `frontend-design` for the
+   visual identity — the placeholder wordmark is deliberately plain.
 
 ## Decisions made (never re-litigate these)
 
-- 2026-09-12 — Repo lives at `~/dev/fightwars`, not under OneDrive — node_modules and a
-  650 MB git history do not belong in a synced folder.
-- 2026-09-12 — GitHub remote is `MooMooDevelopments/fightwars` — the only GitHub account
-  available in this environment (no org access).
-- 2026-09-12 — Determinism gate is record + two replays in **separate processes** with a
-  SHA-256 over every player, unit and tile every 100 ticks, not upstream's `hash()` — upstream's
-  hash omits gold, relations, tile identity and the tick (see `docs/MECHANICS.md` §06.8).
-- 2026-09-12 — Quick mode of the gate runs under `npm test` (pangaea, 60 bots, 6 humans, 3000
-  ticks); the full 24000-tick world match is a separate script — 17 s vs 3.5 min.
-- 2026-09-12 — The brief's "72% to win", "Port 20 s build", "MIRV 35M", "SAM interception
-  probability" and "Fast speed" do not match the code; the code's values are the baseline and
-  are recorded in `docs/MECHANICS.md`. Rebalancing is Phase 5 work, not a Phase 0 fix.
-- 2026-09-12 — Upstream uses Vite (port 9000), not Webpack as the brief says. Brief is wrong;
-  no action.
-- 2026-09-12 — Upstream's `.claude/skills/run-openfront/` Playwright driver is Ubuntu-only
-  and its Start-button selector (`single_modal.start`) is stale (`game_settings.start` now).
-  In this environment the Browser pane drives the game directly; the modal's options are set
-  as element properties (`single-player-modal.bots/.selectedMap/.infiniteTroops/...`).
+- 2026-09-12 — Repo lives at `~/dev/fightwars`, not under OneDrive.
+- 2026-09-12 — GitHub remote is `MooMooDevelopments/fightwars` (only account available).
+- 2026-09-12 — Determinism gate = record + two replays in separate processes with a SHA-256
+  over every player, unit and tile every 100 ticks (upstream's `hash()` is too weak). Quick
+  mode under `npm test`; full match as a separate script and nightly in CI.
+- 2026-09-12 — The brief's "72% to win", "Port 20 s", "MIRV 35M", "SAM probability" and
+  "Fast speed" do not match the code; code values are the baseline (`docs/MECHANICS.md`).
+  Rebalancing is Phase 5.
+- 2026-09-12 — Upstream uses Vite (port 9000), not Webpack. Brief is wrong; no action.
+- 2026-09-12 — Display font is Overpass (already in `resources/`, open) until Phase 4 picks
+  the final condensed face. Music playlist is empty until CC-licensed tracks exist.
+- 2026-09-12 — Server-rendered logo slots point at SVGs (`BRAND.assets.logoPng` is an SVG);
+  node-canvas is not built under `--ignore-scripts`, so rasters are generated with the
+  pure-Node PNG encoder in the session notes, only where PNG is mandatory (PWA icons).
+- 2026-09-12 — Desktop-shell identifiers are `window.fightwarsDesktop` / `app://fightwars`.
+  No FightWars desktop shell exists; the code path stays for later.
+- 2026-09-12 — CrazyGames SDK script stays (distribution platform, not ads); Turnstile stays.
+- 2026-09-12 — Upstream's PR-gate / issue-lifecycle bots and their scripts are gone; we do
+  not run their process.
 
 ## Known broken / deferred
 
-- **REPO IS PRIVATE.** AGPL §13 only triggers once players interact over a network, so
-  nothing is violated yet, but the brief wants a public repo from day one. Deferred to the end
-  of Phase 1 so that the first public commit already carries attribution and no proprietary
-  assets. Flip with `gh repo edit MooMooDevelopments/fightwars --visibility public`.
-- `tests/client/InventoryModal.test.ts` — 4 tests time out at 5 s when the machine is under
-  heavy load (six audit agents + lint in parallel); passes alone in 8.7 s. Not a code bug;
-  upstream's timeout is tight. Revisit only if CI flakes.
-- `.gitmodules` references `src/server/gatekeeper` but the path does not exist in the tree
-  (`git submodule status` is empty) — stale upstream file, harmless.
-- The client loads ad-tech (id5, 33across, pubcid, Carbon, cloudflare insights) even in dev
-  and fills localStorage with tracking IDs; `Admiral.ts` loads an anti-adblock script. All of
-  it goes in Phase 1 (brand/monetisation config) — FightWars has no ads on day one.
-- Two browser tabs in one profile share `localStorage`, so a two-window test needs a second
-  identity. Working trick: override `Storage.prototype.getItem` for `player_persistent_id`
-  and `username` in the second tab before joining.
+- `BRAND.siteUrl` is empty: canonical/og:url tags are omitted until a production domain
+  exists. `og:image` still points at upstream's gameplay screenshot (CC BY-SA, but shows
+  OpenFront chrome) — replace in Phase 4.
+- `win_modal.support_openfront` is the one locale key still carrying the upstream name
+  (keys are frozen for Crowdin compatibility; value says FightWars).
+- `tests/client/InventoryModal.test.ts` times out under heavy CPU contention; passes alone.
+- `.gitmodules` references a `gatekeeper` submodule path that does not exist — stale
+  upstream file, harmless.
+- Two browser tabs in one profile share `localStorage`; for a two-window test override
+  `Storage.prototype.getItem` for `player_persistent_id`/`username` in the second tab.
+- Client fps on a real GPU not measured (sandbox browser is software-rendered).
+- Ranked/matchmaking, cosmetics, auth and stats are non-functional without the closed API
+  (`docs/MECHANICS.md` §06.9) — Phase 2 item 4.
 
-## Numbers last measured (2026-09-12, upstream c77005586, this machine)
+## Numbers last measured (2026-09-12, this machine, upstream 7d95251f1 + Phase 1)
 
-- Determinism test: **pass** — quick mode 3/3 in 16.6 s; full mode (world, 150 bots, 8
-  humans, 24 000 ticks, 5 processes) 3/3 in 205.8 s.
-- Headless sim throughput (`DeterminismRunner`, one process): onion 3000 ticks 1.2 s;
-  pangaea 3.5 s; world (47 players) 6.3 s.
-- Server tick @150p: `npm run perf:game -- --map world --bots 150 --ticks 1000` (the sim runs
-  client-side; this is the per-tick sim cost) — **mean 2.89 ms, p50 2.55, p95 5.90, p99 8.11,
-  max 10.4 ms**, 0 of 1000 ticks over the 100 ms turn budget, 82 MB peak heap, 346 ticks/s.
-- Client fps: not measured yet (needs a real GPU; the sandbox browser uses SwiftShader).
-- Bundle (`npm run build-prod` → `static/`): JS+CSS **3.3 MB** (index 2.40 MB, worker 0.65 MB,
-  CSS 0.21 MB, vendor 0.11 MB); largest map dir 14.4 MB (`sol`); all maps 581 MB. Initial
-  download incl. the largest map ≈ 18 MB, under the 90 MB target. `tsc --noEmit` clean.
-- `npm test`: 450 files / 5503 tests, 132 s (before the determinism gate was added).
+- Determinism test: **pass** — quick 3/3 in ~17 s; full (world, 150 bots, 8 humans,
+  24 000 ticks, 5 processes) 3/3 in 206 s.
+- `npm test`: 451 + 63 files, 5471 + 655 tests, ~110 s.
+- Server tick @150p (`perf:gate`, world, 150 bots, 1000 ticks, client-side sim cost):
+  mean 2.6 ms, p95 4.6, p99 6.7, 0 ticks over the 100 ms turn budget. Budgets in
+  `scripts/perfGate.ts`: mean ≤ 8, p95 ≤ 20, p99 ≤ 40.
+- Load test (150 clients, world, 600 turns, dev server): **0.72 KB/s down per client**
+  (budget 8), turn gap p50 108 ms / p99 115 / max 423, 0 desyncs, 0 errors, 0 rejoins.
+  5 lobbies × 3 clients: 0.06 KB/s, all lobbies in lockstep.
+- Bundle (`build-prod` → `static/`): JS+CSS 3.3 MB; largest map 14.4 MB; ≈ 18 MB initial
+  download incl. the largest map (target < 90 MB). `tsc --noEmit` clean.
+- Client fps: not measured.
+
+## Session-1 notes worth keeping
+
+- Solo match to the win condition: Onion map, "You Won!" at tick 18,899 with 208,228 of
+  210,555 land tiles. Lessons: attacking at 100% ratio leaves zero defence and a nation
+  kills you; the in-game speed panel (▶▶ → Max) makes long matches fast.
+- Two-window lobby: game `aeWLK76Jmg`, both clients identical at tick 902 after the host's
+  attack; no desync logged. The host's Start button must be the one _inside_
+  `host-lobby-modal` (a bare selector picks the singleplayer modal's and starts a solo game).
+- Solo modal options are element properties: `single-player-modal.bots/.selectedMap/
+.infiniteTroops/.instantBuild/.selectedDifficulty`; start via
+  `o-button[translationKey="game_settings.start"] button` inside that modal.

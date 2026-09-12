@@ -1,5 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+// FightWars ships with the store off (BRAND.monetisation.store === false), so
+// the purchase UI renders nothing by default. This suite covers the store
+// code paths themselves, so run it with the switch on.
+vi.mock("../../src/brand/Brand", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/brand/Brand")>();
+  return {
+    BRAND: {
+      ...actual.BRAND,
+      monetisation: { ...actual.BRAND.monetisation, store: true },
+    },
+  };
+});
+
 const { isOnCrazyGames, isDesktopShell } = vi.hoisted(() => ({
   isOnCrazyGames: vi.fn(() => false),
   isDesktopShell: vi.fn(() => false),

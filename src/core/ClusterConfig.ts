@@ -16,7 +16,7 @@ export const ClusterColorSchema = z.enum(["blue", "green"]);
 export type ClusterColor = z.infer<typeof ClusterColorSchema>;
 
 export const ClusterEntrySchema = z.object({
-  // Host the deployment is reachable on directly (e.g. "blue.openfront.io"),
+  // Host the deployment is reachable on directly (e.g. "blue.<domain>"),
   // bypassing any load balancer. Also the self-match key at boot.
   host: z.string().min(1),
   // Which blue/green pool the deployment belongs to. Deployment-wide, unlike

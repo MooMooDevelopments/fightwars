@@ -1,3 +1,4 @@
+import { desktopBridge } from "./DesktopShell";
 // Thin renderer wrapper over the desktop shell's presence bridge. Mirrors
 // SteamSDK.ts; all Steam-specific work lives in the Electron main process.
 //
@@ -34,12 +35,12 @@ interface PresenceBridge {
   shell?: { api?: number };
 }
 
-// window.openfrontDesktop is declared `unknown` by DesktopShell.ts (kept loose
+// The desktop bridge is typed `unknown` by DesktopShell.ts (kept loose
 // there on purpose). We know the shape the Electron preload exposes, so narrow
 // it locally rather than re-declaring the global (a second `declare global`
 // with a different type triggers TS2717).
 function bridge(): PresenceBridge | undefined {
-  return window.openfrontDesktop as PresenceBridge | undefined;
+  return desktopBridge() as PresenceBridge | undefined;
 }
 
 class DesktopPresence {

@@ -18,7 +18,7 @@ import { ClientEnv } from "../../src/client/ClientEnv";
 // are: against the configured server host. These fetches used to be relative,
 // so they resolved against the document origin — which is correct only when
 // the page happens to be served by the game server itself. It is not on the
-// desktop build (app://openfront, where every /api route 404s against the
+// desktop build (app://fightwars, where every /api route 404s against the
 // local file handler) nor on any deployment that serves the client from a
 // different host than the game server.
 function setConfig(serverHost?: string) {

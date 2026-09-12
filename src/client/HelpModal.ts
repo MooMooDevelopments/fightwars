@@ -1,5 +1,6 @@
 import { html } from "lit";
 import { customElement, query, state } from "lit/decorators.js";
+import { BRAND } from "../brand/Brand";
 import {
   textDirection,
   translateText,
@@ -1258,6 +1259,32 @@ export class HelpModal extends BaseModal {
                 </span>
               </div>
             </div>
+          </section>
+
+          <!-- About: the AGPL §13 offer of source and the upstream
+               attribution, both read from BRAND. -->
+          <section
+            class="mt-8 bg-white/5 rounded-xl border border-white/10 px-5 py-4 text-sm"
+          >
+            <h3 class="!mt-0 !mb-2">About ${BRAND.name}</h3>
+            <p class="!mb-2">
+              ${BRAND.name} is free software.
+              <a
+                href=${BRAND.repoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                >Source code (AGPL-3.0)</a
+              >
+            </p>
+            <p class="!mb-0 text-white/60">
+              <a
+                href=${BRAND.upstream.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                >${BRAND.upstream.basedOn}</a
+              >
+              — ${BRAND.upstream.copyright}
+            </p>
           </section>
         </div>
       </div>

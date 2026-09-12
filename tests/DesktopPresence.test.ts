@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { desktopPresence } from "../src/client/DesktopPresence";
 
 beforeEach(() => {
-  delete (window as any).openfrontDesktop;
+  delete (window as any).fightwarsDesktop;
 });
 
 describe("DesktopPresence", () => {
@@ -14,7 +14,7 @@ describe("DesktopPresence", () => {
   });
 
   it("isAvailable is false when shell.api is 1 (older depot)", () => {
-    (window as any).openfrontDesktop = { shell: { api: 1 } };
+    (window as any).fightwarsDesktop = { shell: { api: 1 } };
     expect(desktopPresence.isAvailable()).toBe(false);
   });
 
@@ -27,7 +27,7 @@ describe("DesktopPresence", () => {
     const consumeFn = vi.fn().mockResolvedValue("abc123");
     const subscribeFn = vi.fn(() => () => undefined);
     const dialogFn = vi.fn().mockResolvedValue(true);
-    (window as any).openfrontDesktop = {
+    (window as any).fightwarsDesktop = {
       shell: { api: 1 },
       presence: { set: setFn },
       invite: {
@@ -52,7 +52,7 @@ describe("DesktopPresence", () => {
 
   it("isAvailable is true and passes through with a full bridge at api 2", async () => {
     const setFn = vi.fn().mockResolvedValue(undefined);
-    (window as any).openfrontDesktop = {
+    (window as any).fightwarsDesktop = {
       shell: { api: 2 },
       presence: { set: setFn },
       invite: {
@@ -69,7 +69,7 @@ describe("DesktopPresence", () => {
   });
 
   it("consumePendingInvite degrades to null when bridge rejects", async () => {
-    (window as any).openfrontDesktop = {
+    (window as any).fightwarsDesktop = {
       shell: { api: 2 },
       invite: { consumePending: vi.fn().mockRejectedValue(new Error("boom")) },
     };
@@ -77,7 +77,7 @@ describe("DesktopPresence", () => {
   });
 
   it("openInviteDialog degrades to false when bridge rejects", async () => {
-    (window as any).openfrontDesktop = {
+    (window as any).fightwarsDesktop = {
       shell: { api: 2 },
       invite: {
         openInviteDialog: vi.fn().mockRejectedValue(new Error("boom")),
@@ -87,7 +87,7 @@ describe("DesktopPresence", () => {
   });
 
   it("set does not propagate when presence.set throws synchronously", () => {
-    (window as any).openfrontDesktop = {
+    (window as any).fightwarsDesktop = {
       shell: { api: 2 },
       presence: {
         set: vi.fn(() => {
@@ -105,7 +105,7 @@ describe("DesktopPresence", () => {
   });
 
   it("subscribeInvites always returns a callable unsubscribe, bridge without invite namespace", () => {
-    (window as any).openfrontDesktop = { shell: { api: 2 } };
+    (window as any).fightwarsDesktop = { shell: { api: 2 } };
     const unsubscribe = desktopPresence.subscribeInvites(() => undefined);
     expect(typeof unsubscribe).toBe("function");
     expect(() => unsubscribe()).not.toThrow();
@@ -114,7 +114,7 @@ describe("DesktopPresence", () => {
   it("subscribeInvites always returns a callable unsubscribe, real bridge", () => {
     const innerUnsubscribe = vi.fn();
     const subscribeFn = vi.fn(() => innerUnsubscribe);
-    (window as any).openfrontDesktop = {
+    (window as any).fightwarsDesktop = {
       shell: { api: 2 },
       invite: { subscribe: subscribeFn },
     };
@@ -127,7 +127,7 @@ describe("DesktopPresence", () => {
   });
 
   it("subscribeInvites returns a callable unsubscribe when subscribe throws synchronously", () => {
-    (window as any).openfrontDesktop = {
+    (window as any).fightwarsDesktop = {
       shell: { api: 2 },
       invite: {
         subscribe: vi.fn(() => {

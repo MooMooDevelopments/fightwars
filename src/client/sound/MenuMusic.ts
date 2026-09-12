@@ -1,4 +1,5 @@
 import { Howl } from "howler";
+import { BRAND } from "../../brand/Brand";
 import { assetUrl } from "../../core/AssetUrls";
 import { AudioMixer } from "./AudioMixer";
 
@@ -70,6 +71,10 @@ function rampGain(target: number, t: number): number {
  * same curve going the other way.
  */
 export function startMenuMusic(mixer: AudioMixer): void {
+  // No theme in BRAND means a silent home page: nothing to arm, nothing to
+  // fade, and no gesture listeners waiting for a track that is not there.
+  const track = BRAND.assets.menuMusic;
+  if (track === null) return;
   let theme: Howl | null = null;
   let teardownFadeIn: (() => void) | null = null;
 
@@ -183,7 +188,7 @@ export function startMenuMusic(mixer: AudioMixer): void {
     if (theme !== null) return;
     try {
       theme = new Howl({
-        src: [assetUrl("sounds/music/menu-theme.mp3")],
+        src: [assetUrl(track)],
         loop: true,
         volume: 0,
         // Stream rather than decode 2.2 MB up front -- see the gameplay track

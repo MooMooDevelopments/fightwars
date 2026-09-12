@@ -10,6 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { capturePagePin } from "../../src/client/PagePin";
+import { BRAND } from "../../src/brand/Brand";
 import { SendKickPlayerIntentEvent } from "../../src/client/Transport";
 import { translateText } from "../../src/client/Utils";
 import { EventBus } from "../../src/core/EventBus";
@@ -74,12 +75,6 @@ vi.mock("../../src/client/BootInterrupts", () => ({
   nextBootInterrupt: () => null,
   parseClaimPromptStore: () => ({}),
   runBootInterrupt: async () => {},
-}));
-
-// Injects a third-party script and polls; nothing under test needs it.
-vi.mock("../../src/client/Admiral", () => ({
-  loadAdmiral: vi.fn(),
-  onAdmiralMeasured: vi.fn(),
 }));
 
 // adGatekeeper.start() would install a poll interval and DOM bait.
@@ -233,7 +228,9 @@ describe("Client.initialize() booted from Main.ts module scope", () => {
     expect(warnSpy).toHaveBeenCalledWith("Game version element not found");
     // userAuth() === false → onUserMe(false) (line 735), which flips the ad
     // entitlement on for a signed-out web player.
-    expect(window.adsEnabled).toBe(true);
+    // ...but BRAND.monetisation.ads is the master switch above it: with ads
+    // off in the brand, a signed-out web player is still never ad-eligible.
+    expect(window.adsEnabled).toBe(BRAND.monetisation.ads);
   });
 
   it("routes a hashchange through onHashUpdate", async () => {

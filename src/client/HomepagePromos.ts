@@ -1,5 +1,6 @@
 import { LitElement } from "lit";
 import { customElement } from "lit/decorators.js";
+import { BRAND } from "../brand/Brand";
 import { adGatekeeper } from "./AdGatekeeper";
 
 // ─── Gutter Ads ──────────────────────────────────────────────────────────────
@@ -50,6 +51,10 @@ export class HomepagePromos extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
+    // With ads off in BRAND there is no ad script on the page and nothing to
+    // measure: register no listeners or observers, so show()/close() are
+    // inert and no ad-related DOM work ever runs.
+    if (!BRAND.monetisation.ads) return;
     document.addEventListener("userMeResponse", this.onUserMeResponse);
     document.addEventListener("join-lobby", this.onJoinLobby);
     document.addEventListener("leave-lobby", this.onLeaveLobby);
@@ -164,10 +169,12 @@ export class HomepagePromos extends LitElement {
   }
 
   public show(): void {
+    if (!BRAND.monetisation.ads) return;
     this.loadGutterAds();
   }
 
   public close(): void {
+    if (!BRAND.monetisation.ads || !window.ramp) return;
     this.adLoaded = false;
     try {
       // Destroy gutter rails and the header ad; bottom_rail persists into

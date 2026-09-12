@@ -99,7 +99,7 @@ function publishBeforeAnyConsumerMounts(state: DesktopUpdateState): void {
     apply: async () => {},
     retry: async () => {},
   };
-  (window as { openfrontDesktop?: unknown }).openfrontDesktop = {
+  (window as { fightwarsDesktop?: unknown }).fightwarsDesktop = {
     update: bridge,
   };
   document.body.appendChild(document.createElement("desktop-status-bar"));
@@ -178,7 +178,7 @@ beforeEach(() => {
 afterEach(() => {
   document.removeEventListener("join-lobby", joinLobby as EventListener);
   document.body.innerHTML = "";
-  (window as { openfrontDesktop?: unknown }).openfrontDesktop = undefined;
+  (window as { fightwarsDesktop?: unknown }).fightwarsDesktop = undefined;
   window.BOOTSTRAP_CONFIG = undefined;
   ClientEnv.reset();
   vi.restoreAllMocks();

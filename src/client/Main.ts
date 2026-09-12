@@ -1,5 +1,6 @@
 import { ClientEnv } from "src/client/ClientEnv";
 import { renderNavVersion } from "src/client/GameVersion";
+import { BRAND } from "../brand/Brand";
 import { UserMeResponse } from "../core/ApiSchemas";
 import { assetUrl } from "../core/AssetUrls";
 import { EventBus } from "../core/EventBus";
@@ -18,7 +19,6 @@ import { UserSettings } from "../core/game/UserSettings";
 import "./AccountModal";
 import "./AccountSettingsModal";
 import { adGatekeeper } from "./AdGatekeeper";
-import { loadAdmiral, onAdmiralMeasured } from "./Admiral";
 import { getUserMe, invalidateUserMe } from "./Api";
 import {
   getDesktopSessionState,
@@ -450,12 +450,12 @@ class Client {
     await customElements.whenDefined("mobile-nav-bar");
     await customElements.whenDefined("desktop-nav-bar");
 
-    const openFrontFont = new FontFace(
-      "OpenFront",
-      `url(${assetUrl("fonts/OpenFront.ttf")})`,
+    const displayFont = new FontFace(
+      BRAND.assets.displayFontFamily,
+      `url(${assetUrl(BRAND.assets.displayFontFile)})`,
     );
-    document.fonts.add(openFrontFont);
-    openFrontFont.load().catch(() => {});
+    document.fonts.add(displayFont);
+    displayFont.load().catch(() => {});
 
     // The tagged version only, so a player's version reads the same across web
     // and Steam. The build's full identity -- the commit on an untagged build,
@@ -649,22 +649,18 @@ class Client {
       }
       const isAdFree =
         userMeResponse !== false && userMeResponse.player?.adfree === true;
+      // BRAND.monetisation.ads is the master switch: when off no ad unit,
+      // ad-block probe or third-party ad script ever runs, whatever the
+      // player's entitlement says.
       window.adsEnabled =
-        !isAdFree && !crazyGamesSDK.isOnCrazyGames() && !isDesktopShell();
-      // Ad-eligible users only: paid/adfree users must never load Admiral (its
-      // adblock popup fires autonomously once the payload runs). Start watching
-      // adblock state; once a blocker is ever detected the in-game ad is
-      // suppressed forever (persisted) — those users are highly ad-sensitive.
+        BRAND.monetisation.ads &&
+        !isAdFree &&
+        !crazyGamesSDK.isOnCrazyGames() &&
+        !isDesktopShell();
+      // Ad-eligible users only. Start watching adblock state; once a blocker
+      // is ever detected the in-game ad is suppressed forever (persisted) —
+      // those users are highly ad-sensitive.
       if (window.adsEnabled) {
-        loadAdmiral();
-        // Admiral's read is more reliable than our DOM bait, so use it as a
-        // fast initial signal. A blocker that whitelists this site still shows
-        // ads, so "blocked" means adblocking AND not whitelisted.
-        onAdmiralMeasured((res) => {
-          adGatekeeper.seed(
-            res.adblocking === true && res.whitelisted !== true,
-          );
-        });
         adGatekeeper.start();
       }
       // Snapshot in, dispatch and comparison inside — see
@@ -1591,8 +1587,8 @@ class Client {
       //
       // Not reachable from the desktop shell today: it classifies every
       // https:// URL as open-externally, so redirectToVersionedShell() hands
-      // the replay host to the OS browser and this window stays on
-      // app://openfront/. That is a policy in a different repo though, and
+      // the replay host to the OS browser and this window stays on the
+      // BRAND.desktop.scheme origin. That is a policy in a different repo, and
       // nothing here would notice if it changed -- so guard rather than depend
       // on it. On the replay host, fall back to the in-place leave.
       if (!isReplayShellHost(window.location.hostname)) {
