@@ -114,8 +114,8 @@ export class MapDisplay extends LitElement {
       )}
       class="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-sm transition-all duration-200 active:scale-90 ${this
         .favorite
-        ? "opacity-100 text-cyber-yellow"
-        : "opacity-0 group-hover:opacity-100 text-white hover:text-cyber-yellow"}"
+        ? "opacity-100 text-rank-gold"
+        : "opacity-0 group-hover:opacity-100 text-white hover:text-rank-gold"}"
     >
       ${starIcon(this.favorite, "w-4 h-4")}
     </button>`;
@@ -131,7 +131,7 @@ export class MapDisplay extends LitElement {
         @keydown="${this.handleKeydown}"
         class="w-full h-full p-3 flex flex-col items-center justify-between rounded-xl border cursor-pointer transition-all duration-200 active:scale-95 gap-3 group ${this
           .selected
-          ? "bg-malibu-blue/20 border-malibu-blue/50 shadow-[var(--shadow-malibu-blue-strong)]"
+          ? "bg-action/20 border-action/50 shadow-[var(--shadow-action-strong)]"
           : "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 hover:scale-105"}"
       >
         ${this.isLoading

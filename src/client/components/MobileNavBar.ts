@@ -6,7 +6,7 @@ import { NavNotificationsController } from "./NavNotificationsController";
 
 const MOBILE_ITEM =
   "nav-menu-item block w-full text-left font-bold uppercase tracking-[0.05em] " +
-  "text-white/70 transition-all duration-200 cursor-pointer " +
+  "text-white/70 transition-colors duration-200 cursor-pointer " +
   "hover:text-blue-600 hover:translate-x-2.5 " +
   "hover:drop-shadow-[0_0_20px_rgba(37,99,235,0.5)] " +
   "[&.active]:text-blue-600 [&.active]:translate-x-2.5 " +
@@ -83,7 +83,7 @@ export class MobileNavBar extends LitElement {
       >
         <!-- Logo + Menu -->
         <div
-          class="flex flex-col text-malibu-blue mb-4 ml-[clamp(0.2rem,0.4vw,0.4vh)]"
+          class="flex flex-col text-action-ink mb-4 ml-[clamp(0.2rem,0.4vw,0.4vh)]"
         >
           <div class="flex flex-col items-center gap-1">
             <img

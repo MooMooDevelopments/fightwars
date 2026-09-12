@@ -78,7 +78,7 @@ export class DesktopNavBar extends LitElement {
         <button
           class="nav-menu-item ${currentPage === "page-play"
             ? "active"
-            : ""} text-white/70 hover:text-malibu-blue  font-medium tracking-wider uppercase cursor-pointer transition-colors [&.active]:text-malibu-blue "
+            : ""} text-white/70 hover:text-action-ink  font-medium tracking-wider uppercase cursor-pointer transition-colors [&.active]:text-action-ink "
           data-page="page-play"
           data-i18n="main.play"
         ></button>
@@ -88,7 +88,7 @@ export class DesktopNavBar extends LitElement {
                 <button
                   class="nav-menu-item ${currentPage === "page-item-store"
                     ? "active"
-                    : ""} text-white/70 hover:text-malibu-blue  font-medium tracking-wider uppercase cursor-pointer transition-colors [&.active]:text-malibu-blue "
+                    : ""} text-white/70 hover:text-action-ink  font-medium tracking-wider uppercase cursor-pointer transition-colors [&.active]:text-action-ink "
                   data-page="page-item-store"
                   data-i18n="main.store"
                   @click=${this._notifications.onStoreClick}
@@ -107,13 +107,13 @@ export class DesktopNavBar extends LitElement {
               <button
                 class="nav-menu-item ${currentPage === "page-inventory"
                   ? "active"
-                  : ""} text-white/70 hover:text-malibu-blue font-medium tracking-wider uppercase cursor-pointer transition-colors [&.active]:text-malibu-blue"
+                  : ""} text-white/70 hover:text-action-ink font-medium tracking-wider uppercase cursor-pointer transition-colors [&.active]:text-action-ink"
                 data-page="page-inventory"
                 data-i18n="main.inventory"
               ></button>`
           : nothing}
         <button
-          class="nav-menu-item text-white/70 hover:text-malibu-blue  font-medium tracking-wider uppercase cursor-pointer transition-colors [&.active]:text-malibu-blue "
+          class="nav-menu-item text-white/70 hover:text-action-ink  font-medium tracking-wider uppercase cursor-pointer transition-colors [&.active]:text-action-ink "
           data-page="page-leaderboard"
           data-i18n="main.leaderboard"
         ></button>

@@ -34,7 +34,7 @@ export class GameStartingModal extends LitElement {
           href="${BRAND.upstream.url}/blob/main/CREDITS.md"
           target="_blank"
           rel="noopener noreferrer"
-          class="block mb-4 text-lg font-medium tracking-wider uppercase text-malibu-blue no-underline transition-colors duration-200 hover:text-aquarius"
+          class="block mb-4 text-lg font-medium tracking-wider uppercase text-action-ink no-underline transition-colors duration-200 hover:text-action-ink"
           >${translateText("game_starting_modal.credits")}</a
         >
         <p class="text-base text-white/40 mb-4">

@@ -840,7 +840,7 @@ export class ClanModal extends BaseModal {
           <div class="flex flex-wrap items-center justify-center gap-3">
             <button
               @click=${() => this.setActiveTab("browse")}
-              class="px-6 py-2 text-sm font-bold text-white uppercase tracking-wider bg-malibu-blue hover:bg-aquarius active:bg-malibu-blue/80 rounded-lg transition-all"
+              class="px-6 py-2 text-sm font-bold text-white uppercase tracking-wider bg-action hover:bg-action-hover active:bg-action/80 rounded-lg transition-all"
             >
               ${translateText("clan_modal.browse")}
             </button>

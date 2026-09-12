@@ -160,10 +160,10 @@ export class ClanCreateView extends LitElement {
   }
 
   private inputClass(invalid = false) {
-    return `w-full px-3 py-2.5 bg-white/5 border rounded-xl text-white placeholder-white/20 focus:outline-none focus:ring-2 transition-all text-sm ${
+    return `w-full px-3 py-2.5 bg-white/5 border rounded-xl text-white placeholder-white/20 focus:outline-none focus:ring-2 transition-colors text-sm ${
       invalid
         ? "border-red-500/40 focus:ring-red-500/40"
-        : "border-white/10 focus:ring-malibu-blue/50 focus:border-malibu-blue/50"
+        : "border-white/10 focus:ring-action/50 focus:border-action/50"
     }`;
   }
 
@@ -189,12 +189,15 @@ export class ClanCreateView extends LitElement {
             placeholder=${translateText("clan_modal.create_tag_placeholder")}
             aria-describedby="clan-tag-hint"
           />`,
-          html`<span id="clan-tag-hint">${this.tagHint()}</span>`,
+          html`<span id="clan-tag-hint" aria-live="polite"
+            >${this.tagHint()}</span
+          >`,
         )}
         ${this.field(
           translateText("clan_modal.create_name"),
           html`<input
             type="text"
+            autocomplete="off"
             maxlength=${CLAN_NAME_MAX}
             .value=${this.name}
             @input=${(e: Event) => {
@@ -226,6 +229,7 @@ export class ClanCreateView extends LitElement {
           translateText("clan_modal.create_discord"),
           html`<input
             type="url"
+            autocomplete="off"
             maxlength="255"
             .value=${this.discordUrl}
             @input=${(e: Event) => {
@@ -243,7 +247,7 @@ export class ClanCreateView extends LitElement {
           @click=${() => {
             this.isOpen = !this.isOpen;
           }}
-          class="w-full flex items-center justify-between gap-4 p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all text-left"
+          class="w-full flex items-center justify-between gap-4 p-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-colors text-left"
         >
           <span>
             <span class="block text-sm font-bold text-white"
@@ -260,7 +264,7 @@ export class ClanCreateView extends LitElement {
           <span
             class="shrink-0 w-11 h-6 rounded-full p-0.5 transition-colors ${this
               .isOpen
-              ? "bg-malibu-blue"
+              ? "bg-action"
               : "bg-white/15"}"
           >
             <span
@@ -281,9 +285,9 @@ export class ClanCreateView extends LitElement {
         <button
           type="submit"
           ?disabled=${!this.canSubmit}
-          class="w-full px-6 py-3 text-sm font-bold text-white uppercase tracking-wider rounded-lg transition-all ${this
+          class="w-full px-6 py-3 text-sm font-bold text-white uppercase tracking-wider rounded-lg transition-colors ${this
             .canSubmit
-            ? "bg-malibu-blue hover:bg-aquarius active:bg-malibu-blue/80"
+            ? "bg-action hover:bg-action-hover active:bg-action/80"
             : "bg-white/10 text-white/30 cursor-not-allowed"}"
         >
           ${translateText(

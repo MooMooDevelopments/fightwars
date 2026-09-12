@@ -237,7 +237,7 @@ export class DesktopStatusBar extends LitElement {
                 class="mt-1 h-1.5 w-full rounded-full bg-white/15 overflow-hidden"
               >
                 <div
-                  class="h-full bg-malibu-blue transition-[width] duration-200"
+                  class="h-full bg-action transition-[width] duration-200"
                   style="width: ${this.percent()}%"
                 ></div>
               </div>`
@@ -355,7 +355,7 @@ export class DesktopStatusBar extends LitElement {
     if (bridge === null) return nothing;
     if (s.status === "staged") {
       return html`<button
-        class="shrink-0 px-4 py-2 rounded-md bg-malibu-blue hover:bg-aquarius
+        class="shrink-0 px-4 py-2 rounded-md bg-action hover:bg-action-hover
                text-sm font-medium uppercase tracking-wider"
         @click=${() => {
           bridge.apply().catch((err: unknown) => {
@@ -405,7 +405,7 @@ export class DesktopStatusBar extends LitElement {
   private sessionAction(s: DesktopSessionState) {
     if (s.status === "retrying") return nothing;
     return html`<button
-      class="shrink-0 px-4 py-2 rounded-md bg-malibu-blue hover:bg-aquarius
+      class="shrink-0 px-4 py-2 rounded-md bg-action hover:bg-action-hover
              text-sm font-medium uppercase tracking-wider"
       @click=${() => {
         // Main.ts owns the retry, because a successful sign-in also has to

@@ -57,7 +57,7 @@ export class PlayPage extends LitElement {
             </button>
 
             <div
-              class="col-start-2 flex items-center justify-center text-malibu-blue min-w-0"
+              class="col-start-2 flex items-center justify-center text-action-ink min-w-0"
             >
               <img
                 src=${assetUrl(BRAND.assets.logo)}

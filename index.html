@@ -6,6 +6,12 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
+    <!-- The UI is dark-only, so tell the browser: this is what makes native
+         scrollbars, form controls and the mobile address bar match the page
+         instead of rendering light furniture around a dark app. Both values
+         track --color-surface in src/client/styles.css. -->
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0f172a" />
     <title data-i18n="main.title">FightWars</title>
     <link rel="manifest" href="<%- manifestHref %>" />
     <link rel="icon" type="image/svg+xml" href="<%- faviconHref %>" />

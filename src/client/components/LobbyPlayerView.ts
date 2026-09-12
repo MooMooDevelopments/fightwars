@@ -208,7 +208,7 @@ export class LobbyTeamView extends LitElement {
             return html`<div
               class="px-2 py-1 rounded-sm mb-1 text-xs text-white border break-words
                 ${this.isCurrentPlayer(client)
-                ? "bg-malibu-blue/20 border-sky-500/40"
+                ? "bg-action/20 border-sky-500/40"
                 : "bg-gray-700/70 border-transparent"}"
             >
               ${displayName} ${this.renderVerifiedBadge(client)}
@@ -349,7 +349,7 @@ export class LobbyTeamView extends LitElement {
                   return html` <div
                     class="px-2 py-1 rounded-sm text-xs flex items-center justify-between border
                       ${this.isCurrentPlayer(p)
-                      ? "bg-malibu-blue/20 border-sky-500/40"
+                      ? "bg-action/20 border-sky-500/40"
                       : "bg-gray-700/70 border-transparent"}"
                   >
                     <span class="flex items-center gap-1 min-w-0">

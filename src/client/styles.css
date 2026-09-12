@@ -5,7 +5,8 @@
 
 @theme {
   --default-ring-width: 3px;
-  --default-ring-color: var(--color-malibu-blue);
+  --default-ring-color: var(--color-action);
+
   /* Condensed for figures, its sibling for prose. Barlow's stack falls back
      to the narrow system faces first so a failed webfont load keeps the
      column widths the HUD was laid out for. */
@@ -14,37 +15,77 @@
     sans-serif;
   --font-body: "Barlow", Inter, "Helvetica Neue", Arial, sans-serif;
 
-  /* Brand palette, inherited from the upstream brand guidelines §4 */
-  --color-malibu-blue: #0084d1;
-  --color-aquarius: #3fa9f5;
-  --color-dawn-blue: #cccccc;
-  --color-bright-white: #ffffff;
-  --color-bright-blue: #1e90ff;
+  /* FightWars palette.
+   *
+   * These were upstream's brand colours (their guidelines §4) until Phase 4 —
+   * the chrome was literally painted in another product's blue. They are
+   * named by role now rather than by hue, because "malibu-blue" tells a
+   * reader nothing about where it may be used and stops being true the moment
+   * the colour changes.
+   *
+   * The map is the only saturated surface in this game, so the chrome is
+   * near-neutral and spends its one bold note on `signal`. Every pairing
+   * below is measured, not eyeballed; the old primary button was 4.02:1 with
+   * white, which is under WCAG AA for normal text. */
 
-  /* Masters (ranked) sub-brand */
-  --color-cyber-yellow: #ffd700;
-  --color-limestone: #999999;
+  /* Interactive: buttons, borders, focus rings. 5.17:1 with white text. */
+  --color-action: #2563eb;
+  /* Hover goes *darker*, not lighter — a lighter step would drop white text
+     to about 2.6:1, which is what the old hover colour did. 6.70:1. */
+  --color-action-hover: #1d4ed8;
+  /* The same hue as type or an icon on a dark surface, where a mid blue is
+     too dim to read. 9.90:1 on --color-surface. */
+  --color-action-ink: #93c5fd;
 
-  /* Background & decorative — not for standalone UI use */
-  --color-deep-navy: #0a1628;
-  --color-hex-cyan: #00c8ff;
-  --color-frame-orange: #f97316;
+  /* The one bold note: alerts, the brand mark, "it is your move" states.
+     Deliberately rare — used on every button it would stop being a signal.
+     9.74:1 on the dark surface, and separable under all three dichromacies
+     (see scripts/generatePalettes.ts, which picked it for the same reason). */
+  --color-signal: #ffb000;
+  --color-signal-ink: #0f172a;
 
-  /* App-specific surface colors */
-  --color-surface: #0a1628;
+  /* Masters (ranked) sub-brand. A rank colour, not a brand colour. */
+  --color-rank-gold: #ffd700;
 
-  --shadow-malibu-blue: 0 0 15px rgba(0, 132, 209, 0.2);
-  --shadow-malibu-blue-soft: 0 0 12px rgba(0, 132, 209, 0.2);
-  --shadow-malibu-blue-strong: 0 0 15px rgba(0, 132, 209, 0.3);
-  --shadow-malibu-blue-pill: 0 0 6px rgba(0, 132, 209, 0.35);
-  --shadow-malibu-blue-ring-sm: 0 0 0 4px rgba(0, 132, 209, 0.2);
-  --shadow-malibu-blue-ring-lg: 0 0 0 6px rgba(0, 132, 209, 0.3);
-  --shadow-lobby-card-hover: 0 0 0 2px #0084d1, 0 0 20px rgba(0, 132, 209, 0.5);
+  /* Surfaces and type. */
+  --color-surface: #0f172a;
+  --color-surface-deep: #0a1220;
+  --color-ink: #ffffff;
+  --color-ink-muted: #cbd5e1;
+  --color-ink-dim: #94a3b8;
+
+  --shadow-action: 0 0 15px rgba(37, 99, 235, 0.2);
+  --shadow-action-soft: 0 0 12px rgba(37, 99, 235, 0.2);
+  --shadow-action-strong: 0 0 15px rgba(37, 99, 235, 0.3);
+  --shadow-action-pill: 0 0 6px rgba(37, 99, 235, 0.35);
+  --shadow-action-ring-sm: 0 0 0 4px rgba(37, 99, 235, 0.2);
+  --shadow-action-ring-lg: 0 0 0 6px rgba(37, 99, 235, 0.3);
+  --shadow-lobby-card-hover: 0 0 0 2px #2563eb, 0 0 20px rgba(37, 99, 235, 0.5);
   --shadow-action-card-hover:
-    0 0 0 1px #0084d1, 0 0 12px rgba(0, 132, 209, 0.35);
+    0 0 0 1px #2563eb, 0 0 12px rgba(37, 99, 235, 0.35);
 }
 
 @layer base {
+  /* The app is dark-only; this is what stops the browser drawing light
+     scrollbars and native controls around it. */
+  :root {
+    color-scheme: dark;
+  }
+
+  /* Anyone who has asked their system for less motion gets it. Blanket rule
+     rather than per-component opt-in: the client animates in a lot of places
+     and an opt-in would miss the next one someone adds. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
   *,
   ::after,
   ::before,
@@ -182,7 +223,7 @@ body.page-open {
   padding: 15px 20px;
   font-size: 16px;
   cursor: pointer;
-  background-color: var(--color-malibu-blue);
+  background-color: var(--color-action);
   color: white;
   border: none;
   border-radius: 8px;
@@ -192,7 +233,7 @@ body.page-open {
 }
 
 .start-game-button:not(:disabled):hover {
-  background-color: var(--color-aquarius);
+  background-color: var(--color-action-ink);
 }
 
 .start-game-button:disabled {
@@ -649,7 +690,7 @@ label.option-card:hover {
 /* News button glows blue while there is unread news. */
 news-button .active button {
   position: relative;
-  border-color: var(--color-malibu-blue) !important;
+  border-color: var(--color-action) !important;
   border-width: 2px !important;
   box-shadow:
     0 0 0 1px rgba(37, 99, 235, 0.5),

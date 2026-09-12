@@ -418,8 +418,7 @@ export class TutorialPanel extends LitElement implements Controller {
         @contextmenu=${(e: MouseEvent) => e.preventDefault()}
       >
         <div class="flex items-center justify-between gap-2 mb-1">
-          <span
-            class="font-bold text-cyber-yellow uppercase tracking-wide text-sm"
+          <span class="font-bold text-rank-gold uppercase tracking-wide text-sm"
             >${translateText("tutorial.title")}</span
           >
           <span class="flex items-center gap-2 text-sm text-gray-300">
@@ -458,7 +457,7 @@ export class TutorialPanel extends LitElement implements Controller {
     return html`
       ${step.manual
         ? html`<button
-            class="rounded bg-malibu-blue hover:bg-aquarius px-2 py-0.5 font-semibold text-white"
+            class="rounded bg-action hover:bg-action-hover px-2 py-0.5 font-semibold text-white"
             @click=${() => this.progress.acknowledge()}
           >
             ${translateText("tutorial.got_it")}
@@ -466,7 +465,7 @@ export class TutorialPanel extends LitElement implements Controller {
         : nothing}
       ${goTo
         ? html`<button
-            class="rounded bg-malibu-blue hover:bg-aquarius px-2 py-0.5 font-semibold text-white"
+            class="rounded bg-action hover:bg-action-hover px-2 py-0.5 font-semibold text-white"
             @click=${() => this.eventBus.emit(new GoToPlayerEvent(goTo))}
           >
             ${translateText("tutorial.go_to")}

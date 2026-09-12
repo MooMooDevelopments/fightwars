@@ -126,7 +126,7 @@ export class PlayerStatsTreeView extends LitElement {
         title=${title ?? nothing}
         @click=${onSelect}
         class="grow basis-20 px-3 py-1.5 text-xs font-bold uppercase tracking-wider whitespace-nowrap rounded-lg transition-colors ${isActive
-          ? "bg-malibu-blue/20 text-aquarius border border-malibu-blue/30"
+          ? "bg-action/20 text-action-ink border border-action/30"
           : "text-white/50 hover:text-white hover:bg-white/5 border border-transparent"}"
       >
         ${label}

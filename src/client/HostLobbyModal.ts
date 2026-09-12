@@ -255,7 +255,7 @@ export class HostLobbyModal extends BaseModal {
       <button
         class="px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full transition-all ${this
           .publiclyListed === isPublic
-          ? "bg-malibu-blue text-white"
+          ? "bg-action text-white"
           : "text-white/50 hover:text-white"}"
         @click=${() => this.handleVisibilitySelect(isPublic)}
       >

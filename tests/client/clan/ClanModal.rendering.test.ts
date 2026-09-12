@@ -152,7 +152,7 @@ describe("ClanModal — rendering", () => {
       expect(leaderSpan!.className).toContain("amber");
     });
 
-    it("shows blue role badge class for officer/member", async () => {
+    it("distinguishes the officer/member badge from the leader one", async () => {
       (modal as unknown as { myClanRoles: Map<string, string> }).myClanRoles =
         new Map([["TST", "officer"]]);
       setState(modal, "myClans" as keyof ClanModal, [makeClan()] as never);
@@ -164,7 +164,12 @@ describe("ClanModal — rendering", () => {
         s.textContent?.trim().includes("role_officer"),
       );
       expect(officerSpan).toBeTruthy();
-      expect(officerSpan!.className).toContain("blue");
+      // The badge is styled from the interactive-colour token, not the amber
+      // one the leader gets. Asserted on the token rather than on a hue word:
+      // the palette is named by role now, so "blue" is not in the class at
+      // all and a test that looked for it was really testing the hue.
+      expect(officerSpan!.className).toContain("action");
+      expect(officerSpan!.className).not.toContain("amber");
     });
   });
 

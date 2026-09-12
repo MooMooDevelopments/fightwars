@@ -30,6 +30,6 @@
 }
 
 .l-header__highlightText {
-  color: var(--color-malibu-blue);
+  color: var(--color-action);
   font-weight: 700;
 }
