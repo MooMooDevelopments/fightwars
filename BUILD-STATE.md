@@ -1,6 +1,6 @@
 # FightWars Build State
 
-Last session: 2026-09-12 (session 4) | Current phase: 3 done → next is Phase 4 (identity), with two Phase 2 items still blocked on the owner/hardware | Build status: green
+Last session: 2026-09-12 (session 5) | Current phase: 4 (identity) under way — 3 of its 10 work items done, with two Phase 2 items still blocked on the owner/hardware | Build status: green
 
 Repo: `C:\Users\disbo\dev\fightwars` · `upstream` = openfrontio/OpenFrontIO (forked at
 `c77005586`, rebased onto `7d95251f1` the same day) · `origin` = github.com/MooMooDevelopments/fightwars
@@ -26,7 +26,7 @@ follows it). In the Claude desktop session the launch configs `fightwars-dev` /
 shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 `npm run load:test -- --clients 150 --map world --turns 600`.
 
-## Handoff — read this first (written 2026-09-12 at the end of session 4)
+## Handoff — read this first (written 2026-09-12 at the end of session 5)
 
 - **The plan for everything that remains (Phases 4–7 and the blocked items) is
   `docs/HANDOFF.md`.** This section is the per-session resume; that file is the map.
@@ -35,7 +35,8 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   process is running, the dev stack is stopped.
 - **First commands:** `git fetch upstream && git rebase upstream/main` (then
   `git push --force-with-lease origin main` — the branch is ours), `npm run inst` if
-  `package-lock.json` changed, then the gate block above. Expect rebase conflicts in the
+  `package-lock.json` changed, then the gate block above. At the end of session 5 upstream
+  had no new commits (21 ahead, 0 behind), so no rebase was needed. Expect rebase conflicts in the
   brand-swept files and also in `src/client/AccountIdentity.ts`, `ClanModal.ts`,
   `ClanDetailView.ts`, `ClientGameRunner.ts` (turn handling now goes through
   `TurnSequencer`) and `vite.config.ts` (coverage floor), plus the tests that pin the
@@ -45,11 +46,65 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   the untested verbs/bots/attack record have tests, and `src/core` coverage has a CI floor.
   Two Phase 2 items remain blocked here: Discord login (needs a Discord application
   id/secret only the owner can create) and the compose stack (no Docker on this box).
-- **Next is Phase 4 (identity).** Load `frontend-design` first — the placeholder wordmark
-  is deliberately plain and nothing visual has been designed yet. Section 7 of the brief in
-  full: renderer/UI, OKLCH nation colours + colourblind palettes, radial menus, HUD,
-  leaderboard, events feed, tooltips, sound, mobile controls, tutorial. Give clans a create
-  form and decide what a guest "account" page should be while in there.
+- **Phase 4 (identity) is under way: 3 of 10 work items done** (nation colours + the three
+  dichromat palettes; the clan create form; the attack-cost breakdown on hover). The other
+  seven are unstarted — see `docs/HANDOFF.md` §3 for the table, and "Phase 4 so far" below
+  for what the finished three measure and what they left behind.
+- **The direction, stated once and carried through:** dark, map-first, the map the only
+  saturated surface. Within that, one decision now encoded in every palette — **players are
+  vivid, AI nations are muted**, so a glance separates people from scenery before any label
+  is read. Keep it. `frontend-design` is still the skill to load before the _visual_
+  identity work (wordmark, font, chrome); the three items done so far were colour science,
+  a form and a tooltip, not visual identity.
+- **Phase 4 so far** (details in the three commits, which carry the reasoning):
+  - **Palettes.** `default`, `deuteranopia`, `protanopia`, `tritanopia`, generated offline by
+    `npm run palettes:generate` (`scripts/generatePalettes.ts`) and committed as data.
+    Farthest-point sampling over an OKLCH lattice; 128 human + 128 nation + 128 overflow
+    colours each. The old single `colorblind` palette is gone; stored settings carrying it
+    map to `deuteranopia` (rewritten _before_ schema validation, so an unknown enum member
+    cannot discard the player's other graphics settings).
+    Measured minimum CIEDE2000 separation, as that palette's viewer sees it —
+    **raise the floors in `tests/client/Palette.test.ts` if a better generator earns it:**
+
+    | palette      | first 120 | whole 256 | 24-player lobby (allocated) | team colours |
+    | ------------ | --------- | --------- | --------------------------- | ------------ |
+    | default      | 7.65      | 7.41      | 16.1                        | 42.8         |
+    | deuteranopia | 3.07      | 2.91      | 6.8                         | 19.7         |
+    | protanopia   | 3.28      | 3.08      | 7.1                         | 19.1         |
+    | tritanopia   | 5.66      | 5.44      | 9.8                         | 22.0         |
+
+    The lobby column is the one that matters and the one the allocator fix moved: themes now
+    declare their vision and `ColorAllocator` measures distance in it, so "most distinct"
+    means distinct to the player who _chose_ that palette. Before the fix the dichromat
+    lobbies sat at 3.7–5.5.
+    Two caveats to be honest about: ~3 ΔE across a full 256-colour dichromat pool is close
+    to the physical limit of a dichromat's colour volume, not a number that can be tuned
+    much higher; and territory renders at alpha 150/255 over terrain, so on-screen
+    differences are smaller than these palette-space figures. Verified live on the World map
+    (~107 nations) in all four palettes.
+
+  - **Clan create form.** `POST /clans` finally has a client. `createClan` in `ClanApi.ts`,
+    `ClanCreateView.ts`, offered only where a clan is missing (one clan per account makes a
+    permanent Create tab a dead end). Creating sets the leader role locally — `getUserMe()`
+    memoises the profile for the session, so refetching answers from a cache that predates
+    the clan; the first version offered the new clan's own leader a "Join clan" button.
+  - **Attack cost on hover.** `PlayerInfoOverlay` now shows, per tile, what an attack costs
+    you and them, how fast the front advances, and the multipliers in play.
+    `Config.attackLogic` takes an optional out-parameter and fills in every named factor, so
+    the explanation is the simulation's own arithmetic rather than a second copy;
+    `tests/AttackBreakdown.test.ts` recomposes the formula from those fields across 2000
+    random cases and requires an exact match. Perf gate unchanged (mean 2.38 ms, 0
+    over-budget ticks). **Still open from the brief's G3:** the live "cost so far" needs
+    `startTroops` / `tilesConquered` on `AttackUpdate`, which `AttackImpl` does not track.
+    The modifier row (defense post, fallout, traitor, tribe) is covered by tests but has not
+    been seen in a live game — none of those was in reach during the verification run.
+
+- **Found while there, not yet fixed:** `BRAND.assets.socialImage` still points at
+  `resources/images/GameplayScreenshot.png`, which came from upstream (commits #1692,
+  #2063). It is a screenshot of _OpenFront's_ UI, so the og:image misrepresents the product,
+  and it now also shows the pre-Phase-4 palette. Replacing it needs a clean capture of our
+  own client at 1200x630; the browser pane can frame one but cannot write it to disk, so it
+  wants the Node asset pipeline (`resources/` images are generated in Node — see Phase 1).
 - `npm run test:coverage` now fails if `src/core` drops below the floor in `vite.config.ts`
   (lines 85 / functions 83 / branches 77 / statements 84). Raise the floor as coverage grows.
 - **A two-player browser test** now needs no localStorage trick: open the second player at
