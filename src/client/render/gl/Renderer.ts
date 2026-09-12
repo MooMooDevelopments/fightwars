@@ -39,6 +39,7 @@ import { CrosshairPass } from "./passes/CrosshairPass";
 import { DefenseCoveragePass } from "./passes/DefenseCoveragePass";
 import { FalloutBloomPass } from "./passes/FalloutBloomPass";
 import { FalloutLightPass } from "./passes/FalloutLightPass";
+import { FlashPass } from "./passes/FlashPass";
 import { FxPass } from "./passes/fx-pass";
 import { LightmapPass } from "./passes/LightmapPass";
 import { MapLayerPass } from "./passes/MapLayerPass";
@@ -138,6 +139,7 @@ export class GPURenderer {
   private rangeCirclePass: RangeCirclePass;
   private samRadiusPass: SAMRadiusPass;
   private crosshairPass: CrosshairPass;
+  private flashPass: FlashPass;
   private railroadPass: RailroadPass;
   private barPass: BarPass;
   private worldTextPass: WorldTextPass;
@@ -562,6 +564,7 @@ export class GPURenderer {
 
     // --- Crosshair (warship placement) ---
     this.crosshairPass = new CrosshairPass(gl);
+    this.flashPass = new FlashPass(gl);
 
     // --- Remaining passes (unchanged from v1) ---
     this.structurePass = new StructurePass(
@@ -681,6 +684,14 @@ export class GPURenderer {
     this.canvas.width = Math.round(cssWidth * dpr);
     this.canvas.height = Math.round(cssHeight * dpr);
     this.camera.resize(cssWidth, cssHeight);
+  }
+
+  /**
+   * Wash the view, for a detonation. See FlashPass; overlapping calls take the
+   * strongest rather than adding, so a MIRV does not white the screen out.
+   */
+  triggerFlash(strength: number, color?: [number, number, number]): void {
+    this.flashPass.trigger(strength, performance.now(), color);
   }
 
   setCameraState(x: number, y: number, z: number): void {
@@ -1397,6 +1408,10 @@ export class GPURenderer {
     this.worldTextPass.tick(zoom);
     this.worldTextPass.draw(cam, zoom);
 
+    // Last, so it washes everything the world drew. The HUD is DOM and sits
+    // above the canvas, so it stays readable through the flash.
+    this.flashPass.draw(performance.now());
+
     gl.disable(gl.BLEND);
   }
 
@@ -1498,6 +1513,7 @@ export class GPURenderer {
     this.rangeCirclePass.dispose();
     this.samRadiusPass.dispose();
     this.crosshairPass.dispose();
+    this.flashPass.dispose();
     this.structurePass.dispose();
     this.structureLevelPass.dispose();
     this.unitPass.dispose();

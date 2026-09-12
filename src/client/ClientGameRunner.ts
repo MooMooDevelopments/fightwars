@@ -567,14 +567,19 @@ function mountWebGLFrameLoop(
   const syncCamera = (): void => {
     const scale = transformHandler.scale;
     const dpr = renderDpr();
+    // Shake is in screen pixels, so it divides by scale to reach world tiles.
+    // That is what keeps a blast hitting the view equally hard at every zoom.
+    const shake = transformHandler.shake.offset(performance.now());
     const centerX =
       transformHandler.offsetX +
       mapWidth / 2 +
-      (cachedCanvasW - mapWidth) / (2 * scale);
+      (cachedCanvasW - mapWidth) / (2 * scale) +
+      shake.x / scale;
     const centerY =
       transformHandler.offsetY +
       mapHeight / 2 +
-      (cachedCanvasH - mapHeight) / (2 * scale);
+      (cachedCanvasH - mapHeight) / (2 * scale) +
+      shake.y / scale;
     view.setCameraState(centerX, centerY, scale * dpr);
     // Invoke the WebGL renderer's frame callback synchronously, with the just-
     // updated camera state. The callback re-arms itself via captureRaf, so

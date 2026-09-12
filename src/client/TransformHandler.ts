@@ -6,6 +6,7 @@ import {
   ZOOM_DELTA_DIVISOR,
   ZoomEvent,
 } from "./InputHandler";
+import { ScreenShake } from "./ScreenShake";
 import { GameView, PlayerView, UnitView } from "./view";
 
 export class GoToPlayerEvent implements GameEvent {
@@ -31,6 +32,15 @@ export const CAMERA_MAX_SPEED = 15;
 export const CAMERA_SMOOTHING = 0.03;
 
 export class TransformHandler {
+  /**
+   * Camera shake. Deliberately not folded into offsetX/offsetY: those are the
+   * pan the player set, and everything that converts between screen and world
+   * — hit testing, the build menu, every click — reads them back. A shake that
+   * moved them would make the map land somewhere other than where it is drawn
+   * for as long as it lasted. This is applied once, where the render camera is
+   * built, and nowhere else.
+   */
+  public readonly shake = new ScreenShake();
   public scale: number = 1.8;
   private _boundingRect: DOMRect;
   public offsetX: number = -350;

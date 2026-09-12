@@ -143,6 +143,11 @@ export class MapRenderer {
 
   // ---- Camera ----
 
+  /** Wash the view for a detonation — see FlashPass. */
+  triggerFlash(strength: number, color?: [number, number, number]): void {
+    this.renderer?.triggerFlash(strength, color);
+  }
+
   setCameraState(x: number, y: number, z: number): void {
     this.renderer?.setCameraState(x, y, z);
   }

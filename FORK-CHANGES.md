@@ -344,3 +344,35 @@ is the gap this section closes.
 - `src/client/render/gl/RenderSettings.ts`, `render-settings.json`, `GraphicsOverrides.ts` —
   `mapOverlay.politicalZoom`, default on. Nine fetches per pixel while zoomed out and none while
   zoomed in, so a machine that cannot spare them can have the plain point sample back.
+
+### Feel: shake and flash (Phase 4 item 5, session 7)
+
+#### FightWars-only files added
+
+- `src/client/ScreenShake.ts` — a decaying camera shake in _screen_ pixels, so a blast hits the
+  view equally hard at every zoom. One shake at a time: a bigger blast takes over, a smaller one
+  does not, because a MIRV's salvo summed would leave the camera unusable exactly when the player
+  needs to read it.
+- `src/client/render/gl/passes/FlashPass.ts`,
+  `src/client/render/gl/shaders/shared/flash.frag.glsl` — the wash a detonation leaves. In GL
+  rather than as a DOM overlay so it covers the map and leaves the HUD, which sits above the
+  canvas, legible.
+- `src/client/controllers/ImpactFeedbackController.ts` — drives both from nuke detonations,
+  scaled by warhead and by how far the blast is from the centre of the view. Separate from
+  SoundEffectController, which watches the same events: a muted player should still feel a
+  hydrogen bomb, and a player watching a distant one should not be thrown around by it.
+- `tests/client/ImpactFeedback.test.ts`.
+
+#### Shared upstream files edited
+
+- `src/client/TransformHandler.ts` — holds the shake. Deliberately _not_ folded into
+  `offsetX`/`offsetY`: those are the pan the player set, and every screen-to-world conversion
+  reads them back, so a shake moving them would make the map land somewhere other than where it
+  is drawn for as long as it lasted.
+- `src/client/ClientGameRunner.ts` — `syncCamera` adds the shake, in the one place the render
+  camera is built and nowhere else.
+- `src/client/render/gl/Renderer.ts`, `MapRenderer.ts` — own the flash pass and expose
+  `triggerFlash`.
+- `src/client/hud/GameRenderer.ts` — registers the controller.
+- `src/client/sound/Sounds.ts`, `src/client/controllers/SoundEffectController.ts`,
+  `tests/client/controllers/SoundEffectController.test.ts` — the four orphan sound files.
