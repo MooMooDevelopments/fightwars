@@ -1,6 +1,6 @@
 # FightWars Build State
 
-Last session: 2026-09-12 (session 3) | Current phase: 2 (accounts backend complete; two items blocked on the owner/hardware) | Build status: green
+Last session: 2026-09-12 (session 4) | Current phase: 3 done → next is Phase 4 (identity), with two Phase 2 items still blocked on the owner/hardware | Build status: green
 
 Repo: `C:\Users\disbo\dev\fightwars` · `upstream` = openfrontio/OpenFrontIO (forked at
 `c77005586`, rebased onto `7d95251f1` the same day) · `origin` = github.com/MooMooDevelopments/fightwars
@@ -26,20 +26,29 @@ follows it). In the Claude desktop session the launch configs `fightwars-dev` /
 shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 `npm run load:test -- --clients 150 --map world --turns 600`.
 
-## Handoff — read this first (written 2026-09-12 at the end of session 3)
+## Handoff — read this first (written 2026-09-12 at the end of session 4)
 
 - Tree is clean and pushed; HEAD is on `origin/main`. Nothing is mid-flight, no background
   process is running, the dev stack is stopped.
 - **First commands:** `git fetch upstream && git rebase upstream/main` (then
   `git push --force-with-lease origin main` — the branch is ours), `npm run inst` if
   `package-lock.json` changed, then the gate block above. Expect rebase conflicts in the
-  brand-swept files and now also in `src/client/AccountIdentity.ts`, `ClanModal.ts`,
-  `ClanDetailView.ts` and the tests that pin the guest-is-signed-in rule.
-- **Phase 2's accounts backend is done** (clans, friends, public games, stats tree, seasons,
-  ranked verified in the browser, Postgres CI job). Two Phase 2 items remain and both are
-  blocked here: Discord login (needs a Discord application id/secret only the owner can
-  create) and the compose stack (no Docker on this box). Unless either unblocks, **continue
-  at "Next up" item 2**: the load-harness cluster run, then Phase 3.
+  brand-swept files and also in `src/client/AccountIdentity.ts`, `ClanModal.ts`,
+  `ClanDetailView.ts`, `ClientGameRunner.ts` (turn handling now goes through
+  `TurnSequencer`) and `vite.config.ts` (coverage floor), plus the tests that pin the
+  guest-is-signed-in rule.
+- **Phase 3 is done**: `docs/BASELINE-VERIFICATION.md` maps every brief §5 item to the test
+  that pins it (every path checked to exist), the rejoin-after-reload turn drop is fixed,
+  the untested verbs/bots/attack record have tests, and `src/core` coverage has a CI floor.
+  Two Phase 2 items remain blocked here: Discord login (needs a Discord application
+  id/secret only the owner can create) and the compose stack (no Docker on this box).
+- **Next is Phase 4 (identity).** Load `frontend-design` first — the placeholder wordmark
+  is deliberately plain and nothing visual has been designed yet. Section 7 of the brief in
+  full: renderer/UI, OKLCH nation colours + colourblind palettes, radial menus, HUD,
+  leaderboard, events feed, tooltips, sound, mobile controls, tutorial. Give clans a create
+  form and decide what a guest "account" page should be while in there.
+- `npm run test:coverage` now fails if `src/core` drops below the floor in `vite.config.ts`
+  (lines 85 / functions 83 / branches 77 / statements 84). Raise the floor as coverage grows.
 - **A two-player browser test** now needs no localStorage trick: open the second player at
   `http://[::1]:9000` (a different origin, so its own persistent id and guest account; the
   API's CORS default allows it). Vite listens on IPv6 loopback only, so `127.0.0.1` will not
@@ -127,6 +136,23 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
       and Donations tab sit behind `BRAND.monetisation.store` (they opened the store checkout).
 - [x] API serves `/news.json` and `/streams.json` from `resources/` (the menu 404'd on them),
       answers errors as JSON, and its dev CORS list includes the loopback aliases.
+- [x] Phase 3: **baseline verification** — `docs/BASELINE-VERIFICATION.md`: brief §5 item by
+      item (loop, resources, attack model, structures, every diplomacy verb, lobby matrix,
+      maps, controls) with the test or recorded run that pins each, and the deviations
+      (80 % win threshold, no Fast speed, 120 maps, cost-table differences) cross-referenced
+      to the decisions below.
+- [x] Phase 3: **rejoin repair** — `src/client/TurnSequencer.ts`: live turns that outrun the
+      start snapshot after a reload are held and applied in order instead of dropped with an
+      error each (122 in one observed rejoin). One warning per gap.
+- [x] Phase 3: **coverage on the core** — new tests for the intent dispatcher (every wire
+      intent → its execution; unknown client → no-op), every untested diplomacy verb
+      (embargo, embargo-all, emoji, target, retreat, boat retreat, pause), bots
+      (`TribeExecution`), the attack record (`AttackImpl` border + front clustering) and the
+      delete-unit cooldown branches. Floor for `src/core/**` in `vite.config.ts`, enforced
+      by CI's `npm run test:coverage`.
+- [x] Phase 3: the two flaky client files got the timeouts they need on a loaded box
+      (`MainInitialize` hook 90 s, `InventoryModal` cases 30 s); they were only ever
+      contention timeouts.
 
 ## In progress
 
@@ -137,20 +163,19 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 1. **Rebase check** at session start: `git fetch upstream && git rebase upstream/main`; fix
    conflicts (expect some in `index.html`, nav bars, Footer, SoundManager — the brand sweep
    touched them); rerun all gates.
-2. **Phase 2 — load harness extensions:** `--server-pid` sampling is written but unmeasured;
-   add a 500-lobby cluster run (needs multiple workers: the harness already follows
-   `workerIndex` from `create_game`). Also confirm a finished ranked game ingests with
-   `rankedType` and rates on the ladder end to end (the browser run was stopped mid-game).
-3. **Blocked, owner action:** Discord OAuth login attached to the same account row
-   (`/auth/discord`) — needs a Discord application client id/secret. **Blocked, hardware:**
-   run `docker-compose.yml` on a box with Docker; fix what breaks; point the desync webhook
-   and the metrics dashboard at real alerting.
-4. Then Phase 3 (parity and repair): start with the rejoin path — a client that reloads
-   mid-game rejoins with `lastTurn 0` and logs `got wrong turn have turns 0, received turn N`
-   until it catches up (seen when a hot reload hit both ranked clients). Also the header's
-   account menu still offers Discord/Google login to guests; decide what a guest "account"
-   page should be. Before Phase 4, load `frontend-design` for the visual identity — the
-   placeholder wordmark is deliberately plain — and give clans a create form.
+2. **Phase 4 — identity** (Section 7 of the brief in full). Load `frontend-design` before
+   any UI code; then `ui-ux-pro-max` for palette/type, `dataviz` before any chart or stat
+   tile, and `impeccable` + `web-design-guidelines` on the result. Includes: a clan create
+   form, a guest-appropriate account page (it still offers Discord/Google login), the
+   `og:image` replacement, and the final display font.
+3. **Phase 2 leftovers, when unblocked:** Discord OAuth login attached to the same account row
+   (`/auth/discord`) — needs a Discord application client id/secret (owner). Run
+   `docker-compose.yml` on a box with Docker; fix what breaks; point the desync webhook and
+   the metrics dashboard at real alerting (hardware). Load harness: `--server-pid` sampling
+   is unmeasured; a 500-lobby cluster run needs more workers/hosts than this box. Confirm a
+   finished ranked game ingests with `rankedType` and rates on the ladder end to end.
+4. Phase 5 (depth) after Phase 4. The cooldowns that count from tick 0 (delete unit,
+   embargo-all, target) are upstream behaviour worth revisiting when rebalancing.
 
 ## Decisions made (never re-litigate these)
 
@@ -214,8 +239,8 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 - Linked logins (Discord/Google/Steam) are still non-functional: the account page offers
   them and none is configured. Guests work everywhere else.
 - No clan-creation UI in the client (upstream's lives on its website). Seed via the API.
-- Rejoin after a mid-game reload logs `got wrong turn have turns 0, received turn N` until the
-  client catches up (Phase 3).
+- Rejoin after a mid-game reload: fixed in Phase 3 (`TurnSequencer`); one warning per gap
+  remains by design.
 - The discord card on a clan overview says "invite is no longer valid" for any invite the
   browser cannot resolve against Discord's public API (offline / fake invite) — expected.
 
@@ -223,9 +248,15 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 
 - Determinism test: **pass** — quick 3/3 in ~17 s; full (world, 150 bots, 8 humans,
   24 000 ticks, 5 processes) 3/3 in 206 s.
-- `npm test` (session 3): 472 + 67 files, 5599 + 673 tests, ~160 s on a loaded box (the two
-  flaky client files time out under contention and pass alone). `tests/api` alone: 14 files,
-  220 tests, ~10 s on PGlite.
+- `npm test` (session 4): 478 + 67 files, 5656 + 673 tests, ~165 s. `tests/api` alone: 14
+  files, 220 tests, ~10 s on PGlite.
+- **`src/core` coverage (session 4, `npm run test:coverage`)**: lines 87.2 %, functions
+  86.1 %, branches 80.3 %, statements 86.3 % (execution/ 88.0 / 89.3 / 80.0 / 86.6; game/
+  88.7 / 87.3 / 83.0 / 88.2). Before Phase 3: 85.5 / 83.6 / 78.8 / 84.5. Floor in
+  `vite.config.ts`: 85 / 83 / 77 / 84 — watched to fail on a single test file. Weakest core
+  files now: `TerrainMapLoader.ts` 36 %, `MotionPlans.ts` 52 %, `FetchGameMapLoader.ts` 56 %
+  (loaders exercised by the browser and load harness, not unit tests), `NationCreation.ts`
+  69 %, `NationEmojiBehavior.ts` 77 %, `TransportShipExecution.ts` 78 %.
 - Server tick @150p (`perf:gate`, world, 150 bots, 1000 ticks, client-side sim cost):
   mean 2.6 ms, p95 4.6, p99 6.7, 0 ticks over the 100 ms turn budget. Budgets in
   `scripts/perfGate.ts`: mean ≤ 8, p95 ≤ 20, p99 ≤ 40.

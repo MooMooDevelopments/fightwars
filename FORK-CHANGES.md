@@ -163,3 +163,51 @@ shared upstream files are listed individually because each one is a future rebas
 - `src/api/Matchmaking.ts` closes sockets through `CloseCode` only (the guard test in
   `tests/CloseCodes.test.ts` enforces it across `src/`).
 - `tests/api/Profiles.test.ts` — every response parsed with the client's schemas.
+
+### Clans, friends, public games, stats tree, seasons (Phase 2, session 3, 2026-09-12)
+
+#### FightWars-only files added
+
+- `src/api/ClanRoutes.ts`, `src/api/FriendRoutes.ts`, `src/api/GamesRoutes.ts`,
+  `src/api/StatsTree.ts`, `src/api/GameBuckets.ts`, `src/api/Cursor.ts` — the routes the
+  client's `ClanApi.ts`, `FriendsApi.ts` and profile pages call; migrations 0004–0007 in
+  `src/api/Migrations.ts`.
+- `tests/api/fixtures.ts`, `tests/api/{Clans,Friends,Games,Migrations,StatsTree,Seasons}.test.ts`.
+- `.github/workflows/ci.yml` — "API on Postgres" job (a `postgres:16` service, one database per
+  test file) so the production adapter runs on every push.
+
+#### Shared upstream files edited
+
+- `src/client/AccountIdentity.ts` — `responseHasLinkedIdentity` is true for any `/users/@me`
+  response: in FightWars every session is a guest account, so ranked, the account button, the
+  lobby card and the not-logged-in warning treat guests as signed in. Tests updated:
+  `tests/client/{AccountIdentity,LobbyCardTrust,Matchmaking}.test.ts`,
+  `tests/client/components/NotLoggedInWarning.test.ts`.
+- `src/client/ClanModal.ts` — signed-out means no session (not an empty `me.user`); the
+  Donations tab renders only when `BRAND.monetisation.store` is on. `tests/client/clan/
+{ClanModalGuest,ClanModal.handlers,ClanModalProfileHandoff}.test.ts` updated / mocked with
+  the store on.
+- `src/client/components/clan/ClanDetailView.ts` — Donate button behind the same switch (it
+  opened the store checkout).
+- `src/server/Master.ts`, `vite.config.ts` — `MASTER_PORT` (default 3000) for the master port
+  and the Vite proxy targets; `package.json` gained `dev:alt` (master on 3200).
+
+### Parity and repair (Phase 3, 2026-09-12)
+
+#### FightWars-only files added
+
+- `src/client/TurnSequencer.ts` — orders the turns the sim consumes; holds turns that arrive
+  ahead of the start snapshot during a rejoin instead of dropping them.
+- `docs/BASELINE-VERIFICATION.md` — brief §5 item by item with the test that pins each.
+- `tests/client/TurnSequencer.test.ts`, `tests/ExecutionManagerIntents.test.ts`,
+  `tests/DiplomacyVerbs.test.ts`, `tests/TribeExecution.test.ts`,
+  `tests/AttackImplBorder.test.ts`, `tests/DeleteUnitCooldown.test.ts` — coverage for the
+  intent dispatcher, every diplomacy verb, bots, the attack record and delete cooldowns.
+
+#### Shared upstream files edited
+
+- `src/client/ClientGameRunner.ts` — turn handling goes through `TurnSequencer`; the
+  "got wrong turn" error is gone (one warning per rejoin gap instead).
+  `tests/client/ClientGameRunnerMessages.test.ts` updated to the hold-then-apply rule.
+- `vite.config.ts` — `test.coverage.thresholds` floor for `src/core/**` (lines 85, functions 83,
+  branches 77, statements 84), enforced by CI's `npm run test:coverage`.

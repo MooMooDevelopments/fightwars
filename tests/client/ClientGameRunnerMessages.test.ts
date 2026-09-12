@@ -182,6 +182,7 @@ const errorModalText = () =>
 beforeEach(() => {
   vi.spyOn(console, "log").mockImplementation(() => {});
   vi.spyOn(console, "error").mockImplementation(() => {});
+  vi.spyOn(console, "warn").mockImplementation(() => {});
   captured.lobbyOnConnect = undefined;
   captured.lobbyOnMessage = undefined;
 });
@@ -264,18 +265,37 @@ describe("ClientGameRunner in-game messages", () => {
     );
   });
 
-  it("forwards a matching turn and rejects a wrong turn number", () => {
+  it("forwards a matching turn, holds one that arrives ahead, applies it after the snapshot", () => {
     const { worker, onmessage } = makeStartedRunner(true);
     const turn = { turnNumber: 0, intents: [] };
 
     onmessage({ type: "turn", turn });
     expect(worker.sendTurn).toHaveBeenCalledWith(turn);
 
+    // A rejoin in flight: live turn 5 outruns the start snapshot. It is held
+    // (not forwarded, not dropped) and the gap is reported once as a warning.
     onmessage({ type: "turn", turn: { turnNumber: 5, intents: [] } });
+    onmessage({ type: "turn", turn: { turnNumber: 6, intents: [] } });
     expect(worker.sendTurn).toHaveBeenCalledTimes(1);
-    expect(console.error).toHaveBeenCalledWith(
-      "got wrong turn have turns 1, received turn 5",
+    expect(console.error).not.toHaveBeenCalled();
+    expect(console.warn).toHaveBeenCalledTimes(1);
+
+    // The snapshot the server sends for the rejoin carries turns 0..4; the
+    // held 5 and 6 follow it in order.
+    onmessage({
+      type: "start",
+      turns: [0, 1, 2, 3, 4].map((turnNumber) => ({ turnNumber, intents: [] })),
+      gameStartInfo: { gameID: "game1234", config: {} },
+      myClientID: "c0000001",
+    });
+    const sent = worker.sendTurn.mock.calls.map(
+      (c) => (c[0] as { turnNumber: number }).turnNumber,
     );
+    expect(sent).toEqual([0, 1, 2, 3, 4, 5, 6]);
+
+    // A stale duplicate is ignored silently.
+    onmessage({ type: "turn", turn: { turnNumber: 3, intents: [] } });
+    expect(worker.sendTurn).toHaveBeenCalledTimes(7);
   });
 
   it("processes a worker game update: turnComplete, hash events, render tick", () => {

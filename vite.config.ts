@@ -235,6 +235,19 @@ export default defineConfig(({ mode }) => {
       globals: true,
       environment: "jsdom",
       setupFiles: "./tests/setup.ts",
+      // FightWars Phase 3: the deterministic core must stay at least this
+      // well covered (`npm run test:coverage`, run by CI). Floors sit just
+      // under the measured numbers of 2026-09-12; raise them, never lower.
+      coverage: {
+        thresholds: {
+          "src/core/**/*.ts": {
+            lines: 85,
+            functions: 83,
+            branches: 77,
+            statements: 84,
+          },
+        },
+      },
       // Git worktrees live inside the repo, so their tests match the default
       // glob and run against that worktree's own (often stale) source and
       // node_modules. Anyone with a worktree checked out sees failures that

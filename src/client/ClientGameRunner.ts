@@ -11,6 +11,7 @@ import {
   LobbyInfoEvent,
   PlayerCosmeticRefs,
   ServerMessage,
+  Turn,
 } from "../core/Schemas";
 import { findClosestBy, replacer } from "../core/Util";
 import {
@@ -66,6 +67,7 @@ import {
   SendUpgradeStructureIntentEvent,
   Transport,
 } from "./Transport";
+import { TurnSequencer } from "./TurnSequencer";
 import { createCanvas } from "./Utils";
 import { WebGLFrameBuilder } from "./WebGLFrameBuilder";
 import { MapLayerController } from "./controllers/MapLayerController";
@@ -891,7 +893,20 @@ export class ClientGameRunner {
   private myPlayer: PlayerView | null = null;
   private isActive = false;
 
-  private turnsSeen = 0;
+  // Orders every turn the worker sees; a rejoin asks the server to resend
+  // from `turns.nextTurn`. See TurnSequencer for why turns can arrive ahead.
+  private readonly turns = new TurnSequencer<Turn>((turn) =>
+    this.worker.sendTurn(
+      // Filter out pause intents in replays
+      this.gameView.config().isReplay()
+        ? {
+            ...turn,
+            intents: turn.intents.filter((i) => i.type !== "toggle_pause"),
+          }
+        : turn,
+    ),
+  );
+  private warnedAheadTurn = false;
   private lastMousePosition: { x: number; y: number } | null = null;
 
   private lastMessageTime: number = 0;
@@ -1007,7 +1022,7 @@ export class ClientGameRunner {
 
     const onconnect = () => {
       console.log("Connected to game server!");
-      this.transport.rejoinGame(this.turnsSeen);
+      this.transport.rejoinGame(this.turns.nextTurn);
     };
 
     let hasGoneToPlayer = false;
@@ -1048,20 +1063,11 @@ export class ClientGameRunner {
           goToPlayer();
         }
 
-        for (const turn of message.turns) {
-          if (turn.turnNumber < this.turnsSeen) {
-            continue;
-          }
-          while (turn.turnNumber - 1 > this.turnsSeen) {
-            this.worker.sendTurn({
-              turnNumber: this.turnsSeen,
-              intents: [],
-            });
-            this.turnsSeen++;
-          }
-          this.worker.sendTurn(turn);
-          this.turnsSeen++;
-        }
+        this.turns.applySnapshot(message.turns, (turnNumber) => ({
+          turnNumber,
+          intents: [],
+        }));
+        this.warnedAheadTurn = false;
       }
       if (message.type === "desync") {
         if (this.lobby.gameStartInfo === undefined) {
@@ -1113,23 +1119,16 @@ export class ClientGameRunner {
         }
         this.lastTickReceiveTime = now;
 
-        if (this.turnsSeen !== message.turn.turnNumber) {
-          console.error(
-            `got wrong turn have turns ${this.turnsSeen}, received turn ${message.turn.turnNumber}`,
+        const result = this.turns.offer(message.turn);
+        if (result === "held" && !this.warnedAheadTurn) {
+          // Expected once per rejoin: live turns outrun the start snapshot
+          // that fills the gap. They are held, not dropped.
+          this.warnedAheadTurn = true;
+          console.warn(
+            `turn ${message.turn.turnNumber} arrived ahead of turn ${this.turns.nextTurn}; holding until the gap closes`,
           );
-        } else {
-          this.worker.sendTurn(
-            // Filter out pause intents in replays
-            this.gameView.config().isReplay()
-              ? {
-                  ...message.turn,
-                  intents: message.turn.intents.filter(
-                    (i) => i.type !== "toggle_pause",
-                  ),
-                }
-              : message.turn,
-          );
-          this.turnsSeen++;
+        } else if (result === "applied") {
+          this.warnedAheadTurn = false;
         }
       }
     };

@@ -26,6 +26,10 @@ import {
   UserSettings,
 } from "../../src/core/game/UserSettings";
 
+// Each case mounts the full inventory UI; under CPU contention (the whole
+// suite in parallel) single cases have passed the default 5 s.
+vi.setConfig({ testTimeout: 30_000 });
+
 vi.mock("../../src/client/Api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../src/client/Api")>()),
   getUserMe: vi.fn(),
