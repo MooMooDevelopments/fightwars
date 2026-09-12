@@ -21,6 +21,27 @@ Dev server: `npm run dev` → http://localhost:9000 (Vite). In the Claude deskto
 launch config `fightwars-dev` (session `.claude/launch.json`) starts it. Load harness against
 it: `npm run load:test -- --clients 150 --map world --turns 600`.
 
+## Handoff — read this first (written 2026-09-12 at the end of session 2)
+
+- Tree is clean and pushed; HEAD is on `origin/main`. Nothing is mid-flight, no background
+  process is running, the dev stack is stopped.
+- **First commands:** `git fetch upstream && git rebase upstream/main` (then
+  `git push --force-with-lease origin main` — the branch is ours), `npm run inst` if
+  `package-lock.json` changed, then the gate block below. Expect rebase conflicts in the
+  brand-swept files (`index.html`, nav bars, `Footer.ts`, `SoundManager.ts`, `Auth.ts`).
+- **Then continue Phase 2 at "Next up" item 2**: clans first (biggest remaining gap in the
+  client's expectations — `src/core/ClanApiSchemas.ts` is the contract), then the per-mode
+  stats tree on profiles, then `/public/games`. Discord login is BLOCKED on a Discord
+  application client id/secret the owner must create — skip it until those exist.
+- `npm run dev` now starts three processes: Vite (9000), the game server (3000 + workers
+  3001/3002) and the API (8787). The API keeps its data in memory unless `PGLITE_DIR` or
+  `DATABASE_URL` is set, so a restart forgets accounts and ratings — set `PGLITE_DIR=.pglite`
+  in a local `.env` if you want them to persist between runs (gitignore it).
+- Known flaky under CPU contention only: `tests/client/InventoryModal.test.ts` and
+  `MainInitialize.test.ts`. Run `npm test` on a quiet box; they pass alone every time.
+- Two browser tabs share `localStorage`; for a two-player test see the trick under
+  "Known broken / deferred". Ranked in the browser has not been tried yet.
+
 ## Done
 
 - [x] Phase 0: audit — `docs/MECHANICS.md`, determinism gate, solo match won in the client,
