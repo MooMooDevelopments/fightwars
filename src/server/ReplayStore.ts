@@ -10,7 +10,7 @@
  *                      players and the ordered intent log). The default in
  *                      dev and whenever REPLAY_DIR is set.
  *   ApiReplayStore   — upstream's behaviour, kept for deployments that still
- *                      run an OpenFront-compatible API.
+ *                      run an upstream-compatible API.
  *
  * A Postgres-backed store slots in behind the same interface later.
  */

@@ -47,6 +47,9 @@ it: `npm run load:test -- --clients 150 --map world --turns 600`.
 - [x] Phase 2: replay persistence (`src/server/ReplayStore.ts`): gzip record per game under
       `REPLAY_DIR` (dev default `./replays`), `GET /w<N>/api/replay/:id`, client asks the game
       server first. Verified end to end against the dev server.
+- [x] Phase 2: server turn timing + live metrics — `TurnStats` in `GameServer.endTurn()`,
+      `GET /w<N>/api/metrics`, dashboard at the master's `/metrics` (dev: http://localhost:3000/metrics).
+      Verified under the 150-client load: see numbers below.
 - [x] CI is live on GitHub: every job green on the first dispatched run (push-triggered runs
       appear with a few minutes of delay).
 
@@ -59,21 +62,17 @@ it: `npm run load:test -- --clients 150 --map world --turns 600`.
 1. **Rebase check** at session start: `git fetch upstream && git rebase upstream/main`; fix
    conflicts (expect some in `index.html`, nav bars, Footer, SoundManager — the brand sweep
    touched them); rerun all gates.
-2. **Phase 2 — server turn timing + live metrics.** Time `GameServer.endTurn()`, keep
-   per-game p50/p99, expose `GET /api/metrics` per worker (games, clients, desync events,
-   turn ms, bytes out) and a tiny dashboard page polling every worker. This is the only way to
-   measure the brief's "server tick under 8 ms" for real (perf:gate measures the client sim).
-3. **Phase 2 — accounts/ladder/clans backend.** Everything auth/stats/cosmetics is the
+2. **Phase 2 — accounts/ladder/clans backend.** Everything auth/stats/cosmetics is the
    closed Cloudflare Worker (`docs/MECHANICS.md` §06.9). Design a minimal FightWars API
    service (Node + Postgres): persistent-id accounts with optional Discord OAuth, match
    results, Glicko-2 ratings, clans. Keep the dev-mode UUID token path working. This is the
-   biggest Phase 2 item; do 2 first.
-4. **Phase 2 — Docker/compose** with server + Postgres + Redis; regional pools are config
+   biggest Phase 2 item.
+3. **Phase 2 — Docker/compose** with server + Postgres + Redis; regional pools are config
    (`CLUSTER_JSON` already models instances/workers).
-5. **Phase 2 — load harness extensions:** `--server-pid` sampling is written but unmeasured;
+4. **Phase 2 — load harness extensions:** `--server-pid` sampling is written but unmeasured;
    add a 500-lobby cluster run (needs multiple workers: the harness already follows
    `workerIndex` from `create_game`).
-6. Then Phase 3 (parity and repair) and on. Before Phase 4, load `frontend-design` for the
+5. Then Phase 3 (parity and repair) and on. Before Phase 4, load `frontend-design` for the
    visual identity — the placeholder wordmark is deliberately plain.
 
 ## Decisions made (never re-litigate these)
@@ -122,6 +121,9 @@ it: `npm run load:test -- --clients 150 --map world --turns 600`.
 - Server tick @150p (`perf:gate`, world, 150 bots, 1000 ticks, client-side sim cost):
   mean 2.6 ms, p95 4.6, p99 6.7, 0 ticks over the 100 ms turn budget. Budgets in
   `scripts/perfGate.ts`: mean ≤ 8, p95 ≤ 20, p99 ≤ 40.
+- **Server tick @150p, measured on the server** (`/api/metrics` during the 150-client load,
+  world, 600 turns): **mean 1.92 ms, p99 2.83 ms, max 5.3 ms**, 0 turns over the 100 ms
+  turn interval, 65 KB/s out for the lobby, worker RSS 123 MB. Target < 8 ms: met.
 - Load test (150 clients, world, 600 turns, dev server): **0.72 KB/s down per client**
   (budget 8), turn gap p50 108 ms / p99 115 / max 423, 0 desyncs, 0 errors, 0 rejoins.
   5 lobbies × 3 clients: 0.06 KB/s, all lobbies in lockstep.

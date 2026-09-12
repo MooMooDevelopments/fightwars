@@ -74,6 +74,7 @@ import {
   noopMatchTelemetryEmitter,
   type MatchTelemetryEmitter,
 } from "./telemetry/MatchTelemetry";
+import { TurnStats, TurnStatsSnapshot } from "./TurnStats";
 
 // Outcome of GameServer.joinClient. The worker maps each to a close code.
 export type JoinResult =
@@ -161,6 +162,8 @@ export class GameServer {
   // Compares the per-turn state hashes clients report; a disagreeing client
   // is told once and its votes are ignored from then on.
   private readonly desync = new DesyncDetector();
+  // FightWars: server-side turn timing and bytes out, for /api/metrics.
+  private turnStats: TurnStats | null = null;
 
   // Socket listeners and the decode / validate / rate-limit / spectator-block
   // pipeline every frame goes through before handleClientMessage.
@@ -1315,6 +1318,7 @@ export class GameServer {
     if (this.paused) {
       return;
     }
+    const turnStartedAt = performance.now();
 
     const pastTurn: Turn = {
       turnNumber: this.turns.length,
@@ -1343,11 +1347,23 @@ export class GameServer {
       } satisfies ServerTurnMessage,
       this.zbinCtx,
     );
+    let recipients = 0;
     this.clients.active().forEach((c) => {
       if (c.ws.readyState === c.ws.OPEN) {
         c.ws.send(msg);
+        recipients++;
       }
     });
+    this.turnStats ??= new TurnStats(this.deps.turnIntervalMs());
+    this.turnStats.record(
+      performance.now() - turnStartedAt,
+      msg.byteLength * recipients,
+    );
+  }
+
+  public turnStatsSnapshot(): TurnStatsSnapshot {
+    this.turnStats ??= new TurnStats(this.deps.turnIntervalMs());
+    return this.turnStats.snapshot();
   }
 
   async end() {

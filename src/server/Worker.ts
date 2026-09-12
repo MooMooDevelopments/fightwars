@@ -358,6 +358,12 @@ export async function startWorker() {
     res.json(game.gameInfo());
   });
 
+  // FightWars: live metrics for the dashboard (Master serves /metrics).
+  app.get("/api/metrics", (_req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    res.json({ workerId, ...gm.metrics() });
+  });
+
   // FightWars: serve archived replays from the ReplayStore (Section 8 of the
   // brief: every public match persisted as a replay). The client asks here
   // first and falls back to the legacy API.

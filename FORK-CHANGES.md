@@ -107,3 +107,16 @@ shared upstream files are listed individually because each one is a future rebas
 - `src/server/Worker.ts` — new `GET /api/replay/:id` serving the stored record.
 - `src/client/JoinLobbyModal.ts` — replay lookup asks the game server first, then the legacy API.
 - `tests/server/ReplayStore.test.ts` — round-trip, missing, path-escape, store selection.
+
+### Server turn timing and live metrics (Phase 2, 2026-09-12)
+
+- `src/server/TurnStats.ts` — new: ring buffer of `endTurn()` durations and bytes broadcast per
+  game; mean/p50/p99/max, over-budget count, bytes/s.
+- `src/server/GameServer.ts` — `endTurn()` timed (from commit through broadcast) and bytes counted;
+  `turnStatsSnapshot()` accessor. Additive.
+- `src/server/GameManager.ts` — `metrics()` aggregate (`WorkerMetricsSnapshot`).
+- `src/server/Worker.ts` — `GET /api/metrics`.
+- `src/server/MetricsDashboard.ts` — new: the dependency-free dashboard page.
+- `src/server/Master.ts` — `GET /metrics` (serves that page) and
+  `GET /metrics/worker/:index` (proxies each worker so the page works with or without nginx/vite).
+- `tests/server/TurnStats.test.ts`.

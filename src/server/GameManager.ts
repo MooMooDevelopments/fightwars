@@ -9,6 +9,7 @@ import {
 } from "../core/game/Game";
 import { GameConfig, GameID, PublicGameType } from "../core/Schemas";
 import { Client } from "./Client";
+import { desyncEventCount } from "./DesyncAlert";
 import { GamePhase, GameServer, JoinResult } from "./GameServer";
 import {
   noopMatchTelemetryEmitter,
@@ -124,6 +125,45 @@ export class GameManager {
     return totalClients;
   }
 
+  // FightWars: one JSON snapshot for /api/metrics and the dashboard.
+  metrics(): WorkerMetricsSnapshot {
+    const games = [...this.games.values()].map((game) => {
+      const t = game.turnStatsSnapshot();
+      return {
+        gameID: game.id,
+        phase: game.phase(),
+        clients: game.numClients(),
+        desyncedClients: game.numDesyncedClients(),
+        turns: t.turns,
+        meanMs: t.meanMs,
+        p50Ms: t.p50Ms,
+        p99Ms: t.p99Ms,
+        maxMs: t.maxMs,
+        overBudget: t.overBudget,
+        bytesOutPerSec: t.bytesOutPerSec,
+      };
+    });
+    const started = games.filter((x) => x.turns > 0);
+    const weighted = started.reduce((a, x) => a + x.meanMs * x.turns, 0);
+    const totalTurns = started.reduce((a, x) => a + x.turns, 0);
+    return {
+      at: Date.now(),
+      activeGames: this.games.size,
+      activeClients: this.activeClients(),
+      desyncedClients: this.desyncCount(),
+      desyncEvents: desyncEventCount(),
+      turnMs: {
+        mean: totalTurns > 0 ? weighted / totalTurns : 0,
+        p99: started.reduce((a, x) => Math.max(a, x.p99Ms), 0),
+        max: started.reduce((a, x) => Math.max(a, x.maxMs), 0),
+        overBudget: started.reduce((a, x) => a + x.overBudget, 0),
+      },
+      bytesOutPerSec: started.reduce((a, x) => a + x.bytesOutPerSec, 0),
+      memoryRssBytes: process.memoryUsage().rss,
+      games,
+    };
+  }
+
   desyncCount(): number {
     return [...this.games.values()].reduce(
       (acc, game) => acc + game.numDesyncedClients(),
@@ -192,4 +232,28 @@ export class GameManager {
     }
     this.games = active;
   }
+}
+
+export interface WorkerMetricsSnapshot {
+  at: number;
+  activeGames: number;
+  activeClients: number;
+  desyncedClients: number;
+  desyncEvents: number;
+  turnMs: { mean: number; p99: number; max: number; overBudget: number };
+  bytesOutPerSec: number;
+  memoryRssBytes: number;
+  games: {
+    gameID: string;
+    phase: string;
+    clients: number;
+    desyncedClients: number;
+    turns: number;
+    meanMs: number;
+    p50Ms: number;
+    p99Ms: number;
+    maxMs: number;
+    overBudget: number;
+    bytesOutPerSec: number;
+  }[];
 }

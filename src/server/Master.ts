@@ -17,6 +17,7 @@ import { getDescriptor } from "./DesktopRelease";
 import { logger } from "./Logger";
 import { MapPlaylist } from "./MapPlaylist";
 import { MasterLobbyService } from "./MasterLobbyService";
+import { metricsDashboardHtml } from "./MetricsDashboard";
 import { setNoStoreHeaders } from "./NoStoreHeaders";
 import { startPolling } from "./PollingLoop";
 import { renderAppShell } from "./RenderHtml";
@@ -275,6 +276,39 @@ export async function startMaster() {
 app.get("/cluster.json", (_req, res) => {
   setNoStoreHeaders(res);
   res.json(ServerEnv.cluster());
+});
+
+// FightWars: a live operations dashboard — polls every worker's /api/metrics.
+// Deliberately dependency-free inline HTML; it is an operator page, not UI.
+// The dashboard asks the master for each worker so it works with or without
+// nginx/vite in front (workers listen on 3001 + index, see ServerEnv).
+app.get("/metrics/worker/:index", async (req, res) => {
+  const index = Number.parseInt(req.params.index, 10);
+  if (
+    !Number.isInteger(index) ||
+    index < 0 ||
+    index >= ServerEnv.numWorkers()
+  ) {
+    return res.status(404).json({ error: "no such worker" });
+  }
+  try {
+    const upstream = await fetch(
+      `http://localhost:${ServerEnv.workerPortByIndex(index)}/api/metrics`,
+      { signal: AbortSignal.timeout(2000) },
+    );
+    res.setHeader("Cache-Control", "no-store");
+    res
+      .status(upstream.status)
+      .type("json")
+      .send(await upstream.text());
+  } catch (err) {
+    res.status(502).json({ error: String(err) });
+  }
+});
+
+app.get("/metrics", (_req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  res.type("html").send(metricsDashboardHtml(ServerEnv.numWorkers()));
 });
 
 app.get("/api/health", (_req, res) => {

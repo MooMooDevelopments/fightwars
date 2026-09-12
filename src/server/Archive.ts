@@ -13,7 +13,7 @@ import { ServerEnv } from "./ServerEnv";
 const log = logger.child({ component: "Archive" });
 
 // FightWars: records go to the configured ReplayStore (a local gzip file
-// per game by default) instead of straight to OpenFront's closed API.
+// per game by default) instead of straight to the upstream project's closed API.
 // See ReplayStore.ts.
 
 export async function archive(gameRecord: GameRecord) {
