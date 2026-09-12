@@ -27,4 +27,25 @@ if (typeof globalThis.localStorage === "undefined") {
   });
 }
 
+/**
+ * Only the event surface, deliberately. src/client/Api.ts registers a
+ * `session-cleared` listener at module scope, and WebGLFrameBuilder reaches
+ * it through Cosmetics, so the harness cannot import the code it measures
+ * without one. A real EventTarget means the listener actually registers
+ * rather than being silently skipped; leaving createElement and friends off
+ * means any genuine DOM work still throws instead of being measured under a
+ * shim that does nothing.
+ */
+if (typeof globalThis.document === "undefined") {
+  const target = new EventTarget();
+  Object.defineProperty(globalThis, "document", {
+    configurable: true,
+    value: {
+      addEventListener: target.addEventListener.bind(target),
+      removeEventListener: target.removeEventListener.bind(target),
+      dispatchEvent: target.dispatchEvent.bind(target),
+    },
+  });
+}
+
 export {};

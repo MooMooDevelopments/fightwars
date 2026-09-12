@@ -171,6 +171,10 @@ function createGlStub() {
     initSkinAtlas: noop("initSkinAtlas"),
     applyTerrainRects: (rects: unknown[]) =>
       bump("applyTerrainRects", rects.length),
+    updateSmallPlayerGlow: noop("updateSmallPlayerGlow"),
+    updateEffectPalette: noop("updateEffectPalette"),
+    markLayerTilesDestroyed: noop("markLayerTilesDestroyed"),
+    refreshNames: noop("refreshNames"),
     // uploadFrameData dispatch targets (FrameUploadTarget)
     uploadTileAndTrailState: noop("uploadTileAndTrailState"),
     uploadLiveDelta: (_: unknown, changed: unknown[]) => {
@@ -178,6 +182,8 @@ function createGlStub() {
       changedTilesSeen += changed.length;
     },
     uploadLiveTrailDelta: noop("uploadLiveTrailDelta"),
+    updateSpiralRibbons: (ribbons: readonly unknown[]) =>
+      bump("updateSpiralRibbons", ribbons.length),
     applyFullTiles: noop("applyFullTiles"),
     applyDelta: noop("applyDelta"),
     uploadRailroadState: noop("uploadRailroadState"),

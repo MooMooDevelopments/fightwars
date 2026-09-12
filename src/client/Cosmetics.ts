@@ -34,6 +34,7 @@ import {
   purchaseCosmeticPack,
   purchaseWithCurrency,
 } from "./Api";
+import { getCachedCosmetics, setCachedCosmetics } from "./CosmeticsCache";
 import { showInGameAlert, showInGameConfirm } from "./InGameModal";
 import {
   classifyPurchaseReturn,
@@ -59,16 +60,9 @@ export const COSMETICS_FETCH_TIMEOUT_MS = 10_000;
 
 let __cosmetics: Promise<Cosmetics | null> | null = null;
 let __cosmeticsHash: string | null = null;
-let __cosmeticsCache: Cosmetics | null = null;
-
-/**
- * Synchronous accessor for the most recently resolved cosmetics. Returns null
- * before the first successful `fetchCosmetics()` call. Useful when a code path
- * cannot await (e.g. WebGL per-frame sync).
- */
-export function getCachedCosmetics(): Cosmetics | null {
-  return __cosmeticsCache;
-}
+// The catalog cache lives in CosmeticsCache.ts; re-exported here so existing
+// importers keep working and the renderer can reach it without this module.
+export { getCachedCosmetics };
 
 /**
  * Resolve the local player's selected skin from UserSettings + cached
@@ -78,7 +72,7 @@ export function getCachedCosmetics(): Cosmetics | null {
 export function getLocalSelectedSkin(): { name: string; url: string } | null {
   const skinName = new UserSettings().getSelectedSkinName();
   if (!skinName) return null;
-  const skin = __cosmeticsCache?.skins?.[skinName];
+  const skin = getCachedCosmetics()?.skins?.[skinName];
   if (!skin) return null;
   return { name: skin.name, url: skin.url };
 }
@@ -837,7 +831,7 @@ export async function fetchCosmetics(): Promise<Cosmetics | null> {
       const patternKeys = Object.keys(result.data.patterns).sort();
       const hashInput = patternKeys.join(",");
       __cosmeticsHash = simpleHash(hashInput);
-      __cosmeticsCache = result.data;
+      setCachedCosmetics(result.data);
       return result.data;
     } catch (error) {
       console.error("Error getting cosmetics:", error);

@@ -211,3 +211,108 @@ shared upstream files are listed individually because each one is a future rebas
   `tests/client/ClientGameRunnerMessages.test.ts` updated to the hold-then-apply rule.
 - `vite.config.ts` — `test.coverage.thresholds` floor for `src/core/**` (lines 85, functions 83,
   branches 77, statements 84), enforced by CI's `npm run test:coverage`.
+
+## Phase 4 — identity (2026-09-12)
+
+Written in session 7 covering sessions 5–7; the file had no Phase 4 entries before that, which
+is the gap this section closes.
+
+### Nation colours in OKLCH (cfc7de38a)
+
+#### FightWars-only files added
+
+- `src/client/theme/Oklch.ts`, `src/client/theme/DeltaE.ts` — perceptual colour space and the
+  CIEDE2000 distance the allocator separates players by.
+- `scripts/generatePalettes.ts` — generates the four theme JSONs; run by hand, not in CI.
+- `src/client/render/gl/{deuteranopia,protanopia,tritanopia}-theme.json` — one palette per form
+  of colour blindness, replacing the single `colorblind-theme.json`.
+- `tests/client/DeltaE.test.ts`, `tests/client/Palette.test.ts` — the distance function and the
+  separation floor every generated palette must clear.
+
+#### Shared upstream files edited
+
+- `src/client/render/gl/default-theme.json` — regenerated in OKLCH.
+- `src/client/render/gl/colorblind-theme.json` — deleted; three targeted palettes replace it.
+- `src/client/theme/ColorAllocator.ts` — allocates by CIEDE2000 distance rather than hue index.
+- `src/client/theme/ThemeProvider.ts`, `src/client/GraphicsPresets.ts`,
+  `src/client/render/gl/{GraphicsOverrides,RenderSettings}.ts`,
+  `src/client/render/gl/graphics-presets.json` — the palette is a user-visible setting with
+  four values instead of a boolean.
+- `src/core/game/UserSettings.ts` — stores the chosen palette.
+- `resources/lang/en.json`, `package.json`, `tests/{Colors,GraphicsPresets,TranslationSystem}.test.ts`
+  — strings, the `palettes:generate` script, and the tests that moved with the setting.
+
+### Clan creation, attack cost, account page (da380e999, c54d8c642, 49bb3c999)
+
+#### FightWars-only files added
+
+- `src/client/components/clan/ClanCreateView.ts` — the create form; clans could be joined but
+  not created from the game before.
+- `src/client/AttackCostEstimate.ts` — turns `Config.attackLogic`'s `AttackExplanation` into the
+  hover breakdown.
+- `tests/client/clan/ClanApiCreate.test.ts`, `tests/AttackBreakdown.test.ts`,
+  `tests/client/AttackCostEstimate.test.ts`, `tests/client/AccountModalGuest.test.ts`.
+
+#### Shared upstream files edited
+
+- `src/core/configuration/Config.ts` — `attackLogic` fills in an `AttackExplanation`; the numbers
+  are unchanged, so this is additive and the determinism gate is unaffected.
+- `src/client/hud/layers/PlayerInfoOverlay.ts`, `src/client/hud/GameRenderer.ts` — render the
+  breakdown on hover.
+- `src/client/{ClanApi,ClanModal}.ts` — the create call and its tab.
+- `src/client/AccountModal.ts`, `src/client/UsernameInput.ts`, `src/brand/Brand.ts` — a guest is
+  a signed-in account here, so the page shows what a guest actually has rather than a sign-in wall.
+
+### A face and a mark of its own (938362c3f)
+
+#### FightWars-only files added
+
+- `scripts/generateBrandMarks.ts`, `scripts/generateFontAtlas.ts`, `scripts/syncFonts.ts` — asset
+  generators. Their tools are deliberately **not** dependencies (`msdf-bmfont-xml` pulls native
+  `canvas`); each script's header names the one-off `npm install --no-save`.
+- `resources/fonts/barlow-*.woff2`, `resources/images/SocialCard.png`.
+
+#### Shared upstream files edited
+
+- `resources/atlases/msdf-atlas.{json,png}` — regenerated for Barlow Condensed.
+- `resources/fonts/overpass*.woff`, `resources/images/GameplayScreenshot.png` — deleted.
+- `resources/images/{Favicon.svg,FightWarsLogo.svg,FightWarsLogoDark.svg}`,
+  `resources/icons/icon512_*.png` — own mark.
+- `src/brand/Brand.ts`, `src/client/styles.css` — `--font-display` (Barlow Condensed) and the
+  body face as brand tokens.
+- `src/client/{Main,Utils,HelpModal}.ts`, `src/client/components/{DesktopNavBar,PlayPage}.ts`,
+  `src/client/hud/layers/WinModal.ts`, `src/server/{GamePreviewBuilder,RenderHtml}.ts` — the
+  wordmark and `og:image` follow the brand module.
+- `tsconfig.json`, `eslint.config.js` — `scripts/generateBrandMarks.ts` excluded and allow-listed;
+  it runs under a tool that is not installed, so type-checking it would claim a check that is not
+  happening.
+- `LICENSING.md`, `package.json`, `tests/Brand.test.ts`.
+
+### The chrome stops being painted in upstream's blue (f70684ae4)
+
+#### Shared upstream files edited
+
+- `src/client/styles/core/variables.css`, `src/client/styles.css`, `index.html` — the semantic
+  palette: `action` / `action-hover` / `action-ink` / `signal` / `rank-gold` / `surface` / `ink`.
+  There is deliberately no _lighter_ hover step; that is what left the old one at 2.56:1.
+- ~55 client files under `src/client/` (modals, nav bars, lobby and clan views, base components,
+  HUD layers) — a mechanical sweep from upstream's hard-coded blues to those tokens, one
+  substitution each. Listed as a group for the same reason as the Phase 1 brand sweep: they are
+  one change, and a rebase resolves them the same way.
+- `tests/client/clan/ClanModal.rendering.test.ts` — assertions that named the old colours.
+
+### The client perf harness runs again (session 7)
+
+#### FightWars-only files added
+
+- `src/client/CosmeticsCache.ts` — the resolved cosmetics catalog, split out of `Cosmetics.ts`.
+- `tests/perf/client/ViteServer.ts` — the dev server the two browser-driven harnesses start,
+  previously duplicated byte-for-byte in both.
+
+#### Shared upstream files edited
+
+- `src/client/Cosmetics.ts` — the catalog cache moves to `CosmeticsCache.ts` and is re-exported.
+  `Cosmetics.ts` owns fetching, purchasing and the modals around both, so it imports Api,
+  Payments and InGameModal, and through them lit-html, which touches the DOM at module scope.
+- `src/client/WebGLFrameBuilder.ts` — reads the cache from the leaf module, so the renderer no
+  longer depends on the store. Behaviour is unchanged; this is an import-graph change.

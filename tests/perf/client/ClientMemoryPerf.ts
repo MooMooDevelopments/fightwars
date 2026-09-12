@@ -41,9 +41,9 @@
  * buffers live). Solo games are RNG-driven (bot spawns), so numbers vary a
  * few percent run-to-run; compare trends, not bytes.
  */
-import { ChildProcess, spawn as spawnProcess } from "child_process";
 import fs from "fs";
 import path from "path";
+import { startViteServer, stopViteServer } from "./ViteServer";
 
 interface Options {
   map: string;
@@ -128,52 +128,6 @@ function parseArgs(): Options {
     }
   }
   return opts;
-}
-
-// ---------- dev server ----------
-
-async function startViteServer(port: number): Promise<ChildProcess> {
-  // --strictPort makes vite exit instead of silently picking another port —
-  // that also guards against measuring a different checkout's server.
-  const child = spawnProcess(
-    "npx",
-    ["vite", "--port", String(port), "--strictPort"],
-    {
-      env: { ...process.env, SKIP_BROWSER_OPEN: "true" },
-      stdio: ["ignore", "pipe", "pipe"],
-      detached: true, // own process group, so cleanup kills vite's children
-    },
-  );
-  let output = "";
-  child.stdout?.on("data", (d: Buffer) => (output += d.toString()));
-  child.stderr?.on("data", (d: Buffer) => (output += d.toString()));
-
-  const deadline = Date.now() + 60_000;
-  while (Date.now() < deadline) {
-    if (child.exitCode !== null) {
-      throw new Error(
-        `vite exited with code ${child.exitCode} (port ${port} busy?)\n${output}`,
-      );
-    }
-    try {
-      const res = await fetch(`http://localhost:${port}/`);
-      if (res.ok) return child;
-    } catch {
-      // not up yet
-    }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  throw new Error(`vite did not become ready on port ${port}\n${output}`);
-}
-
-function stopViteServer(child: ChildProcess): void {
-  if (child.pid !== undefined && child.exitCode === null) {
-    try {
-      process.kill(-child.pid, "SIGTERM"); // whole process group
-    } catch {
-      // already gone
-    }
-  }
 }
 
 // ---------- report ----------

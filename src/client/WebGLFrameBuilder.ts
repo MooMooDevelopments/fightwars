@@ -15,7 +15,7 @@ import {
 } from "../core/CosmeticSchemas";
 import { PlayerType } from "../core/game/Game";
 import { decodePatternData } from "../core/PatternDecoder";
-import { getCachedCosmetics } from "./Cosmetics";
+import { getCachedCosmetics } from "./CosmeticsCache";
 import { buildTerrainRowSpans } from "./render/frame/derive/TerrainRowSpans";
 import { uploadFrameData } from "./render/frame/Upload";
 // Type-only: a value import would pull GPURenderer and its `.glsl?raw` shader
