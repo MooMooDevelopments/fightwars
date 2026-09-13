@@ -353,6 +353,85 @@ maths must be integer or `DetMath`; all randomness on the seeded `PseudoRandom`.
 Every item below has a worked hook-point analysis in `docs/MECHANICS.md`; the section is
 named so it can be read before touching the code.
 
+### Before starting Phase 5
+
+Five things learned doing Phase 4 that apply to every item below, because Phase 5 is the first
+phase where nearly every change is a _simulation_ change.
+
+- **The determinism hash is a two-way instrument, not just a gate.** It reads
+  `final hash <N>` on every `npm run perf:gate` and `npm run test:determinism`.
+  - A refactor that is _supposed_ to change nothing must leave it **identical**. Session 7
+    swapped `setTroops(a + b)` for `commitTroops(b)` inside `AttackExecution`'s merge and the
+    hash stayed at `23404413546031824` — stronger evidence than any test that the simulation
+    does the same work. It has read that value in every session from 7 to 9, across an
+    attack-state change, two new render passes and a HUD rebuild, so treat it as the known-good
+    constant for the current balance: **if it moves and you did not mean to move it, stop.**
+  - A change that is _supposed_ to alter play must **move** it. If you retune a formula and the
+    hash is unchanged, your change is not live — wrong config path, dead branch, or a value
+    nothing reads. Check that before believing a balance result.
+  - Record the hash in the commit message when either fact is the point.
+
+- **Know which lane a new number belongs in before you add it.** There are two, and they are
+  not interchangeable:
+  - The **object arrays** (`PlayerUpdate.outgoingAttacks`, and friends) are resent only when
+    `diffPlayerUpdate` sees a change, so they are for values that rarely move.
+  - The **packed `Float64Array` lanes** (`packedPlayerUpdates`, `packedAttackUpdates`) carry
+    values that change every tick for every entity, and are the only part of the protocol with
+    a real bandwidth cost at 120 players. Phase 5 adds a lot of per-tick quantities —
+    materials, manpower, upkeep — and each one is this decision.
+  - **The trap:** `packAttackTroopDeltas` returns early unless the arrays are _membership
+    equal_. A value added to an array's comparison therefore suppresses that tick's packed
+    delta (correctly — the array carries the fresh value instead), and a test fixture that ties
+    an array-borne field to a per-tick one will silently stop the lane emitting at all. That
+    happened in session 7 and only the existing lane test caught it.
+
+- **`perf:gate` is not trustworthy on this machine under load.** It has read anywhere from
+  2.39 ms to 19.1 ms for the _same commit_ depending on what else was running, and the browser
+  pane rendering a game in software is enough to fail it on its own. Before believing a
+  regression: close the pane, stop the dev stack, re-run; if it still fails, `git stash` to a
+  clean tree and watch it fail the same way. An identical final hash across both runs means the
+  simulation is doing identical work and only wall-clock differs. Phase 5's gate says "perf:gate
+  budgets held" — hold it against an _idle_ box or the number means nothing.
+
+- **Nothing counts as verified until it has been watched failing, or photographed.** Phase 5 is
+  balance work, where a change that does nothing looks exactly like a change that works.
+  Sessions 7 to 9 each lost time to that same mistake in a different disguise: a test that
+  sampled the shake before the blast it asserted on, a regex guard carrying stray bytes that
+  could never match anything, and two render effects shipped at opacities invisible on a live
+  map. All three were caught the same way — break the thing the check watches and confirm the
+  check fails. For a balance change the equivalents are the hash above and the bot-vs-bot run
+  Phase 5's gate already demands; neither is optional.
+
+- **Check where a quantity is mutated before designing around it.** Item 4's plan in §3 called
+  for `startTroops`, "what the attack launched with", and that value cannot exist: attacks on
+  the same target merge, so the survivor's live count jumps above its own starting figure and
+  the subtraction goes negative. The fix was a different quantity (`troopsCommitted`, raised by
+  a merge, untouched by losses), not a different formula. Phase 5 items 6.3 and 6.5 both
+  introduce pooled quantities with several writers — `grep` every mutation site first.
+
+### What Phase 4 still owes
+
+Phase 4 is **not** finished and should not be treated as done when Phase 5 starts. Read the §3
+table for the current state; as of session 9 the outstanding work is:
+
+- **§3 item 9 — build queue, rally points, attack presets.** Not started, and the only Phase 4
+  item that touches the simulation: three new intents, each needing a `Schemas.ts` entry, an
+  `ExecutionManager` case, an `Execution` class, a test in `ExecutionManagerIntents.test.ts`
+  and a `docs/MECHANICS.md` note. It is Phase 5 work that happens to be listed under Phase 4,
+  so the cleanest thing is to **fold it into Phase 5 and do it under Phase 5's rules** — the
+  note above about the determinism hash and the two update lanes applies to it directly.
+- **§3 item 3 — halos and flashes at small zoom.** The political-block and border half is done;
+  `SmallPlayerGlowPass` and `FalloutBloomPass` were never touched and have the same sub-pixel
+  problem the border had.
+- **§3 item 6 — the HUD's layout and the feeds.** Typography, tokens and accessibility are
+  done; information design is not, and `dataviz` is still mandatory before the first stat tile,
+  meter or sparkline.
+- **§3 item 7 — mobile layout.** Rotation, the header and touch targets are done; the layout
+  itself is not. Real mobile Safari remains unverifiable on this machine (§6).
+
+If Phase 5 starts before these land, say so explicitly in `BUILD-STATE.md` rather than letting
+the phase table imply Phase 4 closed.
+
 | Item                                                      | Mechanics section                    | The shape of the change                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | --------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 6.1 Supply lines (highest value)                          | §02 G1, §03 7.4                      | New `supplyDistance` on `AttackLogicInput`, gathered in `AttackExecution.attackLogicInput` from a per-tile flood off own City/Port/rail-cluster tiles (the flood in `validStructureSpawnTiles` is the template; `RailNetworkImpl` clusters already exist). Attrition in the tick loop before the budget loop. Free `state` bit for a "supplied" flag so the renderer can shade it.                                                                                  |
