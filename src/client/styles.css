@@ -881,3 +881,72 @@ unit-display .tutorial-highlight::after {
   mask: var(--icon) no-repeat center / contain;
   flex-shrink: 0;
 }
+
+/**
+ * A range input a thumb can actually find.
+ *
+ * The attack-ratio slider is the control a phone player reaches for most, and
+ * it was 6px tall — the height of its own track, which is what a bare
+ * `<input type="range">` gives you. A 6px target fails every touch-size
+ * guideline there is, and it is the difference between setting your ratio and
+ * scrolling the map by accident.
+ *
+ * The element grows to a 44px-tall target while the *visible* track stays
+ * thin, by styling the track and thumb rather than the element. The thumb is
+ * sized to the target, not to the track, for the same reason.
+ */
+.slider-touch {
+  height: 44px;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  /* Chrome double-taps to zoom otherwise, which eats the first drag. */
+  touch-action: manipulation;
+}
+
+/* The filled portion. `appearance: none` takes the browser's own filled track
+   with it, and that fill is the thing that says "this is a proportion" before
+   the number beside it is read. `--fill` is set by the component. */
+.slider-touch::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    var(--color-action) 0 var(--fill, 0%),
+    var(--color-meter-track) var(--fill, 0%) 100%
+  );
+}
+
+.slider-touch::-moz-range-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    var(--color-action) 0 var(--fill, 0%),
+    var(--color-meter-track) var(--fill, 0%) 100%
+  );
+}
+
+.slider-touch::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -8px;
+  border-radius: 9999px;
+  background: var(--color-action);
+  border: 2px solid var(--color-ink);
+}
+
+.slider-touch::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--color-ink);
+  border-radius: 9999px;
+  background: var(--color-action);
+}
+
+.slider-touch:focus-visible {
+  outline: 2px solid var(--color-action-ink);
+  outline-offset: 2px;
+}

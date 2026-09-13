@@ -667,7 +667,8 @@ export class ControlPanel extends LitElement implements Controller {
           aria-valuetext="${Math.round(this.attackRatio * 100)}%"
           @input=${(e: Event) => this.handleRatioSliderInput(e)}
           @pointerup=${(e: Event) => this.handleRatioSliderPointerUp(e)}
-          class="flex-1 h-1.5 accent-action cursor-pointer"
+          class="slider-touch flex-1 cursor-pointer"
+          style="--fill: ${Math.round(this.attackRatio * 100)}%"
         />
       </div>
     `;
@@ -740,7 +741,8 @@ export class ControlPanel extends LitElement implements Controller {
             aria-valuetext="${Math.round(this.attackRatio * 100)}%"
             @input=${(e: Event) => this.handleRatioSliderInput(e)}
             @pointerup=${(e: Event) => this.handleRatioSliderPointerUp(e)}
-            class="w-full h-1.5 accent-action cursor-pointer"
+            class="slider-touch w-full cursor-pointer"
+            style="--fill: ${Math.round(this.attackRatio * 100)}%"
           />
         </div>
       </div>
