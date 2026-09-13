@@ -13,12 +13,14 @@
  *
  * Usage: npx tsx scripts/balanceRun.ts [--ticks 5000] [--bots 150]
  *                                      [--map world] [--seed perf-gate]
- *                                      [--no-supply]
+ *                                      [--no-supply] [--flat-terrain]
  *
- * `--no-supply` turns the supply penalty and its attrition off while leaving
- * everything else alone, so one run against another is an A/B of that one
- * mechanic rather than of two different builds. Prefer it to stashing the
- * feature — a stash also removes the script doing the measuring.
+ * `--no-supply` turns the supply penalty and its attrition off, and
+ * `--flat-terrain` turns the elevation curves off (the band table stays),
+ * each leaving everything else alone, so one run against another is an A/B
+ * of that one mechanic rather than of two different builds. Prefer a flag to
+ * stashing the feature — a stash also removes the script doing the measuring.
+ * Every Phase 5 mechanic should get one.
  */
 import path from "path";
 import { fileURLToPath } from "url";
@@ -66,6 +68,19 @@ class NoSupply extends Config {
   }
 }
 
+/** The same game with elevation charging nothing beyond its band. */
+class FlatTerrain extends Config {
+  terrainHeightSlope(): number {
+    return 0;
+  }
+  terrainClimbSlope(): number {
+    return 0;
+  }
+  terrainHighGroundDefence(): number {
+    return 0;
+  }
+}
+
 /** Map name to enum member, the same spelling the perf harness accepts. */
 function resolveMap(name: string): GameMapType {
   const key = Object.keys(GameMapType).find(
@@ -87,9 +102,13 @@ async function main(): Promise<void> {
   const map = resolveMap(arg("--map", "world"));
   const seed = arg("--seed", "perf-gate");
   const noSupply = process.argv.includes("--no-supply");
+  const flatTerrain = process.argv.includes("--flat-terrain");
+  if (noSupply && flatTerrain) {
+    throw new Error("one lever at a time: pick --no-supply or --flat-terrain");
+  }
   console.debug = () => {};
   console.log(
-    `[balance] map=${map} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}\n`,
+    `[balance] map=${map} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}\n`,
   );
 
   const gameConfig: GameConfig = {
@@ -116,7 +135,9 @@ async function main(): Promise<void> {
 
   const config = noSupply
     ? new NoSupply(gameConfig, null, false)
-    : new Config(gameConfig, null, false);
+    : flatTerrain
+      ? new FlatTerrain(gameConfig, null, false)
+      : new Config(gameConfig, null, false);
   const mapLoader = new NodeGameMapLoader(
     path.join(PROJECT_ROOT, "resources/maps"),
   );

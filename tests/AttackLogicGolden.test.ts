@@ -41,6 +41,8 @@ function run(o: Partial<AttackLogicInput> & { attackTroops: number }) {
     defender: null,
     defenderHasDefensePost: false,
     supplyDistance: 0,
+    elevation: 0,
+    climb: 0,
     falloutRatio: null,
     borderSize: 100,
     ...o,
@@ -256,5 +258,78 @@ describe("attackLogic golden values", () => {
     expect(() =>
       run({ terrain: TerrainType.Impassable, attackTroops: 1 }),
     ).toThrow();
+  });
+});
+
+describe("elevation (brief 6.2)", () => {
+  // Height is charged on top of the band, so the same band at two heights
+  // must differ; climb is signed; high ground spares the defender only.
+  const defended = {
+    attackTroops: 50_000,
+    defender: defender({ numTiles: 10_000, troops: 40_000 }),
+  };
+
+  test("height inside a band", () => {
+    expect({
+      plainsFloor: run({
+        ...defended,
+        terrain: TerrainType.Plains,
+        elevation: 0,
+      }),
+      plainsTop: run({
+        ...defended,
+        terrain: TerrainType.Plains,
+        elevation: 9,
+      }),
+      mountainFoot: run({
+        ...defended,
+        terrain: TerrainType.Mountain,
+        elevation: 20,
+      }),
+      mountainPeak: run({
+        ...defended,
+        terrain: TerrainType.Mountain,
+        elevation: 30,
+      }),
+    }).toMatchSnapshot();
+  });
+
+  test("climb, uphill and down", () => {
+    expect(
+      Object.fromEntries(
+        [-30, -12, -2, 0, 2, 12, 30].map((climb) => [
+          `climb ${climb}`,
+          run({
+            ...defended,
+            terrain: TerrainType.Highland,
+            elevation: 15,
+            climb,
+          }),
+        ]),
+      ),
+    ).toMatchSnapshot();
+  });
+
+  test("high ground spares the defender", () => {
+    const low = run({ ...defended, terrain: TerrainType.Plains, elevation: 0 });
+    const high = run({
+      ...defended,
+      terrain: TerrainType.Mountain,
+      elevation: 30,
+    });
+    expect(high.defenderLoss).toBeLessThan(low.defenderLoss);
+    expect({ low, high }).toMatchSnapshot();
+  });
+
+  test("terra nullius pays for height and climb too", () => {
+    expect({
+      flat: run({ attackTroops: 20_000, elevation: 0, climb: 0 }),
+      peak: run({
+        attackTroops: 20_000,
+        terrain: TerrainType.Mountain,
+        elevation: 30,
+        climb: 12,
+      }),
+    }).toMatchSnapshot();
   });
 });

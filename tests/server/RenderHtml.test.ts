@@ -12,6 +12,15 @@ import {
 } from "../../src/server/RenderHtml";
 import { ServerEnv } from "../../src/server/ServerEnv";
 
+// FightWars: the real manifest is read from static/asset-manifest.json when a
+// production build has been made on this machine, and the guarded-lines case
+// below asserts an empty one. Pin it, so the test says the same thing on a
+// developer box after `npm run build-prod` as it does in CI.
+vi.mock("../../src/server/RuntimeAssetManifest", () => ({
+  getRuntimeAssetManifest: async () => ({}),
+  clearRuntimeAssetManifestCache: () => {},
+}));
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Covers both hosts the tests below boot as: the pinned blue deployment and

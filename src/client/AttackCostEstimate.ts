@@ -67,6 +67,22 @@ function clientSupplyDistance(
 }
 
 /**
+ * The height the attack would come from: the highest tile the player holds
+ * beside the target, the same rule the simulation uses. The target's own
+ * height when none is held, so the climb reads as zero.
+ */
+function clientVantage(game: GameView, tile: TileRef, me: PlayerView): number {
+  const mine = me.smallID();
+  let best = -1;
+  for (const neighbor of game.neighbors(tile)) {
+    if (game.ownerID(neighbor) !== mine) continue;
+    const m = game.magnitude(neighbor);
+    if (m > best) best = m;
+  }
+  return best === -1 ? game.magnitude(tile) : best;
+}
+
+/**
  * Estimate the cost of attacking `tile`. Returns null when the tile cannot be
  * attacked at all — not land, the player's own, a teammate's, or there is no
  * local player.
@@ -113,6 +129,8 @@ export function estimateAttackCost(
         defender.id(),
       ),
     supplyDistance: clientSupplyDistance(game, tile, me),
+    elevation: game.magnitude(tile),
+    climb: game.magnitude(tile) - clientVantage(game, tile, me),
     falloutRatio: game.hasFallout(tile)
       ? game.numTilesWithFallout() / game.numLandTiles()
       : null,
@@ -168,11 +186,14 @@ export interface AttackFactor {
 }
 
 /**
- * The factors worth showing a player: the ones that are *not* 1, because a
- * list of no-ops explains nothing. Ordered by how much they move the answer,
- * furthest from 1 first, so the reason an attack is expensive is the first
- * line rather than the fifth.
+ * The factors worth showing a player: the ones that move the answer by more
+ * than a couple of per cent, because a list of near-no-ops explains nothing
+ * - and with elevation charged on every tile, almost every tile now carries
+ * a x1.01 somewhere. Ordered by how much they move the answer, furthest from
+ * 1 first, so the reason an attack is expensive is the first line rather
+ * than the fifth.
  */
+const FACTOR_WORTH_A_LINE = 0.02;
 export function significantFactors(estimate: AttackEstimate): AttackFactor[] {
   const e = estimate.explanation;
   const all: AttackFactor[] = [
@@ -184,6 +205,9 @@ export function significantFactors(estimate: AttackEstimate): AttackFactor[] {
     },
     { key: "fallout", value: e.falloutMod, affects: "both" },
     { key: "supply", value: e.supplyMod, affects: "both" },
+    { key: "height", value: e.heightMod, affects: "both" },
+    { key: "climb", value: e.climbMod, affects: "both" },
+    { key: "high_ground", value: e.highGroundMod, affects: "loss" },
     { key: "tribe", value: e.botDefenderMod, affects: "loss" },
     { key: "traitor", value: e.traitorLossMod, affects: "loss" },
     { key: "traitor_speed", value: e.traitorSpeedMod, affects: "speed" },
@@ -191,7 +215,7 @@ export function significantFactors(estimate: AttackEstimate): AttackFactor[] {
     { key: "their_size", value: e.largeDefenderMod, affects: "both" },
   ];
   return all
-    .filter((factor) => Math.abs(factor.value - 1) > 0.005)
+    .filter((factor) => Math.abs(factor.value - 1) > FACTOR_WORTH_A_LINE)
     .sort((a, b) => Math.abs(b.value - 1) - Math.abs(a.value - 1));
 }
 
@@ -225,6 +249,11 @@ function blankExplanation(): AttackExplanation {
     falloutMod: 1,
     supplyDistance: 0,
     supplyMod: 1,
+    elevation: 0,
+    heightMod: 1,
+    climb: 0,
+    climbMod: 1,
+    highGroundMod: 1,
     botDefenderMod: 1,
     disconnectedTeammateMod: 1,
     traitorLossMod: 1,

@@ -1,6 +1,6 @@
 # FightWars Build State
 
-Last session: 2026-09-13 (session 10) | Current phase: **5 (depth)** — item 6.1 (supply lines) done; Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
+Last session: 2026-09-14 (session 11) | Current phase: **5 (depth)** — items 6.1 (supply lines) and 6.2 (elevation) done; Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
 
 Repo: `C:\Users\disbo\dev\fightwars` · `upstream` = openfrontio/OpenFrontIO (forked at
 `c77005586`, rebased onto `7d95251f1` the same day) · `origin` = github.com/MooMooDevelopments/fightwars
@@ -26,7 +26,51 @@ follows it). In the Claude desktop session the launch configs `fightwars-dev` /
 shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 `npm run load:test -- --clients 150 --map world --turns 600`.
 
-## Handoff — read this first (written 2026-09-13 at the end of session 10)
+## Handoff — read this first (written 2026-09-14 at the end of session 11)
+
+### Session 11 — item 6.2, terrain that costs something
+
+- **What shipped, in two commits on purpose.** First the three-way terrain switch (and the
+  second copy of its weights in `AttackExecution.addNeighbors`) became one table, `TERRAIN_COST`,
+  with a per-band `{ loss, speed }` multiplier block on `GameConfig.terrain` — a refactor that
+  had to leave the hash at `23307802903294904` and every snapshot byte-identical, and did. Then
+  the stored 0–30 elevation went back inside the three bands: height, signed climb, and a
+  defender's high ground. Hash `23307802903294904 → 24015429958765936`. Full description and
+  the tunables in `docs/MECHANICS.md` §02 G2; every touched file in `FORK-CHANGES.md`.
+  **The Phase 5 constant is now `24015429958765936`.**
+- **Measure the ground before designing on it.** A histogram of `world/map.bin` decided the
+  design: adjacent tiles differ by 0–2 elevation 79 % of the time and the 99th percentile is 12,
+  so a climb measured to one tile is small — but an attack pays it on every tile of an ascent and
+  is paid back on every tile of a descent, which is exactly the ridgeline feel the brief asks for.
+  Twenty lines of Python over the byte array, before any TypeScript.
+- **What this item does not do, and why it is not a gap in the work.** Forest, marsh, desert,
+  urban and river crossings are the rest of §6.2. The byte has no spare bits; a magnitude
+  sub-range would destroy the elevation data the new curves read; and **no source PNG has a
+  forest painted in it** — the generator reads only the blue channel. The content does not
+  exist, and inventing it across 121 maps is the owner's art decision. River crossings change
+  conquest topology (thin water is a wall by design on many maps). Both are written up with hook
+  points in G2. If Phase 5 is ever "done", this is the entry that says what it still owes.
+- **The A/B lever proved itself first.** `npm run balance:run -- --flat-terrain` reproduced the
+  previous session's supply-on game **to the hash** (`33895282646835616`), so the run beside it
+  is elevation and nothing else. Every Phase 5 mechanic should ship with a lever like that; the
+  script enforces one at a time.
+- **The tooltip needed a threshold.** With elevation charged on every tile, almost every hover
+  carried an "Elevation ×1.01" row. `significantFactors` now shows a factor only past 2 %; a
+  list of near-no-ops explains nothing.
+- **Which guard is load-bearing, watched failing:** height forced to 1 → four golden rows and the
+  `AttackBreakdown` tamper loop; climb never gathered → the world-mountain scenario snapshot;
+  high ground forced to 1 → **only** the golden rows, because `highGroundMod` scales the density
+  the recomposition reads back and so cannot be tampered there. Written down so nobody trusts the
+  tamper loop for it.
+- **Two upstream tests needed porting after the rebase, neither about terrain.** A comment in
+  upstream's new `ClusterCheckin.ts` named their domain and tripped the Brand gate; upstream's
+  new `RenderHtml` guarded-lines case asserts an empty asset manifest, which is only true on a
+  box with no production build. Both are in `FORK-CHANGES.md`. **`InventoryModal` failed three
+  cases under the full suite and passed alone** — still the contention flake, still not fixed.
+- **A pattern that fails by not matching.** Two edit scripts this session asserted on match
+  count and stopped — once on a backslash mangled between shell and script, once on an em dash
+  written as a hyphen. Both times the assertion was the only thing that noticed. Keep asserting
+  on the count; a replace that matches nothing looks exactly like "already applied".
 
 ### Session 10 — Phase 5 opens: supply lines (item 6.1)
 
@@ -333,8 +377,12 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 - Clan creation has **no client UI** (upstream creates clans on its website). To seed one in
   dev, POST to the API with the browser's persistent id as the bearer (dev accepts a raw id):
   `curl -X POST localhost:8787/clans -H "Authorization: Bearer <player_persistent_id>" -H "Content-Type: application/json" -d '{"tag":"FWX","name":"Testers"}'`.
-- Known flaky under CPU contention only: `tests/client/InventoryModal.test.ts` and
-  `MainInitialize.test.ts`. Run `npm test` on a quiet box; they pass alone every time.
+- Known flaky under CPU contention only: `tests/client/InventoryModal.test.ts`,
+  `MainInitialize.test.ts`, and (session 11) `tests/TranslationSystem.test.ts` and
+  `tests/zbin/fuzz.test.ts` — each went red under the full parallel suite and passed alone in
+  the same minute. Run `npm test` on a quiet box; they pass alone every time. The session-11
+  failure reasons were not captured (the run was filtered to summary lines), so this is a
+  pattern match, not a diagnosis.
 
 ## Done
 
@@ -435,13 +483,13 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 
 ## Next up (concrete, ordered)
 
-0. **Phase 5 continues.** 6.1 (supply lines) is done; `docs/HANDOFF.md` §4 has the per-item
-   table, the five things that apply to every item, and what Phase 4 still owes. The next item
-   by value is **6.2 terrain that costs something** (`docs/MECHANICS.md` §02 G2), which needs a
-   byte encoding in `map.bin` for the new classes and so is the one with a map-generator half.
-   **6.3 (materials, manpower, upkeep) is the item the "two update lanes" note was written
-   for.** Two loose ends from 6.1 worth folding into whichever item touches them: rail as a
-   supply source (§03 7.4) and the map shading for unsupplied territory (a UI pass).
+0. **Phase 5 continues.** 6.1 (supply lines) and 6.2 (elevation) are done; `docs/HANDOFF.md`
+   §4 has the per-item table, the five things that apply to every item, and what Phase 4 still
+   owes. Next by value is **6.3 (materials, manpower, upkeep, blockades, embargo price)** — the
+   item the "two update lanes" note was written for, and the one that must not take the
+   pre-supply gold figures as its baseline. Loose ends to fold into whichever item touches them:
+   rail as a supply source (§03 7.4), map shading for unsupplied territory (a UI pass), and the
+   §6.2 remainder that needs painted content (G2).
 
 1. **Rebase check** at session start: `git fetch upstream && git rebase upstream/main`; fix
    conflicts (expect some in `index.html`, nav bars, Footer, SoundManager — the brand sweep
@@ -526,6 +574,36 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   remains by design.
 - The discord card on a clan overview says "invite is no longer valid" for any invite the
   browser cannot resolve against Discord's public API (offline / fake invite) — expected.
+
+## Numbers last measured — Phase 5 item 6.2 (2026-09-14, session 11, this machine)
+
+- **Determinism hash: `24015429958765936`** (world, 150 bots, seed `perf-gate`). The neutral
+  table refactor before it held `23307802903294904`.
+- `perf:gate`: mean **3.7 ms** (≤ 8), p95 7.15, p99 10.4, 0 over budget. Elevation is four
+  neighbour reads per conquered tile beside the four supply already does; no measurable cost.
+- `test:determinism:full`: pass 3/3 in 642 s — **not comparable** to session 10's 321 s: it ran
+  concurrently with the full suite and a repo-wide prettier check. Re-measure on an idle box
+  before reading anything into it; the per-tick cost above says elevation added nothing.
+- Balance, `AttackScenarios` snapshot (48 scenarios, table refactor → elevation): median
+  **−3.2 % tiles**, **+3.9 % attacker loss per tile**, **−6.7 % defender loss per tile**. By
+  ground: plains −3.8 % tiles; world highland/mountain −9.6 % at +10.6 %; world mountain −10.0 %
+  at +11.1 % with the defender losing 23 % fewer per tile. A gradient, not a cliff.
+- Second-order, `NationGoldPerMinute`: trade gold +2.8 % (399.2M → 410.5M), train gold +19.7 %
+  (34.0M → 40.7M). Smaller than supply's, same direction.
+- **Bot-vs-bot A/B** (`balance:run --ticks 8000`, world, 150 bots + nations, seed `perf-gate`):
+
+  | after 8000 ticks | flat terrain | elevation    |
+  | ---------------- | ------------ | ------------ |
+  | players alive    | 27           | **32**       |
+  | top 1 share      | 13.9 %       | **11.0 %**   |
+  | top 5 share      | 57.1 %       | **46.4 %**   |
+  | biggest player   | 90 287 tiles | 71 895 tiles |
+  | cities / ports   | 152 / 88     | 140 / 78     |
+  | defense posts    | 29           | 35           |
+
+  Fewer cities and more posts is the interesting row: with ground worth holding, the bots hold
+  it rather than spread. Cumulative with supply: alive 16 → 27 → 32, top-1 29.4 % → 13.9 % →
+  11.0 %.
 
 ## Numbers last measured — Phase 5 item 6.1 (2026-09-13, session 10, this machine)
 

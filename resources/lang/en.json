@@ -140,9 +140,12 @@
   },
   "attack_cost": {
     "factor": {
+      "climb": "Climb",
       "defense_post": "Defense post",
       "defense_post_speed": "Defense post (speed)",
       "fallout": "Fallout",
+      "height": "Elevation",
+      "high_ground": "High ground",
       "supply": "Out of supply",
       "their_size": "Their territory",
       "traitor": "Traitor",

@@ -1768,13 +1768,31 @@ Ranges are in tiles and are **not** scaled by map size, matching `defensePostRan
 
 **What is not done.** The map does not yet _shade_ unsupplied territory; only the attack tooltip shows the penalty (`attack_cost.factor.supply`, "Out of supply"). The client can tell supplied from not but not how far past the range a tile is, so `clientSupplyDistance` in `src/client/AttackCostEstimate.ts` quotes the saturated penalty beyond the flag — the worst case, never an understatement. Rail clusters and track tiles are **not** sources yet (see §03 7.4); only City, Port, Factory and the capital are.
 
-#### G2. Terrain cost multipliers
+#### G2. Terrain cost multipliers — **built for elevation (Phase 5, brief §6.2); new terrain classes deliberately not**
 
-Currently a 3-way switch on `TerrainType` (`terrainAttackBase`, `Config.ts:151-167`) plus a 3-way priority weight (`AttackExecution.ts:401-415`). Making them multipliers:
+**What exists.**
 
-- Replace the `{mag, tileCost}` tuple with `base × terrainLossMult[t]` / `base × terrainSpeedMult[t]` tables keyed by `TerrainType` (or by raw magnitude for a continuous curve — magnitude 0–30 is already stored, `GameMap.ts:244-246`).
-- To make them **data-driven** per map or lobby: `GameConfig` (`src/core/Schemas.ts`) is where wire-configurable knobs live (cf. `spawnImmunityDuration`); `Config` reads it through `this._gameConfig`. Alternatively a `terrain` block in `manifest.json` (`MapManifest`, `TerrainMapLoader.ts:25-38`) — but note `Config` has no map reference today; `AttackLogicInput` would need to carry the multipliers or `Config` would need a map-manifest setter.
-- **New terrain classes (forest/marsh/desert/urban/river) do not exist in the byte** — see §14.3 for the three viable encodings. The lowest-risk path is reserving magnitude sub-ranges (e.g. remap 26–30 to new classes) and extending the generator's blue-channel table (§15), keeping `map.bin` a single byte per tile.
+- **The table.** `TERRAIN_COST` in `src/core/configuration/Config.ts` is the one place the simulation knows a number about plains, highland or mountain: `{ mag, tileCost, priority }` per band, 80/16.5/1, 100/20/1.5, 120/25/2. `Config.terrainAttackBase(terrain)` reads it and `Config.terrainPriorityWeight(terrain)` feeds the conquest heap in `AttackExecution.addNeighbors`, which used to carry its own copy of the weights.
+- **Lobby multipliers.** `GameConfig.terrain` (`TerrainCostConfigSchema` in `src/core/Schemas.ts`) is an optional `{ plains, highland, mountain }` block of `{ loss, speed }` multipliers in 0.1–10, applied to `mag` and `tileCost`. Absent means 1, and multiplying by exactly 1 is exact in IEEE arithmetic, so a lobby that spells out the defaults produces the same bits as one that says nothing — `tests/TerrainCostConfig.test.ts` pins that with `toEqual`, because two lobbies with the same settings must not desync from each other.
+- **Elevation inside the band.** The map stores 0–30 and the bands collapse it to three steps; three linear curves put it back. `AttackLogicInput` gained `elevation` (the target tile's magnitude) and `climb` (that minus the highest magnitude the attacker holds beside it — `AttackExecution.vantageElevation`, four neighbour reads; the target's own height when the attacker holds no neighbour, so an amphibious landing is a flat step). In `attackLogic`, after supply and before the defense-post block so terra nullius pays too:
+
+  | curve                                                                         | tunable                      | value | effect                                                                                                                        |
+  | ----------------------------------------------------------------------------- | ---------------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------- |
+  | `terrainHeightModifier(elevation)` = 1 + slope·e/30                           | `terrainHeightSlope()`       | 0.25  | a mag-30 tile costs 25 % over its band; mountain-vs-plains ratio 1.5 → ~1.9                                                   |
+  | `terrainClimbModifier(climb)` = max(0.5, 1 + slope·c/30)                      | `terrainClimbSlope()`        | 1.0   | the 99th-percentile adjacent climb on the world map is +12, i.e. +40 %; symmetric downhill, floored so a plunge is never free |
+  | `terrainHighGroundModifier(elevation)` = 1 − depth·e/30, on **defender** loss | `terrainHighGroundDefence()` | 0.3   | a defender at mag 30 loses 30 % fewer troops per tile                                                                         |
+
+  Height and climb multiply `mag` and `tileCost` in two separate statements so the explanation can name them; `tests/AttackBreakdown.test.ts` recomposes them in that exact order. `AttackExplanation` carries `elevation`, `heightMod`, `climb`, `climbMod`, `highGroundMod`; the client tooltip gathers the same inputs (`clientVantage` in `src/client/AttackCostEstimate.ts`) and shows rows only past a 2 % threshold, because with elevation on every tile almost every tile carries a ×1.01 somewhere.
+
+**Why adjacent climb is enough.** Measured on the world map (651 569 land tiles): 34 % plains, 38 % highland, 28 % mountain; adjacent tiles differ by 0 in 41 % of pairs, by 1 in 27 %, by 2 in 11 %, and the 99th percentile is 12. A single tile's climb is small, but an attack pays it on every tile of an ascent and is paid it back on every tile of a descent, which is what makes a ridgeline worth holding and a valley the way in.
+
+**Balance record** (`AttackScenarios` snapshot, 48 scenarios, HEAD → this change): median −3.2 % tiles, +3.9 % attacker loss per tile, −6.7 % defender loss per tile. By ground: plains fights −3.8 % tiles, the world highland/mountain region −9.6 % at +10.6 %, the world mountain region −10.0 % at +11.1 % with defenders losing 23 % fewer per tile. A gradient, not a cliff.
+
+**What is deliberately not done, and why.**
+
+- **Forest, marsh, desert, urban.** The byte has no spare bits (§14.3), so a new class costs either a magnitude sub-range — which would destroy the very elevation data the curves above now read — or a second per-tile channel through `genTerrainFromBin`, the worker transfer, `updateTile`'s 8-bit terrain slot and the R16UI upload. Either is a week of plumbing for classes that would then cover zero tiles: the generator reads only the blue channel, and no source PNG under `map-generator/assets/maps` has a forest painted in it. The content does not exist, and inventing it across 121 maps is an art decision the owner should make, not a simulation session. When it is made: new colour keys in `map_generator.go:147-161`, a decode in `GameMap.terrainType`, rows in `TERRAIN_COST`, and the lobby schema already has the shape.
+- **River crossings.** A one-tile water strip is water, and `addNeighbors` will not step onto water; making an attack cross narrow water at a cost changes conquest topology (transport ships, `sharesBorderWith`, border rendering, and every map that uses thin water as a wall by design). Real feature, separate item.
+- **Ranges do not scale with map size**, same as `defensePostRange` and supply.
 
 #### G3. Tooltip breakdown of attack cost
 

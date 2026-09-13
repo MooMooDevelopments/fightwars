@@ -531,3 +531,66 @@ Full description, tunables and hook points: `docs/MECHANICS.md` §02 G1.
   seed loop in `SupplyNetwork.refresh` — and the cross-owner cluster caveat that goes with it.
 - **Ranges do not scale with map size**, matching `defensePostRange`. On the smallest maps 30
   tiles is most of a country and on `giantworldmap` it is a province.
+
+### Terrain that costs something (brief §6.2, session 11)
+
+Two commits, on purpose. The first turned the three-way terrain switch (and the second copy of
+its weights in `AttackExecution.addNeighbors`) into one table a lobby can scale, and had to
+leave the determinism hash and every snapshot byte-identical — a refactor that can only be read
+as neutral if the balance change on top of it is measured against it. The second put the stored
+0–30 elevation back inside the three bands: a mag-30 peak is dearer than a mag-20 foothill, a
+slope costs on every tile of the ascent and pays back on every tile of the descent, and a
+defender on high ground loses fewer troops holding it. Full description and the numbers:
+`docs/MECHANICS.md` §02 G2.
+
+#### Shared upstream files edited
+
+- `src/core/configuration/Config.ts` — `TERRAIN_COST`, `terrainAttackBase` / `terrainPriorityWeight`
+  as methods (the priority weight used to live in `AttackExecution`), the three elevation curves
+  and their tunables (`terrainHeightSlope` 0.25, `terrainClimbSlope` 1.0,
+  `terrainHighGroundDefence` 0.3), `elevation` / `climb` on `AttackLogicInput`, and five new
+  fields on `AttackExplanation`. Height and climb are multiplied in as two statements so the
+  explanation can name each and the recomposition test can mirror the order exactly.
+- `src/core/Schemas.ts` — `TerrainCostConfigSchema`, an optional `terrain` block on `GameConfig`
+  of per-band `{ loss, speed }` multipliers in 0.1–10.
+- `src/core/execution/AttackExecution.ts` — gathers `elevation` and `climb`
+  (`vantageElevation`: the highest tile the attacker holds beside the target, because an attack
+  is launched from its best ground); the heap weight now comes from the table.
+- `src/client/AttackCostEstimate.ts`, `resources/lang/en.json` — the tooltip gathers the same two
+  inputs (`clientVantage`) and gains "Elevation", "Climb" and "High ground" rows; the row
+  threshold rises from 0.5 % to 2 %, because with elevation charged on every tile almost every
+  tile now carries a ×1.01 somewhere and a list of near-no-ops explains nothing.
+- `tests/AttackLogicGolden.test.ts` — the fixtures pass `elevation: 0, climb: 0`, so every
+  existing golden row is byte-identical; four new rows pin height inside a band, signed climb,
+  high ground sparing the defender, and terra nullius paying for both.
+- `tests/AttackBreakdown.test.ts` — random heights and climbs in the drift-alarm sweep, and
+  `heightMod` / `climbMod` in the tamper list. Note that `highGroundMod` is **not** tamperable
+  there — it scales the density the recomposition reads back — so its guard is the golden row,
+  which was watched failing.
+- `tests/AttackScenarios.test.ts.snap`, `tests/NationGoldPerMinute.test.ts.snap` — regenerated;
+  every scenario moved, because elevation touches every tile.
+- `scripts/balanceRun.ts` — `--flat-terrain`, the elevation A/B lever beside `--no-supply`; one
+  lever at a time is enforced.
+
+#### FightWars-only files added
+
+- `tests/TerrainCostConfig.test.ts` — the table is the bare table with no lobby block, a lobby
+  block scales one band and no other, and a multiplier of exactly 1 is exactly no change.
+
+#### Fixed on the way, from this session's rebase onto upstream
+
+- `src/server/ClusterCheckin.ts` — a comment in upstream's new file named their domain as an
+  example mirror and tripped `tests/Brand.test.ts` (upstream may be named only through
+  `BRAND.upstream`). Reworded; nothing but the comment changed.
+- `tests/server/RenderHtml.test.ts` — upstream's new guarded-lines case asserts an empty asset
+  manifest, which is only true on a box with no production build: `RuntimeAssetManifest` reads
+  `static/asset-manifest.json` when it exists. The manifest is now pinned to `{}` in the test so
+  it says the same thing after `npm run build-prod` as it does in CI.
+
+#### Not done, and why
+
+Forest, marsh, desert, urban and river crossings — the rest of §6.2's list. The byte has no spare
+bits, a magnitude sub-range would destroy the elevation data the curves now read, and no source
+PNG has a forest painted in it: the content does not exist, and inventing it across 121 maps is
+the owner's art decision. River crossings change conquest topology and are a separate item.
+Both are written up with hook points in `docs/MECHANICS.md` §02 G2.

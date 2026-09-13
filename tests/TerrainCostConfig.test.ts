@@ -32,6 +32,8 @@ function input(terrain: TerrainType): AttackLogicInput {
     },
     defenderHasDefensePost: false,
     supplyDistance: 0,
+    elevation: 0,
+    climb: 0,
     falloutRatio: null,
     borderSize: 10,
   };

@@ -3669,3 +3669,98 @@ exports[`attackLogic golden values > player vs terra nullius 1`] = `
   },
 }
 `;
+
+exports[`elevation (brief 6.2) > climb, uphill and down 1`] = `
+{
+  "climb -12": {
+    "attackerLoss": 25.6965,
+    "defenderLoss": 3.4,
+    "tickFraction": 0.0142343,
+  },
+  "climb -2": {
+    "attackerLoss": 39.9723,
+    "defenderLoss": 3.4,
+    "tickFraction": 0.0221423,
+  },
+  "climb -30": {
+    "attackerLoss": 21.4137,
+    "defenderLoss": 3.4,
+    "tickFraction": 0.0118619,
+  },
+  "climb 0": {
+    "attackerLoss": 42.8274,
+    "defenderLoss": 3.4,
+    "tickFraction": 0.0237239,
+  },
+  "climb 12": {
+    "attackerLoss": 59.9584,
+    "defenderLoss": 3.4,
+    "tickFraction": 0.0332134,
+  },
+  "climb 2": {
+    "attackerLoss": 45.6826,
+    "defenderLoss": 3.4,
+    "tickFraction": 0.0253055,
+  },
+  "climb 30": {
+    "attackerLoss": 85.6549,
+    "defenderLoss": 3.4,
+    "tickFraction": 0.0474477,
+  },
+}
+`;
+
+exports[`elevation (brief 6.2) > height inside a band 1`] = `
+{
+  "mountainFoot": {
+    "attackerLoss": 53.209,
+    "defenderLoss": 3.2,
+    "tickFraction": 0.0307532,
+  },
+  "mountainPeak": {
+    "attackerLoss": 56.8224,
+    "defenderLoss": 2.8,
+    "tickFraction": 0.0329498,
+  },
+  "plainsFloor": {
+    "attackerLoss": 30.6048,
+    "defenderLoss": 4,
+    "tickFraction": 0.0173975,
+  },
+  "plainsTop": {
+    "attackerLoss": 32.8036,
+    "defenderLoss": 3.64,
+    "tickFraction": 0.0187023,
+  },
+}
+`;
+
+exports[`elevation (brief 6.2) > high ground spares the defender 1`] = `
+{
+  "high": {
+    "attackerLoss": 56.8224,
+    "defenderLoss": 2.8,
+    "tickFraction": 0.0329498,
+  },
+  "low": {
+    "attackerLoss": 30.6048,
+    "defenderLoss": 4,
+    "tickFraction": 0.0173975,
+  },
+}
+`;
+
+exports[`elevation (brief 6.2) > terra nullius pays for height and climb too 1`] = `
+{
+  "flat": {
+    "attackerLoss": 16,
+    "defenderLoss": 0,
+    "tickFraction": 0.025,
+  },
+  "peak": {
+    "attackerLoss": 42,
+    "defenderLoss": 0,
+    "tickFraction": 0.025,
+  },
+}
+`;

@@ -15,6 +15,13 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   army strands it. Build behind the front before you push past it.
 - The attack breakdown you get by hovering an enemy tile now names supply among the reasons an
   attack is expensive.
+- **Terrain that costs something.** Height now counts inside plains, highland and mountain: a
+  peak is dearer than a foothill, attacking uphill costs more on every tile of the climb and
+  pouring downhill costs less on every tile of the descent, and a defender on high ground loses
+  fewer troops holding it. Ridgelines are worth holding and valleys are the way in. Lobby hosts
+  can scale each terrain band's cost, so a map can be made flat or its mountains made walls.
+- The hover breakdown names elevation, climb and high ground when they matter, and no longer
+  lists factors that move the answer by less than two per cent.
 
 ### Phase 2 — Infrastructure (2026-09-12)
 

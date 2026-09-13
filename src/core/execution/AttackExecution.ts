@@ -347,6 +347,7 @@ export class AttackExecution implements Execution {
     borderSize: number,
   ): AttackLogicInput {
     const defender = this.target.isPlayer() ? this.target : null;
+    const elevation = this.map.magnitude(tile);
     // Same test as scanning nearbyUnits() for a post owned by the defender
     // (active, not under construction, within range), without building a
     // result array per conquered tile — this runs for every tile of every
@@ -386,11 +387,31 @@ export class AttackExecution implements Execution {
       supplyDistance: this.mg
         .supplyNetwork()
         .frontDistance(tile, this.ownerSmallID),
+      elevation,
+      climb: elevation - this.vantageElevation(tile, elevation),
       falloutRatio: this.mg.hasFallout(tile)
         ? this.mg.numTilesWithFallout() / this.mg.numLandTiles()
         : null,
       borderSize,
     };
+  }
+
+  /**
+   * The height the attack comes from: the highest tile the attacker holds
+   * beside the target, because an attack is launched from its best ground.
+   * Falls back to the target's own height, so a tile with no attacker
+   * neighbour (a fresh amphibious landing) is a flat step, not a climb.
+   */
+  private vantageElevation(tile: TileRef, fallback: number): number {
+    let best = -1;
+    const count = this.map.neighbors4(tile, this.nbuf2);
+    for (let i = 0; i < count; i++) {
+      const n = this.nbuf2[i];
+      if (this.map.ownerID(n) !== this.ownerSmallID) continue;
+      const m = this.map.magnitude(n);
+      if (m > best) best = m;
+    }
+    return best === -1 ? fallback : best;
   }
 
   private rejectIncomingAllianceRequests(target: Player) {

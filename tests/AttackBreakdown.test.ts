@@ -39,6 +39,11 @@ function blankExplanation(): AttackExplanation {
     falloutMod: 0,
     supplyDistance: 0,
     supplyMod: 0,
+    elevation: 0,
+    heightMod: 0,
+    climb: 0,
+    climbMod: 0,
+    highGroundMod: 0,
     botDefenderMod: 0,
     disconnectedTeammateMod: 0,
     traitorLossMod: 0,
@@ -68,11 +73,18 @@ function recompose(
   const mag =
     e.terrainMag *
     e.supplyMod *
+    e.heightMod *
+    e.climbMod *
     e.defensePostLossMod *
     e.falloutMod *
     e.botDefenderMod;
   const tileCost =
-    e.terrainTileCost * e.supplyMod * e.defensePostSpeedMod * e.falloutMod;
+    e.terrainTileCost *
+    e.supplyMod *
+    e.heightMod *
+    e.climbMod *
+    e.defensePostSpeedMod *
+    e.falloutMod;
 
   if (input.defender === null) {
     return {
@@ -137,6 +149,9 @@ function randomInput(rand: PseudoRandom): AttackLogicInput {
     // Half the cases sit somewhere on the supply ramp, including past its
     // saturation point and on the 255 an out-of-field tile carries.
     supplyDistance: rand.chance(2) ? rand.nextInt(0, 256) : 0,
+    // Real heights and climbs, including the ones the floor clamps.
+    elevation: rand.nextInt(0, 31),
+    climb: rand.chance(3) ? 0 : rand.nextInt(-30, 31),
     falloutRatio: rand.chance(3) ? rand.nextInt(1, 100) / 100 : null,
     borderSize: rand.nextInt(1, 400),
   };
@@ -189,6 +204,8 @@ describe("attackLogic explanation", () => {
       },
       defenderHasDefensePost: true,
       supplyDistance: 55,
+      elevation: 24,
+      climb: 6,
       falloutRatio: 0.25,
       borderSize: 30,
     };
@@ -201,6 +218,8 @@ describe("attackLogic explanation", () => {
     for (const field of [
       "defensePostLossMod",
       "supplyMod",
+      "heightMod",
+      "climbMod",
       "falloutMod",
       "traitorLossMod",
       "largeAttackerMod",
@@ -229,6 +248,8 @@ describe("attackLogic explanation", () => {
         },
         defenderHasDefensePost: false,
         supplyDistance: 0,
+        elevation: 0,
+        climb: 0,
         falloutRatio: null,
         borderSize: 10,
       },
@@ -238,6 +259,9 @@ describe("attackLogic explanation", () => {
     expect(explanation.defensePostSpeedMod).toBe(1);
     expect(explanation.falloutMod).toBe(1);
     expect(explanation.supplyMod).toBe(1);
+    expect(explanation.heightMod).toBe(1);
+    expect(explanation.climbMod).toBe(1);
+    expect(explanation.highGroundMod).toBe(1);
     expect(explanation.botDefenderMod).toBe(1);
     expect(explanation.disconnectedTeammateMod).toBe(1);
     expect(explanation.traitorLossMod).toBe(1);
@@ -261,6 +285,8 @@ describe("attackLogic explanation", () => {
         },
         defenderHasDefensePost: false,
         supplyDistance: 0,
+        elevation: 0,
+        climb: 0,
         falloutRatio: null,
         borderSize: 10,
       },

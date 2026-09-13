@@ -151,6 +151,7 @@ describe("PlayerInfoOverlay", () => {
       neighbors: () => [1, 2, 3, 4],
       ownerID: () => 1,
       isSupplied: () => true,
+      magnitude: () => 0,
       config: () => ({
         isUnitDisabled: () => true,
         maxTroops: () => 1000,

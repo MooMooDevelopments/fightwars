@@ -103,6 +103,18 @@ export interface AttackLogicInput {
    * field carries — all mean "fully over-extended".
    */
   supplyDistance: number;
+  /**
+   * Elevation of the tile being taken, 0-30 as stored in the map. The band
+   * in `terrain` is this collapsed to three steps; this is the texture
+   * inside the band.
+   */
+  elevation: number;
+  /**
+   * Elevation of the tile minus that of the highest tile the attacker holds
+   * beside it: positive attacking uphill, negative pouring downhill. Zero on
+   * flat ground and whenever the attacker holds no neighbour.
+   */
+  climb: number;
   /** Fraction of land tiles with fallout, or null if the tile has no fallout. */
   falloutRatio: number | null;
   /** Tiles on the attack front this tick (plus jitter); fixed for the tick. */
@@ -134,6 +146,13 @@ export interface AttackExplanation {
   /** How far the tile is from the attacker's supply, and what that costs. */
   supplyDistance: number;
   supplyMod: number;
+  /** The tile's height above the band's base, and what the climb to it costs. */
+  elevation: number;
+  heightMod: number;
+  climb: number;
+  climbMod: number;
+  /** High ground: how much less the defender loses holding it. */
+  highGroundMod: number;
   /** Attacking a tribe costs the attacker less. */
   botDefenderMod: number;
   /** 0 when the defender is a disconnected teammate: nobody loses troops. */
@@ -485,6 +504,51 @@ export class Config {
       default:
         return 0;
     }
+  }
+
+  /**
+   * Elevation that costs something (brief §6.2, second half). The band
+   * table above steps 80 -> 100 -> 120 across plains, highland and mountain;
+   * these three curves put the stored 0-30 elevation back inside it, so a
+   * mag-30 peak is dearer than a mag-20 foothill, a slope costs on every tile
+   * of the ascent and pays back on every tile of the descent, and a defender
+   * on high ground loses fewer troops holding it. All linear, so every engine
+   * agrees on the bits.
+   *
+   * Cost of a tile at the top of the range, over its band's base. 0.25 makes
+   * a mag-30 mountain tile 150 against plains' 80 - the ratio goes from 1.5
+   * to just under 1.9.
+   */
+  terrainHeightSlope(): number {
+    return 0.25;
+  }
+
+  /**
+   * Cost of climbing the full 30 steps in one tile, which never happens; a
+   * typical uphill tile is +1 or +2 and the 99th-percentile climb on the
+   * world map is +12, which at 1.0 is +40 %. Symmetric downhill, floored so
+   * a plunge is never free.
+   */
+  terrainClimbSlope(): number {
+    return 1.0;
+  }
+
+  /** Share of per-tile defender loss that a mag-30 defender is spared. */
+  terrainHighGroundDefence(): number {
+    return 0.3;
+  }
+
+  terrainHeightModifier(elevation: number): number {
+    return 1 + (this.terrainHeightSlope() * elevation) / 30;
+  }
+
+  terrainClimbModifier(climb: number): number {
+    const mod = 1 + (this.terrainClimbSlope() * climb) / 30;
+    return mod < 0.5 ? 0.5 : mod;
+  }
+
+  terrainHighGroundModifier(elevation: number): number {
+    return 1 - (this.terrainHighGroundDefence() * elevation) / 30;
   }
 
   /**
@@ -1046,6 +1110,11 @@ export class Config {
       out.falloutMod = 1;
       out.supplyDistance = input.supplyDistance;
       out.supplyMod = 1;
+      out.elevation = input.elevation;
+      out.heightMod = 1;
+      out.climb = input.climb;
+      out.climbMod = 1;
+      out.highGroundMod = 1;
       out.botDefenderMod = 1;
       out.disconnectedTeammateMod = 1;
       out.traitorLossMod = 1;
@@ -1069,6 +1138,23 @@ export class Config {
       mag *= supplyMod;
       tileCost *= supplyMod;
       if (out !== undefined) out.supplyMod = supplyMod;
+    }
+
+    // Elevation next, still before the situational modifiers: like supply it
+    // is a property of the ground, so it applies to the terra nullius branch
+    // too. Height and climb are multiplied in separately so the explanation
+    // can name them; the order here is the order tests recompose them in.
+    const heightMod = this.terrainHeightModifier(input.elevation);
+    if (heightMod !== 1) {
+      mag *= heightMod;
+      tileCost *= heightMod;
+      if (out !== undefined) out.heightMod = heightMod;
+    }
+    const climbMod = this.terrainClimbModifier(input.climb);
+    if (climbMod !== 1) {
+      mag *= climbMod;
+      tileCost *= climbMod;
+      if (out !== undefined) out.climbMod = climbMod;
     }
 
     if (defender !== null && input.defenderHasDefensePost) {
@@ -1128,8 +1214,13 @@ export class Config {
     const traitorLossMod = defender.isTraitor ? this.traitorDefenseDebuff() : 1;
     const traitorCostMod = defender.isTraitor ? this.traitorSpeedDebuff() : 1;
 
-    // Defender loses its average troops-per-tile.
-    const defenderTroopLoss = defender.troops / defender.numTiles;
+    // Defender loses its average troops-per-tile, less on high ground.
+    const highGroundMod = this.terrainHighGroundModifier(input.elevation);
+    const defenderTroopLoss =
+      highGroundMod === 1
+        ? defender.troops / defender.numTiles
+        : (defender.troops / defender.numTiles) * highGroundMod;
+    if (out !== undefined) out.highGroundMod = highGroundMod;
 
     // Two ratios drive the attacker's loss: how outnumbered the attack is
     // (defender army / attack stack, clamped: bigger pushes pay less per
