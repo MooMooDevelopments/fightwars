@@ -1,6 +1,6 @@
 # FightWars Build State
 
-Last session: 2026-09-13 (session 8) | Current phase: 4 (identity) — 5 of its 10 work items done, 2 part-done, 3 not started, with two Phase 2 items still blocked on the owner/hardware | Build status: green
+Last session: 2026-09-13 (session 9) | Current phase: 4 (identity) — 5 of its 10 work items done, 2 part-done, 3 not started, with two Phase 2 items still blocked on the owner/hardware | Build status: green
 
 Repo: `C:\Users\disbo\dev\fightwars` · `upstream` = openfrontio/OpenFrontIO (forked at
 `c77005586`, rebased onto `7d95251f1` the same day) · `origin` = github.com/MooMooDevelopments/fightwars
@@ -26,7 +26,35 @@ follows it). In the Claude desktop session the launch configs `fightwars-dev` /
 shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 `npm run load:test -- --clients 150 --map world --turns 600`.
 
-## Handoff — read this first (written 2026-09-13 at the end of session 8)
+## Handoff — read this first (written 2026-09-13 at the end of session 9)
+
+### Session 9 — item 6's typography and colour half
+
+- **What shipped:** the display face on the HUD's figures, component tokens for the troop
+  meter, and the two audits run on real code. Details in `docs/HANDOFF.md` §3 item 6, which
+  also lists what is still open (the feeds, the layout, the radial menus, the modal palette
+  sweep).
+- **Two colour findings worth carrying.** Measured with the same machinery as the map palettes
+  (`src/client/theme/DeltaE.ts` + `Oklch.ts`):
+  - The troop rate's **green-400 / orange-400 pair measured 10.4 CIEDE2000 to a deuteranope**
+    against 53.0 for normal vision. A game shipping three colourblind map palettes had the one
+    pair they exist to avoid painted into its chrome. It is `ink` vs `signal` now — 28.9 at its
+    worst across all four viewers — with a ▼ so the state is not colour-alone.
+  - **Rank gold and `signal` separate by 5.8 under deuteranopia.** So the gold currency counter
+    cannot be gold: to that player an always-on money readout and an alert would be one colour.
+    The coin icon carries the currency; the figure wears ink. `tests/client/HudTokens.test.ts`
+    holds this as an _inverted_ assertion, so the reason fails loudly if it stops being true.
+- **A deletion that the tutorial caught.** The rate tile encodes the slope of the number it
+  displays, in colour, unlabelled — which read as a second variable smuggled into one tile, so
+  it was removed. Tutorial step 4 teaches that colour explicitly. Restored, fixed rather than
+  deleted, and the tutorial copy now describes the caret. **Grep the tutorial and `en.json`
+  before removing any HUD affordance** — 22 steps describe this interface in detail.
+- **The condensed face is registered at weight 600 only** (`BRAND.assets.fontFaces`). Use
+  `font-semibold` with `font-display`; `font-bold` gets a synthesised 700.
+- **`npm test` green again** — 211 client files, 2581 tests, plus the full suite earlier in the
+  session. Second clean run since the upstream jsdom teardown landed.
+- **Numbers:** `perf:gate` 2.34 ms, final hash `23404413546031824` — unchanged for the third
+  session running.
 
 ### Session 8 — item 5 finished
 

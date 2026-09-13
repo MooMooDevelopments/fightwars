@@ -59,26 +59,27 @@ where tokens must end up — "brand through configuration, not code"), `dataviz`
 chart, stat tile or sparkline, and on the finished work `impeccable` then
 `web-design-guidelines`. Never load `frontend-design` and `impeccable` together.
 
-**Status (end of session 8): 5 items done, 2 part-done, 3 not started — counted by the rows
+**Status (end of session 9): 5 items done, 2 part-done, 3 not started — counted by the rows
 of the table below, which is the honest count.** (Earlier versions of this line said "6 of 10"
 by counting the sub-items inside a row; the table has always been the thing to read.)
 
 Item 5 was finished in session 8 — the nuke ring and the border wave, plus the
-`prefers-reduced-motion` respect the shake and flash shipped without. Items 3 and 6 keep their
-named remainders, written at the end of their sections.
+`prefers-reduced-motion` respect the shake and flash shipped without. Session 9 took item 6's
+typography and colour half. Items 3 and 6 keep their named remainders, written at the end of
+their sections.
 
-| #   | Item                                                                                   | State                                                                 |
-| --- | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| 1   | Nation colours in OKLCH, three colourblind-safe palettes                               | **done**                                                              |
-| 2   | Wordmark, favicon, app icons, `og:image`, display font (and the renderer's MSDF atlas) | **done**                                                              |
-| 3   | Readable at every zoom (political blocks, halos, flashes)                              | **part-done** — blocks and borders; halos and flashes remain          |
-| 4   | Every number explained on hover                                                        | **done** — estimate before, spend during (tiles conquered: see below) |
-| 5   | Feel: border wave, nuke flash + shake + ring + sound                                   | **done**                                                              |
-| 6   | Radial menus, HUD, leaderboard, events feed                                            | **part-done** — palette and typography only                           |
-| 7   | Mobile first-class                                                                     | not started                                                           |
-| 8   | Onboarding: 90-second tutorial                                                         | not started                                                           |
-| 9   | Build queue, rally points, attack presets                                              | not started (keybind remapping already existed)                       |
-| 10  | Clan create form; guest-appropriate account page                                       | **done**                                                              |
+| #   | Item                                                                                   | State                                                                    |
+| --- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| 1   | Nation colours in OKLCH, three colourblind-safe palettes                               | **done**                                                                 |
+| 2   | Wordmark, favicon, app icons, `og:image`, display font (and the renderer's MSDF atlas) | **done**                                                                 |
+| 3   | Readable at every zoom (political blocks, halos, flashes)                              | **part-done** — blocks and borders; halos and flashes remain             |
+| 4   | Every number explained on hover                                                        | **done** — estimate before, spend during (tiles conquered: see below)    |
+| 5   | Feel: border wave, nuke flash + shake + ring + sound                                   | **done**                                                                 |
+| 6   | Radial menus, HUD, leaderboard, events feed                                            | **part-done** — typography, tokens and a11y; layout and the feeds remain |
+| 7   | Mobile first-class                                                                     | not started                                                              |
+| 8   | Onboarding: 90-second tutorial                                                         | not started                                                              |
+| 9   | Build queue, rally points, attack presets                                              | not started (keybind remapping already existed)                          |
+| 10  | Clan create form; guest-appropriate account page                                       | **done**                                                                 |
 
 What the finished ones measure, and what each left behind, is in `BUILD-STATE.md` — it is kept
 current and is the place to look before re-deriving anything.
@@ -215,12 +216,49 @@ Palette and typography are done; layout and information design are not. Layers l
 leaderboard tables in `src/client/components/leaderboard/` (`LeaderboardPlayerList.ts`,
 `LeaderboardClanTable.ts`, `LeaderboardTribeTable.ts`).
 
-`--font-display` (Barlow Condensed) is defined and available as the `font-display` utility but
-is **not yet applied anywhere** — the HUD still inherits the body face. Applying it to the
-figures is the first and cheapest half of this item, and `font-variant-numeric: tabular-nums`
-belongs with it wherever numbers sit in a column that updates every tick.
+**Done (session 9): the typography and the colour underneath it**, on the two surfaces a
+player reads every tick — `ControlPanel.ts` and the shared `StatsTable.ts`.
 
-`dataviz` is mandatory before any of the stat tiles, meters or sparklines.
+- `--font-display` is applied to the figures, at **weight 600**, which is the only weight of
+  the condensed face `Main.ts` registers. Asking for `font-bold` (700) there gets a synthesised
+  bold; do not.
+- Tabular figures went on anything live or in a column and came **off** the stats table's name
+  column. `dataviz` says a large standalone number wants proportional figures; a HUD counter
+  that reticks ten times a second wants stable digit widths more, or it wobbles while the eye
+  is on the map. That is the rule this repo follows, and the reason is written at the
+  `FIGURE_CLASS` constant.
+- The troop meter is rebuilt on component tokens (`--color-meter-fill` / `-committed` /
+  `-track`): a track that is a dark step of the action ramp rather than neutral grey, a 2px
+  gap in the track colour between the segments instead of a stroke around them, and no border.
+  White is legible on all three steps by measurement, which is what retired the per-label
+  drop-shadow.
+- **Two colour findings worth remembering.** The troop rate's green/orange pair measured 53.0
+  CIEDE2000 for normal vision and **10.4 for a deuteranope** — the exact pair the three map
+  palettes exist to avoid, in the chrome. And rank gold separates from `signal` by only 5.8
+  under deuteranopia, so a gold currency readout and an alert are one colour to that player;
+  the coin icon carries the currency instead and the figure wears ink.
+- `tests/client/HudTokens.test.ts` holds the chrome to the standard `Palette.test.ts` holds the
+  map to. `tests/client/ControlPanelAccessibility.test.ts` pins the names and roles.
+- Both audits were run on the real code. They found: two unnamed sliders, a meter that
+  announced nothing, and a readout wearing `cursor-pointer` with no handler. All fixed.
+
+**What is still open on this item:**
+
+- **The feeds.** `EventsDisplay.ts` (716 lines) and `AttacksDisplay.ts` have not been touched —
+  no typography, no tokens, no information design. This is the biggest remaining piece.
+- **Layout.** Nothing has moved. The brief wants chrome that hugs the edges and hides with one
+  key; the control panel, the stats table and the build menu still sit where upstream put them.
+- **The radial menus.** `RadialMenu.ts` (1402 lines) and `RadialMenuElements.ts` (819) are
+  untouched.
+- **The rest of the palette sweep.** 328 raw hue class names remain across the HUD, mostly in
+  the modals (`PlayerPanel.ts` 48, `SendResourceModal.ts` 31, `MultiTabModal.ts` 30) and the
+  three leaderboard tables. The two tick-by-tick surfaces are clean and a test keeps the
+  control panel that way.
+- **Stat tiles, meters and sparklines beyond the troop meter.** `dataviz` is mandatory before
+  the first line of any of them.
+
+**Carried to item 7 (mobile):** the attack-ratio slider's hit area is 6px tall. Fixing it
+properly means restyling the native range control, which is mobile's job, not a padding patch.
 
 ### 7 — Mobile
 
