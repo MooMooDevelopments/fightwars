@@ -1,6 +1,6 @@
 # FightWars Build State
 
-Last session: 2026-09-13 (session 9) | Current phase: 4 (identity) — 6 of its 10 work items done, 2 part-done, 2 not started, with two Phase 2 items still blocked on the owner/hardware | Build status: green
+Last session: 2026-09-13 (session 9) | Current phase: 4 (identity) — 6 of its 10 work items done, 3 part-done, 1 not started (item 9, the intents, which is deliberately last), with two Phase 2 items still blocked on the owner/hardware | Build status: green
 
 Repo: `C:\Users\disbo\dev\fightwars` · `upstream` = openfrontio/OpenFrontIO (forked at
 `c77005586`, rebased onto `7d95251f1` the same day) · `origin` = github.com/MooMooDevelopments/fightwars
@@ -65,6 +65,12 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   bytes where `` should have been — a non-raw Python string in the script that wrote the
   test. It looked correct in review and could never match. Caught only by breaking the code it
   guards and watching it not fail. **Write the regex, then break the thing it watches.**
+- **Item 7 (mobile) is part-done.** Three faults found by putting the game on a 375x812
+  viewport: rotating the phone threw the map 1295 tiles off course (`syncCamera` derives the
+  camera centre from the canvas size and nothing compensated), the phone header drew its
+  controls over the wordmark, and the attack-ratio slider was a 6px touch target. All three
+  fixed and the first proved with a with/without A/B. **Put the game on a phone viewport
+  before assuming mobile is fine** — none of these needed a device to find.
 - **Item 8 is done:** the tutorial is 6 steps, down from 22. And `docs/HANDOFF.md` was wrong to
   say there were no tutorial tests — there were 13, and 7 of them failed on the cut. The note
   is corrected.

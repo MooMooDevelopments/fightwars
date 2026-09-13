@@ -76,7 +76,7 @@ their sections.
 | 4   | Every number explained on hover                                                        | **done** — estimate before, spend during (tiles conquered: see below)    |
 | 5   | Feel: border wave, nuke flash + shake + ring + sound                                   | **done**                                                                 |
 | 6   | Radial menus, HUD, leaderboard, events feed                                            | **part-done** — typography, tokens and a11y; layout and the feeds remain |
-| 7   | Mobile first-class                                                                     | not started                                                              |
+| 7   | Mobile first-class                                                                     | **part-done** — rotation, header and touch targets; layout remains       |
 | 8   | Onboarding: 90-second tutorial                                                         | **done**                                                                 |
 | 9   | Build queue, rally points, attack presets                                              | not started (keybind remapping already existed)                          |
 | 10  | Clan create form; guest-appropriate account page                                       | **done**                                                                 |
@@ -266,12 +266,34 @@ properly means restyling the native range control, which is mobile's job, not a 
 including a Safari `GestureEvent` path for trackpad pinch. So this is not "add touch" — it is
 thumb reach, hit-target sizes, and a HUD that survives a phone.
 
-The Browser pane's own width is narrow enough to be a useful first check (every header bug
-fixed in session 6 was found that way), and `resize_window` emulates a device properly — but
-pass width and height _without_ `preset`, since a preset clears the emulation.
+**Done (session 9), all found by putting the game on a 375x812 viewport and looking:**
 
-**Definition-of-Done item that cannot be closed here:** real mobile Safari. Needs a device or
-BrowserStack.
+- **Rotating the phone threw the map off screen.** `syncCamera` derives the camera centre from
+  the canvas size, and nothing compensated when that size changed — a 375→812 rotation moved
+  the view 1295 tiles across a 2000-tile map. `resizeOffsetShift` in `TransformHandler.ts`
+  cancels it; the ResizeObserver in `ClientGameRunner.ts` applies it and refreshes the bounding
+  rect, which hit-testing and the blast falloff also read. Proved with the same sequence run
+  with and without the change.
+- **The phone header drew its controls over the wordmark** — `1fr auto 1fr` gave the middle
+  column the logo's natural 230px and left 56px for 176px of controls. `PlayPage.ts`.
+- **The attack-ratio slider is a 44px target** with a 6px visible track, a 22px thumb and a
+  focus ring (`.slider-touch` in `styles.css`).
+
+**What is still open:**
+
+- **Layout.** Nothing has moved. The brief's "chrome hugs the edges and hides with one key" is
+  unexercised on any width, and on a phone it is the difference between playing and not.
+- **The spawn screen wastes a portrait phone.** Fitting a 2:1 map into a 0.46:1 viewport leaves
+  the map 375x170 in an 812-tall screen and the rest dead grey. In-game is fine (the camera
+  zooms to the player on spawn) — it is only the _choose a starting location_ screen. Whether
+  to fit, fill-and-pan, or ask for landscape is a product decision, not a bug to fix blind.
+- **The rest of the HUD at phone width** beyond the control panel: the radial menus, the stats
+  table, the modals.
+
+**Definition-of-Done item that cannot be closed here:** real mobile Safari. The pane emulates
+an Android touch device — `resize_window` with a width under 768 sets a mobile user agent and
+five touch points — which is enough to find layout and hit-target faults and not enough to
+close the item. Needs a device or BrowserStack.
 
 ### 8 — Onboarding
 
