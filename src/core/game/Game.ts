@@ -773,6 +773,11 @@ export interface Player {
   tradingPartners(): Player[];
   addEmbargo(other: Player, isTemporary: boolean): void;
   getEmbargoes(): Embargo[];
+  /**
+   * Share (0-1) of the living non-bot players this one could trade with
+   * that have an embargo against it. The input to the embargo price.
+   */
+  embargoPressure(): number;
   stopEmbargo(other: Player): void;
   endTemporaryEmbargo(other: Player): void;
   canTrade(other: Player): boolean;

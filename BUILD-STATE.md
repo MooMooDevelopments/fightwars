@@ -1,6 +1,6 @@
 # FightWars Build State
 
-Last session: 2026-09-14 (session 11) | Current phase: **5 (depth)** — 6.1 (supply lines) and 6.2 (elevation) done, 6.3 in progress (upkeep and materials done; blockades and the embargo price next); Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
+Last session: 2026-09-14 (session 11) | Current phase: **5 (depth)** — 6.1 (supply lines) and 6.2 (elevation) done, **6.3 done** (upkeep, materials, blockades, embargo price; Manpower surfaced as `maxTroops`, not rebuilt); Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
 
 Repo: `C:\Users\disbo\dev\fightwars` · `upstream` = openfrontio/OpenFrontIO (forked at
 `c77005586`, rebased onto `7d95251f1` the same day) · `origin` = github.com/MooMooDevelopments/fightwars
@@ -27,6 +27,41 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 `npm run load:test -- --clients 150 --map world --turns 600`.
 
 ## Handoff — read this first (written 2026-09-14 at the end of session 11)
+
+### Session 11 (continued) — item 6.3 closes: blockades and the embargo price
+
+- **What shipped.** `src/core/execution/Blockade.ts`: a warship of a non-friendly player within
+  25 tiles of a port closes it — no departures (`PortExecution.tick` returns before the spawn
+  roll, so the pity counter cannot wind up behind a blockade), no arrivals (`tradingPorts` drops
+  blockaded destinations). And `Player.embargoPressure()` — the share of possible partners with
+  an embargo against you — feeds `Config.embargoTariff`, 1 − 0.5 × pressure, on the embargoed
+  side's trade-ship payouts, each end of a route paying its own. `docs/MECHANICS.md` §01 "Gaps"
+  and "Embargoes"; files in `FORK-CHANGES.md`.
+- **The embargo price is the coalition tool the brief asked for, and the bots proved it.**
+  Nations already embargo whoever is winning (temporary embargoes from the relations code); the
+  tariff turns that from a gesture into a siege. Same seed, 8000 ticks, only the tariff off:
+  top-1 share **18.3 % → 12.0 %**, top-5 51.0 % → 43.2 %; alive 28 → 23, so the mid-field
+  consolidates while the leader is cut. Blockades barely move a bot game — bots do not blockade
+  on purpose — which is a note for nation AI, not a doubt about the mechanic.
+- **Scan from the warships, not the ports.** The first sweep asked every port whether a hostile
+  warship was near it: a couple of hundred grid queries per tick. The shipped one asks each
+  warship (a few dozen) which non-friendly ports are in reach, marks them, and caches the answer
+  per game per tick because every source port asks about every candidate destination.
+  `perf:gate` idle: **3.11 ms**. It read 8.4 ms with three over-budget ticks while four jobs ran
+  beside it — the load caveat in `docs/HANDOFF.md` §4, once more.
+- **A guard that could not fail, caught by breaking it.** The first "friendly fleet" case had a
+  stranger's warship in range as well, so ignoring friendliness still passed it. Rewritten around
+  the one relation that needs no diplomacy — a player's own warship never closes its own port —
+  and watched failing. Four breaks in all (never blockaded, friendliness ignored, nothing marked,
+  pressure never counted); each caught by the test that names it.
+- **Lever caveat, stated plainly.** Both mechanics landed together, so neither `--no-blockades`
+  nor `--no-embargo-price` alone reproduces the materials build's hash (the other mechanic is
+  still live). The levers are pinned by their unit tests instead; the script refuses two at once.
+- **Nation economy** (`NationGoldPerMinute`): trade gold −4.8 % (468.7M → 446.0M), train gold
+  −39 % (88.6M → 54.1M), ships 1944 → 1884. The train swing is divergence, not mechanism — trains
+  never touch a blockade or a tariff — and it has swung +79 % and +22 % on earlier changes. Read
+  the trade column, not the train one.
+- **`TradeShipExecution.test.ts`** stubs players; its mocks gained `embargoPressure: () => 0`.
 
 ### Session 11 (continued) — item 6.3, materials
 
@@ -547,9 +582,13 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 
 ## Next up (concrete, ordered)
 
-0. **Phase 5 continues, inside 6.3.** Upkeep and materials are done; next are **blockades**
-   (a hostile warship near a port stops its spawns and routes; `PortExecution.tradingPorts`
-   and `shouldSpawnTradeShip`), and the **embargo price**
+0. **Phase 5 continues.** 6.1, 6.2 and 6.3 are done. Next by value is **6.4** — six new units
+   (`docs/MECHANICS.md` §03 7.1 has the 25-file checklist) and the nuke consequences (§04 A–C,
+   extending the existing Doomsday Clock) — or **6.5 tiered diplomacy** (§05), which the embargo
+   price now has a foothold in. Before either: a retune pass on the economy as a whole (upkeep
+   table, flat materials prices, tariff maximum) now that all of 6.3 is live, and the nation-AI
+   note that bots never blockade on purpose. Manpower: surface `maxTroops` in the HUD. The
+   **embargo price** was designed as
    (the embargoed side's remaining trade pays less in proportion to how many partners embargo
    it — the coalition tool). Manpower already exists as `maxTroops`; surface it, do not
    duplicate it. Then re-tune the upkeep table against the whole economy. Loose ends to fold
@@ -639,6 +678,29 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   remains by design.
 - The discord card on a clan overview says "invite is no longer valid" for any invite the
   browser cannot resolve against Discord's public API (offline / fake invite) — expected.
+
+## Numbers last measured — Phase 5 item 6.3, blockades + embargo price (2026-09-14, session 11)
+
+- Determinism hash at `perf:gate` (1000 ticks): `24015216964771530`, unchanged — no bot
+  blockades and no embargo pressure that early. At 8000 ticks the three configurations:
+  both on `34817588719088750`, blockades off `33860372927156296`, tariff off
+  `38854839324619416`.
+- `perf:gate`, idle: **mean 3.11 ms**, p95 5.53, p99 7.78, 0 over budget.
+- `test:determinism:full`: pass 3/3 in **211 s** on an idle box — back at the 206 s baseline,
+  which says the sweep optimisations of session 10 hold with all of Phase 5 so far live.
+  `npm test`: 503 + 69 files, 6019 + 706 tests, all green.
+- **Bot-vs-bot** (`balance:run --ticks 8000`, world, 150 bots + nations, seed `perf-gate`):
+
+  | after 8000 ticks       | both on       | blockades off | tariff off        |
+  | ---------------------- | ------------- | ------------- | ----------------- |
+  | players alive          | 23            | 23            | 28                |
+  | top 1 / top 5 share    | 12.0 / 43.2 % | 11.7 / 44.7 % | **18.3 / 51.0 %** |
+  | warships / trade ships | 23 / 402      | 18 / 392      | 14 / 443          |
+  | cities / ports         | 170 / 106     | 172 / 100     | 172 / 105         |
+  | posts                  | 18            | 21            | 19                |
+
+  Cumulative across Phase 5, players alive at 8000 ticks: 16 → 27 → 32 → 34 → 28 → 23; top-1
+  share 29.4 % → 13.9 % → 11.0 % → 15.0 % → 15.4 % → 12.0 %.
 
 ## Numbers last measured — Phase 5 item 6.3, materials (2026-09-14, session 11, this machine)
 

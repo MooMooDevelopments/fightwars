@@ -674,3 +674,42 @@ Train delivery of materials (the empty `FactoryStopHandler` hook) — production
 owner's pool directly, which is simpler and deterministic; the hook is where geography would
 start to matter. A HUD readout of the pool — the menu shows the price, nothing shows the balance;
 that is a Phase 4 item 6 concern. Stats for materials — no schema slot yet.
+
+### Blockades and the embargo price (brief §6.3, third part, session 11)
+
+A warship parked within 25 tiles of a rival's port closes it — nothing leaves, nothing arrives —
+so a fleet is worth building for something other than piracy and a harbour can be taken without
+taking its land. And an embargo, which used to be free to give and binary to receive, now has a
+price on the receiving end: the embargoed side's remaining trade pays less in proportion to how
+many of its possible partners have closed to it. One embargo is a nuisance; five are a siege.
+`docs/MECHANICS.md` §01 "Gaps" and "Embargoes".
+
+#### FightWars-only files added
+
+- `src/core/execution/Blockade.ts` — `isBlockaded(game, port)`, computed once per tick for every
+  port and cached per game, because every source port asks about every candidate destination
+  and a fresh grid query per pair would be the dearest thing in the tick.
+- `tests/economy/Blockade.test.ts`, `tests/economy/EmbargoPrice.test.ts`.
+
+#### Shared upstream files edited
+
+- `src/core/configuration/Config.ts` — `blockadeRange` 25, `embargoTariffMax` 0.5,
+  `embargoTariff(pressure)`.
+- `src/core/game/Game.ts`, `src/core/game/PlayerImpl.ts` — `Player.embargoPressure()`.
+- `src/core/execution/PortExecution.ts` — no spawn roll while blockaded (before the roll, so the
+  pity counter does not wind up behind a blockade and burst when it lifts); blockaded
+  destinations dropped from `tradingPorts`.
+- `src/core/execution/TradeShipExecution.ts` — each end of an arriving route paid its own
+  tariffed share; piracy payouts untouched.
+- `scripts/balanceRun.ts` — `--no-blockades`, `--no-embargo-price`, and a fleet line.
+- `tests/core/executions/TradeShipExecution.test.ts` — its player mocks gained
+  `embargoPressure: () => 0`.
+
+#### Two things changed after the first draft
+
+- The blockade sweep scans from the warships (a few dozen) rather than the ports (a couple of
+  hundred): same grid query either way, so the cheap direction is the short list. `perf:gate`
+  idle 3.11 ms.
+- The "friendly fleet" test had a stranger's warship in range too and could not fail; it is now
+  the one relation that needs no diplomacy — a player's own warship never closes its own port —
+  and was watched failing.

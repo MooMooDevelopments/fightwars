@@ -1,5 +1,6 @@
 import { Execution, Game, Unit, UnitType } from "../game/Game";
 import { PseudoRandom } from "../PseudoRandom";
+import { isBlockaded } from "./Blockade";
 import { TradeShipExecution } from "./TradeShipExecution";
 import { TrainStationExecution } from "./TrainStationExecution";
 
@@ -41,6 +42,13 @@ export class PortExecution implements Execution {
 
     // Only check every 10 ticks for performance.
     if ((this.mg.ticks() + this.checkOffset) % 10 !== 0) {
+      return;
+    }
+
+    // A blockaded port launches nothing. Checked before the spawn roll so
+    // the pity counter does not wind up behind a blockade and burst when
+    // it lifts.
+    if (isBlockaded(this.mg, this.port)) {
       return;
     }
 
@@ -107,6 +115,8 @@ export class PortExecution implements Execution {
       .players()
       .filter((p) => p !== this.port!.owner() && p.canTrade(this.port!.owner()))
       .flatMap((p) => p.units(UnitType.Port))
+      // ...and nothing sails into a blockaded harbour either.
+      .filter((p) => !isBlockaded(this.mg, p))
       .filter((p) => {
         for (const comp of sourceComponents) {
           if (this.mg.hasWaterComponent(p.tile(), comp)) return true;

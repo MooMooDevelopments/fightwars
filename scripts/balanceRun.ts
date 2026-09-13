@@ -15,6 +15,7 @@
  *                                      [--map world] [--seed perf-gate]
  *                                      [--no-supply] [--flat-terrain]
  *                                      [--no-upkeep] [--no-materials]
+ *                                      [--no-blockades] [--no-embargo-price]
  *
  * `--no-supply` turns the supply penalty and its attrition off, and
  * `--flat-terrain` turns the elevation curves off (the band table stays),
@@ -65,6 +66,20 @@ class NoSupply extends Config {
     return 1;
   }
   supplyAttritionRate(): number {
+    return 0;
+  }
+}
+
+/** The same game with no blockades. */
+class NoBlockades extends Config {
+  blockadeRange(): number {
+    return 0;
+  }
+}
+
+/** The same game with embargoes free to receive again. */
+class NoEmbargoPrice extends Config {
+  embargoTariffMax(): number {
     return 0;
   }
 }
@@ -120,14 +135,23 @@ async function main(): Promise<void> {
   const flatTerrain = process.argv.includes("--flat-terrain");
   const noUpkeep = process.argv.includes("--no-upkeep");
   const noMaterials = process.argv.includes("--no-materials");
+  const noBlockades = process.argv.includes("--no-blockades");
+  const noEmbargoPrice = process.argv.includes("--no-embargo-price");
   if (
-    [noSupply, flatTerrain, noUpkeep, noMaterials].filter(Boolean).length > 1
+    [
+      noSupply,
+      flatTerrain,
+      noUpkeep,
+      noMaterials,
+      noBlockades,
+      noEmbargoPrice,
+    ].filter(Boolean).length > 1
   ) {
     throw new Error("one lever at a time");
   }
   console.debug = () => {};
   console.log(
-    `[balance] map=${map} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}${noUpkeep ? " upkeep=off" : ""}${noMaterials ? " materials=off" : ""}\n`,
+    `[balance] map=${map} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}${noUpkeep ? " upkeep=off" : ""}${noMaterials ? " materials=off" : ""}${noBlockades ? " blockades=off" : ""}${noEmbargoPrice ? " embargo-price=off" : ""}\n`,
   );
 
   const gameConfig: GameConfig = {
@@ -160,7 +184,11 @@ async function main(): Promise<void> {
         ? new NoUpkeep(gameConfig, null, false)
         : noMaterials
           ? new NoMaterials(gameConfig, null, false)
-          : new Config(gameConfig, null, false);
+          : noBlockades
+            ? new NoBlockades(gameConfig, null, false)
+            : noEmbargoPrice
+              ? new NoEmbargoPrice(gameConfig, null, false)
+              : new Config(gameConfig, null, false);
   const mapLoader = new NodeGameMapLoader(
     path.join(PROJECT_ROOT, "resources/maps"),
   );
@@ -244,6 +272,10 @@ async function main(): Promise<void> {
   );
   const materials = alive.reduce((s, p) => s + Number(p.materials()), 0);
   console.log(`Materials held: ${materials}`);
+  console.log(
+    `Fleet:          ${countOf(UnitType.Warship)} warships, ` +
+      `${countOf(UnitType.TradeShip)} trade ships at sea`,
+  );
   console.log(
     `Structures:     ${countOf(UnitType.City)} cities, ` +
       `${countOf(UnitType.Port)} ports, ${countOf(UnitType.Factory)} factories, ` +

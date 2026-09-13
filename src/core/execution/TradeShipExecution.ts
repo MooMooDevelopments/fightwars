@@ -2,6 +2,7 @@ import { renderNumber } from "../../client/Utils";
 import {
   Execution,
   Game,
+  Gold,
   MessageType,
   Player,
   Unit,
@@ -171,6 +172,14 @@ export class TradeShipExecution implements Execution {
     }
   }
 
+  /** A payout after the embargo price; exact when nothing is embargoing. */
+  private tariffed(gold: Gold, player: Player): Gold {
+    const pressure = player.embargoPressure();
+    if (pressure === 0) return gold;
+    const factor = this.mg.config().embargoTariff(pressure);
+    return BigInt(Math.floor(Number(gold) * factor));
+  }
+
   private complete() {
     this.active = false;
     this.tradeShip!.delete(false);
@@ -198,14 +207,18 @@ export class TradeShipExecution implements Execution {
         .stats()
         .boatCapturedTrade(this.tradeShip!.owner(), this.origOwner, gold);
     } else {
-      this.srcPort.owner().addGold(gold, this.srcPort.tile());
-      this._dstPort.owner().addGold(gold, this._dstPort.tile());
-      this.srcPort.owner().addTradeGold(gold);
-      this._dstPort.owner().addTradeGold(gold);
+      // Each side pays its own embargo price: a besieged seller earns less
+      // from the same ship than the open buyer at the other end.
+      const srcOwner = this.srcPort.owner();
+      const dstOwner = this._dstPort.owner();
+      const srcGold = this.tariffed(gold, srcOwner);
+      const dstGold = this.tariffed(gold, dstOwner);
+      srcOwner.addGold(srcGold, this.srcPort.tile());
+      dstOwner.addGold(dstGold, this._dstPort.tile());
+      srcOwner.addTradeGold(srcGold);
+      dstOwner.addTradeGold(dstGold);
       // Record stats
-      this.mg
-        .stats()
-        .boatArriveTrade(this.srcPort.owner(), this._dstPort.owner(), gold);
+      this.mg.stats().boatArriveTrade(srcOwner, dstOwner, srcGold);
     }
     return;
   }

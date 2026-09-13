@@ -30,6 +30,10 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   stands behind your army, not how rich you are. Cities, ports and factories still cost gold
   alone: gold raises a country, industry arms it. The build menu shows the materials price and
   greys out what you cannot yet afford.
+- **Blockades.** Park a warship within 25 tiles of a rival's port and it closes: no trade ships
+  leave, none arrive. A fleet is now worth building for something other than piracy.
+- **Embargoes have a price.** Being embargoed by more of the world makes the trade you still
+  have worth less — one embargo is a nuisance, five are a siege.
 
 ### Phase 2 — Infrastructure (2026-09-12)
 

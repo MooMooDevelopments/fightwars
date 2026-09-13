@@ -1220,6 +1220,17 @@ export class PlayerImpl implements Player {
     return [...this.embargoes.values()];
   }
 
+  embargoPressure(): number {
+    let partners = 0;
+    let against = 0;
+    for (const other of this.mg.players()) {
+      if (other === this || other.type() === PlayerType.Bot) continue;
+      partners++;
+      if (other.hasEmbargoAgainst(this)) against++;
+    }
+    return partners === 0 ? 0 : against / partners;
+  }
+
   addEmbargo(other: Player, isTemporary: boolean): void {
     const embargo = this.embargoes.get(other.id());
     if (embargo !== undefined && !embargo.isTemporary) return;

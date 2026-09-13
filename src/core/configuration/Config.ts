@@ -1296,6 +1296,37 @@ export class Config {
     return 20;
   }
 
+  /**
+   * Blockades (brief §6.3): a hostile warship within this many tiles of a
+   * port stops its trade ships leaving and arriving. 25 — inside a warship's
+   * patrol reach, outside a shore battery's — so a blockade is a fleet
+   * commitment rather than a drive-by.
+   */
+  blockadeRange(): number {
+    return 25;
+  }
+
+  /**
+   * Embargo price (brief §6.3). An embargo used to be free to give and
+   * binary to receive. Now the embargoed side's remaining trade pays less
+   * in proportion to how many of the players it could trade with have
+   * embargoed it: with half the world's ports closed to you, the ships that
+   * still sail are worth less, because the market you are selling into has
+   * shrunk. That is what makes trade denial a coalition tool — one embargo
+   * is a nuisance, five are a siege.
+   *
+   * The share of a trade payout lost when every possible partner embargoes
+   * you; scales linearly down to nothing at zero.
+   */
+  embargoTariffMax(): number {
+    return 0.5;
+  }
+
+  /** Multiplier on a trade payout for a player embargoed by `pressure` of its possible partners (0-1). */
+  embargoTariff(pressure: number): number {
+    return 1 - this.embargoTariffMax() * pressure;
+  }
+
   tradeShipShortRangeDebuff(): number {
     return 300;
   }
