@@ -568,6 +568,8 @@
     "low_troops_warning": "You are very low on troops - You should always keep some troops for defense.",
     "teammate_afk_neighbor_info": "You can attack disconnected teammates.",
     "traitor_neighbor_info": "You can betray traitors without becoming a traitor yourself.",
+    "attack_ratio_slider": "Attack ratio",
+    "troop_meter": "Troops",
     "troop_rate_rising": "Troops you gain each second. Growth is still climbing.",
     "troop_rate_slowing": "Troops you gain each second. Growth is past its peak — spend troops to keep it up."
   },

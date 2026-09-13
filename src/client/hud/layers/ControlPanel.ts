@@ -449,6 +449,14 @@ export class ControlPanel extends LitElement implements Controller {
     return html`
       <div
         class="w-full h-6 rounded-md bg-meter-track overflow-hidden relative"
+        role="meter"
+        aria-label=${translateText("control_panel.troop_meter")}
+        aria-valuemin="0"
+        aria-valuemax=${Math.round(this._maxTroops)}
+        aria-valuenow=${Math.round(this._troops)}
+        aria-valuetext="${renderTroops(this._troops)} / ${renderTroops(
+          this._maxTroops,
+        )}"
       >
         ${this.renderTroopMeterFill()}
         <div
@@ -494,6 +502,14 @@ export class ControlPanel extends LitElement implements Controller {
     return html`
       <div
         class="w-full h-6 rounded-md bg-meter-track overflow-hidden relative"
+        role="meter"
+        aria-label=${translateText("control_panel.troop_meter")}
+        aria-valuemin="0"
+        aria-valuemax=${Math.round(this._maxTroops)}
+        aria-valuenow=${Math.round(this._troops)}
+        aria-valuetext="${renderTroops(this._troops)} / ${renderTroops(
+          this._maxTroops,
+        )}"
       >
         ${this.renderTroopMeterFill()}
         <div
@@ -628,7 +644,7 @@ export class ControlPanel extends LitElement implements Controller {
         translate="no"
       >
         <div
-          class="flex items-center gap-1 shrink-0 border border-ink-dim/40 rounded-md px-1 py-0.5 text-sm text-ink cursor-pointer w-[8rem]"
+          class="flex items-center gap-1 shrink-0 border border-ink-dim/40 rounded-md px-1 py-0.5 text-sm text-ink w-[8rem]"
         >
           <img
             src=${swordIcon}
@@ -650,6 +666,8 @@ export class ControlPanel extends LitElement implements Controller {
           min="1"
           max="100"
           .value=${String(Math.round(this.attackRatio * 100))}
+          aria-label=${translateText("control_panel.attack_ratio_slider")}
+          aria-valuetext="${Math.round(this.attackRatio * 100)}%"
           @input=${(e: Event) => this.handleRatioSliderInput(e)}
           @pointerup=${(e: Event) => this.handleRatioSliderPointerUp(e)}
           class="flex-1 h-1.5 accent-action cursor-pointer"
@@ -724,6 +742,8 @@ export class ControlPanel extends LitElement implements Controller {
             min="1"
             max="100"
             .value=${String(Math.round(this.attackRatio * 100))}
+            aria-label=${translateText("control_panel.attack_ratio_slider")}
+            aria-valuetext="${Math.round(this.attackRatio * 100)}%"
             @input=${(e: Event) => this.handleRatioSliderInput(e)}
             @pointerup=${(e: Event) => this.handleRatioSliderPointerUp(e)}
             class="w-full h-1.5 accent-action cursor-pointer"
