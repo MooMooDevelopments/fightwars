@@ -40,6 +40,13 @@ export class AttackExecution implements Execution {
   private nbuf: TileRef[] = [0, 0, 0, 0];
   private nbuf2: TileRef[] = [0, 0, 0, 0];
 
+  /**
+   * Supply distance of the last tile this attack tried to take — the front's
+   * reach, carried between ticks so attrition can be charged before the
+   * conquest loop runs. 0 (fully supplied) until the first tile is costed.
+   */
+  private frontSupplyDistance = 0;
+
   constructor(
     private startTroops: number | null = null,
     private _owner: Player,
@@ -265,6 +272,18 @@ export class AttackExecution implements Execution {
       return;
     }
 
+    // Over-extension bleeds the standing stack whether or not it is taking
+    // ground, so a push that outruns its cities dies where it stands and a
+    // retreat brings home less than it set out with.
+    const overExtension = this.mg
+      .config()
+      .supplyOverExtension(this.frontSupplyDistance);
+    if (overExtension > 0) {
+      troopCount -=
+        troopCount * this.mg.config().supplyAttritionRate() * overExtension;
+      this.attack.setTroops(troopCount);
+    }
+
     const borderSize = this.attack.borderSize() + this.random.nextInt(0, 5);
     // Each tile consumes a fraction of the tick; conquer until it is spent.
     let tickBudget = 1;
@@ -303,11 +322,15 @@ export class AttackExecution implements Execution {
         continue;
       }
       this.addNeighbors(tileToConquer);
+      const logicInput = this.attackLogicInput(
+        troopCount,
+        tileToConquer,
+        borderSize,
+      );
+      this.frontSupplyDistance = logicInput.supplyDistance;
       const { attackerTroopLoss, defenderTroopLoss, tickFraction } = this.mg
         .config()
-        .attackLogic(
-          this.attackLogicInput(troopCount, tileToConquer, borderSize),
-        );
+        .attackLogic(logicInput);
       tickBudget -= tickFraction;
       troopCount -= attackerTroopLoss;
       this.attack.setTroops(troopCount);
@@ -356,6 +379,14 @@ export class AttackExecution implements Execution {
                 defender.isDisconnected() && this._owner.isOnSameTeam(defender),
             },
       defenderHasDefensePost,
+      // Measured from the attacker's side of the border: the tile being taken
+      // is still the defender's, so it has no supply value of the attacker's
+      // own. One more than the best of the attacker's neighbours is both the
+      // distance this tile will have once taken and the reach the attack is
+      // paying for now.
+      supplyDistance: this.mg
+        .supplyNetwork()
+        .frontDistance(tile, this.ownerSmallID),
       falloutRatio: this.mg.hasFallout(tile)
         ? this.mg.numTilesWithFallout() / this.mg.numLandTiles()
         : null,

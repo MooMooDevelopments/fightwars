@@ -40,6 +40,7 @@ function run(o: Partial<AttackLogicInput> & { attackTroops: number }) {
     attacker: { type: PlayerType.Human, numTiles: 20_000 },
     defender: null,
     defenderHasDefensePost: false,
+    supplyDistance: 0,
     falloutRatio: null,
     borderSize: 100,
     ...o,

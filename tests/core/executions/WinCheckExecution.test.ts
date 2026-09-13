@@ -63,15 +63,18 @@ describe("WinCheckExecution", () => {
       numTilesOwned: vi.fn(() => 10),
       name: vi.fn(() => "P1"),
     };
-    mg.players = vi.fn(() => [player]);
-    mg.numLandTiles = vi.fn(() => 100);
-    mg.numTilesWithFallout = vi.fn(() => 0);
     mg.stats = vi.fn(() => ({ stats: () => ({ mocked: true }) }));
     mg.endSpawnPhase();
     const threshold = (mg.config().gameConfig().maxTimerValue ?? 0) * 600;
     while (mg.ticks() < threshold) {
       mg.executeNextTick();
     }
+    // Stubbed after the clock has run, not before: a bare object standing in
+    // for a Player is fine for the win check, but the tick loop is a real
+    // game and every system in it reads more of a player than this has.
+    mg.players = vi.fn(() => [player]);
+    mg.numLandTiles = vi.fn(() => 100);
+    mg.numTilesWithFallout = vi.fn(() => 0);
     winCheck.checkWinnerFFA();
     expect(mg.setWinner).toHaveBeenCalledWith(player, expect.any(Object));
   });

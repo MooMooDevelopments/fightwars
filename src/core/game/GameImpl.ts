@@ -47,6 +47,7 @@ import { RailNetwork } from "./RailNetwork";
 import { createRailNetwork } from "./RailNetworkImpl";
 import { Stats } from "./Stats";
 import { StatsImpl } from "./StatsImpl";
+import { SupplyNetwork } from "./SupplyNetwork";
 import { assignTeams, resolveTeamsList } from "./TeamAssignment";
 import { TerraNulliusImpl } from "./TerraNulliusImpl";
 import { UnitGrid, UnitPredicate } from "./UnitGrid";
@@ -107,6 +108,7 @@ export class GameImpl implements Game {
   private playerTeams: Team[] = [];
   private botTeam: Team = ColoredTeams.Bot;
   private _railNetwork: RailNetwork = createRailNetwork(this);
+  private _supplyNetwork: SupplyNetwork;
 
   // Used to assign unique IDs to each new alliance
   private nextAllianceID: number = 0;
@@ -141,6 +143,9 @@ export class GameImpl implements Game {
       _config.disableNavMesh(),
     );
     this._sharedWaterCache = new SharedWaterCache(this);
+    this._supplyNetwork = new SupplyNetwork(this, this._map, (tile) =>
+      this.recordTileUpdate(tile),
+    );
 
     if (_config.gameConfig().gameMode === GameMode.Team) {
       this.populateTeams();
@@ -486,6 +491,7 @@ export class GameImpl implements Game {
   executeNextTick(): GameUpdates {
     this.updates = createGameUpdatesMap();
     this.tileUpdatePairs.length = 0;
+    this._supplyNetwork.tick(this._ticks);
     this.execs.forEach((e) => {
       if (
         (!this.inSpawnPhase() || e.activeDuringSpawnPhase()) &&
@@ -766,6 +772,7 @@ export class GameImpl implements Game {
     owner._tileChangeVersion++;
     this.updateBorders(tile);
     this._map.setFallout(tile, false);
+    this._supplyNetwork.onConquer(tile, owner.smallID());
     this.recordTileUpdate(tile);
   }
 
@@ -786,6 +793,7 @@ export class GameImpl implements Game {
     this._territoryVersion++;
     this._map.setOwnerID(tile, 0);
     this.updateBorders(tile);
+    this._supplyNetwork.onRelinquish(tile);
     this.recordTileUpdate(tile);
   }
 
@@ -1090,9 +1098,11 @@ export class GameImpl implements Game {
     this._unitsVersion++;
     this.unitGrid.addUnit(u);
     this._unitMap.set(u.id(), u);
+    this._supplyNetwork.onUnitChanged(u);
   }
   removeUnit(u: Unit) {
     this._unitsVersion++;
+    this._supplyNetwork.onUnitChanged(u);
     this.unitGrid.removeUnit(u);
     this._unitMap.delete(u.id());
     this.planDrivenUnitIds.delete(u.id());
@@ -1230,6 +1240,14 @@ export class GameImpl implements Game {
     this._territoryVersion++;
     return this._map.setOwnerID(ref, playerId);
   }
+  isSupplied(ref: TileRef): boolean {
+    return this._map.isSupplied(ref);
+  }
+
+  setSupplied(ref: TileRef, value: boolean): void {
+    this._map.setSupplied(ref, value);
+  }
+
   hasFallout(ref: TileRef): boolean {
     return this._map.hasFallout(ref);
   }
@@ -1295,6 +1313,10 @@ export class GameImpl implements Game {
   stats(): Stats {
     return this._stats;
   }
+  supplyNetwork(): SupplyNetwork {
+    return this._supplyNetwork;
+  }
+
   railNetwork(): RailNetwork {
     return this._railNetwork;
   }

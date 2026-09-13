@@ -143,6 +143,7 @@
       "defense_post": "Defense post",
       "defense_post_speed": "Defense post (speed)",
       "fallout": "Fallout",
+      "supply": "Out of supply",
       "their_size": "Their territory",
       "traitor": "Traitor",
       "traitor_speed": "Traitor (speed)",
@@ -565,10 +566,10 @@
   "control_panel": {
     "allied_afk_neighbor_info": "You can attack disconnected players even if you are allied with them.",
     "army_limit_warning": "You're near your army limit! Consider sending troops to teammates.",
+    "attack_ratio_slider": "Attack ratio",
     "low_troops_warning": "You are very low on troops - You should always keep some troops for defense.",
     "teammate_afk_neighbor_info": "You can attack disconnected teammates.",
     "traitor_neighbor_info": "You can betray traitors without becoming a traitor yourself.",
-    "attack_ratio_slider": "Attack ratio",
     "troop_meter": "Troops",
     "troop_rate_rising": "Troops you gain each second. Growth is still climbing.",
     "troop_rate_slowing": "Troops you gain each second. Growth is past its peak — spend troops to keep it up."
@@ -771,8 +772,6 @@
     "turnstile_error": "Verification error: {code}. Please refresh and try again."
   },
   "events_display": {
-    "feed_label": "Recent events",
-    "important_feed_label": "Events that need you",
     "about_to_expire": "Your alliance with {name} is about to expire!",
     "accept_alliance": "Accept",
     "alliance_accepted": "accepted",
@@ -792,9 +791,11 @@
     "conquered_no_gold": "Conquered {name} (didn't play, no gold awarded)",
     "duration_second": "1 second",
     "duration_seconds_plural": "{seconds} seconds",
+    "feed_label": "Recent events",
     "focus": "Focus",
     "hydrogen_bomb_detonated": "{name} - hydrogen bomb detonated",
     "ignore": "Ignore",
+    "important_feed_label": "Events that need you",
     "missile_intercepted": "SAM intercepted {unit}",
     "no_boats_available": "No boats available, max {max}",
     "received_gold_from_captured_ship": "Received {gold} gold from ship captured from {name}",
@@ -2064,8 +2065,8 @@
       "spawn_wait": "Spot picked! You can still move it until the timer runs out — the game starts then.",
       "traitor_info": "Traitors get a large defense debuff for 30 seconds, so be careful.",
       "troop_rate": "This is your troop growth rate. Once your troops pass about half of your maximum, growth starts to fall away and the rate is marked with a ▼.",
-      "whats_next": "That is the whole loop: take ground, keep troops in reserve, build, and make friends. Everything else — ports, factories, silos, warheads — is in the help panel whenever you want it. Go and join a real lobby.",
-      "troops": "Keep an eye on your troop count. Attacking with too few troops leaves you weak — let them regrow between attacks."
+      "troops": "Keep an eye on your troop count. Attacking with too few troops leaves you weak — let them regrow between attacks.",
+      "whats_next": "That is the whole loop: take ground, keep troops in reserve, build, and make friends. Everything else — ports, factories, silos, warheads — is in the help panel whenever you want it. Go and join a real lobby."
     },
     "step_counter": "Step {current} of {total}",
     "step_touch": {

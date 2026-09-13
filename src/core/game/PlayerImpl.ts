@@ -1791,6 +1791,10 @@ export class PlayerImpl implements Player {
     return this._tileChangeVersion;
   }
 
+  myUnitsVersion(): number {
+    return this._myUnitsVersion;
+  }
+
   lastTileChange(): Tick {
     return this._lastTileChange;
   }

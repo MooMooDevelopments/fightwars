@@ -5,6 +5,17 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
 
 ## Unreleased
 
+### Phase 5 — Depth (2026-09-13)
+
+- **Supply lines.** An attack is fed from your capital and from your cities, ports and
+  factories, along ground you own. Push far past the last of them and every tile costs more
+  troops and takes longer to take, and the stack itself starts to melt away where it stands.
+  Distance is measured along your own territory, not across the map: a long salient is badly
+  supplied even when it curls back to within sight of home, and cutting the ground behind an
+  army strands it. Build behind the front before you push past it.
+- The attack breakdown you get by hovering an enemy tile now names supply among the reasons an
+  attack is expensive.
+
 ### Phase 2 — Infrastructure (2026-09-12)
 
 - Accounts: every player is now an account, created silently on first visit. No sign-up.

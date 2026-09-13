@@ -37,6 +37,8 @@ function blankExplanation(): AttackExplanation {
     defensePostLossMod: 0,
     defensePostSpeedMod: 0,
     falloutMod: 0,
+    supplyDistance: 0,
+    supplyMod: 0,
     botDefenderMod: 0,
     disconnectedTeammateMod: 0,
     traitorLossMod: 0,
@@ -61,9 +63,16 @@ function recompose(
   defenderTroopLoss: number;
   tickFraction: number;
 } {
+  // Order matters: these are exact float comparisons, and attackLogic
+  // charges supply before the defense post and the fallout.
   const mag =
-    e.terrainMag * e.defensePostLossMod * e.falloutMod * e.botDefenderMod;
-  const tileCost = e.terrainTileCost * e.defensePostSpeedMod * e.falloutMod;
+    e.terrainMag *
+    e.supplyMod *
+    e.defensePostLossMod *
+    e.falloutMod *
+    e.botDefenderMod;
+  const tileCost =
+    e.terrainTileCost * e.supplyMod * e.defensePostSpeedMod * e.falloutMod;
 
   if (input.defender === null) {
     return {
@@ -125,6 +134,9 @@ function randomInput(rand: PseudoRandom): AttackLogicInput {
           isDisconnectedTeammate: rand.chance(8),
         },
     defenderHasDefensePost: rand.chance(3),
+    // Half the cases sit somewhere on the supply ramp, including past its
+    // saturation point and on the 255 an out-of-field tile carries.
+    supplyDistance: rand.chance(2) ? rand.nextInt(0, 256) : 0,
     falloutRatio: rand.chance(3) ? rand.nextInt(1, 100) / 100 : null,
     borderSize: rand.nextInt(1, 400),
   };
@@ -176,6 +188,7 @@ describe("attackLogic explanation", () => {
         isDisconnectedTeammate: false,
       },
       defenderHasDefensePost: true,
+      supplyDistance: 55,
       falloutRatio: 0.25,
       borderSize: 30,
     };
@@ -187,6 +200,7 @@ describe("attackLogic explanation", () => {
 
     for (const field of [
       "defensePostLossMod",
+      "supplyMod",
       "falloutMod",
       "traitorLossMod",
       "largeAttackerMod",
@@ -214,6 +228,7 @@ describe("attackLogic explanation", () => {
           isDisconnectedTeammate: false,
         },
         defenderHasDefensePost: false,
+        supplyDistance: 0,
         falloutRatio: null,
         borderSize: 10,
       },
@@ -222,6 +237,7 @@ describe("attackLogic explanation", () => {
     expect(explanation.defensePostLossMod).toBe(1);
     expect(explanation.defensePostSpeedMod).toBe(1);
     expect(explanation.falloutMod).toBe(1);
+    expect(explanation.supplyMod).toBe(1);
     expect(explanation.botDefenderMod).toBe(1);
     expect(explanation.disconnectedTeammateMod).toBe(1);
     expect(explanation.traitorLossMod).toBe(1);
@@ -244,6 +260,7 @@ describe("attackLogic explanation", () => {
           isDisconnectedTeammate: true,
         },
         defenderHasDefensePost: false,
+        supplyDistance: 0,
         falloutRatio: null,
         borderSize: 10,
       },

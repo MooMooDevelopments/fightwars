@@ -14,7 +14,7 @@ per-session resume file; this document is the map of everything that remains.
 | 2     | Infrastructure     | Done except two blocked items (§6). API (`src/api/`): guest accounts, Glicko-2 ladders with seasons, ranked queues, profiles, clans, friends, public games; load harness; desync alerting; replay store; metrics; Postgres CI job.   |
 | 3     | Parity and repair  | Done. `docs/BASELINE-VERIFICATION.md`, rejoin repair, tests for every verb, core coverage floor in CI.                                                                                                                               |
 | 4     | Identity           | **In progress: 6 of 10 done, 2 part-done (see §3).** The visual direction is set and carried through: dark, map-first, players vivid and nations muted, one amber signal. Own face (Barlow Condensed/Barlow), own mark, own palette. |
-| 5     | Depth              | Not started. Every hook point is already written down in `docs/MECHANICS.md` "Gaps vs FightWars brief" (§01–§05).                                                                                                                    |
+| 5     | Depth              | **In progress: 6.1 supply lines done (session 10).** Every remaining hook point is written down in `docs/MECHANICS.md` "Gaps vs FightWars brief" (§01–§05).                                                                          |
 | 6     | Modes and metagame | Ranked, seasons and clans (server side) exist from Phase 2; the rest not started.                                                                                                                                                    |
 | 7     | Hardening          | Determinism, load harness, desync alerting and licence gate exist; server-side intent validation, anti-automation, fog filtering, accessibility audit, i18n audit not started.                                                       |
 
@@ -353,13 +353,30 @@ maths must be integer or `DetMath`; all randomness on the seeded `PseudoRandom`.
 Every item below has a worked hook-point analysis in `docs/MECHANICS.md`; the section is
 named so it can be read before touching the code.
 
+### Progress
+
+| Item                                                       | State                                                                                                                                                                                                                                                                                                                                                                                               |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 6.1 Supply lines                                           | **Done (session 10).** `src/core/game/SupplyNetwork.ts`; charged in `Config.attackLogic` and as attrition in `AttackExecution.tick`. Full description in `docs/MECHANICS.md` §02 G1. Two things deliberately left: the map does not shade unsupplied territory (a design pass, not a shader edit — it belongs with items 3 and 6 of Phase 4), and rail is not a source yet (§03 7.4 has the shape). |
+| 6.2 Terrain that costs something                           | Not started.                                                                                                                                                                                                                                                                                                                                                                                        |
+| 6.3 Materials, Manpower, upkeep, blockades, embargo price  | Not started. This is the item the "two update lanes" note below was written for.                                                                                                                                                                                                                                                                                                                    |
+| 6.4 Military breadth, nuke consequences                    | Not started.                                                                                                                                                                                                                                                                                                                                                                                        |
+| 6.5 Tiered relations, war goals, coalitions, reputation    | Not started.                                                                                                                                                                                                                                                                                                                                                                                        |
+| 6.6 Doctrines and stability                                | Not started.                                                                                                                                                                                                                                                                                                                                                                                        |
+| Phase 4 item 9 — build queue, rally points, attack presets | Not started; folded into Phase 5 (it is the only simulation item on the Phase 4 list).                                                                                                                                                                                                                                                                                                              |
+
 ### Before starting Phase 5
 
 Five things learned doing Phase 4 that apply to every item below, because Phase 5 is the first
 phase where nearly every change is a _simulation_ change.
 
 - **The determinism hash is a two-way instrument, not just a gate.** It reads
-  `final hash <N>` on every `npm run perf:gate` and `npm run test:determinism`.
+  `final hash <N>` on every `npm run perf:gate` and `npm run test:determinism`. Session 10 is
+  the worked example of the second half of this: supply lines moved it from
+  `23404413546031824` to `23180482065575010`, and then lengthening the correcting sweep from
+  20 ticks to 60 moved it again to `23307802903294904` — a cadence change is a simulation
+  change, and the hash says so before any test does. The Phase 5 constant is now
+  `23307802903294904`.
   - A refactor that is _supposed_ to change nothing must leave it **identical**. Session 7
     swapped `setTroops(a + b)` for `commitTroops(b)` inside `AttackExecution`'s merge and the
     hash stayed at `23404413546031824` — stronger evidence than any test that the simulation

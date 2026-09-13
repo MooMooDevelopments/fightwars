@@ -1,6 +1,6 @@
 # FightWars Build State
 
-Last session: 2026-09-13 (session 9) | Current phase: 4 (identity) — 6 of its 10 work items done, 3 part-done, 1 not started (item 9, the intents, which is deliberately last), with two Phase 2 items still blocked on the owner/hardware | Build status: green
+Last session: 2026-09-13 (session 10) | Current phase: **5 (depth)** — item 6.1 (supply lines) done; Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
 
 Repo: `C:\Users\disbo\dev\fightwars` · `upstream` = openfrontio/OpenFrontIO (forked at
 `c77005586`, rebased onto `7d95251f1` the same day) · `origin` = github.com/MooMooDevelopments/fightwars
@@ -26,7 +26,72 @@ follows it). In the Claude desktop session the launch configs `fightwars-dev` /
 shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 `npm run load:test -- --clients 150 --map world --turns 600`.
 
-## Handoff — read this first (written 2026-09-13 at the end of session 9)
+## Handoff — read this first (written 2026-09-13 at the end of session 10)
+
+### Session 10 — Phase 5 opens: supply lines (item 6.1)
+
+- **What shipped:** `src/core/game/SupplyNetwork.ts` — one byte per tile holding the distance,
+  **walked through the owner's own territory**, to its nearest capital, City, Port or Factory.
+  `Config.attackLogic` charges a penalty on both attacker loss and tile cost; `AttackExecution`
+  bleeds the standing stack on top of it. Full description in `docs/MECHANICS.md` §02 G1, every
+  touched file in `FORK-CHANGES.md`.
+- **The hash moved twice, and the second time was the lesson.** Supply lines took it from the
+  three-session constant `23404413546031824` to `23180482065575010`. Then lengthening the
+  correcting sweep from 20 ticks to 60 moved it again, to `23307802903294904`: **a refresh
+  cadence is a simulation parameter**, not a performance knob, however much it looks like one.
+  The Phase 5 constant is `23307802903294904`.
+- **The sweep cost 1.17 ms of a 5.8 ms tick before it was measured properly.** Instrumenting
+  `SupplyNetwork.tick` directly (a static counter and a `console.log` every N sweeps) was what
+  showed it: the **execution profiler cannot see it**, because the sweep runs in
+  `executeNextTick` rather than in an `Execution`, and its time lands in the profiler's
+  unattributed "remainder". `perf:gate` went 3.52 ms (baseline, this session, post-rebase) →
+  5.5 ms → 4.95 ms (period 20 → 60) → **3.82 ms**.
+- **The thing that actually fixed it was an exactness argument, not a tuning knob.** A player's
+  supply field is a pure function of two things: their tile set and their unit list. Both are
+  already versioned (`tileChangeVersion`, and `_myUnitsVersion`, which needed an accessor on
+  `Player`), so a player whose versions have not moved since their last flood provably has the
+  right field and re-flooding it is waste. With that skip, plus `forEach` instead of `for...of`
+  over `player.tiles()` (`tiles()` iterates through a generator and the sweep makes two full
+  passes), the sweep settles at **~0.6 ms/tick** at 8000 ticks and its cost stops growing with
+  the map. **The hash stayed at `23307802903294904` across that change, which is the proof it
+  was an optimisation** — the same instrument that must move for a balance change must not move
+  for this one.
+- **The worst single sweep is 13.7 ms**, when one dominant player's whole territory is flooded
+  in one tick. That is inside the 100 ms turn budget and the 115 ms outlier ticks in a long run
+  are not the sweep, but it is the shape to watch: if it ever matters, split one player's flood
+  across ticks rather than shortening the period.
+- **A test that passed for the wrong reason, caught by breaking the code.** The corridor
+  comparison in `tests/SupplyAttrition.test.ts` was written to guard the whole mechanic. With
+  `supplyPenalty` forced to 1 it **still passed** — the attrition alone explained the entire
+  difference. The per-tile penalty is actually guarded by the tamper loop in
+  `AttackBreakdown.test.ts` and by the `AttackScenarios` snapshots. Five breaks were run in all
+  (ownership filter, relaxation, range cap, attrition, penalty) and each one is named against
+  the test that caught it. **Breaking each mechanism separately is the only way to find out
+  which guard is load-bearing** — a suite that goes red is not evidence that the test you meant
+  to write works.
+- **The benchmark scenarios needed capitals.** `AttackScenarios.test.ts` set up rectangles with
+  no supply source anywhere, so after this change every scenario fought at full over-extension
+  and the snapshot stopped being a benchmark of the formula. Each side now plants a capital in
+  the middle of its rect. The snapshot moved anyway and that diff is the balance record: normal
+  plains fights ~15-18 % fewer tiles at ~18 % more loss per tile; single-capital million-tile
+  empires −44 % to −48 % tiles at +80 % to +139 %.
+- **New instrument: `npm run balance:run`** (`scripts/balanceRun.ts`) — the same headless game
+  as `perf:gate`, run long, printing who is alive, how concentrated the land is and what got
+  built. Phase 5's gate asks for a bot-vs-bot run per item and nothing existed to produce one.
+- **The bots proved it without being told.** The A/B below is the same game with only the
+  penalty and the attrition switched off: supply lines halve the runaway leader (top-1 share
+  29.4 % → 13.9 %) and leave two thirds more players alive at 8000 ticks. The row worth
+  believing is the structures — cities +11 %, ports +16 %, defense posts 11 → 29. Nothing tells
+  a bot to build more; that is the existing AI answering the incentive, which is the strongest
+  evidence available that the mechanic changes a decision rather than just a number.
+- **Making war dearer made peace richer.** `NationGoldPerMinute` moved +45 % trade gold and
+  +139 % train gold over twenty minutes, because nations that are not being overrun keep their
+  ports and cities. Nothing in Phase 5's economy items should take today's gold figures as an
+  untouched baseline.
+- **Deliberately not done:** the map does not shade unsupplied territory yet (the bit is set and
+  streamed; the render decision belongs with the Phase 4 item 3 and 6 work, since territory fill
+  already carries patterns, skins, defense darkening, alt-view and saturation), and rail is not
+  a supply source yet. Both are written up with their hook points.
 
 ### Session 9 — item 6's typography and colour half, the feeds, and item 8
 
@@ -370,6 +435,14 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 
 ## Next up (concrete, ordered)
 
+0. **Phase 5 continues.** 6.1 (supply lines) is done; `docs/HANDOFF.md` §4 has the per-item
+   table, the five things that apply to every item, and what Phase 4 still owes. The next item
+   by value is **6.2 terrain that costs something** (`docs/MECHANICS.md` §02 G2), which needs a
+   byte encoding in `map.bin` for the new classes and so is the one with a map-generator half.
+   **6.3 (materials, manpower, upkeep) is the item the "two update lanes" note was written
+   for.** Two loose ends from 6.1 worth folding into whichever item touches them: rail as a
+   supply source (§03 7.4) and the map shading for unsupplied territory (a UI pass).
+
 1. **Rebase check** at session start: `git fetch upstream && git rebase upstream/main`; fix
    conflicts (expect some in `index.html`, nav bars, Footer, SoundManager — the brand sweep
    touched them); rerun all gates.
@@ -384,8 +457,8 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
    the metrics dashboard at real alerting (hardware). Load harness: `--server-pid` sampling
    is unmeasured; a 500-lobby cluster run needs more workers/hosts than this box. Confirm a
    finished ranked game ingests with `rankedType` and rates on the ladder end to end.
-4. Phase 5 (depth) after Phase 4. The cooldowns that count from tick 0 (delete unit,
-   embargo-all, target) are upstream behaviour worth revisiting when rebalancing.
+4. The cooldowns that count from tick 0 (delete unit, embargo-all, target) are upstream
+   behaviour worth revisiting when rebalancing.
 
 ## Decisions made (never re-litigate these)
 
@@ -453,6 +526,49 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   remains by design.
 - The discord card on a clan overview says "invite is no longer valid" for any invite the
   browser cannot resolve against Discord's public API (offline / fake invite) — expected.
+
+## Numbers last measured — Phase 5 item 6.1 (2026-09-13, session 10, this machine)
+
+- **Determinism hash: `23307802903294904`** (world, 150 bots, seed `perf-gate`). Held across the
+  sweep optimisation; moved twice on purpose before that (see the session-10 handoff).
+- `perf:gate`: **mean 3.82 ms** (≤ 8), p95 7.85 (≤ 20), p99 12.6 (≤ 40), 0 ticks over budget.
+  Pre-supply baseline the same day, post-rebase: mean 3.52, p95 6.34, p99 9.1, hash
+  `23404413546031824`.
+- Supply sweep alone (instrumented, world, 150 bots): 0.17 ms/tick cumulative at tick 1000,
+  settling at **0.56 ms/tick by tick 8000**; worst single sweep 13.7 ms.
+- `test:determinism:full`: pass 3/3 in **321 s** (world, 150 bots, 8 humans, 24 000 ticks, 5
+  sequential processes), against a 206 s baseline. It read 671 s before the sweep optimisation;
+  the 1.55x that remains is the mechanic itself — slower conquest means longer wars means more
+  attacks alive per tick — and not the sweep.
+- `npm test`: **494 + 67 files, 5928 + 673 tests, all green**, which includes
+  `tests/EnJsonSorted.test.ts`, red on the branch before this session for three keys that had
+  nothing to do with Phase 5.
+- Balance, from the `AttackScenarios` snapshot diff (46 scenarios, each side now given a
+  capital): median **−15.2 % tiles conquered** and **+20.9 % attacker loss per tile**; the range
+  runs from no change to −47.6 % tiles for single-capital million-tile empires. The three
+  bracketing rows on identical 25k attacks: capital on the front line 300 tiles at 83.3 troops
+  each, capital mid-territory 263 at 95.1, no capital at all 204 at 122.5.
+- Second-order, from `NationGoldPerMinute` (world, impossible nations, 20 minutes): slower
+  conquest leaves nations holding their ports and cities, so **trade gold +45 %** (276.3M →
+  399.2M), **train gold +139 %** (14.2M → 34.0M), ships at sea 218 → 278. Making war dearer
+  makes peace richer; worth remembering before any economy item of Phase 5 reads these numbers
+  as its own baseline.
+- **Bot-vs-bot balance run** (`npm run balance:run -- --ticks 8000`, world, 150 bots + nations,
+  seed `perf-gate`, 222 spawned). The `--no-supply` flag turns only the penalty and the
+  attrition off, so this is an A/B of the mechanic and not of two builds:
+
+  | after 8000 ticks | supply off    | supply on    |
+  | ---------------- | ------------- | ------------ |
+  | players alive    | 16            | **27**       |
+  | top 1 share      | 29.4 %        | **13.9 %**   |
+  | top 5 share      | 85.6 %        | **57.1 %**   |
+  | biggest player   | 191 621 tiles | 90 287 tiles |
+  | cities / ports   | 137 / 76      | 152 / 88     |
+  | defense posts    | 11            | 29           |
+
+  The runaway leader is halved, two thirds more players are still standing, and everyone builds
+  more — which is the decision the mechanic exists to create, arriving without anyone being told
+  about it.
 
 ## Numbers last measured (2026-09-12, this machine, upstream 7d95251f1 + Phase 1)
 

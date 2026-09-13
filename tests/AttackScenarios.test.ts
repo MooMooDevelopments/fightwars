@@ -41,6 +41,13 @@ interface Side {
   traitor?: boolean;
   /** Defense posts at these coordinates (defender only). */
   defensePosts?: [number, number][];
+  /**
+   * Where this side's capital stands — its supply source. Defaults to the
+   * middle of its rect, the tile it owns nearest that point if the middle
+   * belongs to someone else. "none" is a force with no supply at all, which
+   * is what an amphibious landing on a far continent is.
+   */
+  capital?: [number, number] | "none";
 }
 
 interface Scenario {
@@ -81,6 +88,35 @@ function conquerRect(game: Game, player: Player, r: Rect): void {
       }
     }
   }
+}
+
+/**
+ * Plants the side's capital, the source its supply field floods from. Every
+ * scenario has one unless it says otherwise: a war fought by two sides with
+ * no cities anywhere would put both fronts at full over-extension and make
+ * the numbers below a benchmark of one situation rather than of the formula.
+ */
+function setCapital(game: Game, player: Player, side: Side): void {
+  if (side.capital === "none") return;
+  const r = side.rect;
+  const cx = side.capital?.[0] ?? r.x + Math.floor(r.w / 2);
+  const cy = side.capital?.[1] ?? r.y + Math.floor(r.h / 2);
+  const map = game.map();
+  let best: number | null = null;
+  let bestDist = Infinity;
+  for (let y = r.y; y < r.y + r.h; y++) {
+    for (let x = r.x; x < r.x + r.w; x++) {
+      const t = map.ref(x, y);
+      if (map.ownerID(t) !== player.smallID()) continue;
+      const d = Math.abs(x - cx) + Math.abs(y - cy);
+      if (d < bestDist) {
+        bestDist = d;
+        best = t;
+        if (d === 0) break;
+      }
+    }
+  }
+  if (best !== null) player.setSpawnTile(best);
 }
 
 function sig(x: number): number {
@@ -128,6 +164,8 @@ async function runScenario(s: Scenario): Promise<Metrics> {
   if (!attackerFirst) conquerRect(game, attacker, s.attacker.rect);
   attacker.setTroops(s.attacker.troops);
   if (s.attacker.traitor) attacker.markTraitor();
+  setCapital(game, attacker, s.attacker);
+  if (defenderSide !== null) setCapital(game, defender, defenderSide);
 
   const targetID =
     defenderSide === null ? game.terraNullius().id() : defender.id();
@@ -224,6 +262,22 @@ const scenarios: Record<string, Scenario> = {
   "plains equal 50k vs 50k, attack 25k": {
     map: "plains",
     attacker: { rect: PLAINS_LEFT, troops: 50_000 },
+    defender: { rect: PLAINS_RIGHT, troops: 50_000 },
+    attackTroops: 25_000,
+  },
+  // --- plains, the same fight with the capital moved -----------------------
+  // Directly comparable to "attack 25k" above, which has its capital in the
+  // middle of its half: this one is fed from the border itself, and this one
+  // is fed from nowhere.
+  "plains supply: capital on the front line, attack 25k": {
+    map: "plains",
+    attacker: { rect: PLAINS_LEFT, troops: 50_000, capital: [49, 50] },
+    defender: { rect: PLAINS_RIGHT, troops: 50_000 },
+    attackTroops: 25_000,
+  },
+  "plains supply: no capital at all, attack 25k": {
+    map: "plains",
+    attacker: { rect: PLAINS_LEFT, troops: 50_000, capital: "none" },
     defender: { rect: PLAINS_RIGHT, troops: 50_000 },
     attackTroops: 25_000,
   },

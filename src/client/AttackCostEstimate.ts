@@ -43,6 +43,30 @@ export interface AttackEstimate {
 const TICKS_PER_SECOND = 10;
 
 /**
+ * How far from supply the client can tell this tile is.
+ *
+ * The server streams one bit per tile — inside the free supply range or not —
+ * so the client knows exactly when an attack pays nothing, and only knows a
+ * bound when it pays something. Past the range the estimate quotes the
+ * saturated penalty, which is the worst case: the tooltip may say an attack
+ * is dearer than it turns out to be, never cheaper. Quoting a made-up middle
+ * value would be the one thing worse than that.
+ */
+function clientSupplyDistance(
+  game: GameView,
+  tile: TileRef,
+  me: PlayerView,
+): number {
+  const mine = me.smallID();
+  for (const neighbor of game.neighbors(tile)) {
+    if (game.ownerID(neighbor) === mine && game.isSupplied(neighbor)) {
+      return 0;
+    }
+  }
+  return game.config().supplyMaxRange();
+}
+
+/**
  * Estimate the cost of attacking `tile`. Returns null when the tile cannot be
  * attacked at all — not land, the player's own, a teammate's, or there is no
  * local player.
@@ -88,6 +112,7 @@ export function estimateAttackCost(
         UnitType.DefensePost,
         defender.id(),
       ),
+    supplyDistance: clientSupplyDistance(game, tile, me),
     falloutRatio: game.hasFallout(tile)
       ? game.numTilesWithFallout() / game.numLandTiles()
       : null,
@@ -158,6 +183,7 @@ export function significantFactors(estimate: AttackEstimate): AttackFactor[] {
       affects: "speed",
     },
     { key: "fallout", value: e.falloutMod, affects: "both" },
+    { key: "supply", value: e.supplyMod, affects: "both" },
     { key: "tribe", value: e.botDefenderMod, affects: "loss" },
     { key: "traitor", value: e.traitorLossMod, affects: "loss" },
     { key: "traitor_speed", value: e.traitorSpeedMod, affects: "speed" },
@@ -197,6 +223,8 @@ function blankExplanation(): AttackExplanation {
     defensePostLossMod: 1,
     defensePostSpeedMod: 1,
     falloutMod: 1,
+    supplyDistance: 0,
+    supplyMod: 1,
     botDefenderMod: 1,
     disconnectedTeammateMod: 1,
     traitorLossMod: 1,

@@ -36,6 +36,12 @@ export interface GameMap {
   setOwnerID(ref: TileRef, playerId: number): void;
   hasFallout(ref: TileRef): boolean;
   setFallout(ref: TileRef, value: boolean): void;
+  /**
+   * True when the tile is within supply range of one of its owner's supply
+   * sources. Maintained by SupplyNetwork; meaningless on unowned tiles.
+   */
+  isSupplied(ref: TileRef): boolean;
+  setSupplied(ref: TileRef, value: boolean): void;
   isOnEdgeOfMap(ref: TileRef): boolean;
   isBorder(ref: TileRef): boolean;
   neighbors(ref: TileRef): TileRef[];
@@ -97,6 +103,7 @@ export interface GameMap {
    *
    * The bit layout of each `uint16` matches the renderer's tile state:
    *   bits  0-11: ownerID
+   *   bit   12:  supplied
    *   bit   13:  fallout
    *   bit   14:  defense bonus
    */
@@ -133,6 +140,7 @@ export class GameMapImpl implements GameMap {
 
   // State bits (Uint16Array)
   private static readonly PLAYER_ID_MASK = 0xfff;
+  private static readonly SUPPLIED_BIT = 12;
   private static readonly FALLOUT_BIT = 13;
   private static readonly DEFENSE_BONUS_BIT = 14;
   // Bit 15 still reserved
@@ -314,6 +322,18 @@ export class GameMapImpl implements GameMap {
         this._numTilesWithFallout--;
         this.state[ref] &= ~(1 << GameMapImpl.FALLOUT_BIT);
       }
+    }
+  }
+
+  isSupplied(ref: TileRef): boolean {
+    return Boolean(this.state[ref] & (1 << GameMapImpl.SUPPLIED_BIT));
+  }
+
+  setSupplied(ref: TileRef, value: boolean): void {
+    if (value) {
+      this.state[ref] |= 1 << GameMapImpl.SUPPLIED_BIT;
+    } else {
+      this.state[ref] &= ~(1 << GameMapImpl.SUPPLIED_BIT);
     }
   }
 

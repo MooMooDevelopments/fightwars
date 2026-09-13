@@ -146,10 +146,16 @@ describe("PlayerInfoOverlay", () => {
       hasFallout: () => false,
       numTilesWithFallout: () => 0,
       numLandTiles: () => 1,
+      // The supply term reads the hovered tile's neighbours: which of them
+      // the player owns, and whether those are inside supply range.
+      neighbors: () => [1, 2, 3, 4],
+      ownerID: () => 1,
+      isSupplied: () => true,
       config: () => ({
         isUnitDisabled: () => true,
         maxTroops: () => 1000,
         defensePostRange: () => 10,
+        supplyMaxRange: () => 90,
         attackLogic: (
           _input: unknown,
           out: Record<string, number> | undefined,

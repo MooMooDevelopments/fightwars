@@ -96,6 +96,13 @@ export interface AttackLogicInput {
   } | null;
   /** A defense post owned by the defender is in range of the tile. */
   defenderHasDefensePost: boolean;
+  /**
+   * Tiles walked through the attacker's own territory from its nearest
+   * supply source (spawn tile, City, Port or Factory) to this tile. Values
+   * at or past `supplyMaxRange()` — including the 255 a tile out of the
+   * field carries — all mean "fully over-extended".
+   */
+  supplyDistance: number;
   /** Fraction of land tiles with fallout, or null if the tile has no fallout. */
   falloutRatio: number | null;
   /** Tiles on the attack front this tick (plus jitter); fixed for the tick. */
@@ -124,6 +131,9 @@ export interface AttackExplanation {
   defensePostSpeedMod: number;
   /** Fallout on the tile: same modifier applied to both. */
   falloutMod: number;
+  /** How far the tile is from the attacker's supply, and what that costs. */
+  supplyDistance: number;
+  supplyMod: number;
   /** Attacking a tribe costs the attacker less. */
   botDefenderMod: number;
   /** 0 when the defender is a disconnected teammate: nobody loses troops. */
@@ -412,6 +422,62 @@ export class Config {
 
   defensePostRange(): number {
     return 30;
+  }
+
+  /**
+   * Supply lines (brief §6.1). An attack is fed through the attacker's own
+   * ground from its nearest spawn tile, City, Port or Factory; the further
+   * the front is from one, the more the attack bleeds and the slower it
+   * moves. The decision this is here to create is "put a city or a port
+   * behind the front before pushing past it".
+   *
+   * Distances are in tiles walked through owned territory, not straight-line
+   * distance, and are not scaled by map size — a 30-tile reach means the same
+   * thing on every map, the way `defensePostRange` does.
+   *
+   * This one is the reach that costs nothing.
+   */
+  supplyFreeRange(): number {
+    return 30;
+  }
+
+  /** Tiles of reach at which the penalty and the attrition saturate. */
+  supplyMaxRange(): number {
+    return 90;
+  }
+
+  /** Loss and slowdown multiplier at (and past) `supplyMaxRange`. */
+  supplyMaxPenalty(): number {
+    return 1.5;
+  }
+
+  /**
+   * Share of a stranded attack's standing stack that melts away each tick at
+   * full over-extension. 0.002 costs a stack about a sixth of itself over ten
+   * seconds of sitting at the end of a dead supply line.
+   */
+  supplyAttritionRate(): number {
+    return 0.002;
+  }
+
+  /**
+   * 0 inside the free range, rising linearly to 1 at `supplyMaxRange`. Only
+   * + - * / so every engine agrees on the bits (see DetMath).
+   */
+  supplyOverExtension(supplyDistance: number): number {
+    const free = this.supplyFreeRange();
+    const max = this.supplyMaxRange();
+    if (supplyDistance <= free) return 0;
+    if (supplyDistance >= max) return 1;
+    return (supplyDistance - free) / (max - free);
+  }
+
+  /** Multiplier on both attacker loss and tile cost for an over-extended attack. */
+  supplyPenalty(supplyDistance: number): number {
+    return (
+      1 +
+      (this.supplyMaxPenalty() - 1) * this.supplyOverExtension(supplyDistance)
+    );
   }
 
   defensePostDefenseBonus(): number {
@@ -915,6 +981,8 @@ export class Config {
       out.defensePostLossMod = 1;
       out.defensePostSpeedMod = 1;
       out.falloutMod = 1;
+      out.supplyDistance = input.supplyDistance;
+      out.supplyMod = 1;
       out.botDefenderMod = 1;
       out.disconnectedTeammateMod = 1;
       out.traitorLossMod = 1;
@@ -927,6 +995,17 @@ export class Config {
       out.defenderDensity = 0;
       out.speedCost = 0;
       out.borderSize = input.borderSize;
+    }
+
+    // Over-extension is charged before anything else so it applies to the
+    // terra nullius branch too: the brief's "far from supply" is about the
+    // attacker's reach, and an empty tile 80 tiles past your last port is
+    // exactly the push this is meant to make expensive.
+    const supplyMod = this.supplyPenalty(input.supplyDistance);
+    if (supplyMod !== 1) {
+      mag *= supplyMod;
+      tileCost *= supplyMod;
+      if (out !== undefined) out.supplyMod = supplyMod;
     }
 
     if (defender !== null && input.defenderHasDefensePost) {

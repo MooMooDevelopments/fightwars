@@ -421,3 +421,113 @@ client, contrary to the plan in `docs/HANDOFF.md` §3: the client sees territory
 cannot attribute them to one of a player's several concurrent attacks. Sending it would mean
 widening `packedAttackUpdates`, the one per-tick lane with a real bandwidth cost under 120
 players, so it is deliberately left out rather than guessed at.
+
+## Phase 5 — depth (2026-09-13)
+
+### Supply lines (brief §6.1, session 10)
+
+An attack is fed through the attacker's own ground from its nearest capital, City, Port or
+Factory. The further the front is from one, the more the attack bleeds per tile, the slower it
+advances, and the more the standing stack melts away while it stands there. The decision it
+creates is "put a city or a port behind the front before pushing past it" — and the reason it is
+supply rather than a radius is that distance is **walked through your own territory**, so a
+salient that loops back to within sight of its capital is still as far from supply as the road
+home is long, and cutting that road strands everything past the cut.
+
+Full description, tunables and hook points: `docs/MECHANICS.md` §02 G1.
+
+#### FightWars-only files added
+
+- `src/core/game/SupplyNetwork.ts` — one byte per tile: distance to its owner's nearest source,
+  `255` for unknown or out of range. Maintained two ways, and the split is what makes it
+  affordable: `onConquer` relaxes a newly taken tile to one more than the lowest of its owner's
+  four neighbours (four array reads on the conquest path), so an advance carries its own supply
+  line forward with no sweep involved; a level-order BFS re-floods each player from scratch
+  round-robin over 60 ticks, because relaxation cannot see a distance get _shorter_ or a source
+  disappear. Frontier arrays are reused, so a sweep allocates nothing, and a player's slot is
+  skipped outright when neither its tile set nor its unit list has moved since its last flood —
+  the field is a pure function of those two, so re-flooding an unchanged player is waste, and
+  that waste is what makes an unguarded sweep grow with the map.
+- `tests/SupplyNetwork.test.ts` — the field: sources, walked distance (a U-shaped territory
+  whose far end is 20 tiles from its capital and 60 from supply), the range cap, the rendered
+  flag, relaxation without a sweep, and a salient stranded by losing the ground behind it.
+- `scripts/balanceRun.ts`, `package.json` (`npm run balance:run`) — the same headless game as
+  `perf:gate`, run long, printing who is alive, how concentrated the land is and what got built.
+  Phase 5's gate asks for a bot-vs-bot run per item and nothing existed to produce one. Its
+  `--no-supply` flag turns this mechanic's penalty and attrition off and nothing else, so an A/B
+  is of the mechanic rather than of two builds — and unlike stashing the feature, it does not
+  also remove the script doing the measuring.
+- `tests/SupplyAttrition.test.ts` — the same fight fought twice down a 150-tile corridor with
+  the capital at either end, plus the supply curve's boundaries. The corridor comparison is an
+  end-to-end claim dominated by the attrition; the per-tile penalty is pinned separately (see
+  below), which is worth knowing before trusting either.
+
+#### Shared upstream files edited
+
+- `src/core/configuration/Config.ts` — `supplyFreeRange` 30, `supplyMaxRange` 90,
+  `supplyMaxPenalty` 1.5, `supplyAttritionRate` 0.002, and the two curves over them. All linear
+  (`+ - * /` only), so no `DetMath` is needed. `attackLogic` charges `supplyPenalty` on both
+  `mag` and `tileCost` **before** the defense-post and fallout blocks, so it applies to the terra
+  nullius branch too: an empty tile 80 tiles past your last port is exactly the push this is
+  meant to make expensive. `AttackLogicInput.supplyDistance` and
+  `AttackExplanation.supplyDistance` / `supplyMod` carry it in and out.
+- `src/core/execution/AttackExecution.ts` — gathers `supplyDistance` from the attacker's side of
+  the border (the tile being taken is still the defender's, so it has no supply value of the
+  attacker's own), and charges attrition on the standing stack before the conquest loop, so a
+  push that outruns its cities dies where it stands and a retreat brings home less than it set
+  out with.
+- `src/core/game/GameMap.ts` — state **bit 12** as a per-tile `supplied` flag, set inside
+  `supplyFreeRange`. It rides the existing R16UI tile-state texture, so the client has it with no
+  new wire format. The sweep writes distances directly and syncs the flag in one pass at the
+  end: going through the setter during the flood would clear every tile's flag and set most of
+  them again, and each flip records a tile update — a player's whole territory on the wire,
+  twice, every cycle.
+- `src/core/game/Game.ts`, `src/core/game/PlayerImpl.ts` — `Player.myUnitsVersion()`, an
+  accessor for the per-player unit version that already existed as `_myUnitsVersion`. Paired
+  with `tileChangeVersion()` it is the exact test for "this player's supply field cannot have
+  changed", and it covers the one case `addUnit` / `removeUnit` miss: a City or Port that
+  changes hands through `setOwner` rather than being built or destroyed.
+- `src/core/game/GameImpl.ts`, `src/core/game/Game.ts` — owns the network, runs its sweep at the
+  top of `executeNextTick`, relaxes on `conquer`, clears on `relinquish`, and marks a player's
+  field dirty from `addUnit` / `removeUnit` when the unit is one of the three source structures,
+  so a city built behind the front counts on the next tick rather than up to six seconds later.
+- `src/client/AttackCostEstimate.ts`, `src/client/view/GameView.ts`,
+  `resources/lang/en.json` — the hover breakdown gains an "Out of supply" row. The client knows
+  exactly when an attack pays nothing and only a bound when it pays something, so past the flag
+  it quotes the saturated penalty: the tooltip may say an attack is dearer than it turns out to
+  be, never cheaper.
+- `tests/AttackScenarios.test.ts` — each side now plants a capital, by default in the middle of
+  its rect. Without one, both sides of every benchmark fight at full over-extension and the
+  numbers stop being a benchmark of the formula. Two new rows fight the same 25k attack with the
+  capital on the front line and with no capital at all, which brackets the mechanic: 300 tiles
+  taken at 83.3 troops each, 263 at 95.1 from the middle, 204 at 122.5 with nothing behind it.
+- `tests/AttackBreakdown.test.ts`, `tests/AttackLogicGolden.test.ts` — `supplyDistance` in the
+  random sweep and the fixtures. The golden snapshot is **unchanged**, because the fixtures pass
+  distance 0 and the penalty is exactly 1 there.
+- `tests/__snapshots__/NationGoldPerMinute.test.ts.snap` — regenerated. Slower conquest leaves
+  nations holding their ports and cities, so trade gold rises 45 % and train gold 139 % over
+  twenty minutes. Making war dearer makes peace richer; the numbers are in `BUILD-STATE.md`.
+
+#### Fixed on the way, not caused by this change
+
+- `resources/lang/en.json` — three keys were out of alphabetical order and
+  `tests/EnJsonSorted.test.ts` was **already red on the branch** before this work (confirmed by
+  stashing the one key this change adds and watching it fail identically). Sorted; the diff is
+  six moved lines, verified content-identical by a JSON round-trip.
+- `tests/core/executions/WinCheckExecution.test.ts` — the timer case stubbed `mg.players` with a
+  bare `{numTilesOwned, name}` object and then ran a real tick loop, so any system reading more
+  of a player than that broke on it. The stub moved to after the loop: the win check still gets
+  it, and the tick loop gets a real game.
+
+#### Not done, and why
+
+- **The map does not shade unsupplied territory yet.** The bit is set, streamed and read; what is
+  missing is the render decision, and territory fill already carries patterns, skins, defense
+  darkening, alt-view relations and a saturation control. Adding a sixth thing to that stack is a
+  design pass, not a shader edit, and it belongs with the Phase 4 item 3 and 6 work. The mechanic
+  is not invisible in the meantime: the attack tooltip names it and quotes the multiplier.
+- **Rail is not a supply source.** Only the capital and City / Port / Factory are, so a railway to
+  the front buys nothing yet. `docs/MECHANICS.md` §03 7.4 has the shape of the change — one more
+  seed loop in `SupplyNetwork.refresh` — and the cross-owner cluster caveat that goes with it.
+- **Ranges do not scale with map size**, matching `defensePostRange`. On the smallest maps 30
+  tiles is most of a country and on `giantworldmap` it is a province.

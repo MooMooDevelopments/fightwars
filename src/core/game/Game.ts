@@ -13,6 +13,7 @@ import {
 import { MotionPlanRecord } from "./MotionPlans";
 import { RailNetwork } from "./RailNetwork";
 import { Stats } from "./Stats";
+import { SupplyNetwork } from "./SupplyNetwork";
 import { ReadonlyTileSet } from "./TileSet";
 import { UnitPredicate } from "./UnitGrid";
 
@@ -626,6 +627,8 @@ export interface Player {
   lastTileChange(): Tick;
   /** Counter bumped on every ownership change of one of this player's tiles (also when its border set can change). */
   tileChangeVersion(): number;
+  /** Bumped whenever this player's unit list changes — build, delete, capture in or out. */
+  myUnitsVersion(): number;
 
   isDisconnected(): boolean;
   markDisconnected(
@@ -923,6 +926,8 @@ export interface Game extends GameMap {
 
   addUpdate(update: GameUpdate): void;
   railNetwork(): RailNetwork;
+  /** Per-tile distance to each player's supply sources (brief §6.1). */
+  supplyNetwork(): SupplyNetwork;
   conquerPlayer(conqueror: Player, conquered: Player): void;
   miniWaterHPA(): PathFinder<number> | null;
   miniWaterGraph(): AbstractGraph | null;

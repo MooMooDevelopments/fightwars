@@ -1294,6 +1294,14 @@ export class GameView implements GameMap {
   setOwnerID(ref: TileRef, playerId: number): void {
     return this._map.setOwnerID(ref, playerId);
   }
+  isSupplied(ref: TileRef): boolean {
+    return this._map.isSupplied(ref);
+  }
+
+  setSupplied(ref: TileRef, value: boolean): void {
+    this._map.setSupplied(ref, value);
+  }
+
   hasFallout(ref: TileRef): boolean {
     return this._map.hasFallout(ref);
   }
