@@ -262,6 +262,8 @@ export interface PlayerUpdate {
   piracyGold?: Gold;
   /** Cumulative gold received from all sources (workers, trade, ...). */
   goldEarned?: Gold;
+  /** Materials on hand (brief §6.3). Per-tick churn: rides the packed lane. */
+  materials?: Gold;
   troops?: number;
   allies?: number[];
   embargoes?: Set<PlayerID>;

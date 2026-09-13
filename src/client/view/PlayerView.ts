@@ -85,6 +85,7 @@ function stateFromUpdate(pu: PlayerUpdate): PlayerState {
     trainGold: Number(pu.trainGold ?? 0n),
     piracyGold: Number(pu.piracyGold ?? 0n),
     goldEarned: Number(pu.goldEarned ?? 0n),
+    materials: Number(pu.materials ?? 0n),
     troops: pu.troops!,
     isTraitor: pu.isTraitor!,
     traitorRemainingTicks: Math.max(0, pu.traitorRemainingTicks ?? 0),
@@ -531,6 +532,11 @@ export class PlayerView {
   /** Cumulative gold received from all sources. */
   goldEarned(): number {
     return this.state.goldEarned;
+  }
+
+  /** Materials on hand: made by Factories, spent on arms. */
+  materials(): Gold {
+    return BigInt(this.state.materials);
   }
 
   troops(): number {

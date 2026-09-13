@@ -908,6 +908,21 @@ export class Config {
         assertNever(type);
     }
 
+    // Materials are one table (unitMaterialsCost) rather than a line in each
+    // case above; every caller of unitInfo sees the same decorated object.
+    // Infinite gold is the "infinite resources" cheat: costWrapper already
+    // makes gold free for a human under it, and materials follow the same
+    // rule, so a sandbox lobby is not the one place arms are gated.
+    const materials = this.unitMaterialsCost(type);
+    if (materials !== 0n && info.materialsCost === undefined) {
+      info = {
+        ...info,
+        materialsCost: (_game: Game, player: Player) =>
+          player.type() === PlayerType.Human && this.hasInfiniteGoldFor(player)
+            ? 0n
+            : materials,
+      };
+    }
     this.unitInfoCache.set(type, info);
     return info;
   }
@@ -1384,6 +1399,48 @@ export class Config {
     }
 
     return Math.min(player.troops() + toAdd, max) - player.troops();
+  }
+
+  /**
+   * Materials (brief §6.3). Factories make them, arms consume them, and
+   * nothing else touches them, so the pool is the answer to one question:
+   * how much industry stands behind this army. A player with gold and no
+   * factories can raise cities, ports and factories but not a single
+   * defense post, and that is the tall-versus-wide choice the brief asks
+   * for. Flat per unit — a throughput gate, not a price curve.
+   */
+  unitMaterialsCost(type: UnitType): Gold {
+    switch (type) {
+      case UnitType.DefensePost:
+        return 200n;
+      case UnitType.Warship:
+        return 600n;
+      case UnitType.SAMLauncher:
+      case UnitType.MissileSilo:
+        return 1_000n;
+      case UnitType.AtomBomb:
+        return 1_500n;
+      case UnitType.HydrogenBomb:
+        return 6_000n;
+      case UnitType.MIRV:
+        return 20_000n;
+      default:
+        return 0n;
+    }
+  }
+
+  /**
+   * Materials a factory makes per tick per level: 2, so a level-one factory
+   * makes a defense post every ten seconds and a silo every fifty. Not
+   * scaled by the gold multiplier — materials are not money.
+   */
+  factoryMaterialsPerTick(level: number): Gold {
+    return 2n * BigInt(level);
+  }
+
+  /** Enough at spawn for one defense post, and not two. */
+  startingMaterials(): Gold {
+    return 200n;
   }
 
   /**

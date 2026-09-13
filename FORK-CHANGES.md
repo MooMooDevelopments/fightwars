@@ -622,3 +622,55 @@ exempt. Description and table: `docs/MECHANICS.md` §01 "Upkeep".
   recruits stopping and resuming, foreclosure at the grace tick and not one before, the clock
   resetting on a paid tick, and foreclosure stopping once the bill fits. Two breaks were watched:
   upkeep never due fails five of seven, foreclosure never firing fails the two that name it.
+
+### Materials (brief §6.3, second part, session 11)
+
+A second pool beside gold that exactly one thing makes and exactly one thing spends. Factories
+produce 2 × level per tick; defense posts, warships, SAMs, silos and nukes cost a flat amount of
+it; cities, ports and factories cost gold alone. That asymmetry is the tall-versus-wide choice —
+gold raises a country, industry arms it. Description, table and what is not done:
+`docs/MECHANICS.md` §03 7.2.
+
+#### Shared upstream files edited
+
+- `src/core/game/Game.ts` — `UnitInfo.materialsCost?`, `Player.materials/addMaterials/
+removeMaterials`, `BuildableUnit.materialsCost`.
+- `src/core/configuration/Config.ts` — `unitMaterialsCost` (the table), `factoryMaterialsPerTick`,
+  `startingMaterials`; `unitInfo` decorates every non-zero type once, at the cache, so every
+  caller sees the same object.
+- `src/core/game/PlayerImpl.ts` — the pool, the gate in `canBuildUnitType`, the charge in
+  `buildUnit` and `upgradeUnit`, the price on `buildableUnits`, and the packed lane widened from a
+  quint to a sextet — materials change every tick for every factory owner, which is exactly the
+  case the packed lane exists for.
+- `src/core/execution/FactoryExecution.ts` — production, after the station is created and only
+  once the factory is built.
+- `src/core/game/GameUpdates.ts`, `src/core/game/GameUpdateUtils.ts`, `src/client/view/GameView.ts`,
+  `src/client/view/PlayerView.ts`, `src/client/render/types/Renderer.ts` — the field on the first
+  full update, the merge, the stride-6 unpack, the accessor, the state.
+- `src/client/hud/layers/RadialMenuElements.ts`, `src/client/controllers/BuildPreviewController.ts`,
+  `resources/lang/en.json` — the build menu greys out on a short pool and prints the materials
+  price beside the gold; `player_panel.materials`.
+- `tests/PackedPlayerUpdates.test.ts`, `tests/PlayerUpdateDiff.test.ts`,
+  `tests/LiveTradeRevenue.test.ts`, `tests/client/view/GameView.test.ts`,
+  `tests/GameUpdateUtils.test.ts`, the two `tests/client/render/frame/derive` fixtures — every
+  quint-shaped expectation widened to the sextet; `tests/economy/ConstructionGold.test.ts` — the
+  MIRV cost case buys a silo and a MIRV, both arms, so it is given their materials.
+- `tests/MirvBetrayal.test.ts`, `tests/NationCounterWarshipInfestation.test.ts`,
+  `tests/NationMIRV.test.ts`, `tests/NationNukeSamOverwhelm.test.ts`,
+  `tests/nukes/HydrogenAndMirv.test.ts` — twenty `addGold` grants to players who then build arms
+  each gained the matching `addMaterials` beside them. Infinite gold frees only humans (the
+  SAM-overwhelm test already says so about gold), and nations in these fixtures have no factory.
+- `scripts/balanceRun.ts` — `--no-materials`, and a "Materials held" line in the report.
+
+#### FightWars-only files added
+
+- `tests/economy/Materials.test.ts` — the starting stock, the gate held tile-invariant (same
+  tile, same infinite gold, only the pool moves), the flat charge at build and upgrade, factory
+  production per level and none under construction, the shipped price, and the zero floor.
+
+#### Not done, and why
+
+Train delivery of materials (the empty `FactoryStopHandler` hook) — production lands in the
+owner's pool directly, which is simpler and deterministic; the hook is where geography would
+start to matter. A HUD readout of the pool — the menu shows the price, nothing shows the balance;
+that is a Phase 4 item 6 concern. Stats for materials — no schema slot yet.

@@ -25,6 +25,11 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
 - **Upkeep.** Cities, ports, factories, defence posts, silos, SAMs and warships now cost gold
   every second you hold them. Fall short and you stop recruiting; stay short for thirty seconds
   and you lose the dearest thing you own. Build what you can feed.
+- **Materials.** Factories now make materials, and defence posts, warships, SAMs, silos and
+  nukes cost them on top of gold — a flat price each, so the question is how much industry
+  stands behind your army, not how rich you are. Cities, ports and factories still cost gold
+  alone: gold raises a country, industry arms it. The build menu shows the materials price and
+  greys out what you cannot yet afford.
 
 ### Phase 2 — Infrastructure (2026-09-12)
 

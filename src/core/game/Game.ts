@@ -177,6 +177,12 @@ export interface UnitInfo {
   // extraUnits shifts the cost curve as if the player already had that many
   // additional units/levels — used to price the later steps of a bulk upgrade.
   cost: (game: Game, player: Player, extraUnits?: number) => Gold;
+  /**
+   * Materials the unit costs on top of gold (brief §6.3). Flat per unit,
+   * never escalating: materials are a throughput gate, not a price curve.
+   * Absent means free.
+   */
+  materialsCost?: (game: Game, player: Player) => Gold;
   maxHealth?: number;
   damage?: number;
   constructionDuration?: number;
@@ -653,6 +659,10 @@ export interface Player {
   gold(): Gold;
   addGold(toAdd: Gold, tile?: TileRef): void;
   removeGold(toRemove: Gold): Gold;
+  /** Materials on hand: made by Factories, spent on arms (brief §6.3). */
+  materials(): Gold;
+  addMaterials(toAdd: Gold): void;
+  removeMaterials(toRemove: Gold): Gold;
 
   // Cumulative trade revenue, surfaced on the live PlayerUpdate so clients can
   // compute per-source gold rates (leaderboard "Ship/Train Trade Gold/min").
@@ -972,6 +982,8 @@ export interface BuildableUnit {
   canUpgrade: number | false;
   type: PlayerBuildableUnitType;
   cost: Gold;
+  /** Materials per unit; 0 for anything that costs gold alone. */
+  materialsCost: Gold;
   // Cumulative cost of upgrading 1..MAX_UPGRADE_AMOUNT times (upgrade costs
   // escalate per level, so a bulk total is NOT cost * amount). Only set when
   // canUpgrade is not false.

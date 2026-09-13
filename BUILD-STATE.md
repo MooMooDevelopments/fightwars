@@ -1,6 +1,6 @@
 # FightWars Build State
 
-Last session: 2026-09-14 (session 11) | Current phase: **5 (depth)** — 6.1 (supply lines) and 6.2 (elevation) done, 6.3 in progress (upkeep done; materials, blockades and the embargo price next); Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
+Last session: 2026-09-14 (session 11) | Current phase: **5 (depth)** — 6.1 (supply lines) and 6.2 (elevation) done, 6.3 in progress (upkeep and materials done; blockades and the embargo price next); Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
 
 Repo: `C:\Users\disbo\dev\fightwars` · `upstream` = openfrontio/OpenFrontIO (forked at
 `c77005586`, rebased onto `7d95251f1` the same day) · `origin` = github.com/MooMooDevelopments/fightwars
@@ -27,6 +27,43 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 `npm run load:test -- --clients 150 --map world --turns 600`.
 
 ## Handoff — read this first (written 2026-09-14 at the end of session 11)
+
+### Session 11 (continued) — item 6.3, materials
+
+- **What shipped.** A second pool beside gold that exactly one thing makes and one thing spends:
+  Factories produce 2 × level per tick; posts, warships, SAMs, silos and nukes cost a flat
+  amount; cities, ports and factories cost gold alone. That asymmetry is the tall-versus-wide
+  choice — gold raises a country, industry arms it. `docs/MECHANICS.md` §03 7.2; files in
+  `FORK-CHANGES.md`. Hash `24015216964771530 → 34062363394006440` at 8000 ticks (see below for
+  why the 1000-tick gate did not move). **The Phase 5 constant at `perf:gate` is unchanged at
+  `24015216964771530`; the balance run is the instrument for this one.**
+- **The packed lane became a sextet.** Materials change every tick for every factory owner —
+  exactly the case the packed lane exists for — so `[smallID, tiles, gold, troops, goldEarned]`
+  gained a sixth slot, and every quint-shaped expectation in seven test files had to be widened
+  by hand. The "two update lanes" note in `docs/HANDOFF.md` §4 was written for this decision,
+  and it was the right lane; the cost was the fixtures.
+- **The hash did not move at 1000 ticks, and that was not a dead branch.** `perf:gate` runs
+  bots and nations for 1000 ticks; no nation reaches a second defense post or a first silo that
+  soon, so the gate is never hit and the game is bit-identical. At 8000 ticks it moves. **Before
+  concluding a change is not live, ask whether the instrument's horizon can reach it** — the
+  1000-tick gate is a performance instrument that happens to print a hash, not a balance one.
+- **Infinite gold is the infinite-resources cheat.** Twenty-nine tests across the nuke, SAM,
+  MIRV and attack suites failed at first because their sandboxes have infinite gold and no
+  materials. Rather than hand each a stockpile, `unitInfo` makes `materialsCost` 0 for a human
+  under infinite gold, the same way `costWrapper` already makes gold free — one rule, and a
+  sandbox lobby is not the one place arms are gated. Pinned in `tests/economy/Materials.test.ts`.
+- **A test that saw a spawn rule instead of the gate.** The first "gates arms" case asserted
+  `canBuild(City)` at a tile and failed for a reason that had nothing to do with materials. It
+  now holds the tile and the gold constant and moves only the pool, so what flips is the gate.
+  Assert on the thing you changed, at inputs you control.
+- **Three breaks, three named catches:** the gate made to never refuse fails only "gates arms
+  and only arms"; production switched off fails only "is made by factories"; the charge removed
+  fails only "charges the flat price". Each guard is load-bearing for exactly one thing.
+- **The bots built.** Gated: cities 143 → 171, ports 75 → 100, factories 26 → 40, posts
+  41 → 33; alive 34 → 28 (fewer posts, easier conquest). Nations that cannot arm early build
+  economy instead — `NationGoldPerMinute` trade gold **+21 %**, train gold +22 %, ships +20 %.
+  The materials pool sat at 107k unused when arms were free and 95k when gated — supply is not
+  the constraint at these rates, the flat prices are. Revisit both with blockades in.
 
 ### Session 11 (continued) — item 6.3 opens with upkeep
 
@@ -510,10 +547,9 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 
 ## Next up (concrete, ordered)
 
-0. **Phase 5 continues, inside 6.3.** Upkeep is done; next are **materials** (Factories
-   produce, military construction consumes — the packed-lane decision the "two update lanes"
-   note was written for), **blockades** (a hostile warship near a port stops its spawns and
-   routes; `PortExecution.tradingPorts` and `shouldSpawnTradeShip`), and the **embargo price**
+0. **Phase 5 continues, inside 6.3.** Upkeep and materials are done; next are **blockades**
+   (a hostile warship near a port stops its spawns and routes; `PortExecution.tradingPorts`
+   and `shouldSpawnTradeShip`), and the **embargo price**
    (the embargoed side's remaining trade pays less in proportion to how many partners embargo
    it — the coalition tool). Manpower already exists as `maxTroops`; surface it, do not
    duplicate it. Then re-tune the upkeep table against the whole economy. Loose ends to fold
@@ -603,6 +639,29 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   remains by design.
 - The discord card on a clan overview says "invite is no longer valid" for any invite the
   browser cannot resolve against Discord's public API (offline / fake invite) — expected.
+
+## Numbers last measured — Phase 5 item 6.3, materials (2026-09-14, session 11, this machine)
+
+- **Determinism hash at `perf:gate` (1000 ticks): `24015216964771530`, unchanged** — the gate
+  is never reached that early (handoff note above). At `balance:run --ticks 8000`:
+  `29119482670225350 → 34062363394006440`.
+- **Bot-vs-bot A/B** (`balance:run --ticks 8000`, world, 150 bots + nations, seed `perf-gate`;
+  `--no-materials` zeroes `unitMaterialsCost` and nothing else, and reproduced the upkeep game to
+  the hash first):
+
+  | after 8000 ticks  | arms free     | arms gated    |
+  | ----------------- | ------------- | ------------- |
+  | players alive     | 34            | 28            |
+  | top 1 / top 5     | 15.0 / 45.7 % | 15.4 / 48.9 % |
+  | cities / ports    | 143 / 75      | **171 / 100** |
+  | factories / posts | 26 / 41       | **40 / 33**   |
+  | materials held    | 107 148       | 94 660        |
+
+- Nation economy (`NationGoldPerMinute`): trade gold +21 % (387.0M → 468.7M), train gold +22 %
+  (72.9M → 88.6M), ships arrived 1619 → 1944.
+- `perf:gate`, idle: mean 3.84 ms, p95 6.84, p99 9.13, 0 over budget. `test:determinism:full`:
+  pass 3/3 in 340 s. `npm test`: 501 + 69 files, 6010 + 706 tests, all green.
+- Cumulative across Phase 5 so far, players alive at 8000 ticks: 16 → 27 → 32 → 34 → 28.
 
 ## Numbers last measured — Phase 5 item 6.3, upkeep (2026-09-14, session 11, this machine)
 

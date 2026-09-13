@@ -1590,6 +1590,7 @@
     "kick": "Kick player",
     "kick_confirm": "Kick {name}?\n\nThey won't be able to rejoin this game.",
     "kicked": "Already kicked",
+    "materials": "materials",
     "moderation": "Moderation",
     "report": "Report",
     "report_reason_botting": "Botting",

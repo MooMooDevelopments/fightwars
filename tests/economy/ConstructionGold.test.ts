@@ -78,6 +78,12 @@ describe("Construction economy", () => {
     );
 
     player.addGold(100_000_000n);
+    // A silo and a MIRV are arms: both need materials as well as gold
+    // (brief §6.3), and the silo below is bought first.
+    player.addMaterials(
+      game.config().unitMaterialsCost(UnitType.MIRV) +
+        game.config().unitMaterialsCost(UnitType.MissileSilo),
+    );
 
     player.conquer(game.ref(1, 1));
     player.buildUnit(UnitType.MissileSilo, game.ref(1, 1), {});

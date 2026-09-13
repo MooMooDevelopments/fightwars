@@ -28,7 +28,10 @@ describe("MIRV betrayal side effects", () => {
     player2.conquer(game.ref(10, 10));
 
     player1.addGold(1_000_000_000n);
+
+    player1.addMaterials(1_000_000n);
     player2.addGold(1_000_000_000n);
+    player2.addMaterials(1_000_000n);
 
     game.addExecution(new AllianceRequestExecution(player1, player2.id()));
     game.executeNextTick();

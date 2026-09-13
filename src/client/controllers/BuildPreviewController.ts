@@ -641,6 +641,7 @@ export class BuildPreviewController implements Controller {
         canBuild: false,
         canUpgrade: false,
         cost: 0n,
+        materialsCost: 0n,
         overlappingRailroads: [],
         ghostRailPaths: [],
       },

@@ -76,6 +76,7 @@ describe("NationNukeBehavior - maybeDestroyEnemySam", () => {
 
     // infiniteGold only applies to Human players, so the nation needs gold
     nation.addGold(1_000_000_000n);
+    nation.addMaterials(1_000_000n);
     nation.addTroops(100_000);
     human.addTroops(100_000);
 

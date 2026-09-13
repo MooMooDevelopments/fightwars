@@ -70,7 +70,9 @@ describe("Nation MIRV Retaliation", () => {
 
     // Give both players enough gold for MIRVs
     attacker.addGold(1_000_000_000n);
+    attacker.addMaterials(1_000_000n);
     nation.addGold(1_000_000_000n);
+    nation.addMaterials(1_000_000n);
     // Verify preconditions
     expect(attacker.units(UnitType.MissileSilo)).toHaveLength(1);
     expect(nation.units(UnitType.MissileSilo)).toHaveLength(1);
@@ -232,7 +234,9 @@ describe("Nation MIRV Retaliation", () => {
 
     // Give both players enough gold for MIRVs
     dominantPlayer.addGold(100_000_000n);
+    dominantPlayer.addMaterials(1_000_000n);
     nation.addGold(100_000_000n);
+    nation.addMaterials(1_000_000n);
 
     // Verify preconditions
     expect(dominantPlayer.units(UnitType.MissileSilo)).toHaveLength(0);
@@ -397,8 +401,11 @@ describe("Nation MIRV Retaliation", () => {
 
     // Give all players enough gold for MIRVs
     steamroller.addGold(100_000_000n);
+    steamroller.addMaterials(1_000_000n);
     secondPlayer.addGold(100_000_000n);
+    secondPlayer.addMaterials(1_000_000n);
     nation.addGold(100_000_000n);
+    nation.addMaterials(1_000_000n);
 
     // Verify preconditions
     expect(nation.units(UnitType.MissileSilo)).toHaveLength(1);
@@ -547,8 +554,11 @@ describe("Nation MIRV Retaliation", () => {
 
     // Give all players enough gold for MIRVs
     steamroller.addGold(100_000_000n);
+    steamroller.addMaterials(1_000_000n);
     secondPlayer.addGold(100_000_000n);
+    secondPlayer.addMaterials(1_000_000n);
     nation.addGold(100_000_000n);
+    nation.addMaterials(1_000_000n);
 
     // Verify preconditions
     expect(nation.units(UnitType.MissileSilo)).toHaveLength(1);
@@ -679,8 +689,11 @@ describe("Nation MIRV Retaliation", () => {
 
     // Give all players enough gold for MIRVs
     teamPlayer1.addGold(100_000_000n);
+    teamPlayer1.addMaterials(1_000_000n);
     teamPlayer2.addGold(100_000_000n);
+    teamPlayer2.addMaterials(1_000_000n);
     nation.addGold(100_000_000n);
+    nation.addMaterials(1_000_000n);
 
     // Verify preconditions
     expect(nation.units(UnitType.MissileSilo)).toHaveLength(1);

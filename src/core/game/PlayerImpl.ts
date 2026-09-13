@@ -118,6 +118,8 @@ export class PlayerImpl implements Player {
 
   private _gold: bigint;
   private _troops: bigint;
+  /** Materials on hand (brief §6.3); rides the packed stats lane. */
+  private _materials: bigint;
 
   /** Cumulative ship-trade revenue (arrival credit for src + dst port owners). */
   private _tradeGold: bigint = 0n;
@@ -197,6 +199,7 @@ export class PlayerImpl implements Player {
   ) {
     this._troops = toInt(startTroops);
     this._gold = mg.config().startingGold(playerInfo);
+    this._materials = mg.config().startingMaterials();
     this._pseudo_random = new PseudoRandom(simpleHash(this.playerInfo.id));
   }
 
@@ -232,17 +235,20 @@ export class PlayerImpl implements Player {
       (prev.tilesOwned !== full.tilesOwned ||
         prev.gold !== full.gold ||
         prev.troops !== full.troops ||
-        prev.goldEarned !== full.goldEarned)
+        prev.goldEarned !== full.goldEarned ||
+        prev.materials !== full.materials)
     ) {
       // goldEarned gets its own comparison: it can change even when gold
       // nets back to its previous value within one tick (addGold followed
-      // by removeGold), and the quint must still flush then.
+      // by removeGold), and the sextet must still flush then. Materials
+      // ride here too: a factory changes them every tick for every owner.
       statsOut.push(
         full.smallID!,
         full.tilesOwned!,
         Number(full.gold),
         full.troops!,
         Number(full.goldEarned),
+        Number(full.materials),
       );
     }
     if (attackTroopsOut !== undefined) {
@@ -380,6 +386,7 @@ export class PlayerImpl implements Player {
       trainGold: this._trainGold,
       piracyGold: this._piracyGold,
       goldEarned: this._goldEarned,
+      materials: this._materials,
       troops: this.troops(),
       allies: allies,
       embargoes: embargoes,
@@ -1340,6 +1347,22 @@ export class PlayerImpl implements Player {
     return actualRemoved;
   }
 
+  materials(): Gold {
+    return this._materials;
+  }
+
+  addMaterials(toAdd: Gold): void {
+    if (toAdd <= 0n) return;
+    this._materials += toAdd;
+  }
+
+  removeMaterials(toRemove: Gold): Gold {
+    if (toRemove <= 0n) return 0n;
+    const actualRemoved = minInt(this._materials, toRemove);
+    this._materials -= actualRemoved;
+    return actualRemoved;
+  }
+
   troops(): number {
     return Number(this._troops);
   }
@@ -1379,6 +1402,8 @@ export class PlayerImpl implements Player {
     }
 
     const cost = this.mg.unitInfo(type).cost(this.mg, this);
+    const materials =
+      this.mg.unitInfo(type).materialsCost?.(this.mg, this) ?? 0n;
     const b = new UnitImpl(
       type,
       this.mg,
@@ -1391,6 +1416,7 @@ export class PlayerImpl implements Player {
     this._myUnitsVersion++;
     this.recordUnitConstructed(type);
     this.removeGold(cost);
+    this.removeMaterials(materials);
     this.removeTroops("troops" in params ? (params.troops ?? 0) : 0);
     this.mg.addUpdate(b.toUpdate());
     this.mg.addUnit(b);
@@ -1435,6 +1461,11 @@ export class PlayerImpl implements Player {
     if (this._gold < cost) {
       return false;
     }
+    const materials =
+      this.mg.unitInfo(unitType).materialsCost?.(this.mg, this) ?? 0n;
+    if (this._materials < materials) {
+      return false;
+    }
     if (unitType !== UnitType.MIRVWarhead && !this.isAlive()) {
       return false;
     }
@@ -1472,8 +1503,10 @@ export class PlayerImpl implements Player {
   }
 
   upgradeUnit(unit: Unit) {
-    const cost = this.mg.unitInfo(unit.type()).cost(this.mg, this);
+    const info = this.mg.unitInfo(unit.type());
+    const cost = info.cost(this.mg, this);
     this.removeGold(cost);
+    this.removeMaterials(info.materialsCost?.(this.mg, this) ?? 0n);
     unit.increaseLevel();
     this.recordUnitConstructed(unit.type());
   }
@@ -1499,6 +1532,7 @@ export class PlayerImpl implements Player {
       const u = units[i];
 
       const cost = config.unitInfo(u).cost(mg, this);
+      const materialsCost = config.unitInfo(u).materialsCost?.(mg, this) ?? 0n;
       let canUpgrade: number | false = false;
       let canBuild: TileRef | false = false;
 
@@ -1535,6 +1569,7 @@ export class PlayerImpl implements Player {
         canBuild,
         canUpgrade,
         cost,
+        materialsCost,
         upgradeCosts,
         overlappingRailroads: buildNew
           ? rail.overlappingRailroads(u, canBuild as TileRef)

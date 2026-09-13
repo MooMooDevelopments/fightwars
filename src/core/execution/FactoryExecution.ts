@@ -21,6 +21,12 @@ export class FactoryExecution implements Execution {
       this.active = false;
       return;
     }
+    if (this.factory.isUnderConstruction()) return;
+    this.factory
+      .owner()
+      .addMaterials(
+        this.game.config().factoryMaterialsPerTick(this.factory.level()),
+      );
   }
 
   isActive(): boolean {

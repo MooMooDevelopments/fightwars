@@ -79,6 +79,7 @@ describe("Hydrogen Bomb and MIRV flows", () => {
       .unitInfo(UnitType.MissileSilo)
       .cost(gameWithConstruction, playerWithConstruction);
     playerWithConstruction.addGold(siloCost);
+    playerWithConstruction.addMaterials(1_000_000n);
 
     // Start construction of silo
     gameWithConstruction.addExecution(
@@ -152,6 +153,7 @@ describe("Hydrogen Bomb and MIRV flows", () => {
       .unitInfo(UnitType.HydrogenBomb)
       .cost(gameWithConstruction, playerWithConstruction);
     playerWithConstruction.addGold(hydrogenBombCost);
+    playerWithConstruction.addMaterials(1_000_000n);
 
     const canBuildAfterCompletion = playerWithConstruction.canBuild(
       UnitType.HydrogenBomb,

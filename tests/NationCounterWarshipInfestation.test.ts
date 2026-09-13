@@ -72,6 +72,7 @@ describe("Counter Warship Infestation", () => {
 
     // Give nation plenty of gold to be one of the richest
     nation.addGold(10_000_000_000n);
+    nation.addMaterials(1_000_000n);
 
     // Build 11+ warships for the enemy on ocean tiles (x=8-15)
     // Each warship needs a unique ocean tile
@@ -239,6 +240,7 @@ describe("Counter Warship Infestation", () => {
 
     // Give nation plenty of gold to be one of the richest
     nation.addGold(10_000_000_000n);
+    nation.addMaterials(1_000_000n);
 
     // Build warships for enemy team on ocean tiles: total > 15 to trigger team threshold
     // Enemy1 gets 10 warships (more than 3, which is required for targeting)

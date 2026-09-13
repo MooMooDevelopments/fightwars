@@ -76,6 +76,8 @@ export interface PlayerState {
   piracyGold: number;
   /** Cumulative gold received from all sources (live). */
   goldEarned: number;
+  /** Materials on hand (live, packed lane). */
+  materials: number;
   troops: number;
   isTraitor: boolean;
   traitorRemainingTicks: number;

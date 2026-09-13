@@ -36,16 +36,16 @@ describe("packedPlayerUpdates (GameImpl drain)", () => {
     game.drainPackedPlayerUpdates(); // discard spawn-time churn
   });
 
-  test("a stat change is drained as a [smallID, tiles, gold, troops, goldEarned] quint", () => {
+  test("a stat change is drained as a [smallID, tiles, gold, troops, goldEarned, materials] sextet", () => {
     alice.addGold(500n);
     game.executeNextTick();
     const packed = game.drainPackedPlayerUpdates();
     expect(packed).not.toBeNull();
     // Find alice's quint (other players may have churned too).
     let quad: number[] | undefined;
-    for (let i = 0; i + 4 < packed!.length; i += 5) {
+    for (let i = 0; i + 5 < packed!.length; i += 6) {
       if (packed![i] === alice.smallID()) {
-        quad = Array.from(packed!.subarray(i, i + 5));
+        quad = Array.from(packed!.subarray(i, i + 6));
       }
     }
     expect(quad).toEqual([
@@ -54,6 +54,7 @@ describe("packedPlayerUpdates (GameImpl drain)", () => {
       Number(alice.gold()),
       alice.troops(),
       Number(alice.goldEarned()),
+      Number(alice.materials()),
     ]);
   });
 
@@ -135,11 +136,11 @@ describe("GameRunner payload cadence", () => {
     const gu = byTick.get(game.ticks())!;
     const packed = gu.packedPlayerUpdates;
     expect(packed).toBeDefined();
-    expect(packed!.length % 5).toBe(0);
+    expect(packed!.length % 6).toBe(0);
     let quad: number[] | undefined;
-    for (let i = 0; i + 4 < packed!.length; i += 5) {
+    for (let i = 0; i + 5 < packed!.length; i += 6) {
       if (packed![i] === alice.smallID()) {
-        quad = Array.from(packed!.subarray(i, i + 5));
+        quad = Array.from(packed!.subarray(i, i + 6));
       }
     }
     expect(quad).toEqual([
@@ -148,6 +149,7 @@ describe("GameRunner payload cadence", () => {
       Number(alice.gold()),
       alice.troops(),
       Number(alice.goldEarned()),
+      Number(alice.materials()),
     ]);
     // And the object channel no longer carries the stat fields: alice must
     // not appear in this tick's PlayerUpdates for a gold-only change.

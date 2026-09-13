@@ -26,6 +26,7 @@ function makePlayerState(overrides: Partial<PlayerState> = {}): PlayerState {
     trainGold: 0,
     piracyGold: 0,
     goldEarned: 0,
+    materials: 0,
     troops: 100,
     isTraitor: false,
     traitorRemainingTicks: 0,
@@ -429,6 +430,7 @@ describe("applyStateUpdate", () => {
       trainGold: 0,
       piracyGold: 0,
       goldEarned: 0,
+      materials: 0,
     });
     applyStateUpdate(target, {
       type: GameUpdateType.Player,
@@ -576,6 +578,7 @@ describe("diffPlayerUpdate — every scalar field must be wired up", () => {
     "gold",
     "troops",
     "goldEarned",
+    "materials",
   ]);
 
   function flip(value: unknown): unknown {

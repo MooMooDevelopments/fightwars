@@ -511,7 +511,10 @@ function createMenuElements(
               }),
               fontSize: "20px",
               color: (p: MenuElementParams) =>
-                executable && (p.game.myPlayer()?.gold() ?? 0n) >= cost
+                executable &&
+                (p.game.myPlayer()?.gold() ?? 0n) >= cost &&
+                (p.game.myPlayer()?.materials() ?? 0n) >=
+                  buildableUnit.materialsCost * BigInt(amount)
                   ? COLORS.building
                   : COLORS.disabled,
               icon: "",
@@ -526,9 +529,20 @@ function createMenuElements(
                   text: `${renderNumber(cost)} ${translateText("player_panel.gold")}`,
                   className: "cost",
                 },
+                ...(buildableUnit.materialsCost > 0n
+                  ? [
+                      {
+                        text: `${renderNumber(buildableUnit.materialsCost * BigInt(amount))} ${translateText("player_panel.materials")}`,
+                        className: "cost",
+                      },
+                    ]
+                  : []),
               ],
               disabled: (p: MenuElementParams) =>
-                !executable || (p.game.myPlayer()?.gold() ?? 0n) < cost,
+                !executable ||
+                (p.game.myPlayer()?.gold() ?? 0n) < cost ||
+                (p.game.myPlayer()?.materials() ?? 0n) <
+                  buildableUnit.materialsCost * BigInt(amount),
               action: (p: MenuElementParams) => {
                 if (isStackableNuke) {
                   p.eventBus.emit(

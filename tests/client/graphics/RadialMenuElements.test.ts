@@ -119,37 +119,54 @@ describe("RadialMenuElements", () => {
 
     mockPlayerActions = {
       buildableUnits: [
-        { type: UnitType.City, canBuild: true, canUpgrade: false, cost: 100n },
+        {
+          type: UnitType.City,
+          canBuild: true,
+          canUpgrade: false,
+          cost: 100n,
+          materialsCost: 0n,
+        },
         {
           type: UnitType.Factory,
           canBuild: true,
           canUpgrade: false,
           cost: 100n,
+          materialsCost: 0n,
         },
         {
           type: UnitType.AtomBomb,
           canBuild: true,
           canUpgrade: false,
           cost: 100n,
+          materialsCost: 0n,
         },
         {
           type: UnitType.Warship,
           canBuild: true,
           canUpgrade: false,
           cost: 100n,
+          materialsCost: 0n,
         },
         {
           type: UnitType.HydrogenBomb,
           canBuild: true,
           canUpgrade: false,
           cost: 100n,
+          materialsCost: 0n,
         },
-        { type: UnitType.MIRV, canBuild: true, canUpgrade: false, cost: 100n },
+        {
+          type: UnitType.MIRV,
+          canBuild: true,
+          canUpgrade: false,
+          cost: 100n,
+          materialsCost: 0n,
+        },
         {
           type: UnitType.TransportShip,
           canBuild: true,
           canUpgrade: false,
           cost: 100n,
+          materialsCost: 0n,
         },
       ],
       canAttack: true,
@@ -548,6 +565,7 @@ describe("RadialMenuElements", () => {
           canBuild: true,
           canUpgrade: 123,
           cost: 100n,
+          materialsCost: 0n,
           upgradeCosts: [100n, 250n, 450n, 700n, 1000n],
         },
       ];
@@ -556,12 +574,18 @@ describe("RadialMenuElements", () => {
       const cityElement = subMenu.find((item) => item.id === "build_City");
 
       // Only x1 affordable: no submenu — the click upgrades x1 directly.
-      (mockGame as any).myPlayer = vi.fn(() => ({ gold: () => 249n }));
+      (mockGame as any).myPlayer = vi.fn(() => ({
+        gold: () => 249n,
+        materials: () => 0n,
+      }));
       expect(cityElement!.subMenu!(mockParams)).toHaveLength(0);
 
       // 999 covers four upgrades: always the fixed x1/x5/x10/xMax slots,
       // with unexecutable steps disabled and the max slot at x4.
-      (mockGame as any).myPlayer = vi.fn(() => ({ gold: () => 999n }));
+      (mockGame as any).myPlayer = vi.fn(() => ({
+        gold: () => 999n,
+        materials: () => 0n,
+      }));
       let options = cityElement!.subMenu!(mockParams);
       expect(options.map((o) => o.id)).toEqual([
         `upgrade_${UnitType.City}_1`,
@@ -581,7 +605,10 @@ describe("RadialMenuElements", () => {
       );
 
       // The full x5 total: the x5 slot becomes executable.
-      (mockGame as any).myPlayer = vi.fn(() => ({ gold: () => 1000n }));
+      (mockGame as any).myPlayer = vi.fn(() => ({
+        gold: () => 1000n,
+        materials: () => 0n,
+      }));
       options = cityElement!.subMenu!(mockParams);
       expect(options.map((o) => o.disabled(mockParams))).toEqual([
         false,
@@ -614,6 +641,7 @@ describe("RadialMenuElements", () => {
       // fixed x1/x2/x5/xMax slots, x5 disabled, max fires 2.
       (mockGame as any).myPlayer = vi.fn(() => ({
         gold: () => 1_000_000n,
+        materials: () => 0n,
         readyMissileCount: () => 2,
       }));
       let options = atomBombElement!.subMenu!(mockParams);
@@ -632,6 +660,7 @@ describe("RadialMenuElements", () => {
       // Gold for three bombs and plenty of tubes: gold caps the max at 3.
       (mockGame as any).myPlayer = vi.fn(() => ({
         gold: () => 350n,
+        materials: () => 0n,
         readyMissileCount: () => 10,
       }));
       options = atomBombElement!.subMenu!(mockParams);
@@ -650,6 +679,7 @@ describe("RadialMenuElements", () => {
       // A single loaded tube: no submenu — the click launches one bomb.
       (mockGame as any).myPlayer = vi.fn(() => ({
         gold: () => 1_000_000n,
+        materials: () => 0n,
         readyMissileCount: () => 1,
       }));
       expect(atomBombElement!.subMenu!(mockParams)).toHaveLength(0);
@@ -658,6 +688,7 @@ describe("RadialMenuElements", () => {
       // fires 12.
       (mockGame as any).myPlayer = vi.fn(() => ({
         gold: () => 1_000_000n,
+        materials: () => 0n,
         readyMissileCount: () => 12,
       }));
       options = atomBombElement!.subMenu!(mockParams);

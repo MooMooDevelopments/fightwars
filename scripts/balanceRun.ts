@@ -14,7 +14,7 @@
  * Usage: npx tsx scripts/balanceRun.ts [--ticks 5000] [--bots 150]
  *                                      [--map world] [--seed perf-gate]
  *                                      [--no-supply] [--flat-terrain]
- *                                      [--no-upkeep]
+ *                                      [--no-upkeep] [--no-materials]
  *
  * `--no-supply` turns the supply penalty and its attrition off, and
  * `--flat-terrain` turns the elevation curves off (the band table stays),
@@ -69,6 +69,13 @@ class NoSupply extends Config {
   }
 }
 
+/** The same game with arms costing no materials. */
+class NoMaterials extends Config {
+  unitMaterialsCost(): bigint {
+    return 0n;
+  }
+}
+
 /** The same game with no structure or warship upkeep. */
 class NoUpkeep extends Config {
   unitUpkeep(): bigint {
@@ -112,12 +119,15 @@ async function main(): Promise<void> {
   const noSupply = process.argv.includes("--no-supply");
   const flatTerrain = process.argv.includes("--flat-terrain");
   const noUpkeep = process.argv.includes("--no-upkeep");
-  if ([noSupply, flatTerrain, noUpkeep].filter(Boolean).length > 1) {
+  const noMaterials = process.argv.includes("--no-materials");
+  if (
+    [noSupply, flatTerrain, noUpkeep, noMaterials].filter(Boolean).length > 1
+  ) {
     throw new Error("one lever at a time");
   }
   console.debug = () => {};
   console.log(
-    `[balance] map=${map} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}${noUpkeep ? " upkeep=off" : ""}\n`,
+    `[balance] map=${map} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}${noUpkeep ? " upkeep=off" : ""}${noMaterials ? " materials=off" : ""}\n`,
   );
 
   const gameConfig: GameConfig = {
@@ -148,7 +158,9 @@ async function main(): Promise<void> {
       ? new FlatTerrain(gameConfig, null, false)
       : noUpkeep
         ? new NoUpkeep(gameConfig, null, false)
-        : new Config(gameConfig, null, false);
+        : noMaterials
+          ? new NoMaterials(gameConfig, null, false)
+          : new Config(gameConfig, null, false);
   const mapLoader = new NodeGameMapLoader(
     path.join(PROJECT_ROOT, "resources/maps"),
   );
@@ -230,6 +242,8 @@ async function main(): Promise<void> {
   console.log(
     `Concentration:  top 1 ${share(1)}, top 5 ${share(5)}, top 20 ${share(20)}`,
   );
+  const materials = alive.reduce((s, p) => s + Number(p.materials()), 0);
+  console.log(`Materials held: ${materials}`);
   console.log(
     `Structures:     ${countOf(UnitType.City)} cities, ` +
       `${countOf(UnitType.Port)} ports, ${countOf(UnitType.Factory)} factories, ` +
