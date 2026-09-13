@@ -44,8 +44,36 @@
   --color-signal: #ffb000;
   --color-signal-ink: #0f172a;
 
-  /* Masters (ranked) sub-brand. A rank colour, not a brand colour. */
+  /* Masters (ranked) sub-brand. A rank colour, not a brand colour.
+   *
+   * Deliberately NOT reused for the gold *currency*, however tempting. Measured
+   * against `signal`, this separates by only 5.8 CIEDE2000 under deuteranopia
+   * and 8.1 under protanopia — so to a dichromat an always-on money counter in
+   * this colour and an alert in `signal` are the same colour. The coin icon
+   * carries the currency's identity; its figure wears `ink` like every other
+   * figure. */
   --color-rank-gold: #ffd700;
+
+  /* Component layer: the troop meter.
+   *
+   * Two stacked segments — troops at home, then troops committed to attacks —
+   * against a track that is the cap. Steps of the `action` ramp rather than a
+   * neutral track, so the whole bar reads as one scale; committed troops are
+   * the darker step because they are ground already spent. Measured, with
+   * white labels sitting over all three:
+   *
+   *   fill      #2563eb   white 5.17:1   (= --color-action)
+   *   committed #1e3a8a   white 10.36:1
+   *   track     #172554   white 14.69:1, and 1.21:1 against the surface
+   *
+   * so a label is legible wherever the fill happens to end, which is what
+   * retires the per-label drop-shadow this bar used to need. Adjacent
+   * separation is 17.1–19.6 (fill/committed) and 9.0–10.2 (committed/track)
+   * CIEDE2000 across normal vision and all three dichromacies — see
+   * tests/client/HudTokens.test.ts, which pins every number above. */
+  --color-meter-fill: var(--color-action);
+  --color-meter-committed: #1e3a8a;
+  --color-meter-track: #172554;
 
   /* Surfaces and type. */
   --color-surface: #0f172a;

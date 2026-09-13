@@ -45,8 +45,18 @@ const ALIGNMENT_CLASS: Record<ColumnAlignment, string> = {
   end: "justify-end text-right",
 };
 const CELL_CLASS = "h-6 md:h-8 lg:h-9 min-w-0 px-1 flex items-center";
-const DIVIDER_CLASS = "border-l border-l-slate-600/40";
-const HEADER_DIVIDER_CLASS = "border-l border-l-slate-500";
+// Recessive by design: a divider is not data. One step off the surface,
+// hairline, and the header's is the only one allowed to be firmer.
+const DIVIDER_CLASS = "border-l border-l-ink-dim/25";
+const HEADER_DIVIDER_CLASS = "border-l border-l-ink-dim/50";
+/**
+ * A figure's cell. The condensed face and tabular figures are for columns of
+ * numbers that have to line up and retick — which is exactly the columns with
+ * a `value` behind them. The name column is prose and keeps the body face;
+ * giving it tabular figures, as this table used to, only widened its digits
+ * for no alignment anyone needed.
+ */
+const FIGURE_CLASS = "font-display font-semibold tabular-nums";
 
 export abstract class StatsTable extends LitElement {
   public game: GameView | null = null;
@@ -206,7 +216,7 @@ export abstract class StatsTable extends LitElement {
     const sorted = this.sortKey === column.id;
     return html`
       <div
-        class="stats-table-header-cell ${CELL_CLASS} justify-center text-center whitespace-nowrap border-b border-b-slate-500 ${index >
+        class="stats-table-header-cell ${CELL_CLASS} justify-center text-center whitespace-nowrap border-b border-b-ink-dim/50 ${index >
         0
           ? HEADER_DIVIDER_CLASS
           : ""}"
@@ -222,13 +232,13 @@ export abstract class StatsTable extends LitElement {
       >
         ${column.isOrderable
           ? html`<button
-              class="inline-flex items-center justify-center gap-1 hover:text-sky-200 transition-colors"
+              class="inline-flex items-center justify-center gap-1 hover:text-action-ink transition-colors"
               aria-label=${label}
               @click=${() => this.setSort(column.id)}
             >
               ${visual}
               ${sorted
-                ? html`<span class="text-sky-300" aria-hidden="true"
+                ? html`<span class="text-action-ink" aria-hidden="true"
                     >${this.sortOrder === "asc" ? "↑" : "↓"}</span
                   >`
                 : nothing}
@@ -244,11 +254,16 @@ export abstract class StatsTable extends LitElement {
     text: string,
     borderClass: string,
   ) {
+    // `value` is set exactly on the columns that have a number behind them,
+    // which makes it the honest test for "this cell is a figure".
+    const isFigure = column.value !== undefined;
     return html`
       <div
         class="stats-table-cell ${CELL_CLASS} ${ALIGNMENT_CLASS[
           column.align
-        ]} tabular-nums ${index > 0 ? DIVIDER_CLASS : ""} ${borderClass}"
+        ]} ${isFigure ? FIGURE_CLASS : ""} ${index > 0
+          ? DIVIDER_CLASS
+          : ""} ${borderClass}"
         role="cell"
       >
         <span class="block w-full truncate">${text}</span>
@@ -265,9 +280,9 @@ export abstract class StatsTable extends LitElement {
   ) {
     return html`
       <div
-        class="stats-table-row grid col-span-full hover:bg-slate-600/60 ${pinned
-          ? "stats-table-pinned-row bg-gray-700/95"
-          : ""} ${row.emphasized ? "font-bold" : ""} ${row.onClick
+        class="stats-table-row grid col-span-full hover:bg-ink/10 ${pinned
+          ? "stats-table-pinned-row bg-action/25"
+          : ""} ${row.emphasized ? "font-semibold" : ""} ${row.onClick
           ? "cursor-pointer"
           : ""}"
         style="grid-template-columns: subgrid; grid-column: 1 / -1;"

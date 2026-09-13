@@ -59,6 +59,19 @@ export class ControlPanel extends LitElement implements Controller {
   @state()
   private _attackingTroops: number = 0;
 
+  /**
+   * Whether troop growth is past its peak — the rate fell this tick.
+   *
+   * Kept because the tutorial teaches it ("growth slows down once your troops
+   * approach half of your max") and because it is the cue to go and spend
+   * troops. It is *not* the number in the tile: the tile shows the rate, this
+   * is the sign of its slope, which is why it needs a channel of its own.
+   */
+  @state()
+  private _troopGrowthSlowing: boolean = false;
+
+  private _lastTroopIncreaseRate: number = 0;
+
   @state()
   private _goldGain: bigint | null = null;
   @state()
@@ -67,10 +80,6 @@ export class ControlPanel extends LitElement implements Controller {
 
   @state()
   private _tutorialHighlight: TutorialHighlight | null = null;
-
-  private _troopRateIsIncreasing: boolean = true;
-
-  private _lastTroopIncreaseRate: number;
 
   // Border detection cache
   private _nearbyPlayerIDs: Set<number> = new Set();
@@ -131,7 +140,7 @@ export class ControlPanel extends LitElement implements Controller {
       return;
     }
 
-    this.updateTroopIncrease();
+    this.updateTroopGrowthSlope();
 
     const config = this.game.config();
     this._maxTroops = config.maxTroops(player);
@@ -323,13 +332,19 @@ export class ControlPanel extends LitElement implements Controller {
     }
   }
 
-  private updateTroopIncrease() {
+  /**
+   * Track whether the growth rate is rising or falling.
+   *
+   * The comparison is against the previous tick rather than against a
+   * fraction of the cap, which is what the tutorial describes — the two
+   * coincide, because the rate peaks around half of max and falls from there.
+   */
+  private updateTroopGrowthSlope() {
     const player = this.game?.myPlayer();
     if (player === null) return;
-    const troopIncreaseRate = this.game.config().troopIncreaseRate(player);
-    this._troopRateIsIncreasing =
-      troopIncreaseRate >= this._lastTroopIncreaseRate;
-    this._lastTroopIncreaseRate = troopIncreaseRate;
+    const rate = this.game.config().troopIncreaseRate(player);
+    this._troopGrowthSlowing = rate < this._lastTroopIncreaseRate;
+    this._lastTroopIncreaseRate = rate;
   }
 
   onAttackRatioChange(newRatio: number) {
@@ -360,47 +375,88 @@ export class ControlPanel extends LitElement implements Controller {
     (e.target as HTMLInputElement).blur();
   }
 
-  private calculateTroopBar(): { greenPercent: number; orangePercent: number } {
+  /**
+   * The two segments of the troop meter, as percentages of the cap: troops at
+   * home, then troops already committed to attacks. Named for what they are
+   * rather than for what colour they used to be — they were `greenPercent`
+   * and `orangePercent` until the palette stopped being hue-named.
+   *
+   * The committed segment is clamped to whatever room the first leaves, so
+   * the two can never sum past the track.
+   */
+  private calculateTroopBar(): {
+    atHomePercent: number;
+    committedPercent: number;
+  } {
     const base = Math.max(this._maxTroops, 1);
-    const greenPercentRaw = (this._troops / base) * 100;
-    const orangePercentRaw = (this._attackingTroops / base) * 100;
-
-    const greenPercent = Math.max(0, Math.min(100, greenPercentRaw));
-    const orangePercent = Math.max(
+    const atHomePercent = Math.max(
       0,
-      Math.min(100 - greenPercent, orangePercentRaw),
+      Math.min(100, (this._troops / base) * 100),
+    );
+    const committedPercent = Math.max(
+      0,
+      Math.min(100 - atHomePercent, (this._attackingTroops / base) * 100),
     );
 
-    return { greenPercent, orangePercent };
+    return { atHomePercent, committedPercent };
+  }
+
+  /**
+   * The troop meter's track and its two stacked segments.
+   *
+   * Shared by both layouts because the segments are the part that has rules —
+   * the layouts differ only in which labels they put on top. Everything the
+   * bar is made of comes from the meter's component tokens, so a white label
+   * is legible wherever the fill happens to end; that is what retired the
+   * per-label `drop-shadow` this bar used to wear.
+   *
+   * The 2px sliver in the track colour between the segments is the gap that
+   * separates them. A stroke around either segment would add ink that is not
+   * data; a gap in the surface behind them is the mechanism that does not.
+   *
+   * The segments are driven by `transform` rather than `width` so the browser
+   * can animate them off the main thread — this bar reticks ten times a
+   * second. The cost is that neither segment can carry a rounded data-end of
+   * its own (a scaled radius stretches), so the rounding lives on the track
+   * and the segments are clipped by it.
+   */
+  private renderTroopMeterFill() {
+    const { atHomePercent, committedPercent } = this.calculateTroopBar();
+    return html`
+      <div class="relative h-full">
+        <div
+          class="absolute inset-y-0 left-0 w-full origin-left bg-meter-fill transition-transform duration-200 ease-out"
+          style="transform: scaleX(${atHomePercent / 100});"
+        ></div>
+        <div
+          class="absolute inset-y-0 left-0 w-full origin-left bg-meter-committed transition-transform duration-200 ease-out"
+          style="transform: translateX(${atHomePercent}%) scaleX(${committedPercent /
+          100});"
+        ></div>
+        ${committedPercent > 0
+          ? html`<div
+              class="absolute inset-y-0 left-0 w-full pointer-events-none transition-transform duration-200 ease-out"
+              style="transform: translateX(${atHomePercent}%);"
+            >
+              <div class="absolute inset-y-0 left-0 w-0.5 bg-meter-track"></div>
+            </div>`
+          : ""}
+      </div>
+    `;
   }
 
   private renderMobileTroopBar() {
-    const { greenPercent, orangePercent } = this.calculateTroopBar();
     return html`
       <div
-        class="w-full h-6 border border-gray-600 rounded-md bg-gray-900/60 overflow-hidden relative"
+        class="w-full h-6 rounded-md bg-meter-track overflow-hidden relative"
       >
-        <div class="relative h-full">
-          <div
-            class="absolute inset-y-0 left-0 w-full origin-left bg-action transition-transform duration-200 ease-out"
-            style="transform: scaleX(${greenPercent / 100});"
-          ></div>
-          <div
-            class="absolute inset-y-0 left-0 w-full origin-left bg-action-hover transition-transform duration-200 ease-out"
-            style="transform: translateX(${greenPercent}%) scaleX(${orangePercent /
-            100});"
-          ></div>
-        </div>
+        ${this.renderTroopMeterFill()}
         <div
-          class="absolute inset-0 flex items-center justify-between px-1.5 text-xs font-bold leading-none pointer-events-none"
+          class="absolute inset-0 flex items-center justify-between px-1.5 text-xs font-display font-semibold tabular-nums leading-none pointer-events-none"
           translate="no"
         >
-          <span class="text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]"
-            >${renderTroops(this._troops)}</span
-          >
-          <span class="text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]"
-            >${renderTroops(this._maxTroops)}</span
-          >
+          <span class="text-ink">${renderTroops(this._troops)}</span>
+          <span class="text-ink">${renderTroops(this._maxTroops)}</span>
         </div>
         <div
           class="absolute inset-0 flex items-center justify-center pointer-events-none"
@@ -417,14 +473,16 @@ export class ControlPanel extends LitElement implements Controller {
               aria-hidden="true"
               width="12"
               height="12"
-              class="brightness-0 invert drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]"
+              class="brightness-0 invert"
             />
             <span
-              class="text-[10px] font-bold drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] ${this
-                ._troopRateIsIncreasing
-                ? "text-green-400"
-                : "text-orange-400"}"
-              >+${renderTroops(this.troopRate)}/s</span
+              class="text-[10px] font-display font-semibold tabular-nums ${this
+                ._troopGrowthSlowing
+                ? "text-signal"
+                : "text-ink"}"
+              >+${renderTroops(this.troopRate)}/s${this._troopGrowthSlowing
+                ? "▼"
+                : ""}</span
             >
           </div>
         </div>
@@ -433,40 +491,23 @@ export class ControlPanel extends LitElement implements Controller {
   }
 
   private renderDesktopTroopBar() {
-    const { greenPercent, orangePercent } = this.calculateTroopBar();
     return html`
       <div
-        class="w-full h-6 border border-gray-600 rounded-md bg-gray-900/60 overflow-hidden relative"
+        class="w-full h-6 rounded-md bg-meter-track overflow-hidden relative"
       >
-        <div class="relative h-full">
-          <div
-            class="absolute inset-y-0 left-0 w-full origin-left bg-action transition-transform duration-200 ease-out"
-            style="transform: scaleX(${greenPercent / 100});"
-          ></div>
-          <div
-            class="absolute inset-y-0 left-0 w-full origin-left bg-action-hover transition-transform duration-200 ease-out"
-            style="transform: translateX(${greenPercent}%) scaleX(${orangePercent /
-            100});"
-          ></div>
-        </div>
+        ${this.renderTroopMeterFill()}
         <div
-          class="absolute inset-0 flex items-center text-lg font-bold leading-none pointer-events-none"
+          class="absolute inset-0 flex items-center text-lg font-display font-semibold tabular-nums leading-none pointer-events-none"
           translate="no"
         >
           <span class="flex-1 flex justify-end h-full items-center pr-0.5">
-            <span class="text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]"
-              >${renderTroops(this._troops)}</span
-            >
+            <span class="text-ink">${renderTroops(this._troops)}</span>
           </span>
-          <span
-            class="h-full flex items-center px-0.5 text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]"
-            >/</span
-          >
+          <span class="h-full flex items-center px-0.5 text-ink-dim">/</span>
           <span
             class="flex-1 flex justify-start h-full items-center pl-0.5 gap-0.5"
           >
-            <span
-              class="text-white tabular-nums w-[3.5rem] drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]"
+            <span class="text-ink w-[3.5rem]"
               >${renderTroops(this._maxTroops)}</span
             >
             <img
@@ -475,7 +516,7 @@ export class ControlPanel extends LitElement implements Controller {
               aria-hidden="true"
               width="22"
               height="22"
-              class="shrink-0 brightness-0 invert drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] ml-1.5"
+              class="shrink-0 brightness-0 invert ml-1.5"
             />
           </span>
         </div>
@@ -493,8 +534,8 @@ export class ControlPanel extends LitElement implements Controller {
     return html`
       <div
         class="flex items-center gap-1.5 px-1.5 py-1 rounded-md border text-xs font-medium mb-1 ${isWarning
-          ? "border-orange-400/60 bg-orange-400/10 text-orange-300"
-          : "border-blue-400/60 bg-blue-400/10 text-blue-300"}"
+          ? "border-signal/60 bg-signal/10 text-signal"
+          : "border-action-ink/60 bg-action-ink/10 text-action-ink"}"
       >
         <span class="shrink-0">${isWarning ? "⚠" : "ℹ"}</span>
         <span>${translateText(this._notification.message)}</span>
@@ -509,12 +550,17 @@ export class ControlPanel extends LitElement implements Controller {
       <div class="flex gap-1.5 items-center mb-1">
         <!-- Troop rate -->
         <div
-          class="flex items-center gap-1 shrink-0 border rounded-md font-bold text-sm py-0.5 px-1 w-[5.5rem] ${this.tutorialHighlightClass(
+          class="flex items-center gap-1 shrink-0 border rounded-md text-sm py-0.5 px-1 w-[5.5rem] ${this.tutorialHighlightClass(
             "troop_rate",
-          )} ${this._troopRateIsIncreasing
-            ? "border-green-400"
-            : "border-orange-400"}"
+          )} ${this._troopGrowthSlowing
+            ? "border-signal/60"
+            : "border-ink-dim/40"}"
           translate="no"
+          title=${translateText(
+            this._troopGrowthSlowing
+              ? "control_panel.troop_rate_slowing"
+              : "control_panel.troop_rate_rising",
+          )}
         >
           <img
             src=${soldierIcon}
@@ -522,25 +568,32 @@ export class ControlPanel extends LitElement implements Controller {
             aria-hidden="true"
             width="13"
             height="13"
-            class="shrink-0"
-            style="filter: ${this._troopRateIsIncreasing
-              ? "brightness(0) saturate(100%) invert(74%) sepia(44%) saturate(500%) hue-rotate(83deg) brightness(103%)"
-              : "brightness(0) saturate(100%) invert(65%) sepia(60%) saturate(600%) hue-rotate(330deg) brightness(105%)"}"
+            class="shrink-0 brightness-0 invert opacity-70"
           />
           <span
-            class="text-sm font-bold tabular-nums ${this._troopRateIsIncreasing
-              ? "text-green-400"
-              : "text-orange-400"}"
+            class="text-sm font-display font-semibold tabular-nums ${this
+              ._troopGrowthSlowing
+              ? "text-signal"
+              : "text-ink"}"
             >+${renderTroops(this.troopRate)}/s</span
+          >
+          <!-- The caret, not the colour, is what carries this state to a
+               player who cannot see the colour. -->
+          <span
+            class="text-[10px] leading-none ${this._troopGrowthSlowing
+              ? "text-signal"
+              : "invisible"}"
+            aria-hidden="true"
+            >▼</span
           >
         </div>
         <!-- Troop bar -->
         <div class="flex-1 ${this.tutorialHighlightClass("troops")}">
           ${this.renderDesktopTroopBar()}
         </div>
-        <!-- Gold -->
+        <!-- Gold. The coin carries the identity; the figure wears ink. -->
         <div
-          class="flex items-center gap-1 shrink-0 border rounded-md border-yellow-400 font-bold text-yellow-400 text-sm py-0.5 px-1 min-w-[4.5rem] relative ${this.tutorialHighlightClass(
+          class="flex items-center gap-1 shrink-0 border border-ink-dim/40 rounded-md text-sm py-0.5 px-1 min-w-[4.5rem] relative ${this.tutorialHighlightClass(
             "gold",
           )}"
           translate="no"
@@ -549,13 +602,22 @@ export class ControlPanel extends LitElement implements Controller {
             ? keyed(
                 this._goldGainPulseId,
                 html`<span
-                  class="gold-gain-pop absolute -top-5 right-[5px] min-[1015px]:right-[9px] text-green-400 text-sm font-extrabold tabular-nums whitespace-nowrap pointer-events-none drop-shadow-[0_2px_3px_rgba(0,0,0,0.9)]"
+                  class="gold-gain-pop absolute -top-5 right-[5px] min-[1015px]:right-[9px] text-ink text-sm font-display font-semibold tabular-nums whitespace-nowrap pointer-events-none drop-shadow-[0_2px_3px_rgba(0,0,0,0.9)]"
                   >+${renderNumber(this._goldGain)}</span
                 >`,
               )
             : ""}
-          <img src=${goldCoinIcon} width="13" height="13" class="shrink-0" />
-          <span class="tabular-nums">${renderNumber(this._gold)}</span>
+          <img
+            src=${goldCoinIcon}
+            alt=""
+            aria-hidden="true"
+            width="13"
+            height="13"
+            class="shrink-0"
+          />
+          <span class="font-display font-semibold tabular-nums text-ink"
+            >${renderNumber(this._gold)}</span
+          >
         </div>
       </div>
       <!-- Row 2: attack ratio | slider -->
@@ -566,7 +628,7 @@ export class ControlPanel extends LitElement implements Controller {
         translate="no"
       >
         <div
-          class="flex items-center gap-1 shrink-0 border border-gray-600 rounded-md px-1 py-0.5 text-sm font-bold text-white cursor-pointer w-[8rem]"
+          class="flex items-center gap-1 shrink-0 border border-ink-dim/40 rounded-md px-1 py-0.5 text-sm text-ink cursor-pointer w-[8rem]"
         >
           <img
             src=${swordIcon}
@@ -576,7 +638,7 @@ export class ControlPanel extends LitElement implements Controller {
             height="12"
             style="filter: brightness(0) invert(1);"
           />
-          <span
+          <span class="font-display font-semibold tabular-nums"
             >${(this.attackRatio * 100).toFixed(0)}%
             (${renderTroops(
               (this.game?.myPlayer()?.troops() ?? 0) * this.attackRatio,
@@ -602,7 +664,7 @@ export class ControlPanel extends LitElement implements Controller {
       <div class="flex gap-2 items-center">
         <!-- Gold -->
         <div
-          class="flex items-center justify-center p-1 gap-0.5 border rounded-md border-yellow-400 font-bold text-yellow-400 text-xs w-1/5 shrink-0 relative ${this.tutorialHighlightClass(
+          class="flex items-center justify-center p-1 gap-0.5 border border-ink-dim/40 rounded-md text-ink text-xs w-1/5 shrink-0 relative ${this.tutorialHighlightClass(
             "gold",
           )}"
           translate="no"
@@ -611,13 +673,21 @@ export class ControlPanel extends LitElement implements Controller {
             ? keyed(
                 this._goldGainPulseId,
                 html`<span
-                  class="gold-gain-pop absolute -top-5 right-[5px] min-[1015px]:right-[9px] text-green-400 text-xs font-extrabold tabular-nums whitespace-nowrap pointer-events-none drop-shadow-[0_2px_3px_rgba(0,0,0,0.9)]"
+                  class="gold-gain-pop absolute -top-5 right-[5px] min-[1015px]:right-[9px] text-ink text-xs font-display font-semibold tabular-nums whitespace-nowrap pointer-events-none drop-shadow-[0_2px_3px_rgba(0,0,0,0.9)]"
                   >+${renderNumber(this._goldGain)}</span
                 >`,
               )
             : ""}
-          <img src=${goldCoinIcon} width="13" height="13" />
-          <span class="px-0.5">${renderNumber(this._gold)}</span>
+          <img
+            src=${goldCoinIcon}
+            alt=""
+            aria-hidden="true"
+            width="13"
+            height="13"
+          />
+          <span class="px-0.5 font-display font-semibold tabular-nums"
+            >${renderNumber(this._gold)}</span
+          >
         </div>
         <!-- Troop bar -->
         <div
@@ -640,7 +710,7 @@ export class ControlPanel extends LitElement implements Controller {
             height="10"
             style="filter: brightness(0) invert(1);"
           />
-          <span class="text-white text-xs font-bold tabular-nums"
+          <span class="text-ink text-xs font-display font-semibold tabular-nums"
             >${(this.attackRatio * 100).toFixed(0)}%</span
           >
         </div>

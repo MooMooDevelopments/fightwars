@@ -567,7 +567,9 @@
     "army_limit_warning": "You're near your army limit! Consider sending troops to teammates.",
     "low_troops_warning": "You are very low on troops - You should always keep some troops for defense.",
     "teammate_afk_neighbor_info": "You can attack disconnected teammates.",
-    "traitor_neighbor_info": "You can betray traitors without becoming a traitor yourself."
+    "traitor_neighbor_info": "You can betray traitors without becoming a traitor yourself.",
+    "troop_rate_rising": "Troops you gain each second. Growth is still climbing.",
+    "troop_rate_slowing": "Troops you gain each second. Growth is past its peak — spend troops to keep it up."
   },
   "cosmetics": {
     "adfree": "ad-free for life!",
@@ -2057,7 +2059,7 @@
       "spawn": "Click anywhere on the map to pick where you spawn.",
       "spawn_wait": "Spot picked! You can still move it until the timer runs out — the game starts then.",
       "traitor_info": "Traitors get a large defense debuff for 30 seconds, so be careful.",
-      "troop_rate": "This is your troop growth rate. Growth slows down and turns orange once your troops approach half of your max.",
+      "troop_rate": "This is your troop growth rate. Once your troops pass about half of your maximum, growth starts to fall away and the rate is marked with a ▼.",
       "troops": "Keep an eye on your troop count. Attacking with too few troops leaves you weak — let them regrow between attacks."
     },
     "step_counter": "Step {current} of {total}",
