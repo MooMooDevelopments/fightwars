@@ -475,6 +475,19 @@ export const OvertimeConfigSchema = z.object({
   startMinutes: zb.uint({ min: 1, max: 120 }).optional(),
 });
 
+const TerrainBandMultiplierSchema = z.object({
+  /** Multiplies attacker troop loss per tile of this terrain. */
+  loss: zb.float({ min: 0.1, max: 10 }).optional(),
+  /** Multiplies how long a tile of this terrain takes to fall. */
+  speed: zb.float({ min: 0.1, max: 10 }).optional(),
+});
+export const TerrainCostConfigSchema = z.object({
+  plains: TerrainBandMultiplierSchema.optional(),
+  highland: TerrainBandMultiplierSchema.optional(),
+  mountain: TerrainBandMultiplierSchema.optional(),
+});
+export type TerrainCostConfig = z.infer<typeof TerrainCostConfigSchema>;
+
 export const GameConfigSchema = z.object({
   gameMap: z.enum(GameMapType),
   difficulty: z.enum(Difficulty),
@@ -541,6 +554,11 @@ export const GameConfigSchema = z.object({
   customAllianceDuration: zb.uint({ max: 15 }).nullable().optional(), // In minutes; 0 disables alliances
   startDelay: zb.uint({ max: 600 }).nullable().optional(), // In seconds
   spawnImmunityDuration: zb.uint().nullable().optional(), // In ticks
+  // Per-band multipliers on the terrain cost table in Config (brief §6.2).
+  // Absent means 1: the table's own numbers. A lobby that wants mountains to
+  // be walls sets mountain.loss and mountain.speed high; one that wants a
+  // flat map sets them all to 1.
+  terrain: TerrainCostConfigSchema.optional(),
   disabledUnits: z.enum(UnitType).array().optional(),
   playerTeams: TeamCountConfigSchema.optional(),
   goldMultiplier: zb.float({ min: 0.1, max: 1000 }).nullable().optional(),

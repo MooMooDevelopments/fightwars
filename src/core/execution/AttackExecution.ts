@@ -9,7 +9,6 @@ import {
   Player,
   PlayerID,
   PlayerType,
-  TerrainType,
   TerraNullius,
   UnitType,
 } from "../game/Game";
@@ -429,21 +428,9 @@ export class AttackExecution implements Execution {
         }
       }
 
-      let mag: number;
-      switch (this.map.terrainType(neighbor)) {
-        case TerrainType.Plains:
-          mag = 1;
-          break;
-        case TerrainType.Highland:
-          mag = 1.5;
-          break;
-        case TerrainType.Mountain:
-          mag = 2;
-          break;
-        default:
-          mag = 0;
-          break;
-      }
+      const mag = this.mg
+        .config()
+        .terrainPriorityWeight(this.map.terrainType(neighbor));
 
       const priority =
         (this.random.nextInt(0, 7) + 10) * (1 - numOwnedByMe * 0.5 + mag / 2) +

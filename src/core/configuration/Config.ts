@@ -215,22 +215,53 @@ function largeTerritoryBonus(numTiles: number, depth: number): number {
   );
 }
 
-function terrainAttackBase(terrain: TerrainType): {
-  mag: number;
-  tileCost: number;
-} {
+/**
+ * What a tile of each terrain band costs to take (brief §6.2). This is the
+ * balance surface for terrain; nothing else in the simulation knows a number
+ * about plains, highland or mountain.
+ *
+ *  - `mag`: how bloody the tile is (drives attacker troop loss)
+ *  - `tileCost`: how expensive the tile is to take (higher = slower)
+ *  - `priority`: how much an attack prefers to take it *later* than the
+ *    flatter ground beside it (the conquest heap's terrain weight)
+ *
+ * A lobby scales `mag` and `tileCost` per band through `GameConfig.terrain`;
+ * see {@link Config.terrainAttackBase}.
+ */
+export const TERRAIN_COST: Readonly<
+  Record<
+    TerrainType.Plains | TerrainType.Highland | TerrainType.Mountain,
+    { mag: number; tileCost: number; priority: number }
+  >
+> = {
+  [TerrainType.Plains]: { mag: 80, tileCost: 16.5, priority: 1 },
+  [TerrainType.Highland]: { mag: 100, tileCost: 20, priority: 1.5 },
+  [TerrainType.Mountain]: { mag: 120, tileCost: 25, priority: 2 },
+};
+
+function terrainBand(
+  terrain: TerrainType,
+): TerrainType.Plains | TerrainType.Highland | TerrainType.Mountain {
   switch (terrain) {
     case TerrainType.Plains:
-      return { mag: 80, tileCost: 16.5 };
     case TerrainType.Highland:
-      return { mag: 100, tileCost: 20 };
     case TerrainType.Mountain:
-      return { mag: 120, tileCost: 25 };
+      return terrain;
     case TerrainType.Impassable:
       throw new Error(`impassable terrain cannot be attacked`);
     default:
       throw new Error(`terrain type ${terrain} not supported`);
   }
+}
+
+function terrainBandKey(
+  band: TerrainType.Plains | TerrainType.Highland | TerrainType.Mountain,
+): "plains" | "highland" | "mountain" {
+  return band === TerrainType.Plains
+    ? "plains"
+    : band === TerrainType.Highland
+      ? "highland"
+      : "mountain";
 }
 const DEFAULT_SPAWN_IMMUNITY_TICKS = 5 * 10;
 
@@ -422,6 +453,38 @@ export class Config {
 
   defensePostRange(): number {
     return 30;
+  }
+
+  /**
+   * The terrain table with this lobby's multipliers applied. Multiplying by
+   * exactly 1 is exact in IEEE arithmetic, so a lobby with no `terrain`
+   * block produces the same bits as the bare table.
+   */
+  terrainAttackBase(terrain: TerrainType): { mag: number; tileCost: number } {
+    const band = terrainBand(terrain);
+    const base = TERRAIN_COST[band];
+    const scale = this._gameConfig.terrain?.[terrainBandKey(band)];
+    if (scale === undefined) return { mag: base.mag, tileCost: base.tileCost };
+    return {
+      mag: base.mag * (scale.loss ?? 1),
+      tileCost: base.tileCost * (scale.speed ?? 1),
+    };
+  }
+
+  /**
+   * How much an attack prefers flatter ground: the conquest heap's terrain
+   * weight, from the same table as the costs so the two cannot drift apart.
+   * Water and impassable weigh 0 — they never enter the heap.
+   */
+  terrainPriorityWeight(terrain: TerrainType): number {
+    switch (terrain) {
+      case TerrainType.Plains:
+      case TerrainType.Highland:
+      case TerrainType.Mountain:
+        return TERRAIN_COST[terrain].priority;
+      default:
+        return 0;
+    }
   }
 
   /**
@@ -973,7 +1036,7 @@ export class Config {
     out?: AttackExplanation,
   ): AttackLogicResult {
     const { attackTroops, attacker, defender } = input;
-    const terrain = terrainAttackBase(input.terrain);
+    const terrain = this.terrainAttackBase(input.terrain);
     let { mag, tileCost } = terrain;
     if (out !== undefined) {
       out.terrainMag = terrain.mag;
