@@ -53,7 +53,7 @@ import {
 import { pagePin } from "./PagePin";
 import { groupTokenOf, loggableStartMessage } from "./PresenceGroup";
 import { terrainMapFileLoader } from "./TerrainMapFileLoader";
-import { GoToPlayerEvent } from "./TransformHandler";
+import { GoToPlayerEvent, resizeOffsetShift } from "./TransformHandler";
 import {
   MoveWarshipIntentEvent,
   NewLobbyEvent,
@@ -556,10 +556,28 @@ function mountWebGLFrameLoop(
   const resizeObs = new ResizeObserver((entries) => {
     for (const entry of entries) {
       const { width, height } = entry.contentRect;
-      if (width > 0 && height > 0) {
-        cachedCanvasW = width;
-        cachedCanvasH = height;
-      }
+      if (width <= 0 || height <= 0) continue;
+      // Hold the view still across the change. syncCamera below derives the
+      // camera centre from the canvas size, so without this a phone rotating
+      // from 375 to 812 wide moves the world point under the middle of the
+      // screen by about 1300 tiles — most of a World map — and leaves the
+      // player looking at empty ocean. See resizeOffsetShift.
+      const scale = transformHandler.scale;
+      transformHandler.offsetX -= resizeOffsetShift(
+        cachedCanvasW,
+        width,
+        scale,
+      );
+      transformHandler.offsetY -= resizeOffsetShift(
+        cachedCanvasH,
+        height,
+        scale,
+      );
+      cachedCanvasW = width;
+      cachedCanvasH = height;
+      // The bounding rect feeds hit-testing and the blast falloff; a stale one
+      // after a rotation puts both in the wrong place.
+      transformHandler.updateCanvasBoundingRect();
     }
   });
   resizeObs.observe(glCanvas);

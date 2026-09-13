@@ -28,8 +28,21 @@ export class PlayPage extends LitElement {
         <div
           class="lg:hidden fixed left-0 right-0 top-[var(--top-ad-height,0px)] z-40 pt-[env(safe-area-inset-top)] bg-surface border-b border-white/10"
         >
+          <!-- Content-sized outer columns, remainder to the wordmark.
+               The tracks used to be 1fr / auto / 1fr, which let the middle
+               column take the logo's natural 230px and left 56px a side — but
+               the controls on the right need 176px and cannot shrink, so at
+               375px they were drawn straight over the wordmark. The wordmark
+               is the one thing here that can give way, so it is the one that
+               gets the flexible track and shrinks into it.
+
+               It sits at the start of that track rather than centred in it:
+               centring inside the leftover space would put it visibly left of
+               the viewport's centre, which reads as a mistake rather than a
+               decision. Beside the menu button is where a phone header puts a
+               wordmark anyway. -->
           <div
-            class="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)_minmax(0,1fr)] items-center h-14 px-2 gap-2"
+            class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center h-14 px-2 gap-2"
           >
             <button
               id="hamburger-btn"
@@ -57,7 +70,7 @@ export class PlayPage extends LitElement {
             </button>
 
             <div
-              class="col-start-2 flex items-center justify-center text-action-ink min-w-0"
+              class="col-start-2 flex items-center justify-start text-action-ink min-w-0"
             >
               <img
                 src=${assetUrl(BRAND.assets.logo)}

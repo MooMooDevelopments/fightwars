@@ -31,6 +31,29 @@ export const GOTO_INTERVAL_MS = 16;
 export const CAMERA_MAX_SPEED = 15;
 export const CAMERA_SMOOTHING = 0.03;
 
+/**
+ * How far `offsetX`/`offsetY` has to move to hold the view still when the
+ * canvas changes size.
+ *
+ * The camera centre is derived from the canvas size — see `syncCamera` in
+ * ClientGameRunner, which adds `(canvasSize - mapSize) / (2 * scale)`. So a
+ * change of `newSize - oldSize` pixels moves the world point under the middle
+ * of the screen by half that, in tiles. Nothing compensated for it, which is
+ * why rotating a phone threw the map off screen: at the zoom the whole world
+ * is first shown at, a 375px-to-812px rotation moves the view about 1300
+ * tiles across a 2000-tile map.
+ *
+ * Returns the delta to *subtract* from the offset.
+ */
+export function resizeOffsetShift(
+  oldSize: number,
+  newSize: number,
+  scale: number,
+): number {
+  if (scale <= 0 || !Number.isFinite(scale)) return 0;
+  return (newSize - oldSize) / (2 * scale);
+}
+
 export class TransformHandler {
   /**
    * Camera shake. Deliberately not folded into offsetX/offsetY: those are the
