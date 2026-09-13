@@ -2029,7 +2029,7 @@
   },
   "tutorial": {
     "close": "Close tutorial",
-    "complete": "You're ready! Good luck out there.",
+    "complete": "You're ready. Leave this game and join a real lobby — the help panel has everything else.",
     "go_to": "Go to",
     "got_it": "Got it",
     "hide_for_game": "Hide for this game",
@@ -2064,6 +2064,7 @@
       "spawn_wait": "Spot picked! You can still move it until the timer runs out — the game starts then.",
       "traitor_info": "Traitors get a large defense debuff for 30 seconds, so be careful.",
       "troop_rate": "This is your troop growth rate. Once your troops pass about half of your maximum, growth starts to fall away and the rate is marked with a ▼.",
+      "whats_next": "That is the whole loop: take ground, keep troops in reserve, build, and make friends. Everything else — ports, factories, silos, warheads — is in the help panel whenever you want it. Go and join a real lobby.",
       "troops": "Keep an eye on your troop count. Attacking with too few troops leaves you weak — let them regrow between attacks."
     },
     "step_counter": "Step {current} of {total}",

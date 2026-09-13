@@ -97,6 +97,25 @@ export interface TutorialStep {
   isDone?: (ctx: TutorialContext) => boolean;
 }
 
+/**
+ * The 90-second arc, and nothing else.
+ *
+ * This was 22 steps ending at MIRV and SAM — a manual, not an onboarding. The
+ * brief asks for ninety seconds: spawn, expand, set your ratio, build
+ * something, make an ally, and then out into a real game. Six steps, five of
+ * which are the brief's beats and the last of which is the hand-off.
+ *
+ * Everything the removed steps taught — ports, factories, defence posts,
+ * warships, silos, every warhead, how alliances and traitors work — is in the
+ * help panel already (`help_modal.build_*_desc`, `info_alliance`), which is
+ * reachable at any time and does not cost a first-time player ten minutes
+ * before their first real match.
+ *
+ * One thing went with them and is worth knowing: the `capture_tribes` step put
+ * a target crosshair on the nearest tribes. Its teaching survives — the
+ * build step's own waiting text says how to earn gold — but the crosshair does
+ * not, since `highlight` is fixed per step and the build step needs its own.
+ */
 export const TUTORIAL_STEPS: readonly TutorialStep[] = [
   // Waits out the multiplayer spawn timer too: the next step asks the
   // player to expand, which is impossible until the game actually starts.
@@ -108,22 +127,14 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     highlight: "territory",
     isDone: (c) => c.attacking,
   },
-  { id: "troops", highlight: "troops", manual: true },
-  { id: "troop_rate", highlight: "troop_rate", manual: true },
   {
     id: "attack_ratio",
     highlight: "attack_ratio",
     isDone: (c) => c.attackRatioMoved,
   },
-  // Long-running: stays up (with the nearest tribes marked with the target
-  // crosshair) until the player has banked enough gold for the City step.
-  {
-    id: "capture_tribes",
-    highlight: "tribes",
-    applies: (c) => c.botsExist && !c.cityDisabled,
-    isDone: (c) =>
-      c.cities > 0 || (c.cityCost !== null && c.gold >= c.cityCost),
-  },
+  // The first thing you build. While it is unaffordable the panel shows the
+  // earn-gold text instead, which is where "attack neighbours, conquer them
+  // for their gold" is taught.
   {
     id: "buy_city",
     highlight: "city",
@@ -140,105 +151,9 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
     applies: (c) => c.nationsExist && !c.alliancesDisabled,
     isDone: (c) => c.allied,
   },
-  {
-    id: "alliance_info",
-    bullets: ["alliance_info", "traitor_info"],
-    applies: (c) => c.nationsExist && !c.alliancesDisabled,
-    manual: true,
-  },
-  {
-    id: "buy_factory",
-    highlight: "factory",
-    unit: UnitType.Factory,
-    hotkey: "buildFactory",
-    applies: (c) => !c.factoryDisabled,
-    isDone: (c) => c.factories > 0,
-  },
-  {
-    id: "factory_info",
-    applies: (c) => !c.factoryDisabled,
-    manual: true,
-  },
-  // Boats are free, so no earn-gold gating; done once one of ours is afloat.
-  {
-    id: "send_boat",
-    applies: (c) => !c.boatsDisabled,
-    isDone: (c) => c.boatSent,
-  },
-  {
-    id: "buy_port",
-    highlight: "port",
-    unit: UnitType.Port,
-    hotkey: "buildPort",
-    applies: (c) => !c.portDisabled,
-    isDone: (c) => c.ports > 0,
-  },
-  {
-    id: "port_info",
-    bullets: ["port_info_ships", "port_info_warships"],
-    applies: (c) => !c.portDisabled,
-    manual: true,
-  },
-  {
-    id: "buy_defense_post",
-    highlight: "defense_post",
-    unit: UnitType.DefensePost,
-    hotkey: "buildDefensePost",
-    applies: (c) => !c.defensePostDisabled,
-    isDone: (c) => c.defensePosts > 0,
-  },
-  // Warships are built from ports, so this step needs one.
-  {
-    id: "buy_warship",
-    highlight: "warship",
-    unit: UnitType.Warship,
-    hotkey: "buildWarship",
-    applies: (c) => !c.warshipDisabled && !c.portDisabled,
-    isDone: (c) => c.warships > 0,
-  },
-  {
-    id: "buy_silo",
-    highlight: "silo",
-    unit: UnitType.MissileSilo,
-    hotkey: "buildMissileSilo",
-    applies: (c) => !c.siloDisabled,
-    isDone: (c) => c.silos > 0,
-  },
-  // Waits (via the earn-gold text) until the bomb is affordable, then asks
-  // for a launch; done as soon as one of ours is in flight.
-  {
-    id: "launch_atom",
-    highlight: "atom",
-    unit: UnitType.AtomBomb,
-    hotkey: "buildAtomBomb",
-    applies: (c) => !c.siloDisabled && !c.atomDisabled,
-    isDone: (c) => c.atomLaunched,
-  },
-  // One stop per weapon, each highlighting its spot in the unit hotbar.
-  {
-    id: "atom_info",
-    highlight: "atom",
-    applies: (c) => !c.siloDisabled && !c.atomDisabled,
-    manual: true,
-  },
-  {
-    id: "hydrogen_info",
-    highlight: "hydrogen",
-    applies: (c) => !c.siloDisabled && !c.hydrogenDisabled,
-    manual: true,
-  },
-  {
-    id: "mirv_info",
-    highlight: "mirv",
-    applies: (c) => !c.siloDisabled && !c.mirvDisabled,
-    manual: true,
-  },
-  {
-    id: "sam_info",
-    highlight: "sam",
-    applies: (c) => !c.samDisabled,
-    manual: true,
-  },
+  // The hand-off. Says where the rest of the game is documented and sends the
+  // player to a real lobby, rather than ending on a checkmark.
+  { id: "whats_next", manual: true },
 ];
 
 /** Ticks a completed step stays on screen (with its checkmark) before advancing. */
