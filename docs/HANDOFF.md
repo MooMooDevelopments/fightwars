@@ -59,7 +59,7 @@ where tokens must end up — "brand through configuration, not code"), `dataviz`
 chart, stat tile or sparkline, and on the finished work `impeccable` then
 `web-design-guidelines`. Never load `frontend-design` and `impeccable` together.
 
-**Status (end of session 9): 5 items done, 2 part-done, 3 not started — counted by the rows
+**Status (end of session 9): 6 items done, 2 part-done, 2 not started — counted by the rows
 of the table below, which is the honest count.** (Earlier versions of this line said "6 of 10"
 by counting the sub-items inside a row; the table has always been the thing to read.)
 
@@ -77,7 +77,7 @@ their sections.
 | 5   | Feel: border wave, nuke flash + shake + ring + sound                                   | **done**                                                                 |
 | 6   | Radial menus, HUD, leaderboard, events feed                                            | **part-done** — typography, tokens and a11y; layout and the feeds remain |
 | 7   | Mobile first-class                                                                     | not started                                                              |
-| 8   | Onboarding: 90-second tutorial                                                         | not started                                                              |
+| 8   | Onboarding: 90-second tutorial                                                         | **done**                                                                 |
 | 9   | Build queue, rally points, attack presets                                              | not started (keybind remapping already existed)                          |
 | 10  | Clan create form; guest-appropriate account page                                       | **done**                                                                 |
 
@@ -275,19 +275,32 @@ BrowserStack.
 
 ### 8 — Onboarding
 
-`src/client/hud/Tutorial.ts` holds **22 steps** (`spawn`, `attack_wilderness`, `troops`,
-`troop_rate`, `attack_ratio`, `capture_tribes`, `buy_city`, `propose_alliance`,
-`alliance_info`, `buy_factory`, `factory_info`, `send_boat`, `buy_port`, `port_info`,
-`buy_defense_post`, `buy_warship`, `buy_silo`, `launch_atom`, `atom_info`, `hydrogen_info`,
-`mirv_info`, `sam_info`); `TutorialPanel.ts` renders them.
+**Done (session 9).** `src/client/hud/Tutorial.ts` holds **6 steps**, down from 22: `spawn`,
+`attack_wilderness`, `attack_ratio`, `buy_city`, `propose_alliance`, `whats_next`. The first
+five are the brief's beats; the last is the hand-off, which names the help panel and sends the
+player to a real lobby. Verified live: the panel reads "Step 1 of 6".
 
-The brief asks for **90 seconds**: spawn → expand → ratio → build → ally, then out into a real
-lobby. Twenty-two steps ending at MIRV and SAM is a different product, so this item is mostly
-subtraction — cut the arc to five, move the rest to a reference the player can open later, and
-add the hand-off into a real lobby at the end.
+Everything the removed steps taught is already in `help_modal` (`build_city_desc` through
+`build_sam_desc`, `info_alliance`), so the cut needed no new reference to be written.
 
-**There are no tutorial tests at all.** Pin step progression first: it is exactly what breaks
-silently when steps are removed.
+**Two deliberate losses**, so nobody re-derives them as bugs:
+
+- `capture_tribes` was the only step with `highlight: "tribes"`, so the target crosshairs over
+  the nearest tribes are gone. Its _teaching_ survives in the build step's earn-gold text.
+- The `troops` and `troop_rate` info steps are gone. Both were "read this", and after session
+  9's HUD work the readouts state their own meaning — the meter is a labelled meter and the
+  rate tile carries a caret and a tooltip.
+
+**This section used to say "There are no tutorial tests at all." That was wrong** — `tests/Tutorial.test.ts`
+had 13, and seven of them failed the moment the steps were cut, which is exactly the safety net
+the note said was missing. Check before repeating a claim like that.
+
+The rewritten file keeps the mechanics coverage and adds three tests that hold the arc as a
+contract: the exact step list in order, that exactly one step asks the player to build
+anything, and that the last step is one they must read.
+
+**Left behind:** the `tutorial.step.*` copy for the removed steps is still in `en.json` and
+every other locale, unused. An orphan-key sweep is its own job.
 
 ### 9 — Build queue, rally points, attack presets
 

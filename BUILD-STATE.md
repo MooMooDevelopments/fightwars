@@ -1,6 +1,6 @@
 # FightWars Build State
 
-Last session: 2026-09-13 (session 9) | Current phase: 4 (identity) — 5 of its 10 work items done, 2 part-done, 3 not started, with two Phase 2 items still blocked on the owner/hardware | Build status: green
+Last session: 2026-09-13 (session 9) | Current phase: 4 (identity) — 6 of its 10 work items done, 2 part-done, 2 not started, with two Phase 2 items still blocked on the owner/hardware | Build status: green
 
 Repo: `C:\Users\disbo\dev\fightwars` · `upstream` = openfrontio/OpenFrontIO (forked at
 `c77005586`, rebased onto `7d95251f1` the same day) · `origin` = github.com/MooMooDevelopments/fightwars
@@ -28,7 +28,7 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 
 ## Handoff — read this first (written 2026-09-13 at the end of session 9)
 
-### Session 9 — item 6's typography and colour half
+### Session 9 — item 6's typography and colour half, the feeds, and item 8
 
 - **What shipped:** the display face on the HUD's figures, component tokens for the troop
   meter, and the two audits run on real code. Details in `docs/HANDOFF.md` §3 item 6, which
@@ -53,6 +53,21 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   `font-semibold` with `font-display`; `font-bold` gets a synthesised 700.
 - **`npm test` green again** — 211 client files, 2581 tests, plus the full suite earlier in the
   session. Second clean run since the upstream jsdom teardown landed.
+- **The feeds had the same defect, worse.** `severityColors` painted the whole event feed in
+  red/yellow/green/grey/blue and its weakest pair was **loss against gain at 6.9** — "your
+  attack failed" against "you conquered a player", the distinction the feed exists to make. The
+  fix was not the red: moving gain off green and onto the blue ink puts the same red at 13.2 at
+  its worst. Five roles became four (`blue` and `info` both meant "neutral").
+- **Six icons stopped being tinted by hand-tuned `filter` chains.** The new `.icon-mask`
+  utility in `styles.css` makes an icon a shape filled by `currentColor`, so an icon inside
+  `text-status-loss` _is_ that token. Use it for any new monochrome icon.
+- **A guard was written wrong and passed vacuously.** The raw-hue regex had literal backspace
+  bytes where `` should have been — a non-raw Python string in the script that wrote the
+  test. It looked correct in review and could never match. Caught only by breaking the code it
+  guards and watching it not fail. **Write the regex, then break the thing it watches.**
+- **Item 8 is done:** the tutorial is 6 steps, down from 22. And `docs/HANDOFF.md` was wrong to
+  say there were no tutorial tests — there were 13, and 7 of them failed on the cut. The note
+  is corrected.
 - **Numbers:** `perf:gate` 2.34 ms, final hash `23404413546031824` — unchanged for the third
   session running.
 
