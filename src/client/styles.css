@@ -54,6 +54,31 @@
    * figure. */
   --color-rank-gold: #ffd700;
 
+  /* The event feed's severity palette.
+   *
+   * Four roles, not five: "blue" and "info" both meant *neutral information*
+   * and were two colours saying one thing, which is how the set ran out of
+   * separable colours in the first place.
+   *
+   * The set this replaces was red-400 / yellow-400 / green-400 / gray-200 /
+   * blue-400, and its weakest pair was **loss against gain at 6.9 CIEDE2000
+   * for the worst-off viewer** — 71.5 for normal vision. That pair is the most
+   * important distinction the feed makes ("you conquered a player" versus
+   * "your attack failed") and it was the one a dichromat could not make.
+   *
+   * The fix is not the red: it is the green. With gain moved to the blue ink,
+   * the same red measures 13.2 at its worst against every other role. Blue for
+   * gain rather than green is the standard move when loss has to stay red, and
+   * loss staying red is worth more than the convention of green.
+   *
+   * Every row also states what happened in words, so the colour is the fast
+   * channel and never the only one. Measured in tests/client/HudTokens.test.ts
+   * against the feed's own surface, which is darker than the chrome's. */
+  --color-status-loss: #f87171;
+  --color-status-alert: var(--color-signal);
+  --color-status-gain: var(--color-action-ink);
+  --color-status-note: var(--color-ink-muted);
+
   /* Component layer: the troop meter.
    *
    * Two stacked segments — troops at home, then troops committed to attacks —
@@ -828,4 +853,31 @@ unit-display .tutorial-highlight::after {
 
 .remove-player-btn:hover {
   background: #ef4444;
+}
+
+/**
+ * A monochrome icon that takes its colour from the type beside it.
+ *
+ * The HUD's icons are single-colour SVGs, and they used to be tinted with
+ * hand-tuned `filter` chains — `brightness(0) saturate(100%) invert(27%)
+ * sepia(91%) saturate(4551%) hue-rotate(348deg) …` to reach one red. Nobody
+ * can read that as a colour, nothing checks it against the palette, and it has
+ * to be re-derived by trial and error every time a token moves.
+ *
+ * A mask makes the icon a shape and lets `currentColor` fill it, so an icon
+ * inside `text-status-loss` is exactly `--color-status-loss`, and follows it
+ * when that changes.
+ *
+ *   <span class="icon-mask size-4" style="--icon: url(...)"></span>
+ *
+ * Masked icons are decorative by construction — there is no <img> and so no
+ * alt text — which suits these, since every one of them sits beside the figure
+ * or label it decorates.
+ */
+.icon-mask {
+  display: inline-block;
+  background-color: currentColor;
+  -webkit-mask: var(--icon) no-repeat center / contain;
+  mask: var(--icon) no-repeat center / contain;
+  flex-shrink: 0;
 }

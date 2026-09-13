@@ -215,15 +215,15 @@ export class AttacksDisplay extends LitElement implements Controller {
     return this.incomingAttacks.map(
       (attack) => html`
         <div
-          class="flex items-center gap-0.5 w-full bg-gray-800/92 backdrop-blur-sm sm:rounded-lg px-1.5 py-0.5 overflow-hidden"
+          class="flex items-center gap-0.5 w-full bg-surface/90 backdrop-blur-sm sm:rounded-lg px-1.5 py-0.5 overflow-hidden"
         >
           ${this.renderButton({
             content: html`<span class="inline-flex items-center"
-                ><img
-                  src="${soldierIcon}"
-                  class="h-4 w-4"
-                  style="filter: brightness(0) saturate(100%) invert(27%) sepia(91%) saturate(4551%) hue-rotate(348deg) brightness(89%) contrast(97%)"
-                />↓</span
+                ><span
+                  class="icon-mask h-4 w-4"
+                  style="--icon: url(${soldierIcon})"
+                ></span
+                >↓</span
               ><span class="ml-1">${renderTroops(attack.troops)}</span>
               <span class="truncate ml-1"
                 >${(
@@ -235,19 +235,18 @@ export class AttacksDisplay extends LitElement implements Controller {
                 : ""} `,
             onClick: () => this.attackWarningOnClick(attack),
             className:
-              "text-left text-red-400 inline-flex items-center gap-0.5 lg:gap-1 min-w-0",
+              "text-left text-status-loss inline-flex items-center gap-0.5 lg:gap-1 min-w-0",
             translate: false,
           })}
           ${!attack.retreating
             ? this.renderButton({
-                content: html`<img
-                  src="${swordIcon}"
-                  class="h-4 w-4"
-                  style="filter: brightness(0) saturate(100%) invert(27%) sepia(91%) saturate(4551%) hue-rotate(348deg) brightness(89%) contrast(97%)"
-                />`,
+                content: html`<span
+                  class="icon-mask h-4 w-4"
+                  style="--icon: url(${swordIcon})"
+                ></span>`,
                 onClick: () => this.handleRetaliate(attack),
                 className:
-                  "ml-auto inline-flex items-center justify-center cursor-pointer bg-red-900/50 hover:bg-red-800/70 sm:rounded-lg px-1.5 py-1 border border-red-700/50",
+                  "ml-auto inline-flex items-center justify-center cursor-pointer text-status-loss bg-status-loss/15 hover:bg-status-loss/25 sm:rounded-lg px-1.5 py-1 border border-status-loss/40",
                 translate: false,
               })
             : ""}
@@ -286,15 +285,15 @@ export class AttacksDisplay extends LitElement implements Controller {
     return this.outgoingAttacks.map(
       (attack) => html`
         <div
-          class="flex items-center gap-0.5 w-full bg-gray-800/92 backdrop-blur-sm sm:rounded-lg px-1.5 py-0.5 overflow-hidden"
+          class="flex items-center gap-0.5 w-full bg-surface/90 backdrop-blur-sm sm:rounded-lg px-1.5 py-0.5 overflow-hidden"
         >
           ${this.renderButton({
             content: html`<span class="inline-flex items-center"
-                ><img
-                  src="${soldierIcon}"
-                  class="h-4 w-4"
-                  style="filter: brightness(0) saturate(100%) invert(62%) sepia(80%) saturate(500%) hue-rotate(175deg) brightness(100%)"
-                />↑</span
+                ><span
+                  class="icon-mask h-4 w-4"
+                  style="--icon: url(${soldierIcon})"
+                ></span
+                >↑</span
               ><span class="ml-1">${renderTroops(attack.troops)}</span>
               ${this.renderSpent(attack)}
               <span class="truncate ml-1"
@@ -328,15 +327,15 @@ export class AttacksDisplay extends LitElement implements Controller {
     return this.outgoingLandAttacks.map(
       (landAttack) => html`
         <div
-          class="flex items-center gap-0.5 w-full bg-gray-800/92 backdrop-blur-sm sm:rounded-lg px-1.5 py-0.5 overflow-hidden"
+          class="flex items-center gap-0.5 w-full bg-surface/90 backdrop-blur-sm sm:rounded-lg px-1.5 py-0.5 overflow-hidden"
         >
           ${this.renderButton({
             content: html`<span class="inline-flex items-center"
-                ><img
-                  src="${soldierIcon}"
-                  class="h-4 w-4"
-                  style="filter: brightness(0) saturate(100%) invert(62%) sepia(80%) saturate(500%) hue-rotate(175deg) brightness(100%)"
-                />↑</span
+                ><span
+                  class="icon-mask h-4 w-4"
+                  style="--icon: url(${soldierIcon})"
+                ></span
+                >↑</span
               ><span class="ml-1">${renderTroops(landAttack.troops)}</span>
               ${this.renderSpent(landAttack)}
               ${translateText("help_modal.ui_wilderness")}`,
@@ -403,7 +402,7 @@ export class AttacksDisplay extends LitElement implements Controller {
     return this.outgoingBoats.map(
       (boat) => html`
         <div
-          class="flex items-center gap-0.5 w-full bg-gray-800/92 backdrop-blur-sm sm:rounded-lg px-1.5 py-0.5 overflow-hidden"
+          class="flex items-center gap-0.5 w-full bg-surface/90 backdrop-blur-sm sm:rounded-lg px-1.5 py-0.5 overflow-hidden"
         >
           ${this.renderButton({
             content: html`${this.renderBoatIcon(boat)}
@@ -413,7 +412,7 @@ export class AttacksDisplay extends LitElement implements Controller {
               <span class="truncate text-xs ml-1"
                 >${this.getBoatTargetName(boat)}</span
               >
-              <span class="text-xs ml-1 text-slate-300"
+              <span class="text-xs ml-1 text-ink-dim"
                 >${this.getBoatETA(boat)}</span
               >`,
             onClick: () => this.eventBus.emit(new GoToUnitEvent(boat)),
@@ -442,7 +441,7 @@ export class AttacksDisplay extends LitElement implements Controller {
     return this.incomingBoats.map(
       (boat) => html`
         <div
-          class="flex items-center gap-0.5 w-full bg-gray-800/92 backdrop-blur-sm sm:rounded-lg px-1.5 py-0.5 overflow-hidden"
+          class="flex items-center gap-0.5 w-full bg-surface/90 backdrop-blur-sm sm:rounded-lg px-1.5 py-0.5 overflow-hidden"
         >
           ${this.renderButton({
             content: html`${this.renderBoatIcon(boat)}
@@ -452,12 +451,12 @@ export class AttacksDisplay extends LitElement implements Controller {
               <span class="truncate text-xs ml-1"
                 >${boat.owner()?.displayName()}</span
               >
-              <span class="text-xs ml-1 text-slate-300"
+              <span class="text-xs ml-1 text-ink-dim"
                 >${this.getBoatETA(boat)}</span
               >`,
             onClick: () => this.eventBus.emit(new GoToUnitEvent(boat)),
             className:
-              "text-left text-red-400 inline-flex items-center gap-0.5 lg:gap-1 min-w-0",
+              "text-left text-status-loss inline-flex items-center gap-0.5 lg:gap-1 min-w-0",
             translate: false,
           })}
         </div>

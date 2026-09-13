@@ -646,14 +646,11 @@ export class ControlPanel extends LitElement implements Controller {
         <div
           class="flex items-center gap-1 shrink-0 border border-ink-dim/40 rounded-md px-1 py-0.5 text-sm text-ink w-[8rem]"
         >
-          <img
-            src=${swordIcon}
-            alt=""
+          <span
+            class="icon-mask"
+            style="--icon: url(${swordIcon}); width: 12px; height: 12px"
             aria-hidden="true"
-            width="12"
-            height="12"
-            style="filter: brightness(0) invert(1);"
-          />
+          ></span>
           <span class="font-display font-semibold tabular-nums"
             >${(this.attackRatio * 100).toFixed(0)}%
             (${renderTroops(
@@ -720,14 +717,11 @@ export class ControlPanel extends LitElement implements Controller {
           class="flex flex-col items-center shrink-0 gap-0.5 w-8"
           translate="no"
         >
-          <img
-            src=${swordIcon}
-            alt=""
+          <span
+            class="icon-mask"
+            style="--icon: url(${swordIcon}); width: 10px; height: 10px"
             aria-hidden="true"
-            width="10"
-            height="10"
-            style="filter: brightness(0) invert(1);"
-          />
+          ></span>
           <span class="text-ink text-xs font-display font-semibold tabular-nums"
             >${(this.attackRatio * 100).toFixed(0)}%</span
           >

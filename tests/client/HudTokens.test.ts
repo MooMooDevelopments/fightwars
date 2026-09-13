@@ -151,13 +151,81 @@ describe("the chrome's status colours", () => {
   });
 });
 
+describe("the event feed's severity palette", () => {
+  // The feed sits on the same dark surface as the rest of the chrome.
+  const FEED_SURFACE = token("surface");
+  const roles = {
+    loss: token("status-loss"),
+    alert: token("status-alert"),
+    gain: token("status-gain"),
+    note: token("status-note"),
+  };
+
+  test("every role reads as type on the feed's surface", () => {
+    for (const [name, hex] of Object.entries(roles)) {
+      expect(
+        contrast(hex, FEED_SURFACE),
+        `${name} on the feed surface`,
+      ).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  test("no two roles collapse for any viewer", () => {
+    // The set this replaced was red-400 / yellow-400 / green-400 / gray-200 /
+    // blue-400, and its weakest pair was loss against gain at 6.9. That pair
+    // is "your attack failed" against "you conquered a player" — the
+    // distinction the feed exists to make.
+    const entries = Object.entries(roles);
+    for (let i = 0; i < entries.length; i++) {
+      for (let j = i + 1; j < entries.length; j++) {
+        const [a, aHex] = entries[i];
+        const [b, bHex] = entries[j];
+        expect(worstSeparation(aHex, bHex), `${a} vs ${b}`).toBeGreaterThan(8);
+      }
+    }
+  });
+
+  test("loss and gain are not merely distinct but obviously so", () => {
+    // A floor well above the general one, because confusing these two inverts
+    // the meaning of a message rather than blurring it.
+    expect(worstSeparation(roles.loss, roles.gain)).toBeGreaterThanOrEqual(25);
+  });
+});
+
+/**
+ * A Tailwind class that names a hue instead of a role. A colour decision made
+ * outside the palette, where nothing measures it.
+ */
+const HUE_CLASS =
+  /\b(?:text|bg|border|from|to|ring)-(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|gray|slate|zinc|neutral|stone)-\d{2,3}\b/g;
+
 describe("the HUD does not reach past the palette", () => {
+  test("the feeds and the severity map name no raw hue either", () => {
+    for (const relative of [
+      "src/client/hud/layers/EventsDisplay.ts",
+      "src/client/hud/layers/AttacksDisplay.ts",
+      "src/client/Utils.ts",
+    ]) {
+      expect(read(relative).match(HUE_CLASS) ?? [], relative).toEqual([]);
+    }
+  });
+
+  test("no icon is tinted by a hand-tuned filter chain", () => {
+    // `filter: brightness(0) saturate(100%) invert(27%) sepia(91%) ...` is a
+    // colour nobody can read and nothing can check against the palette. The
+    // .icon-mask utility lets an icon take currentColor instead.
+    for (const relative of [
+      "src/client/hud/layers/ControlPanel.ts",
+      "src/client/hud/layers/AttacksDisplay.ts",
+    ]) {
+      expect(read(relative), relative).not.toMatch(/filter: brightness\(0\)/);
+    }
+  });
+
   test("the control panel names no raw hue", () => {
     // The panel the player reads every tick is the one place worth holding to
     // this mechanically. A hue name here is a colour decision made outside the
     // palette, where nothing measures it.
-    const hues =
-      /\b(?:text|bg|border|from|to|ring)-(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|gray|slate|zinc|neutral|stone)-\d{2,3}\b/g;
-    expect(CONTROL_PANEL.match(hues) ?? []).toEqual([]);
+    expect(CONTROL_PANEL.match(HUE_CLASS) ?? []).toEqual([]);
   });
 });

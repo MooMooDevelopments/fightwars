@@ -771,6 +771,8 @@
     "turnstile_error": "Verification error: {code}. Please refresh and try again."
   },
   "events_display": {
+    "feed_label": "Recent events",
+    "important_feed_label": "Events that need you",
     "about_to_expire": "Your alliance with {name} is about to expire!",
     "accept_alliance": "Accept",
     "alliance_accepted": "accepted",

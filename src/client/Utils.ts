@@ -649,13 +649,24 @@ export function getTranslatedPlayerTeamLabel(
   return translated === translationKey ? team : translated;
 }
 
+/**
+ * What a feed row's colour says, by role.
+ *
+ * Four roles rather than the five this had: `blue` and `info` both meant
+ * "neutral information", and spending two colours on one meaning is what left
+ * the set without a separable pair for the distinction that matters. `blue` is
+ * kept as an alias so existing callers keep working and mean the same thing.
+ *
+ * The colours themselves, and why gain is blue rather than green, are
+ * documented at the tokens in styles.css and pinned in HudTokens.test.ts.
+ */
 export const severityColors: Record<string, string> = {
-  fail: "text-red-400",
-  warn: "text-yellow-400",
-  success: "text-green-400",
-  info: "text-gray-200",
-  blue: "text-blue-400",
-  white: "text-white",
+  fail: "text-status-loss",
+  warn: "text-status-alert",
+  success: "text-status-gain",
+  info: "text-status-note",
+  blue: "text-status-note",
+  white: "text-ink",
 };
 
 /**

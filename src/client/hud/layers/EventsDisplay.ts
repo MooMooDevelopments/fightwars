@@ -605,7 +605,7 @@ export class EventsDisplay extends LitElement implements Controller {
         content: html`${translateText("events_display.betrayal_debuff_ends", {
           time: remainingSeconds,
         })}`,
-        className: "text-left text-yellow-400",
+        className: "text-left text-status-alert",
         translate: false,
       })}
     `;
@@ -674,11 +674,17 @@ export class EventsDisplay extends LitElement implements Controller {
       <div class="flex flex-col gap-1 w-full min-[1200px]:w-96">
         ${tier2Events.length > 0
           ? html`
+              <!-- The quieter tray. Announced politely rather than
+                   assertively: this is chatter, and interrupting whatever the
+                   player is doing for it would be worse than silence. -->
               <div
-                class="bg-gray-800/92 backdrop-blur-sm max-h-[12vh] lg:max-h-[22vh] overflow-y-auto rounded-lg opacity-90 events-container"
+                class="bg-surface/90 backdrop-blur-sm max-h-[12vh] lg:max-h-[22vh] overflow-y-auto rounded-lg events-container"
+                role="log"
+                aria-live="polite"
+                aria-label=${translateText("events_display.feed_label")}
               >
                 <table
-                  class="w-full border-collapse text-white text-xs lg:text-sm pointer-events-auto"
+                  class="w-full border-collapse text-ink text-xs lg:text-sm pointer-events-auto"
                 >
                   <tbody>
                     ${tier2Events.map((event) => this.renderEventRow(event))}
@@ -689,11 +695,21 @@ export class EventsDisplay extends LitElement implements Controller {
           : ""}
         ${tier1Events.length > 0 || showBetrayalTimer
           ? html`
+              <!-- The tray for things that matter. Its left rule used to be
+                   red, which said "danger" about every row in it including an
+                   alliance being accepted. The rule marks the tray; the rows
+                   say their own severity, and the larger, opaque type is what
+                   carries the hierarchy. -->
               <div
-                class="bg-gray-800 backdrop-blur-sm max-h-[30vh] lg:max-h-[40vh] overflow-y-auto rounded-lg shadow-lg border-l-4 border-red-500 important-events-container"
+                class="bg-surface backdrop-blur-sm max-h-[30vh] lg:max-h-[40vh] overflow-y-auto rounded-lg shadow-lg border-l-4 border-ink-dim/50 important-events-container"
+                role="log"
+                aria-live="polite"
+                aria-label=${translateText(
+                  "events_display.important_feed_label",
+                )}
               >
                 <table
-                  class="w-full border-collapse text-white text-base lg:text-lg font-medium pointer-events-auto"
+                  class="w-full border-collapse text-ink text-base lg:text-lg font-medium pointer-events-auto"
                 >
                   <tbody>
                     ${tier1Events.map((event) => this.renderEventRow(event))}
