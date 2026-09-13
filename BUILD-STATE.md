@@ -1,6 +1,6 @@
 # FightWars Build State
 
-Last session: 2026-09-14 (session 11) | Current phase: **5 (depth)** — items 6.1 (supply lines) and 6.2 (elevation) done; Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
+Last session: 2026-09-14 (session 11) | Current phase: **5 (depth)** — 6.1 (supply lines) and 6.2 (elevation) done, 6.3 in progress (upkeep done; materials, blockades and the embargo price next); Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
 
 Repo: `C:\Users\disbo\dev\fightwars` · `upstream` = openfrontio/OpenFrontIO (forked at
 `c77005586`, rebased onto `7d95251f1` the same day) · `origin` = github.com/MooMooDevelopments/fightwars
@@ -27,6 +27,33 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 `npm run load:test -- --clients 150 --map world --turns 600`.
 
 ## Handoff — read this first (written 2026-09-14 at the end of session 11)
+
+### Session 11 (continued) — item 6.3 opens with upkeep
+
+- **What shipped.** Every structure level and every warship costs gold per tick, charged in
+  `PlayerExecution.tick` after income and before troop growth. A short treasury recruits
+  nobody that tick; thirty seconds short and the dearest unit is foreclosed, nothing exempt.
+  `docs/MECHANICS.md` §01 "Upkeep" has the table; `FORK-CHANGES.md` the files. Hash
+  `24015429958765936 → 24015216964771530`. **The Phase 5 constant is now
+  `24015216964771530`.**
+- **Debt had to become consequences.** `removeGold` clamps at zero and nothing in the engine
+  can represent a negative balance, so "overbuilding bankrupts you" is modelled as two rules
+  rather than a number: no recruits on a short tick, one foreclosure per grace period. The
+  foreclosure picks by `upkeep × level`, ties to the lowest id, so every client picks the same
+  unit. A test that expected a city to fall after three warships was wrong and the mechanic was
+  right: once the warships are gone the bill fits, the clock resets, and the city stays. **Write
+  the arithmetic down before writing the assertion.**
+- **Upkeep is a pressure at these rates, not a wall.** The A/B below moves the bots very little
+  — three more cities, three fewer ports, six more posts — and the top-1 share actually rose.
+  Against a 100/tick human income the table bites; against a nation's trade-and-train income at
+  scale it does not yet. Left as is on purpose: materials and blockades land on the same economy
+  next, and tuning one lever before the others exist is tuning against the wrong game. Revisit
+  the table once 6.3 is whole.
+- **Nation economy under upkeep** (`NationGoldPerMinute`): trade gold −5.7 % (410.5M → 387.0M),
+  train gold **+79 %** (40.7M → 72.9M), ships arrived 1705 → 1619. Fewer ports, more rail —
+  nations reroute income rather than lose it. Worth knowing before blockades are designed.
+- **The A/B lever proved itself again first:** `--no-upkeep` reproduced the elevation-on game
+  to the hash (`26700484981869784`).
 
 ### Session 11 — item 6.2, terrain that costs something
 
@@ -483,13 +510,15 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 
 ## Next up (concrete, ordered)
 
-0. **Phase 5 continues.** 6.1 (supply lines) and 6.2 (elevation) are done; `docs/HANDOFF.md`
-   §4 has the per-item table, the five things that apply to every item, and what Phase 4 still
-   owes. Next by value is **6.3 (materials, manpower, upkeep, blockades, embargo price)** — the
-   item the "two update lanes" note was written for, and the one that must not take the
-   pre-supply gold figures as its baseline. Loose ends to fold into whichever item touches them:
-   rail as a supply source (§03 7.4), map shading for unsupplied territory (a UI pass), and the
-   §6.2 remainder that needs painted content (G2).
+0. **Phase 5 continues, inside 6.3.** Upkeep is done; next are **materials** (Factories
+   produce, military construction consumes — the packed-lane decision the "two update lanes"
+   note was written for), **blockades** (a hostile warship near a port stops its spawns and
+   routes; `PortExecution.tradingPorts` and `shouldSpawnTradeShip`), and the **embargo price**
+   (the embargoed side's remaining trade pays less in proportion to how many partners embargo
+   it — the coalition tool). Manpower already exists as `maxTroops`; surface it, do not
+   duplicate it. Then re-tune the upkeep table against the whole economy. Loose ends to fold
+   into whichever item touches them: rail as a supply source (§03 7.4), map shading for
+   unsupplied territory (a UI pass), the §6.2 remainder that needs painted content (G2).
 
 1. **Rebase check** at session start: `git fetch upstream && git rebase upstream/main`; fix
    conflicts (expect some in `index.html`, nav bars, Footer, SoundManager — the brand sweep
@@ -574,6 +603,30 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   remains by design.
 - The discord card on a clan overview says "invite is no longer valid" for any invite the
   browser cannot resolve against Discord's public API (offline / fake invite) — expected.
+
+## Numbers last measured — Phase 5 item 6.3, upkeep (2026-09-14, session 11, this machine)
+
+- **Determinism hash: `24015216964771530`** (world, 150 bots, seed `perf-gate`).
+- `test:determinism:full`: pass 3/3 in 464 s, on a box otherwise idle. `npm test`: 500 + 69
+  files, 6002 + 706 tests, all green.
+- `perf:gate`, idle box: **mean 3.47 ms** (≤ 8), p95 6.5, p99 8.87, 0 over budget. A first
+  read of 4.35 ms ran beside the A/B and the nation snapshot and was load, not upkeep — the
+  per-tick work is one loop over each player's units, which `PlayerExecution.tick` already made
+  for the structure sweep.
+- **Bot-vs-bot A/B** (`balance:run --ticks 8000`, world, 150 bots + nations, seed `perf-gate`;
+  `--no-upkeep` zeroes `unitUpkeep` and nothing else):
+
+  | after 8000 ticks  | no upkeep | upkeep   |
+  | ----------------- | --------- | -------- |
+  | players alive     | 32        | 34       |
+  | top 1 share       | 11.0 %    | 15.0 %   |
+  | top 5 share       | 46.4 %    | 45.7 %   |
+  | top 20 share      | 98.4 %    | 90.5 %   |
+  | cities / ports    | 140 / 78  | 143 / 75 |
+  | factories / posts | 29 / 35   | 26 / 41  |
+
+  A pressure, not a wall — see the handoff note. Cumulative across Phase 5 so far: alive
+  16 → 27 → 32 → 34.
 
 ## Numbers last measured — Phase 5 item 6.2 (2026-09-14, session 11, this machine)
 

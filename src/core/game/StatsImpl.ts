@@ -15,6 +15,7 @@ import {
   GOLD_INDEX_TRADE,
   GOLD_INDEX_TRAIN_OTHER,
   GOLD_INDEX_TRAIN_SELF,
+  GOLD_INDEX_UPKEEP,
   GOLD_INDEX_WAR,
   GOLD_INDEX_WORK,
   NukeType,
@@ -256,6 +257,10 @@ export class StatsImpl implements Stats {
 
   goldWork(player: Player, gold: BigIntLike): void {
     this._addGold(player, GOLD_INDEX_WORK, gold);
+  }
+
+  goldUpkeep(player: Player, gold: BigIntLike): void {
+    this._addGold(player, GOLD_INDEX_UPKEEP, gold);
   }
 
   goldWar(player: Player, captured: Player, gold: BigIntLike): void {

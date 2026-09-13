@@ -815,6 +815,7 @@
     "trade_ship_captured": "Your trade ship was captured by {name}",
     "unit_destroyed": "Your {unit} was destroyed",
     "unit_voluntarily_deleted": "Unit voluntarily deleted",
+    "upkeep_foreclosed": "Upkeep unpaid for 30 seconds: your {unit} was lost",
     "wants_to_renew_alliance": "{name} wants to renew your alliance"
   },
   "featured_stream": {

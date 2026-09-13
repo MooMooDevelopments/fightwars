@@ -594,3 +594,31 @@ bits, a magnitude sub-range would destroy the elevation data the curves now read
 PNG has a forest painted in it: the content does not exist, and inventing it across 121 maps is
 the owner's art decision. River crossings change conquest topology and are a separate item.
 Both are written up with hook points in `docs/MECHANICS.md` §02 G2.
+
+### Upkeep (brief §6.3, first part, session 11)
+
+Every structure level and every warship costs gold each tick, charged right after worker income,
+so overbuilding is a debt that catches up with you rather than a price paid once. The engine
+cannot hold a negative balance, so non-payment is modelled as consequences: no recruits on a short
+tick, and after thirty seconds of shortfall the dearest thing the player owns is lost — nothing
+exempt. Description and table: `docs/MECHANICS.md` §01 "Upkeep".
+
+#### Shared upstream files edited
+
+- `src/core/configuration/Config.ts` — `unitUpkeep(type, player)` (the table, scaled by the lobby
+  gold multiplier like income), `upkeepDue(player)`, `upkeepGraceTicks()` = 300.
+- `src/core/execution/PlayerExecution.ts` — the charge, the "no recruits while short" rule (troop
+  growth now happens after upkeep, and only on a paid tick), `unpaidUpkeepTicks`, and
+  `foreclose()`: highest `upkeep × level`, ties to the lowest id, deleted with an event message.
+- `src/core/StatsSchemas.ts`, `src/core/game/Stats.ts`, `src/core/game/StatsImpl.ts` —
+  `GOLD_INDEX_UPKEEP` (6) and `goldUpkeep`. `_addGold` grows the array on demand and every reader
+  indexes by name, so archived records and the ranking are unaffected.
+- `resources/lang/en.json` — `events_display.upkeep_foreclosed`.
+- `scripts/balanceRun.ts` — `--no-upkeep`.
+
+#### FightWars-only files added
+
+- `tests/economy/Upkeep.test.ts` — the per-level charge and its stats row, construction exempt,
+  recruits stopping and resuming, foreclosure at the grace tick and not one before, the clock
+  resetting on a paid tick, and foreclosure stopping once the bill fits. Two breaks were watched:
+  upkeep never due fails five of seven, foreclosure never firing fails the two that name it.

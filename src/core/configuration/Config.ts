@@ -1386,6 +1386,67 @@ export class Config {
     return Math.min(player.troops() + toAdd, max) - player.troops();
   }
 
+  /**
+   * Upkeep (brief §6.3). Every structure level and every warship costs gold
+   * each tick, charged in PlayerExecution.tick right after income, so that
+   * overbuilding is a debt that catches up with you rather than a one-off
+   * price you paid last minute. Worker income is 100/tick for a human, so a
+   * five-city, three-port, one-factory player pays 95 of it back before
+   * trade — enough to make the next city a decision, not a reflex.
+   *
+   * Scaled by the lobby's gold multiplier like income is, so a 10x-gold lobby
+   * keeps the same ratio of income to upkeep.
+   */
+  unitUpkeep(type: UnitType, player: Player | PlayerView): Gold {
+    let base: number;
+    switch (type) {
+      case UnitType.City:
+      case UnitType.Port:
+        base = 10;
+        break;
+      case UnitType.Factory:
+        base = 15;
+        break;
+      case UnitType.DefensePost:
+        base = 5;
+        break;
+      case UnitType.SAMLauncher:
+      case UnitType.MissileSilo:
+        base = 25;
+        break;
+      case UnitType.Warship:
+        base = 40;
+        break;
+      default:
+        return 0n;
+    }
+    return BigInt(Math.floor(base * this.goldMultiplierFor(player)));
+  }
+
+  /**
+   * What a player owes this tick: upkeep per level of every active, built
+   * unit that has one. Deterministic: units() is creation order.
+   */
+  upkeepDue(player: Player): Gold {
+    let due = 0n;
+    for (const unit of player.units()) {
+      if (!unit.isActive() || unit.isUnderConstruction()) continue;
+      const each = this.unitUpkeep(unit.type(), player);
+      if (each === 0n) continue;
+      due += each * BigInt(unit.level());
+    }
+    return due;
+  }
+
+  /**
+   * Ticks of unpaid upkeep a player is allowed before something is lost: 30
+   * seconds. Long enough to notice the empty treasury and sell or conquer,
+   * short enough that ignoring it is not a strategy.
+   */
+  upkeepGraceTicks(): Tick {
+    return 300;
+  }
+
   goldAdditionRate(player: Player | PlayerView): Gold {
     const multiplier = this.goldMultiplierFor(player);
     let baseRate: bigint;

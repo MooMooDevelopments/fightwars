@@ -88,6 +88,8 @@ export interface Stats {
 
   // Player earns gold from workers
   goldWork(player: Player, gold: number | bigint): void;
+  /** Gold taken by upkeep this tick. */
+  goldUpkeep(player: Player, gold: number | bigint): void;
 
   // Player builds a unit of type
   unitBuild(player: Player, type: OtherUnitType): void;

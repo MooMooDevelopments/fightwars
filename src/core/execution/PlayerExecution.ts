@@ -3,9 +3,11 @@ import {
   Cell,
   Execution,
   Game,
+  MessageType,
   Player,
   PlayerType,
   Structures,
+  Unit,
   UnitType,
 } from "../game/Game";
 import { GameMap, TileRef } from "../game/GameMap";
@@ -21,6 +23,8 @@ export class PlayerExecution implements Execution {
 
   private config: Config;
   private lastCalc = 0;
+  /** Consecutive ticks the treasury has fallen short of upkeep. */
+  private unpaidUpkeepTicks = 0;
   private mg: Game;
   // Direct GameMap reference to skip the Game delegation hop in hot loops.
   private map: GameMap;
@@ -83,13 +87,36 @@ export class PlayerExecution implements Execution {
       return;
     }
 
-    const troopInc = this.config.troopIncreaseRate(this.player);
-    this.player.addTroops(troopInc);
     const goldFromWorkers = this.config.goldAdditionRate(this.player);
     this.player.addGold(goldFromWorkers);
 
     // Record stats
     this.mg.stats().goldWork(this.player, goldFromWorkers);
+
+    // Upkeep comes out after income and before troops grow, so an unpaid
+    // treasury has a consequence this tick — no recruits — and a running one:
+    // after upkeepGraceTicks of shortfall the most expensive thing the player
+    // owns is lost. The engine cannot represent debt (removeGold clamps at
+    // zero), which is why non-payment has to be modelled as consequences
+    // rather than as a negative balance.
+    const upkeepDue = this.config.upkeepDue(this.player);
+    const upkeepPaid = this.player.removeGold(upkeepDue);
+    if (upkeepPaid > 0n) this.mg.stats().goldUpkeep(this.player, upkeepPaid);
+    const upkeepUnpaid = upkeepPaid < upkeepDue;
+    if (upkeepUnpaid) {
+      this.unpaidUpkeepTicks++;
+      if (this.unpaidUpkeepTicks >= this.config.upkeepGraceTicks()) {
+        this.unpaidUpkeepTicks = 0;
+        this.foreclose();
+      }
+    } else {
+      this.unpaidUpkeepTicks = 0;
+    }
+
+    if (!upkeepUnpaid) {
+      const troopInc = this.config.troopIncreaseRate(this.player);
+      this.player.addTroops(troopInc);
+    }
 
     for (const alliance of this.player.alliances()) {
       if (alliance.expiresAt() <= this.mg.ticks()) {
@@ -492,6 +519,35 @@ export class PlayerExecution implements Execution {
     }
 
     return result;
+  }
+
+  /**
+   * Bankruptcy: lose the single unit with the highest upkeep, ties to the
+   * oldest (lowest id), so the choice is the same on every client. Nothing is
+   * exempt — a player who cannot feed their last city loses it, which is what
+   * "overbuilding bankrupts you" has to mean for the threat to be real.
+   */
+  private foreclose(): void {
+    let victim: Unit | null = null;
+    let victimUpkeep = 0n;
+    for (const unit of this.player.units()) {
+      if (!unit.isActive() || unit.isUnderConstruction()) continue;
+      const upkeep =
+        this.config.unitUpkeep(unit.type(), this.player) * BigInt(unit.level());
+      if (upkeep > victimUpkeep) {
+        victim = unit;
+        victimUpkeep = upkeep;
+      }
+    }
+    if (victim === null) return;
+    this.mg.displayMessage(
+      "events_display.upkeep_foreclosed",
+      MessageType.UNIT_DESTROYED,
+      this.player.id(),
+      undefined,
+      { unit: victim.type() },
+    );
+    victim.delete(false);
   }
 
   private removeOnDeath(): void {

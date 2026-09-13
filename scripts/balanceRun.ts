@@ -14,6 +14,7 @@
  * Usage: npx tsx scripts/balanceRun.ts [--ticks 5000] [--bots 150]
  *                                      [--map world] [--seed perf-gate]
  *                                      [--no-supply] [--flat-terrain]
+ *                                      [--no-upkeep]
  *
  * `--no-supply` turns the supply penalty and its attrition off, and
  * `--flat-terrain` turns the elevation curves off (the band table stays),
@@ -68,6 +69,13 @@ class NoSupply extends Config {
   }
 }
 
+/** The same game with no structure or warship upkeep. */
+class NoUpkeep extends Config {
+  unitUpkeep(): bigint {
+    return 0n;
+  }
+}
+
 /** The same game with elevation charging nothing beyond its band. */
 class FlatTerrain extends Config {
   terrainHeightSlope(): number {
@@ -103,12 +111,13 @@ async function main(): Promise<void> {
   const seed = arg("--seed", "perf-gate");
   const noSupply = process.argv.includes("--no-supply");
   const flatTerrain = process.argv.includes("--flat-terrain");
-  if (noSupply && flatTerrain) {
-    throw new Error("one lever at a time: pick --no-supply or --flat-terrain");
+  const noUpkeep = process.argv.includes("--no-upkeep");
+  if ([noSupply, flatTerrain, noUpkeep].filter(Boolean).length > 1) {
+    throw new Error("one lever at a time");
   }
   console.debug = () => {};
   console.log(
-    `[balance] map=${map} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}\n`,
+    `[balance] map=${map} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}${noUpkeep ? " upkeep=off" : ""}\n`,
   );
 
   const gameConfig: GameConfig = {
@@ -137,7 +146,9 @@ async function main(): Promise<void> {
     ? new NoSupply(gameConfig, null, false)
     : flatTerrain
       ? new FlatTerrain(gameConfig, null, false)
-      : new Config(gameConfig, null, false);
+      : noUpkeep
+        ? new NoUpkeep(gameConfig, null, false)
+        : new Config(gameConfig, null, false);
   const mapLoader = new NodeGameMapLoader(
     path.join(PROJECT_ROOT, "resources/maps"),
   );

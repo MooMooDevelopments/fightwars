@@ -22,6 +22,9 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   can scale each terrain band's cost, so a map can be made flat or its mountains made walls.
 - The hover breakdown names elevation, climb and high ground when they matter, and no longer
   lists factors that move the answer by less than two per cent.
+- **Upkeep.** Cities, ports, factories, defence posts, silos, SAMs and warships now cost gold
+  every second you hold them. Fall short and you stop recruiting; stay short for thirty seconds
+  and you lose the dearest thing you own. Build what you can feed.
 
 ### Phase 2 — Infrastructure (2026-09-12)
 
