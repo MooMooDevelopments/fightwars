@@ -1,4 +1,5 @@
 import {
+  AllianceTier,
   Difficulty,
   Game,
   GameMode,
@@ -514,7 +515,11 @@ export class AiAttackBehavior {
           continue;
         }
         if (!this.sendAttack(target)) continue;
-        this.player.updateRelation(ally, -20);
+        // A full ally is helped for free; a defensive partner is helped, but
+        // it costs them something in the nation's regard.
+        if (this.player.allianceTierWith(ally) !== AllianceTier.FullAlliance) {
+          this.player.updateRelation(ally, -20);
+        }
         this.emojiBehavior.sendEmoji(ally, EMOJI_ASSIST_ACCEPT);
         return true;
       }

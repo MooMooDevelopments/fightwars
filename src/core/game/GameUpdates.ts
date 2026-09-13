@@ -106,6 +106,7 @@ export enum GameUpdateType {
   SpawnPhaseEnd,
   GamePaused,
   DonateEvent,
+  Coalition,
 }
 
 export type GameUpdate =
@@ -131,7 +132,8 @@ export type GameUpdate =
   | EmbargoUpdate
   | SpawnPhaseEndUpdate
   | GamePausedUpdate
-  | DonateEventUpdate;
+  | DonateEventUpdate
+  | CoalitionUpdate;
 
 export interface BonusEventUpdate {
   type: GameUpdateType.BonusEvent;
@@ -293,6 +295,8 @@ export interface AllianceView {
   createdAt: Tick;
   expiresAt: Tick;
   hasExtensionRequest: boolean;
+  /** AllianceTier as a number (1 pact, 2 defensive, 3 full). */
+  tier: number;
 }
 
 export interface AllianceRequestUpdate {
@@ -300,6 +304,21 @@ export interface AllianceRequestUpdate {
   requestorID: number;
   recipientID: number;
   createdAt: Tick;
+  /** The rung asked for (AllianceTier). */
+  tier: number;
+}
+
+/**
+ * Auto-coalitions (brief §6.5): sent when the biggest side crosses the
+ * coalition threshold, and again when it falls back below it.
+ */
+export interface CoalitionUpdate {
+  type: GameUpdateType.Coalition;
+  /** smallID of the leading player; in team games, of its largest member. */
+  leaderID: number;
+  /** Share of the land the leading side holds, 0–1. */
+  share: number;
+  active: boolean;
 }
 
 export interface AllianceRequestReplyUpdate {

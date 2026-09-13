@@ -50,6 +50,8 @@ describe("WinCheckExecution", () => {
     const player = {
       numTilesOwned: vi.fn(() => 81),
       name: vi.fn(() => "P1"),
+      // 81 % is a coalition leader too, and the offer names it by small id.
+      smallID: vi.fn(() => 1),
     };
     mg.players = vi.fn(() => [player]);
     mg.numLandTiles = vi.fn(() => 100);

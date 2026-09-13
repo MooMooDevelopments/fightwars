@@ -1,4 +1,4 @@
-import { Execution, Game } from "../game/Game";
+import { AllianceTier, Execution, Game } from "../game/Game";
 import { PseudoRandom } from "../PseudoRandom";
 import { ClientID, GameID, StampedIntent, Turn } from "../Schemas";
 import { simpleHash } from "../Util";
@@ -83,7 +83,11 @@ export class Executor {
       case "boat":
         return new TransportShipExecution(player, intent.dst, intent.troops);
       case "allianceRequest":
-        return new AllianceRequestExecution(player, intent.recipient);
+        return new AllianceRequestExecution(
+          player,
+          intent.recipient,
+          intent.tier as AllianceTier | undefined,
+        );
       case "allianceReject":
         return new AllianceRejectExecution(intent.requestor, player);
       case "breakAlliance":

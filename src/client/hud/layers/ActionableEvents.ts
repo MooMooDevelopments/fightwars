@@ -1,12 +1,19 @@
 import { html, LitElement } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { EventBus } from "../../../core/EventBus";
-import { MessageType, Tick } from "../../../core/game/Game";
+import {
+  ALLIANCE_TIER_KEYS,
+  AllianceTier,
+  MessageType,
+  PlayerType,
+  Tick,
+} from "../../../core/game/Game";
 import {
   AllianceExtensionUpdate,
   AllianceRequestReplyUpdate,
   AllianceRequestUpdate,
   BrokeAllianceUpdate,
+  CoalitionUpdate,
   GameUpdateType,
 } from "../../../core/game/GameUpdates";
 import { Controller } from "../../Controller";
@@ -57,6 +64,7 @@ export class ActionableEvents extends LitElement implements Controller {
       this.onAllianceRequestReplyEvent.bind(this),
     ],
     [GameUpdateType.BrokeAlliance, this.onBrokeAllianceEvent.bind(this)],
+    [GameUpdateType.Coalition, this.onCoalitionEvent.bind(this)],
     [
       GameUpdateType.AllianceExtension,
       this.onAllianceExtensionEvent.bind(this),
@@ -222,8 +230,13 @@ export class ActionableEvents extends LitElement implements Controller {
     if (!requestor.isAlliedWith(recipient)) {
       this.eventBus.emit(new PlaySoundEffectEvent("alliance-suggested"));
     }
+    // A request from a build without rungs carries no tier: the old card.
+    const descriptionKey =
+      update.tier === undefined
+        ? "events_display.request_alliance"
+        : `events_display.request_alliance_${allianceTierKey(update.tier)}`;
     this.addEvent({
-      description: translateText("events_display.request_alliance", {
+      description: translateText(descriptionKey, {
         name: requestor.displayName(),
       }),
       buttons: [
@@ -239,7 +252,11 @@ export class ActionableEvents extends LitElement implements Controller {
           action: () => {
             this.eventBus.emit(new PlaySoundEffectEvent("alliance-accepted"));
             this.eventBus.emit(
-              new SendAllianceRequestIntentEvent(recipient, requestor),
+              new SendAllianceRequestIntentEvent(
+                recipient,
+                requestor,
+                update.tier,
+              ),
             );
           },
         },
@@ -258,6 +275,63 @@ export class ActionableEvents extends LitElement implements Controller {
       duration: this.game.config().allianceRequestDuration(),
       focusID: update.requestorID,
       requestorID: update.requestorID,
+    });
+  }
+
+  /**
+   * Auto-coalitions (brief §6.5): when a side crosses the threshold, every
+   * other player gets one card and one button. The button asks every
+   * living non-leader for a defensive pact; the simulation refuses the
+   * ones that cannot be asked (allies already, pending, disconnected).
+   */
+  private onCoalitionEvent(update: CoalitionUpdate) {
+    const myPlayer = this.game.myPlayer();
+    if (!myPlayer) return;
+    this.events = this.events.filter(
+      (event) => event.type !== MessageType.COALITION_OFFER,
+    );
+    if (!update.active || update.leaderID === myPlayer.smallID()) {
+      this.requestUpdate();
+      return;
+    }
+    const leader = this.game.playerBySmallID(update.leaderID) as PlayerView;
+    if (leader.isOnSameTeam(myPlayer)) return;
+    this.addEvent({
+      description: translateText("events_display.coalition_offer", {
+        name: leader.displayName(),
+        percent: Math.round(update.share * 100),
+      }),
+      buttons: [
+        {
+          text: translateText("events_display.focus"),
+          className: "btn-gray",
+          action: () => this.eventBus.emit(new GoToPlayerEvent(leader)),
+          preventClose: true,
+        },
+        {
+          text: translateText("events_display.join_coalition"),
+          className: "btn",
+          action: () => {
+            for (const other of this.game.playerViews()) {
+              if (other === myPlayer || other === leader) continue;
+              if (!other.isAlive() || other.isOnSameTeam(leader)) continue;
+              if (other.type() === PlayerType.Bot) continue;
+              this.eventBus.emit(
+                new SendAllianceRequestIntentEvent(
+                  myPlayer,
+                  other,
+                  AllianceTier.DefensivePact,
+                ),
+              );
+            }
+          },
+        },
+      ],
+      type: MessageType.COALITION_OFFER,
+      createdAt: this.game.ticks(),
+      priority: 0,
+      focusID: update.leaderID,
+      requestorID: update.leaderID,
     });
   }
 
@@ -365,4 +439,9 @@ export class ActionableEvents extends LitElement implements Controller {
       </div>
     `;
   }
+}
+
+/** Locale suffix for a wire tier number. */
+function allianceTierKey(tier: number): string {
+  return ALLIANCE_TIER_KEYS[tier as AllianceTier] ?? "full_alliance";
 }

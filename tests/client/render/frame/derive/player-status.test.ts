@@ -363,6 +363,7 @@ describe("computePlayerStatus — live mode (localPlayerSmallID set)", () => {
             createdAt: 100,
             expiresAt: 700,
             hasExtensionRequest: false,
+            tier: 3,
           },
         ],
       }),

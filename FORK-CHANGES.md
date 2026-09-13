@@ -747,3 +747,61 @@ second one. `docs/MECHANICS.md` §04 "Gaps" A–C.
 #### FightWars-only files added
 
 - `tests/nukes/FalloutConsequences.test.ts`.
+
+### Tiered relations and auto-coalitions (brief §6.5, session 11)
+
+An alliance has a rung — non-aggression pact, defensive pact, full alliance — climbed by asking
+again with the one button that already exists; each rung unlocks more (peace; allies who come to
+your defence; help for free) and costs more to break (½×, 1×, 1½× the traitor window). And once
+any side holds 40 % of the map, everyone else is offered a coalition: nations take pacts from any
+fellow non-leader without their usual reluctance and seek them out, and humans get one card with
+one button. `docs/MECHANICS.md` §05 "Gaps" 1 and 3. Vassalage, war goals and persistent
+reputation are deliberately not built; §05 2 and 4 say why.
+
+#### Shared upstream files edited
+
+- `src/core/game/Game.ts` — `AllianceTier`, `ALLIANCE_TIER_KEYS`, `nextAllianceTier`; `tier()` on
+  `AllianceRequest` and `Alliance`, `setTier` on `MutableAlliance`; `Player.allianceTierWith`,
+  `allies()` redefined as defensive-pact-and-up, `createAllianceRequest(recipient, tier?)`,
+  `markTraitor(durationScale?)`; `AllianceInfo.tier` / `nextTier`; `Game.leader` / `leaderShare` /
+  `setLeader`; `MessageType.COALITION_OFFER`.
+- `src/core/game/AllianceImpl.ts`, `src/core/game/AllianceRequestImpl.ts` — the tier, default
+  `FullAlliance` so every existing constructor call means what it did.
+- `src/core/game/GameImpl.ts` — requests carry a rung; accepting on an existing alliance climbs
+  it in place and renews it; breaking scales the traitor window; the leader and the once-only
+  `CoalitionUpdate` on the threshold flip (in team games, naming the team's largest member).
+- `src/core/game/PlayerImpl.ts` — `canSendAllianceRequest` allows a deepening; the traitor
+  window carries its scale; the alliance view ships the tier.
+- `src/core/game/GameUpdates.ts`, `src/core/game/GameUpdateUtils.ts`,
+  `src/client/render/types/Renderer.ts` — `tier` on the views (and in `allianceArrayEqual`, so a
+  climb re-sends), `CoalitionUpdate`, `GameUpdateType.Coalition`.
+- `src/core/Schemas.ts`, `src/core/execution/ExecutionManager.ts`,
+  `src/core/execution/alliance/AllianceRequestExecution.ts` — `tier?` on the intent, threaded
+  through; a request at or below the rung held is dropped.
+- `src/core/execution/WinCheckExecution.ts` — publishes the leader and its share, both modes.
+- `src/core/execution/nation/NationAllianceBehavior.ts`, `src/core/execution/NationExecution.ts`,
+  `src/core/execution/utils/AiAttackBehavior.ts` — acceptance by rung, pacts first, climbing with
+  partners the nation likes, the coalition rule, free help for a full ally.
+- `src/core/configuration/Config.ts` — `allianceTiersEnabled`, `allianceBreakTraitorScale`,
+  `coalitionThreshold`.
+- `src/client/Utils.ts` — `COALITION_OFFER` gets the warn colour (the exhaustiveness test
+  console-warns on any message type without one).
+- `src/client/Transport.ts`, `src/client/hud/layers/ActionableEvents.ts`,
+  `src/client/hud/layers/PlayerPanel.ts`, `resources/lang/en.json` — the intent carries the
+  rung, the incoming card names it and accepts at it, the coalition card, the button label.
+- `scripts/balanceRun.ts` — `--flat-alliances`, `--no-coalition`, and an alliances line.
+- `tests/NationAllianceBehavior.test.ts` — the mock request gained `tier: () => FullAlliance`;
+  three fixtures with alliance-view literals gained `tier: 3`.
+
+#### FightWars-only files added
+
+- `tests/AllianceTiers.test.ts` — the ladder (one object climbed in place; nothing above the top;
+  a non-climb refused; a rung asked for outright; the clock reset on a climb), what each rung
+  means, the break cost per rung, and tiers off. Three things the tests had to learn: a second
+  request inside the 30 s cooldown is refused, `BreakAllianceExecution` acts a tick after its
+  init, and the traitor window is read one tick after the mark.
+- `tests/Coalition.test.ts` — the leader and its share from the win check; the offer once on the
+  way up and once on the way down (published from _inside_ a tick — `executeNextTick` wipes the
+  update map at its start, so a `setLeader` between ticks never reaches the client); nations
+  accepting a fellow non-leader they would otherwise weigh, not the leader, and not once the
+  leader falls back below the line.

@@ -1,4 +1,4 @@
-import { AllianceRequest, Player, Tick } from "./Game";
+import { AllianceRequest, AllianceTier, Player, Tick } from "./Game";
 import { GameImpl } from "./GameImpl";
 import { AllianceRequestUpdate, GameUpdateType } from "./GameUpdates";
 
@@ -10,7 +10,12 @@ export class AllianceRequestImpl implements AllianceRequest {
     private recipient_: Player,
     private tickCreated: number,
     private game: GameImpl,
+    private tier_: AllianceTier = AllianceTier.FullAlliance,
   ) {}
+
+  tier(): AllianceTier {
+    return this.tier_;
+  }
 
   status(): "pending" | "accepted" | "rejected" {
     return this.status_;
@@ -43,6 +48,7 @@ export class AllianceRequestImpl implements AllianceRequest {
       requestorID: this.requestor_.smallID(),
       recipientID: this.recipient_.smallID(),
       createdAt: this.tickCreated,
+      tier: this.tier_,
     };
   }
 }

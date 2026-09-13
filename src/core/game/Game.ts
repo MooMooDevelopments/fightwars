@@ -423,6 +423,37 @@ export interface Attack {
   clusteredPositions(): TileRef[];
 }
 
+/**
+ * Tiered relations (brief §6.5). Every alliance has a tier, and the ladder is
+ * climbed by asking again: a first request is a non-aggression pact, a
+ * request to a partner you already hold a pact with asks for the next rung.
+ * Each rung unlocks more and costs more to break.
+ *
+ *  - NonAggression: neither side can attack the other. Nothing else.
+ *  - DefensivePact: allies also come to your defence — nations retaliate
+ *    against whoever is attacking you.
+ *  - FullAlliance: today's alliance in full — assistance is free of the
+ *    relation cost nations charge for it, and the extension prompt exists.
+ */
+export enum AllianceTier {
+  NonAggression = 1,
+  DefensivePact = 2,
+  FullAlliance = 3,
+}
+
+export const ALLIANCE_TIER_KEYS: Record<AllianceTier, string> = {
+  [AllianceTier.NonAggression]: "non_aggression",
+  [AllianceTier.DefensivePact]: "defensive_pact",
+  [AllianceTier.FullAlliance]: "full_alliance",
+};
+
+export function nextAllianceTier(current: AllianceTier | null): AllianceTier {
+  if (current === null) return AllianceTier.NonAggression;
+  return current >= AllianceTier.FullAlliance
+    ? AllianceTier.FullAlliance
+    : ((current + 1) as AllianceTier);
+}
+
 export interface AllianceRequest {
   accept(): void;
   reject(): void;
@@ -430,6 +461,8 @@ export interface AllianceRequest {
   recipient(): Player;
   createdAt(): Tick;
   status(): "pending" | "accepted" | "rejected";
+  /** The rung asked for; accepting sets the alliance to it. */
+  tier(): AllianceTier;
 }
 
 export interface Alliance {
@@ -438,6 +471,7 @@ export interface Alliance {
   createdAt(): Tick;
   expiresAt(): Tick;
   other(player: Player): Player;
+  tier(): AllianceTier;
 }
 
 export interface MutableAlliance extends Alliance {
@@ -447,6 +481,8 @@ export interface MutableAlliance extends Alliance {
   addExtensionRequest(player: Player): void;
   id(): number;
   extend(): void;
+  /** Climb (or, never in practice, descend) the ladder in place. */
+  setTier(tier: AllianceTier): void;
   onlyOneAgreedToExtend(): boolean;
 
   agreedToExtend(player: Player): boolean;
@@ -622,7 +658,8 @@ export interface Player {
   // State & Properties
   isAlive(): boolean;
   isTraitor(): boolean;
-  markTraitor(): void;
+  /** `durationScale` stretches or shortens the traitor window (per-tier break cost). */
+  markTraitor(durationScale?: number): void;
   // Doomsday Clock (anti-stall): marked when below the rising territory bar.
   inDoomsdayClock(): boolean;
   /** Territory is actively rotting away (the final doomsday phase). */
@@ -739,14 +776,21 @@ export interface Player {
   outgoingAllianceRequests(): AllianceRequest[];
   alliances(): MutableAlliance[];
   expiredAlliances(): Alliance[];
+  /** Partners at DefensivePact or above: the ones who come to your aid. */
   allies(): Player[];
   isAlliedWith(other: Player): boolean;
+  /** The tier held with `other`, or null when there is no alliance. */
+  allianceTierWith(other: Player): AllianceTier | null;
   allianceWith(other: Player): MutableAlliance | null;
   allianceInfo(other: Player): AllianceInfo | null;
+  /** True with no alliance, or with one below FullAlliance (a deepening). */
   canSendAllianceRequest(other: Player): boolean;
   breakAlliance(alliance: Alliance): void;
   removeAllAlliances(): void;
-  createAllianceRequest(recipient: Player): AllianceRequest | null;
+  createAllianceRequest(
+    recipient: Player,
+    tier?: AllianceTier,
+  ): AllianceRequest | null;
   betrayals(): number;
 
   // Targeting
@@ -944,6 +988,13 @@ export interface Game extends GameMap {
   stats(): Stats;
 
   addUpdate(update: GameUpdate): void;
+  /**
+   * Auto-coalitions (brief §6.5): the biggest side's share of the land,
+   * published by WinCheckExecution every ten ticks, and who holds it.
+   */
+  leaderShare(): number;
+  leader(): Player | Team | null;
+  setLeader(leader: Player | Team | null, share: number): void;
   railNetwork(): RailNetwork;
   /** Per-tile distance to each player's supply sources (brief §6.1). */
   supplyNetwork(): SupplyNetwork;
@@ -1040,6 +1091,9 @@ export interface PlayerBorderTiles {
 }
 
 export interface AllianceInfo {
+  tier: AllianceTier;
+  /** What the next request would ask for; null at the top rung. */
+  nextTier: AllianceTier | null;
   expiresAt: Tick;
   inExtensionWindow: boolean;
   myPlayerAgreedToExtend: boolean;
@@ -1089,6 +1143,7 @@ export enum MessageType {
   DONATION_RECEIVED,
   CHAT,
   RENEW_ALLIANCE,
+  COALITION_OFFER,
 }
 
 // Message categories used for filtering events in the EventsDisplay
@@ -1121,6 +1176,7 @@ export const MESSAGE_TYPE_CATEGORIES: Record<MessageType, MessageCategory> = {
   [MessageType.ALLIANCE_BROKEN]: MessageCategory.ALLIANCE,
   [MessageType.ALLIANCE_EXPIRED]: MessageCategory.ALLIANCE,
   [MessageType.RENEW_ALLIANCE]: MessageCategory.ALLIANCE,
+  [MessageType.COALITION_OFFER]: MessageCategory.ALLIANCE,
   [MessageType.DONATION_SENT]: MessageCategory.TRADE,
   [MessageType.DONATION_RECEIVED]: MessageCategory.TRADE,
   [MessageType.CHAT]: MessageCategory.CHAT,

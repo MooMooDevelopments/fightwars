@@ -51,6 +51,8 @@ export interface AllianceData {
   createdAt: number;
   expiresAt: number;
   hasExtensionRequest: boolean;
+  /** AllianceTier as a number (1 pact, 2 defensive, 3 full). */
+  tier: number;
 }
 
 export interface EmojiData {

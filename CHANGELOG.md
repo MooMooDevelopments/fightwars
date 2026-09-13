@@ -38,6 +38,13 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   land and cities under it produce nothing while it does. Crossing it gets harder as more of the
   world burns, not easier. Once more than a twentieth of the world is irradiated, everyone
   recruits less — including whoever launched — and the Doomsday Clock runs ahead.
+- **Relations have rungs.** Your first agreement with a neighbour is a non-aggression pact;
+  ask again and it becomes a defensive pact, whose partners come to your defence; ask once more
+  and it is a full alliance. Each rung costs more to break. Nations climb the ladder with
+  players they have come to like.
+- **Coalitions.** When anyone holds 40 % of the map, everyone else is offered a coalition —
+  one card, one button, defensive pacts with every other player who will have you. The leader
+  knowing it is coming is the late game.
 
 ### Phase 2 — Infrastructure (2026-09-12)
 

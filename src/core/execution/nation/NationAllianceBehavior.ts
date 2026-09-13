@@ -1,10 +1,13 @@
 import {
+  AllianceTier,
   Difficulty,
   Game,
   GameMode,
+  nextAllianceTier,
   Player,
   PlayerType,
   Relation,
+  Team,
 } from "../../game/Game";
 import { PseudoRandom } from "../../PseudoRandom";
 import { assertNever } from "../../Util";
@@ -38,7 +41,7 @@ export class NationAllianceBehavior {
         req.reject();
         continue;
       }
-      if (this.getAllianceDecision(req.requestor(), true)) {
+      if (this.getAllianceDecision(req.requestor(), true, req.tier())) {
         req.accept();
       } else {
         req.reject();
@@ -55,7 +58,7 @@ export class NationAllianceBehavior {
       if (!alliance.onlyOneAgreedToExtend()) continue;
 
       const human = alliance.other(this.player);
-      if (!this.getAllianceDecision(human, true)) continue;
+      if (!this.getAllianceDecision(human, true, alliance.tier())) continue;
 
       this.game.addExecution(
         new AllianceExtensionExecution(this.player, human.id()),
@@ -72,23 +75,77 @@ export class NationAllianceBehavior {
         this.game.config().gameConfig().difficulty === Difficulty.Easy) ||
       p.type() !== PlayerType.Bot;
 
+    // Under a coalition, everyone who is not the leader is worth a pact,
+    // and worth asking every time rather than one time in thirty.
+    const coalition = this.coalitionAgainst();
     for (const enemy of borderingEnemies) {
+      const inCoalition =
+        coalition !== null && !this.isLeader(enemy, coalition);
       if (
-        this.random.chance(30) &&
+        (inCoalition || this.random.chance(30)) &&
         isAcceptablePlayerType(enemy) &&
         this.player.canSendAllianceRequest(enemy) &&
-        this.getAllianceDecision(enemy, false)
+        this.getAllianceDecision(enemy, false, this.firstTier())
       ) {
         this.game.addExecution(
-          new AllianceRequestExecution(this.player, enemy.id()),
+          new AllianceRequestExecution(
+            this.player,
+            enemy.id(),
+            inCoalition ? AllianceTier.DefensivePact : this.firstTier(),
+          ),
         );
       }
     }
   }
 
+  /**
+   * Climb the ladder with partners the nation has come to like: a pact
+   * becomes a defensive pact, a defensive pact a full alliance, one rung at
+   * a time and not every tick.
+   */
+  maybeDeepenAlliances() {
+    if (this.game.config().disableAlliances()) return;
+    if (!this.game.config().allianceTiersEnabled()) return;
+    for (const alliance of this.player.alliances()) {
+      if (alliance.tier() >= AllianceTier.FullAlliance) continue;
+      if (!this.random.chance(20)) continue;
+      const partner = alliance.other(this.player);
+      const next = nextAllianceTier(alliance.tier());
+      if (!this.player.canSendAllianceRequest(partner)) continue;
+      if (!this.getAllianceDecision(partner, false, next)) continue;
+      this.game.addExecution(
+        new AllianceRequestExecution(this.player, partner.id(), next),
+      );
+    }
+  }
+
+  /** What a nation asks for first: a pact when tiers are on, else the old full alliance. */
+  private firstTier(): AllianceTier {
+    return this.game.config().allianceTiersEnabled()
+      ? AllianceTier.NonAggression
+      : AllianceTier.FullAlliance;
+  }
+
+  /** The side a coalition is forming against, or null when there is none. */
+  private coalitionAgainst(): Player | Team | null {
+    const leader = this.game.leader();
+    if (leader === null) return null;
+    if (this.game.leaderShare() < this.game.config().coalitionThreshold()) {
+      return null;
+    }
+    // The leader itself, and the leader's own team, get no coalition.
+    if (this.isLeader(this.player, leader)) return null;
+    return leader;
+  }
+
+  private isLeader(p: Player, leader: Player | Team): boolean {
+    return typeof leader === "string" ? p.team() === leader : p === leader;
+  }
+
   private getAllianceDecision(
     otherPlayer: Player,
     isResponse: boolean,
+    tier: AllianceTier = AllianceTier.FullAlliance,
   ): boolean {
     // Easy (dumb) nations sometimes get confused and accept/reject randomly (Just like dumb humans do)
     if (this.isConfused()) {
@@ -99,6 +156,38 @@ export class NationAllianceBehavior {
       if (isResponse && this.random.chance(3)) {
         this.emojiBehavior.sendEmoji(otherPlayer, EMOJI_CONFUSED);
       }
+      return false;
+    }
+    // Coalition (brief §6.5): against a side holding the map, any pact or
+    // defensive pact with a fellow non-leader is taken without the usual
+    // reluctance about too many friends — the reluctance exists to keep
+    // enough enemies for the crown, and the crown is the problem now.
+    const coalition = this.coalitionAgainst();
+    if (
+      coalition !== null &&
+      !this.isLeader(otherPlayer, coalition) &&
+      tier <= AllianceTier.DefensivePact &&
+      this.player.relation(otherPlayer) >= Relation.Neutral
+    ) {
+      return true;
+    }
+    // A non-aggression pact asks for nothing but peace, and peace with a
+    // neighbour that is not hostile is cheap to give.
+    if (
+      tier === AllianceTier.NonAggression &&
+      this.game.config().allianceTiersEnabled()
+    ) {
+      return this.player.relation(otherPlayer) >= Relation.Neutral;
+    }
+    // A full alliance is only for players the nation actually likes, or in
+    // the honeymoon of the opening; everything below it goes through the
+    // usual reckoning about threats and numbers.
+    if (
+      tier === AllianceTier.FullAlliance &&
+      this.game.config().allianceTiersEnabled() &&
+      !this.isAlliancePartnerFriendly(otherPlayer) &&
+      !this.isEarlygame()
+    ) {
       return false;
     }
     // Reject if otherPlayer has allied with a lot of players (Hard and Impossible only)

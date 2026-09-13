@@ -5,6 +5,7 @@ import { ClusterConfig } from "../ClusterConfig";
 import { exp, log, pow, pow2 } from "../DetMath";
 import { DoomsdayClockSpeed } from "../game/DoomsdayClock";
 import {
+  AllianceTier,
   Difficulty,
   Game,
   GameType,
@@ -382,6 +383,46 @@ export class Config {
   /** True when the player joined the lobby as a spectator (watch-only). */
   isIntentionalSpectator(): boolean {
     return this._spectator;
+  }
+
+  /**
+   * Tiered relations (brief §6.5). Off, every request is a full alliance and
+   * every break costs the same, which is the game as it was — the balance
+   * lever `--flat-alliances` uses this.
+   */
+  allianceTiersEnabled(): boolean {
+    return true;
+  }
+
+  /**
+   * How much longer the traitor mark lasts for breaking a deeper bond: a
+   * pact is half the usual window, a defensive pact the usual, a full
+   * alliance half again as long. Breaking a promise costs in proportion to
+   * the promise.
+   */
+  allianceBreakTraitorScale(tier: AllianceTier): number {
+    if (!this.allianceTiersEnabled()) return 1;
+    switch (tier) {
+      case AllianceTier.NonAggression:
+        return 0.5;
+      case AllianceTier.DefensivePact:
+        return 1;
+      case AllianceTier.FullAlliance:
+        return 1.5;
+      default:
+        return 1;
+    }
+  }
+
+  /**
+   * Auto-coalitions (brief §6.5): once any side holds this share of the
+   * land, everyone else is offered a coalition — nations accept pacts and
+   * defensive pacts from any non-leader without their usual reluctance and
+   * seek them out, and humans get a one-click offer. The leader knowing it
+   * is coming is the late game. 1.01 never triggers (the lever).
+   */
+  coalitionThreshold(): number {
+    return 0.4;
   }
 
   traitorDefenseDebuff(): number {

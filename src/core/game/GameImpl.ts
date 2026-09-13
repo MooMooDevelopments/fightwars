@@ -12,6 +12,7 @@ import { AllianceRequestImpl } from "./AllianceRequestImpl";
 import {
   Alliance,
   AllianceRequest,
+  AllianceTier,
   Cell,
   ColoredTeams,
   Duos,
@@ -115,6 +116,9 @@ export class GameImpl implements Game {
 
   private _isPaused: boolean = false;
   private _winner: Player | Team | null = null;
+  private _leader: Player | Team | null = null;
+  private _leaderShare = 0;
+  private _coalitionActive = false;
   private _waterManager: WaterManager;
   private _sharedWaterCache: SharedWaterCache;
   private _teamGameSpawnAreas: TeamGameSpawnAreas | undefined;
@@ -417,9 +421,11 @@ export class GameImpl implements Game {
   createAllianceRequest(
     requestor: Player,
     recipient: Player,
+    tier: AllianceTier = AllianceTier.FullAlliance,
   ): AllianceRequest | null {
-    if (requestor.isAlliedWith(recipient)) {
-      console.log("cannot request alliance, already allied");
+    const held = requestor.allianceTierWith(recipient);
+    if (held !== null && tier <= held) {
+      console.log("cannot request alliance, already allied at that tier");
       return null;
     }
     if (
@@ -438,7 +444,13 @@ export class GameImpl implements Game {
       correspondingReq.accept();
       return null;
     }
-    const ar = new AllianceRequestImpl(requestor, recipient, this._ticks, this);
+    const ar = new AllianceRequestImpl(
+      requestor,
+      recipient,
+      this._ticks,
+      this,
+      tier,
+    );
     this.allianceRequests.push(ar);
     this.addUpdate(ar.toUpdate());
     return ar;
@@ -454,21 +466,28 @@ export class GameImpl implements Game {
 
     const existing = requestor.allianceWith(recipient);
     if (existing) {
-      throw new Error(
-        `cannot accept alliance request, already allied with ${recipient.name()}`,
+      if (request.tier() <= existing.tier()) {
+        throw new Error(
+          `cannot accept alliance request, already allied with ${recipient.name()} at tier ${existing.tier()}`,
+        );
+      }
+      // Climbing the ladder: the same alliance, one rung up, with its clock
+      // reset — a deepened bond is a renewed one.
+      existing.setTier(request.tier());
+      existing.extend();
+    } else {
+      // Create and register the new alliance
+      const alliance = new AllianceImpl(
+        this,
+        requestor as PlayerImpl,
+        recipient as PlayerImpl,
+        this._ticks,
+        this.nextAllianceID++,
+        request.tier(),
       );
+      (alliance.requestor() as PlayerImpl)._alliances.push(alliance);
+      (alliance.recipient() as PlayerImpl)._alliances.push(alliance);
     }
-
-    // Create and register the new alliance
-    const alliance = new AllianceImpl(
-      this,
-      requestor as PlayerImpl,
-      recipient as PlayerImpl,
-      this._ticks,
-      this.nextAllianceID++,
-    );
-    (alliance.requestor() as PlayerImpl)._alliances.push(alliance);
-    (alliance.recipient() as PlayerImpl)._alliances.push(alliance);
     (request.requestor() as PlayerImpl).pastOutgoingAllianceRequests.push(
       request,
     );
@@ -893,7 +912,9 @@ export class GameImpl implements Game {
       );
     }
     if (!other.isTraitor() && !other.isDisconnected()) {
-      breaker.markTraitor();
+      breaker.markTraitor(
+        this._config.allianceBreakTraitorScale(alliance.tier()),
+      );
     }
 
     this.detachAlliance(alliance);
@@ -986,6 +1007,47 @@ export class GameImpl implements Game {
       winner: winner === null ? undefined : this.makeWinner(winner),
       allPlayersStats,
     });
+  }
+
+  leaderShare(): number {
+    return this._leaderShare;
+  }
+
+  leader(): Player | Team | null {
+    return this._leader;
+  }
+
+  setLeader(leader: Player | Team | null, share: number): void {
+    this._leader = leader;
+    this._leaderShare = share;
+    const active =
+      leader !== null && share >= this._config.coalitionThreshold();
+    if (active === this._coalitionActive) return;
+    this._coalitionActive = active;
+    // Only on the flip, so the client's offer card appears once and clears
+    // once rather than being re-issued ten times a second.
+    const leaderID =
+      leader === null
+        ? 0
+        : typeof leader === "string"
+          ? (this.leaderOfTeam(leader)?.smallID() ?? 0)
+          : leader.smallID();
+    this.addUpdate({
+      type: GameUpdateType.Coalition,
+      leaderID,
+      share,
+      active,
+    });
+  }
+
+  /** In a team game the coalition is offered against a team; name its largest member. */
+  private leaderOfTeam(team: Team): Player | null {
+    let best: Player | null = null;
+    for (const p of this.players()) {
+      if (p.team() !== team) continue;
+      if (best === null || p.numTilesOwned() > best.numTilesOwned()) best = p;
+    }
+    return best;
   }
 
   getWinner(): Player | Team | null {

@@ -1,8 +1,10 @@
 import {
   AllianceRequest,
+  AllianceTier,
   Execution,
   Game,
   MessageType,
+  nextAllianceTier,
   Player,
   PlayerID,
   UnitType,
@@ -17,6 +19,8 @@ export class AllianceRequestExecution implements Execution {
   constructor(
     private requestor: Player,
     private recipientID: PlayerID,
+    /** Rung asked for; absent means the next above what is held. */
+    private tier?: AllianceTier,
   ) {}
 
   init(mg: Game, ticks: number): void {
@@ -30,10 +34,19 @@ export class AllianceRequestExecution implements Execution {
 
     const recipient = mg.player(this.recipientID);
 
-    if (!this.requestor.canSendAllianceRequest(recipient)) {
+    const held = this.requestor.allianceTierWith(recipient);
+    const asked = mg.config().allianceTiersEnabled()
+      ? (this.tier ?? nextAllianceTier(held))
+      : AllianceTier.FullAlliance;
+    if (
+      !this.requestor.canSendAllianceRequest(recipient) ||
+      (held !== null && asked <= held)
+    ) {
       console.warn("cannot send alliance request");
       this.active = false;
     } else {
+      // A matching request the other way is an acceptance — at the rung
+      // they asked for, which is what the accept button sends back.
       const incoming = recipient
         .outgoingAllianceRequests()
         .find((r) => r.recipient() === this.requestor);
@@ -56,7 +69,7 @@ export class AllianceRequestExecution implements Execution {
         // Cancel incoming nukes between players
         this.cancelNukesBetweenAlliedPlayers(recipient);
       } else {
-        this.req = this.requestor.createAllianceRequest(recipient);
+        this.req = this.requestor.createAllianceRequest(recipient, asked);
       }
     }
   }

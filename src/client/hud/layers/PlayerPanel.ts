@@ -4,6 +4,8 @@ import Countries from "resources/countries.json" with { type: "json" };
 import { assetUrl } from "../../../core/AssetUrls";
 import { EventBus } from "../../../core/EventBus";
 import {
+  ALLIANCE_TIER_KEYS,
+  AllianceTier,
   AllPlayers,
   GameType,
   PlayerActions,
@@ -217,6 +219,15 @@ export class PlayerPanel extends LitElement implements Controller {
   private handleClose(e: Event) {
     e.stopPropagation();
     this.hide();
+  }
+
+  /** "Send Alliance" becomes the name of the rung the next request asks for. */
+  private allianceButtonKey(): string {
+    const next = this.actions?.interaction?.allianceInfo?.nextTier;
+    if (next === undefined || next === null) {
+      return "player_panel.send_alliance";
+    }
+    return `player_panel.deepen_${ALLIANCE_TIER_KEYS[next as AllianceTier]}`;
   }
 
   private handleAllianceClick(
@@ -923,8 +934,8 @@ export class PlayerPanel extends LitElement implements Controller {
                         this.handleAllianceClick(e, my, other),
                       icon: allianceIcon,
                       iconAlt: "Alliance",
-                      title: translateText("player_panel.send_alliance"),
-                      label: translateText("player_panel.send_alliance"),
+                      title: translateText(this.allianceButtonKey()),
+                      label: translateText(this.allianceButtonKey()),
                       type: "indigo",
                     })
                   : ""}

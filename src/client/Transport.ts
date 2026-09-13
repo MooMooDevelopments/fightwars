@@ -57,6 +57,8 @@ export class SendAllianceRequestIntentEvent implements GameEvent {
   constructor(
     public readonly requestor: PlayerView,
     public readonly recipient: PlayerView,
+    /** AllianceTier to ask for; absent asks for the next rung. */
+    public readonly tier?: number,
   ) {}
 }
 
@@ -690,6 +692,7 @@ export class Transport {
     this.sendIntent({
       type: "allianceRequest",
       recipient: event.recipient.id(),
+      ...(event.tier !== undefined ? { tier: event.tier } : {}),
     });
   }
 

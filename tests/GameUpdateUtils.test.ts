@@ -273,6 +273,7 @@ describe("diffPlayerUpdate", () => {
           createdAt: 10,
           expiresAt: 110,
           hasExtensionRequest: false,
+          tier: 3,
         },
       ],
     });

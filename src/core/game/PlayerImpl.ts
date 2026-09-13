@@ -13,6 +13,7 @@ import {
   Alliance,
   AllianceInfo,
   AllianceRequest,
+  AllianceTier,
   AllPlayers,
   Attack,
   BuildableUnit,
@@ -26,6 +27,7 @@ import {
   Gold,
   MAX_UPGRADE_AMOUNT,
   MutableAlliance,
+  nextAllianceTier,
   Player,
   PlayerBuildable,
   PlayerBuildableUnitType,
@@ -133,6 +135,8 @@ export class PlayerImpl implements Player {
   private _goldEarned: bigint = 0n;
 
   markedTraitorTick = -1;
+  /** Per-tier break cost: multiplies traitorDuration for this mark. */
+  private traitorDurationScale = 1;
   markedDoomsdayClockTick = -1;
   /** Tick territory rot last took land from this player (-1 = never). */
   private rottedAtTick = -1;
@@ -303,6 +307,7 @@ export class PlayerImpl implements Player {
             createdAt: a.createdAt(),
             expiresAt: a.expiresAt(),
             hasExtensionRequest: a.expiresAt() <= extensionCutoff,
+            tier: a.tier(),
           }) satisfies AllianceView,
       );
     }
@@ -760,7 +765,15 @@ export class PlayerImpl implements Player {
   }
 
   allies(): Player[] {
-    return this.alliances().map((a) => a.other(this));
+    // A non-aggression pact keeps the peace and nothing more; help comes
+    // from a defensive pact up.
+    return this.alliances()
+      .filter((a) => a.tier() >= AllianceTier.DefensivePact)
+      .map((a) => a.other(this));
+  }
+
+  allianceTierWith(other: Player): AllianceTier | null {
+    return this.allianceWith(other)?.tier() ?? null;
   }
 
   isAlliedWith(other: Player): boolean {
@@ -796,7 +809,11 @@ export class PlayerImpl implements Player {
       other.isAlive() &&
       inExtensionWindow &&
       !alliance.agreedToExtend(this);
+    const tier = alliance.tier();
     return {
+      tier,
+      nextTier:
+        tier >= AllianceTier.FullAlliance ? null : nextAllianceTier(tier),
       expiresAt: alliance.expiresAt(),
       inExtensionWindow,
       myPlayerAgreedToExtend: alliance.agreedToExtend(this),
@@ -819,8 +836,18 @@ export class PlayerImpl implements Player {
       // we are already allied with.
       return false;
     }
-    if (this.isFriendly(other) || !this.isAlive()) {
+    if (!this.isAlive()) {
       return false;
+    }
+    // Same team: nothing to ask for. Allied: only a deepening is left to ask
+    // for, and only while there is a rung above the one held.
+    if (this.isOnSameTeam(other)) {
+      return false;
+    }
+    const held = this.allianceTierWith(other);
+    if (held !== null) {
+      if (!this.mg.config().allianceTiersEnabled()) return false;
+      if (held >= AllianceTier.FullAlliance) return false;
     }
 
     const hasPending = this.outgoingAllianceRequests().some(
@@ -867,13 +894,16 @@ export class PlayerImpl implements Player {
   getTraitorRemainingTicks(): number {
     if (this.markedTraitorTick < 0) return 0;
     const elapsed = this.mg.ticks() - this.markedTraitorTick;
-    const duration = this.mg.config().traitorDuration();
+    const duration = Math.floor(
+      this.mg.config().traitorDuration() * this.traitorDurationScale,
+    );
     const remaining = duration - elapsed;
     return remaining > 0 ? remaining : 0;
   }
 
-  markTraitor(): void {
+  markTraitor(durationScale: number = 1): void {
     this.markedTraitorTick = this.mg.ticks();
+    this.traitorDurationScale = durationScale;
     this._betrayalCount++; // Keep count for Nations too
 
     // Record stats (only for real Humans)
@@ -922,11 +952,22 @@ export class PlayerImpl implements Player {
     return this._betrayalCount;
   }
 
-  createAllianceRequest(recipient: Player): AllianceRequest | null {
-    if (this.isAlliedWith(recipient)) {
-      throw new Error(`cannot create alliance request, already allies`);
+  createAllianceRequest(
+    recipient: Player,
+    tier?: AllianceTier,
+  ): AllianceRequest | null {
+    const held = this.allianceTierWith(recipient);
+    const asked = tier ?? nextAllianceTier(held);
+    if (held !== null && asked <= held) {
+      throw new Error(
+        `cannot create alliance request, already at tier ${held} (asked ${asked})`,
+      );
     }
-    return this.mg.createAllianceRequest(this, recipient satisfies Player);
+    return this.mg.createAllianceRequest(
+      this,
+      recipient satisfies Player,
+      asked,
+    );
   }
 
   relation(other: Player): Relation {

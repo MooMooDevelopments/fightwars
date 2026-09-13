@@ -656,6 +656,9 @@ export const BoatAttackIntentSchema = z.object({
 export const AllianceRequestIntentSchema = z.object({
   type: z.literal("allianceRequest"),
   recipient: MappedID,
+  // AllianceTier (1 pact, 2 defensive, 3 full). Absent asks for the next
+  // rung above whatever is held, which is what the one button does.
+  tier: zb.uint({ min: 1, max: 3 }).optional(),
 });
 
 export const AllianceRejectIntentSchema = z.object({

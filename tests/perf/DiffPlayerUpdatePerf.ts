@@ -36,6 +36,7 @@ function makeAlliances(n: number): AllianceView[] {
     createdAt: 100 + i,
     expiresAt: 1000 + i,
     hasExtensionRequest: false,
+    tier: 3,
   }));
 }
 

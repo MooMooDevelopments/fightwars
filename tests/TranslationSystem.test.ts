@@ -26,6 +26,9 @@ const DYNAMIC_KEY_PATTERNS: RegExp[] = [
   /^territory_patterns\.color_palette\.[^.]+$/,
   /^build_menu\.desc\.[^.]+$/,
   /^unit_type\.[^.]+$/,
+  // The one alliance button is labelled by the rung it asks for next
+  // (PlayerPanel.allianceButtonKey, from ALLIANCE_TIER_KEYS).
+  /^player_panel\.deepen_(non_aggression|defensive_pact|full_alliance)$/,
   /^news_box\.(tournament|tutorial|news|warning|firefox_warning)$/,
   // Built-in graphics preset names/descriptions are referenced from
   // src/client/render/gl/graphics-presets.json, not translateText literals.

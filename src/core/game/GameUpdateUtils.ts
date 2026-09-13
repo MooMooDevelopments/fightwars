@@ -328,7 +328,8 @@ function allianceArrayEqual(a?: AllianceView[], b?: AllianceView[]): boolean {
       x.other !== y.other ||
       x.createdAt !== y.createdAt ||
       x.expiresAt !== y.expiresAt ||
-      x.hasExtensionRequest !== y.hasExtensionRequest
+      x.hasExtensionRequest !== y.hasExtensionRequest ||
+      x.tier !== y.tier
     ) {
       return false;
     }

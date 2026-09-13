@@ -28,6 +28,52 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 
 ## Handoff — read this first (written 2026-09-14 at the end of session 11)
 
+### Session 11 (continued) — item 6.5: relations have rungs, and the map has a leader
+
+- **What shipped.** An alliance is now one of three rungs — non-aggression pact, defensive
+  pact, full alliance — climbed by asking again with the one button that already existed; a
+  pact is peace and nothing more, a defensive pact makes an ally worth defending, a full one
+  gets a nation's help for free; breaking costs ½×, 1×, 1½× the traitor window. And the win
+  check now publishes the leader and its share every ten ticks; when any side crosses 40 %
+  one `CoalitionUpdate` goes out (and one more when it falls back), nations take pacts from
+  any fellow non-leader without their usual reluctance and go looking for them, and humans get
+  one card with one button. `docs/MECHANICS.md` §05 "Gaps" 1 and 3; files in
+  `FORK-CHANGES.md`. Vassal, war goals / peace terms and persistent reputation are
+  deliberately not built — §05 1, 2 and 4 say why. Levers: `--flat-alliances`,
+  `--no-coalition`.
+- **Climbed in place, not stacked.** Accepting a request from a partner already held calls
+  `setTier` + `extend()` on the existing `AllianceImpl` rather than making a second object, so
+  every "how many alliances" count, the expiry, and the client's alliance array stay one entry
+  per pair. `allianceArrayEqual` compares the tier, so a climb re-sends the array.
+- **A guard that could not fail, caught by breaking it.** The coalition acceptance test passed
+  with the coalition branch deleted: at neutral relation the ordinary path already said yes
+  through `isEarlygame()`. The test now pins the three private "yes" routes (threat, honeymoon,
+  similar strength) to false, and its control case — same neutral stranger, leader at 30 % —
+  is refused. The other two breaks (the `allies()` tier filter, the break-cost scale) were
+  caught first time. Break it before you trust it, every time.
+- **Three things the tests had to learn.** A second request to the same player inside the 30 s
+  cooldown is refused, so the ladder test waits it out between rungs; `BreakAllianceExecution`
+  acts in `tick()`, one tick after `init()`; and an update added _between_ ticks never reaches
+  the client — `executeNextTick` clears the update map at its start — so the coalition test
+  registers the real `WinCheckExecution` and reads the update from the tick it ran in.
+- **The bots kept more countries alive.** Same seed, 8000 ticks: flat alliances end with 15
+  full alliances and **23** states alive, top 20 holding 99.7 %; with rungs, 44 pacts, 7
+  defensive pacts, 0 full and **34** alive, top 20 at 91.0 %. Cheap peace is taken far more
+  often than an alliance was, and small states live on it. Nobody reached 40 %, so
+  `--no-coalition` is byte-identical to on at this horizon — the coalition is proven by the
+  tests, not yet by the bots. Open question for the retune: on the impossible-nations 20-minute
+  snapshot the count went the other way (45 → 34 alive) — likely `hasTooManyAlliances`
+  counting pacts as alliances on Hard/Impossible while pact partners do not defend each other.
+- **Three exhaustiveness gates earned their keep.** The full suite caught what the targeted
+  runs could not: `MessageTypeClasses` console-warns on a message type without a colour
+  (`COALITION_OFFER`), `TranslationSystem` flags keys built from a template (`deepen_*`, now a
+  declared dynamic pattern) and keys nothing reads any more (`request_alliance`, now the card
+  for a tier-less request), and the `WinCheckExecution` mock player had no `smallID` for the
+  leader the win check now publishes. Run the whole suite before calling an item done.
+- **Nation economy** (`NationGoldPerMinute`): trade gold −7.3 % (424.8M → 393.9M), train gold
+  +59 % (55.7M → 88.8M), alive nations 45 → 34 — a different game, as expected of a diplomacy
+  change; the retune pass owns it.
+
 ### Session 11 (continued) — item 6.4 opens with nuke consequences
 
 - **What shipped.** Fallout gets a clock and the clock gets consequences: it expires after three
@@ -617,11 +663,13 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 
 ## Next up (concrete, ordered)
 
-0. **Phase 5 continues.** 6.1, 6.2, 6.3 and the nuke half of 6.4 are done. Next: the **six
+0. **Phase 5 continues.** 6.1, 6.2, 6.3, the nuke half of 6.4 and the tiers-and-coalitions
+   half of 6.5 are done. Next: **6.6 doctrines and stability** (§05 5–6), or the **six
    units** of 6.4 (`docs/MECHANICS.md` §03 7.1 has the 25-file checklist, §04 D–E the hooks;
-   budget ~25 files + atlas + locale per unit, so do them one at a time with a lever each), or
-   **6.5 tiered diplomacy** (§05), which the embargo price now has a foothold in. Before either: a retune pass on the economy as a whole (upkeep
-   table, flat materials prices, tariff maximum) now that all of 6.3 is live, and the nation-AI
+   budget ~25 files + atlas + locale per unit, so do them one at a time with a lever each).
+   Before either: a retune pass on the economy and diplomacy as a whole (upkeep
+   table, flat materials prices, tariff maximum, whether `hasTooManyAlliances` should count
+   pacts) now that all of 6.3 and 6.5 are live, and the nation-AI
    note that bots never blockade on purpose. Manpower: surface `maxTroops` in the HUD. The
    **embargo price** was designed as
    (the embargoed side's remaining trade pays less in proportion to how many partners embargo
@@ -713,6 +761,28 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   remains by design.
 - The discord card on a clan overview says "invite is no longer valid" for any invite the
   browser cannot resolve against Discord's public API (offline / fake invite) — expected.
+
+## Numbers last measured — Phase 5 item 6.5, tiers + coalitions (2026-09-14, session 11)
+
+- Determinism hash at `perf:gate` (1000 ticks): `24015216964771530` → `23351105707837370` —
+  moved, as it must: nations ask for pacts from the opening and grant them at neutral
+  relation. `perf:gate` idle: **mean 2.55 ms**, p95 4.71, p99 6.44, 0 over budget.
+- `test:determinism:full`: pass 3/3 in 226 s. `npm test`: 506 files, 6044 tests — `NationGoldPerMinute`
+  regenerated alone, as the rule says.
+- **Bot-vs-bot** (`balance:run --ticks 8000`, world, 150 bots + nations, seed `perf-gate`):
+
+  | after 8000 ticks         | flat alliances      | tiers + coalition   | `--no-coalition`    |
+  | ------------------------ | ------------------- | ------------------- | ------------------- |
+  | players alive            | 23                  | 34                  | 34                  |
+  | top 1 / 5 / 20 share     | 12.2 / 46.6 / 99.7  | 14.3 / 48.0 / 91.0  | same                |
+  | pacts / defensive / full | 0 / 0 / 15          | 44 / 7 / 0          | same                |
+  | leader share             | 12.3 %              | 14.3 %              | same                |
+  | final hash               | `30525071524541864` | `29973981493118710` | `29973981493118710` |
+
+  The flat hash equals the 6.4 "consequences on" hash: the lever restores the previous game
+  exactly. No side reaches 40 % in 8000 ticks, so the coalition never fires here; no full
+  alliance forms because nations climb to the top rung only with partners they have come to
+  like, and none did by then.
 
 ## Numbers last measured — Phase 5 item 6.4, nuke consequences (2026-09-14, session 11)
 

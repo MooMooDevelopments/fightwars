@@ -16,7 +16,8 @@
  *                                      [--no-supply] [--flat-terrain]
  *                                      [--no-upkeep] [--no-materials]
  *                                      [--no-blockades] [--no-embargo-price]
- *                                      [--legacy-fallout]
+ *                                      [--legacy-fallout] [--flat-alliances]
+ *                                      [--no-coalition]
  *
  * `--no-supply` turns the supply penalty and its attrition off, and
  * `--flat-terrain` turns the elevation curves off (the band table stays),
@@ -68,6 +69,20 @@ class NoSupply extends Config {
   }
   supplyAttritionRate(): number {
     return 0;
+  }
+}
+
+/** The same game with every alliance a full one and no ladder to climb. */
+class FlatAlliances extends Config {
+  allianceTiersEnabled(): boolean {
+    return false;
+  }
+}
+
+/** The same game with nobody ever offered a coalition. */
+class NoCoalition extends Config {
+  coalitionThreshold(): number {
+    return 1.01;
   }
 }
 
@@ -149,6 +164,8 @@ async function main(): Promise<void> {
   const noBlockades = process.argv.includes("--no-blockades");
   const noEmbargoPrice = process.argv.includes("--no-embargo-price");
   const legacyFallout = process.argv.includes("--legacy-fallout");
+  const flatAlliances = process.argv.includes("--flat-alliances");
+  const noCoalition = process.argv.includes("--no-coalition");
   if (
     [
       noSupply,
@@ -158,13 +175,15 @@ async function main(): Promise<void> {
       noBlockades,
       noEmbargoPrice,
       legacyFallout,
+      flatAlliances,
+      noCoalition,
     ].filter(Boolean).length > 1
   ) {
     throw new Error("one lever at a time");
   }
   console.debug = () => {};
   console.log(
-    `[balance] map=${map} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}${noUpkeep ? " upkeep=off" : ""}${noMaterials ? " materials=off" : ""}${noBlockades ? " blockades=off" : ""}${noEmbargoPrice ? " embargo-price=off" : ""}${legacyFallout ? " fallout=legacy" : ""}\n`,
+    `[balance] map=${map} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}${noUpkeep ? " upkeep=off" : ""}${noMaterials ? " materials=off" : ""}${noBlockades ? " blockades=off" : ""}${noEmbargoPrice ? " embargo-price=off" : ""}${legacyFallout ? " fallout=legacy" : ""}${flatAlliances ? " alliances=flat" : ""}${noCoalition ? " coalition=off" : ""}\n`,
   );
 
   const gameConfig: GameConfig = {
@@ -203,7 +222,11 @@ async function main(): Promise<void> {
               ? new NoEmbargoPrice(gameConfig, null, false)
               : legacyFallout
                 ? new LegacyFallout(gameConfig, null, false)
-                : new Config(gameConfig, null, false);
+                : flatAlliances
+                  ? new FlatAlliances(gameConfig, null, false)
+                  : noCoalition
+                    ? new NoCoalition(gameConfig, null, false)
+                    : new Config(gameConfig, null, false);
   const mapLoader = new NodeGameMapLoader(
     path.join(PROJECT_ROOT, "resources/maps"),
   );
@@ -299,6 +322,12 @@ async function main(): Promise<void> {
     `Structures:     ${countOf(UnitType.City)} cities, ` +
       `${countOf(UnitType.Port)} ports, ${countOf(UnitType.Factory)} factories, ` +
       `${countOf(UnitType.DefensePost)} posts`,
+  );
+  const tiers = [0, 0, 0, 0];
+  for (const p of alive) for (const a of p.alliances()) tiers[a.tier()]++;
+  console.log(
+    `Alliances:      ${tiers[1] / 2} pacts, ${tiers[2] / 2} defensive, ${tiers[3] / 2} full; ` +
+      `leader share ${pct(game.leaderShare(), 1)}`,
   );
   console.log(`Final hash:     ${lastHash?.hash} (tick ${lastHash?.tick})`);
   console.log("\nTop 10 by territory:");

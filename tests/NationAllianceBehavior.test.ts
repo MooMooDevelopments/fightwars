@@ -4,6 +4,7 @@ import { NationEmojiBehavior } from "../src/core/execution/nation/NationEmojiBeh
 import {
   AllianceRequest,
   Difficulty,
+  AllianceTier,
   Game,
   GameMode,
   Player,
@@ -88,6 +89,9 @@ describe("AllianceBehavior.handleAllianceRequests", () => {
       requestor: () => requestor,
       recipient: () => player,
       createdAt: () => createdAtTick as unknown as Tick,
+      // The cases below were written for the one kind of alliance there
+      // was; a full alliance is the rung that reproduces them.
+      tier: () => AllianceTier.FullAlliance,
       accept: vi.fn(),
       reject: vi.fn(),
     } as unknown as AllianceRequest;

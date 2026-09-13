@@ -103,11 +103,19 @@ export class WinCheckExecution implements Execution {
     }
 
     const max = sorted[0];
+    this.mg.setLeader(max, this.shareOf(max.numTilesOwned()));
     if (this.hasWon(max.numTilesOwned())) {
       this.mg.setWinner(max, this.mg.stats().stats());
       console.log(`${max.name()} has won the game`);
       this.active = false;
     }
+  }
+
+  /** Share of the claimable land (fallout excluded, like the win bar). */
+  private shareOf(tiles: number): number {
+    if (this.mg === null) throw new Error("Not initialized");
+    const land = this.mg.numLandTiles() - this.mg.numTilesWithFallout();
+    return land <= 0 ? 0 : tiles / land;
   }
 
   // Hold more than the required share of non-fallout land, or outlast the
@@ -180,6 +188,7 @@ export class WinCheckExecution implements Execution {
       return;
     }
     const max = sorted[0];
+    this.mg.setLeader(max[0], this.shareOf(max[1]));
     if (this.hasWon(max[1])) {
       if (max[0] === ColoredTeams.Bot) return;
       this.mg.setWinner(max[0], this.mg.stats().stats());

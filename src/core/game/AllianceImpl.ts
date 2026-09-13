@@ -1,4 +1,4 @@
-import { Game, MutableAlliance, Player, Tick } from "./Game";
+import { AllianceTier, Game, MutableAlliance, Player, Tick } from "./Game";
 import { GameUpdateType } from "./GameUpdates";
 
 export class AllianceImpl implements MutableAlliance {
@@ -13,6 +13,7 @@ export class AllianceImpl implements MutableAlliance {
     readonly recipient_: Player,
     private readonly createdAt_: Tick,
     private readonly id_: number,
+    private tier_: AllianceTier = AllianceTier.FullAlliance,
   ) {
     this.expiresAt_ = createdAt_ + mg.config().allianceDuration();
   }
@@ -77,6 +78,14 @@ export class AllianceImpl implements MutableAlliance {
 
   public id(): number {
     return this.id_;
+  }
+
+  tier(): AllianceTier {
+    return this.tier_;
+  }
+
+  setTier(tier: AllianceTier): void {
+    this.tier_ = tier;
   }
 
   extend(): void {
