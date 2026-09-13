@@ -501,6 +501,8 @@ export interface Unit {
   isOverdueDeletion(): boolean;
   delete(displayMessage?: boolean, destroyer?: Player): void;
   tile(): TileRef;
+  /** Standing on fallout (brief §6.4): the structure produces nothing. */
+  isIrradiated(): boolean;
   lastTile(): TileRef;
   move(tile: TileRef): void;
   isActive(): boolean;
@@ -663,6 +665,8 @@ export interface Player {
   materials(): Gold;
   addMaterials(toAdd: Gold): void;
   removeMaterials(toRemove: Gold): Gold;
+  /** Owned tiles under fallout (brief §6.4); they count for nothing. */
+  numIrradiatedTiles(): number;
 
   // Cumulative trade revenue, surfaced on the live PlayerUpdate so clients can
   // compute per-source gold rates (leaderboard "Ship/Train Trade Gold/min").

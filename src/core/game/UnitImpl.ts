@@ -217,6 +217,10 @@ export class UnitImpl implements Unit {
   hasHealth(): boolean {
     return this.info().maxHealth !== undefined;
   }
+  isIrradiated(): boolean {
+    return this.mg.hasFallout(this.tile());
+  }
+
   tile(): TileRef {
     return this._tile;
   }

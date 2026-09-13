@@ -86,6 +86,7 @@ function stateFromUpdate(pu: PlayerUpdate): PlayerState {
     piracyGold: Number(pu.piracyGold ?? 0n),
     goldEarned: Number(pu.goldEarned ?? 0n),
     materials: Number(pu.materials ?? 0n),
+    irradiatedTiles: pu.irradiatedTiles ?? 0,
     troops: pu.troops!,
     isTraitor: pu.isTraitor!,
     traitorRemainingTicks: Math.max(0, pu.traitorRemainingTicks ?? 0),
@@ -537,6 +538,11 @@ export class PlayerView {
   /** Materials on hand: made by Factories, spent on arms. */
   materials(): Gold {
     return BigInt(this.state.materials);
+  }
+
+  /** Owned tiles under fallout; they count for nothing. */
+  numIrradiatedTiles(): number {
+    return this.state.irradiatedTiles;
   }
 
   troops(): number {

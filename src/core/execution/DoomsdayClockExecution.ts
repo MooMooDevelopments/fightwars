@@ -107,7 +107,16 @@ export class DoomsdayClockExecution implements Execution {
       drainMaxPercent: cfg.warshipDrainMaxPercent,
     };
 
-    const elapsed = mg.elapsedGameSeconds();
+    // Nuclear winter (brief §6.4): world fallout advances the clock rather
+    // than starting a second one, so the HUD, the leader exemption and the
+    // side grouping all stay single-sourced.
+    const falloutRatio =
+      mg.numLandTiles() === 0
+        ? 0
+        : mg.numTilesWithFallout() / mg.numLandTiles();
+    const elapsed =
+      mg.elapsedGameSeconds() +
+      Math.floor(falloutRatio * (cfg.nuclearWinterSecondsPerFalloutShare ?? 0));
     // Humans and Nations are subject to it; the small map bots are not (the
     // !== Bot idiom used across the codebase). players() already returns only
     // alive players.

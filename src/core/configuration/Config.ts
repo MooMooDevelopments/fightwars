@@ -345,6 +345,10 @@ const DOOMSDAY_CLOCK_DEFAULTS = {
   warshipDrainStartPercent: 1,
   warshipDrainMaxPercent: 50,
   warshipDrainCurveExponent: 8, // >1 = convex: stays gentle early, then spikes
+  // NUCLEAR WINTER (FightWars, brief §6.4): game seconds the clock is advanced
+  // per unit of world fallout ratio, so a world a tenth irradiated runs its
+  // clock a minute ahead. One input to the one clock; there is no second one.
+  nuclearWinterSecondsPerFalloutShare: 600,
 };
 
 // Share of the land a side must hold to win, in every game mode.
@@ -415,6 +419,9 @@ export class Config {
       warshipDrainStartPercent: d.warshipDrainStartPercent,
       warshipDrainMaxPercent: d.warshipDrainMaxPercent,
       warshipDrainCurveExponent: d.warshipDrainCurveExponent,
+      nuclearWinterSecondsPerFalloutShare: this.falloutHasConsequences()
+        ? d.nuclearWinterSecondsPerFalloutShare
+        : 0,
     };
   }
   // Overtime config, resolved against defaults.
@@ -455,11 +462,53 @@ export class Config {
     return 250_000;
   }
 
+  /**
+   * Nuke consequences (brief §6.4). Fallout used to be permanent until
+   * someone walked onto it, and then gone. Now it is a mark with a clock:
+   * it outlasts conquest, expires on its own after `falloutDurationTicks`,
+   * makes the owned land under it count for nothing, and past a threshold
+   * of the world burning drags everyone's recruiting down — which is how
+   * MAD arrives without a rule that says so.
+   *
+   * Crossing irradiated ground: the multiplier on attacker loss and tile
+   * cost. It used to fall as more of the world burned (5 → 3), which
+   * rewarded escalation; it now rises (3 → 5). Both ends of the old range,
+   * the other way up.
+   */
   falloutDefenseModifier(falloutRatio: number): number {
-    // falloutRatio is between 0 and 1
-    // So defense modifier is between [5, 2.5]
-    return 5 - falloutRatio * 2;
+    if (!this.falloutHasConsequences()) return 5 - falloutRatio * 2;
+    return 3 + falloutRatio * 2;
   }
+
+  /** Master switch for the §6.4 consequences; the balance lever flips it. */
+  falloutHasConsequences(): boolean {
+    return true;
+  }
+
+  /** Ticks an irradiated tile stays irradiated: three minutes. */
+  falloutDurationTicks(): Tick {
+    return 1800;
+  }
+
+  /** Share of the world's land irradiated before recruiting starts to suffer. */
+  falloutRegenThreshold(): number {
+    return 0.05;
+  }
+
+  /** Share of recruiting lost when the whole world is irradiated. */
+  falloutRegenDepth(): number {
+    return 0.75;
+  }
+
+  /** 1 below the threshold, falling linearly to 1 − depth at ratio 1. */
+  falloutRegenModifier(falloutRatio: number): number {
+    if (!this.falloutHasConsequences()) return 1;
+    const threshold = this.falloutRegenThreshold();
+    if (falloutRatio <= threshold) return 1;
+    const past = (falloutRatio - threshold) / (1 - threshold);
+    return 1 - this.falloutRegenDepth() * (past > 1 ? 1 : past);
+  }
+
   msPerTick(): number {
     return 100;
   }
@@ -1368,10 +1417,15 @@ export class Config {
     const maxTroops =
       player.type() === PlayerType.Human && this.hasInfiniteTroopsFor(player)
         ? 1_000_000_000
-        : 2 * (pow(player.numTilesOwned(), 0.6) * 1000 + 50000) +
+        : 2 *
+            (pow(player.numTilesOwned() - player.numIrradiatedTiles(), 0.6) *
+              1000 +
+              50000) +
           player
             .units(UnitType.City)
-            .filter((u) => !u.isUnderConstruction())
+            // Irradiated land produces nothing: neither the tiles nor the
+            // cities standing on them.
+            .filter((u) => !u.isUnderConstruction() && !u.isIrradiated())
             .map((city) => city.level())
             .reduce((a, b) => a + b, 0) *
             this.cityTroopIncrease();
@@ -1398,10 +1452,15 @@ export class Config {
     }
   }
 
-  troopIncreaseRate(player: Player | PlayerView): number {
+  troopIncreaseRate(
+    player: Player | PlayerView,
+    worldFalloutRatio: number = 0,
+  ): number {
     const max = this.maxTroops(player);
 
     let toAdd = 10 + pow(player.troops(), 0.73) / 4;
+    // World fallout drags everyone's recruiting, the nuker's included.
+    toAdd *= this.falloutRegenModifier(worldFalloutRatio);
 
     const ratio = 1 - player.troops() / max;
     toAdd *= ratio;

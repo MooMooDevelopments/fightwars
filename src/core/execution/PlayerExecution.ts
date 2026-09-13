@@ -114,7 +114,10 @@ export class PlayerExecution implements Execution {
     }
 
     if (!upkeepUnpaid) {
-      const troopInc = this.config.troopIncreaseRate(this.player);
+      const troopInc = this.config.troopIncreaseRate(
+        this.player,
+        this.mg.numTilesWithFallout() / this.mg.numLandTiles(),
+      );
       this.player.addTroops(troopInc);
     }
 

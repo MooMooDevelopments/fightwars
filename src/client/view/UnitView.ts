@@ -237,6 +237,10 @@ export class UnitView {
   updateNukeState(_update: NukeState): void {
     throw new Error("updateNukeState is not supported on UnitView");
   }
+  isIrradiated(): boolean {
+    return this.gameView.hasFallout(this.tile());
+  }
+
   tile(): TileRef {
     return this.state.pos;
   }

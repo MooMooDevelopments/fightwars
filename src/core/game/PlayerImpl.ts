@@ -120,6 +120,8 @@ export class PlayerImpl implements Player {
   private _troops: bigint;
   /** Materials on hand (brief §6.3); rides the packed stats lane. */
   private _materials: bigint;
+  /** Owned tiles under fallout (brief §6.4); rare change, object lane. */
+  public _irradiatedTiles = 0;
 
   /** Cumulative ship-trade revenue (arrival credit for src + dst port owners). */
   private _tradeGold: bigint = 0n;
@@ -387,6 +389,7 @@ export class PlayerImpl implements Player {
       piracyGold: this._piracyGold,
       goldEarned: this._goldEarned,
       materials: this._materials,
+      irradiatedTiles: this._irradiatedTiles,
       troops: this.troops(),
       allies: allies,
       embargoes: embargoes,
@@ -1360,6 +1363,10 @@ export class PlayerImpl implements Player {
 
   materials(): Gold {
     return this._materials;
+  }
+
+  numIrradiatedTiles(): number {
+    return this._irradiatedTiles;
   }
 
   addMaterials(toAdd: Gold): void {

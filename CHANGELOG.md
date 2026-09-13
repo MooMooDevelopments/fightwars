@@ -34,6 +34,10 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   leave, none arrive. A fleet is now worth building for something other than piracy.
 - **Embargoes have a price.** Being embargoed by more of the world makes the trade you still
   have worth less — one embargo is a nuisance, five are a siege.
+- **Nukes have consequences.** Fallout now lasts three minutes whoever holds the ground, and the
+  land and cities under it produce nothing while it does. Crossing it gets harder as more of the
+  world burns, not easier. Once more than a twentieth of the world is irradiated, everyone
+  recruits less — including whoever launched — and the Doomsday Clock runs ahead.
 
 ### Phase 2 — Infrastructure (2026-09-12)
 

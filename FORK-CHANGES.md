@@ -713,3 +713,37 @@ many of its possible partners have closed to it. One embargo is a nuisance; five
 - The "friendly fleet" test had a stranger's warship in range too and could not fail; it is now
   the one relation that needs no diplomacy — a player's own warship never closes its own port —
   and was watched failing.
+
+### Nuke consequences (brief §6.4, first half, session 11)
+
+Fallout gets a clock and the clock gets consequences: it expires after three minutes, it
+outlasts conquest, the owned land and cities under it count for nothing, a world more than 5 %
+irradiated recruits less for everyone, the crossing modifier now rises with world fallout
+instead of falling, and world fallout advances the existing Doomsday Clock rather than starting a
+second one. `docs/MECHANICS.md` §04 "Gaps" A–C.
+
+#### Shared upstream files edited
+
+- `src/core/configuration/Config.ts` — `falloutHasConsequences`, `falloutDurationTicks` 1800,
+  `falloutRegenThreshold` 0.05, `falloutRegenDepth` 0.75, `falloutRegenModifier`,
+  `nuclearWinterSecondsPerFalloutShare` 600 in `DOOMSDAY_CLOCK_DEFAULTS`; `falloutDefenseModifier` inverted to 3 + 2·ratio;
+  `troopIncreaseRate(player, worldFalloutRatio = 0)`; `maxTroops` subtracts irradiated tiles and
+  skips irradiated cities.
+- `src/core/game/GameImpl.ts` — the expiry queue and `expireFallout()` (once a second, front of
+  the queue only); `conquer` keeps the bit and moves the count; `relinquish` drops it.
+- `src/core/execution/DoomsdayClockExecution.ts` — `elapsed` advanced by nuclear winter.
+- `src/core/execution/PlayerExecution.ts`, `src/client/hud/layers/ControlPanel.ts` — pass the
+  world fallout ratio into the troop rate (both call sites, so the HUD's rate matches the sim's).
+- `src/core/game/Game.ts`, `src/core/game/UnitImpl.ts`, `src/client/view/UnitView.ts` —
+  `Unit.isIrradiated()`; `Player.numIrradiatedTiles()`.
+- `src/core/game/PlayerImpl.ts`, `src/core/game/GameUpdates.ts`, `src/core/game/GameUpdateUtils.ts`,
+  `src/client/render/types/Renderer.ts`, `src/client/view/PlayerView.ts` — `irradiatedTiles` on
+  the object lane (rare change), diffed and merged like the trade counters.
+- `tests/__snapshots__/AttackLogicGolden.test.ts.snap` — the rows with fallout moved, for the
+  inverted modifier and nothing else; every other row is byte-identical.
+- Four test fixtures with `PlayerState` literals gained `irradiatedTiles: 0`.
+- `scripts/balanceRun.ts` — `--legacy-fallout`, and a fallout line in the report.
+
+#### FightWars-only files added
+
+- `tests/nukes/FalloutConsequences.test.ts`.

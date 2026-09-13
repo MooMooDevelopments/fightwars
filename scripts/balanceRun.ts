@@ -16,6 +16,7 @@
  *                                      [--no-supply] [--flat-terrain]
  *                                      [--no-upkeep] [--no-materials]
  *                                      [--no-blockades] [--no-embargo-price]
+ *                                      [--legacy-fallout]
  *
  * `--no-supply` turns the supply penalty and its attrition off, and
  * `--flat-terrain` turns the elevation curves off (the band table stays),
@@ -67,6 +68,16 @@ class NoSupply extends Config {
   }
   supplyAttritionRate(): number {
     return 0;
+  }
+}
+
+/** The same game with fallout as it was: permanent until conquered, then gone. */
+class LegacyFallout extends Config {
+  falloutHasConsequences(): boolean {
+    return false;
+  }
+  falloutDurationTicks(): number {
+    return 1_000_000_000;
   }
 }
 
@@ -137,6 +148,7 @@ async function main(): Promise<void> {
   const noMaterials = process.argv.includes("--no-materials");
   const noBlockades = process.argv.includes("--no-blockades");
   const noEmbargoPrice = process.argv.includes("--no-embargo-price");
+  const legacyFallout = process.argv.includes("--legacy-fallout");
   if (
     [
       noSupply,
@@ -145,13 +157,14 @@ async function main(): Promise<void> {
       noMaterials,
       noBlockades,
       noEmbargoPrice,
+      legacyFallout,
     ].filter(Boolean).length > 1
   ) {
     throw new Error("one lever at a time");
   }
   console.debug = () => {};
   console.log(
-    `[balance] map=${map} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}${noUpkeep ? " upkeep=off" : ""}${noMaterials ? " materials=off" : ""}${noBlockades ? " blockades=off" : ""}${noEmbargoPrice ? " embargo-price=off" : ""}\n`,
+    `[balance] map=${map} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}${noUpkeep ? " upkeep=off" : ""}${noMaterials ? " materials=off" : ""}${noBlockades ? " blockades=off" : ""}${noEmbargoPrice ? " embargo-price=off" : ""}${legacyFallout ? " fallout=legacy" : ""}\n`,
   );
 
   const gameConfig: GameConfig = {
@@ -188,7 +201,9 @@ async function main(): Promise<void> {
             ? new NoBlockades(gameConfig, null, false)
             : noEmbargoPrice
               ? new NoEmbargoPrice(gameConfig, null, false)
-              : new Config(gameConfig, null, false);
+              : legacyFallout
+                ? new LegacyFallout(gameConfig, null, false)
+                : new Config(gameConfig, null, false);
   const mapLoader = new NodeGameMapLoader(
     path.join(PROJECT_ROOT, "resources/maps"),
   );
@@ -272,6 +287,10 @@ async function main(): Promise<void> {
   );
   const materials = alive.reduce((s, p) => s + Number(p.materials()), 0);
   console.log(`Materials held: ${materials}`);
+  console.log(
+    `Fallout:        ${game.numTilesWithFallout()} tiles (${pct(game.numTilesWithFallout(), land)}), ` +
+      `${alive.reduce((s, p) => s + p.numIrradiatedTiles(), 0)} of them owned`,
+  );
   console.log(
     `Fleet:          ${countOf(UnitType.Warship)} warships, ` +
       `${countOf(UnitType.TradeShip)} trade ships at sea`,

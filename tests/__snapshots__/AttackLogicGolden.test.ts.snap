@@ -1658,14 +1658,14 @@ exports[`attackLogic golden values > player vs player: situational modifiers 1`]
     "tickFraction": 0.0212105,
   },
   "fallout 10%": {
-    "attackerLoss": 185.076,
+    "attackerLoss": 123.384,
     "defenderLoss": 5,
-    "tickFraction": 0.10181,
+    "tickFraction": 0.0678735,
   },
   "fallout 100%": {
-    "attackerLoss": 115.673,
+    "attackerLoss": 192.788,
     "defenderLoss": 5,
-    "tickFraction": 0.0636314,
+    "tickFraction": 0.106052,
   },
   "human attacks bot": {
     "attackerLoss": 26.9903,

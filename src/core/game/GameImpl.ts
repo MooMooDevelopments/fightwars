@@ -242,6 +242,47 @@ export class GameImpl implements Game {
     this._territoryVersion++;
     this._map.setFallout(tile, value);
     this.recordTileUpdate(tile);
+    if (value) {
+      // Constant duration, so pushes arrive in expiry order and the queue
+      // drains from the front — no per-tile timestamp store needed.
+      this.falloutExpiry.push(
+        this._ticks + this._config.falloutDurationTicks(),
+        tile,
+      );
+    }
+  }
+
+  /** [expiryTick, tile] pairs in push order; drained in expireFallout. */
+  private falloutExpiry: number[] = [];
+  private falloutExpiryHead = 0;
+
+  /**
+   * Fallout consequences (brief §6.4): irradiated ground clears itself after
+   * falloutDurationTicks, whoever holds it by then. Once a second, like the
+   * Doomsday Clock, and only the front of the queue, which is in tick order.
+   */
+  private expireFallout(): void {
+    const q = this.falloutExpiry;
+    while (
+      this.falloutExpiryHead < q.length &&
+      q[this.falloutExpiryHead] <= this._ticks
+    ) {
+      const tile = q[this.falloutExpiryHead + 1];
+      this.falloutExpiryHead += 2;
+      if (!this._map.hasFallout(tile)) continue;
+      this._map.setFallout(tile, false);
+      this._territoryVersion++;
+      const owner = this.owner(tile);
+      if (owner.isPlayer()) (owner as PlayerImpl)._irradiatedTiles--;
+      this.recordTileUpdate(tile);
+    }
+    if (
+      this.falloutExpiryHead >= 4096 &&
+      this.falloutExpiryHead * 2 > q.length
+    ) {
+      this.falloutExpiry = q.slice(this.falloutExpiryHead);
+      this.falloutExpiryHead = 0;
+    }
   }
 
   setWater(tile: TileRef): void {
@@ -492,6 +533,7 @@ export class GameImpl implements Game {
     this.updates = createGameUpdatesMap();
     this.tileUpdatePairs.length = 0;
     this._supplyNetwork.tick(this._ticks);
+    if (this._ticks % 10 === 0) this.expireFallout();
     this.execs.forEach((e) => {
       if (
         (!this.inSpawnPhase() || e.activeDuringSpawnPhase()) &&
@@ -771,7 +813,16 @@ export class GameImpl implements Game {
     owner._lastTileChange = this._ticks;
     owner._tileChangeVersion++;
     this.updateBorders(tile);
-    this._map.setFallout(tile, false);
+    // Fallout outlasts conquest (brief §6.4): the tile changes hands still
+    // irradiated, and the new owner's books carry it until it expires.
+    if (this._map.hasFallout(tile)) {
+      if (this._config.falloutHasConsequences()) {
+        if (previousOwner.isPlayer()) previousOwner._irradiatedTiles--;
+        owner._irradiatedTiles++;
+      } else {
+        this._map.setFallout(tile, false);
+      }
+    }
     this._supplyNetwork.onConquer(tile, owner.smallID());
     this.recordTileUpdate(tile);
   }
@@ -789,6 +840,7 @@ export class GameImpl implements Game {
     previousOwner._tileChangeVersion++;
     previousOwner._tiles.delete(tile);
     previousOwner._borderTiles.delete(tile);
+    if (this._map.hasFallout(tile)) previousOwner._irradiatedTiles--;
 
     this._territoryVersion++;
     this._map.setOwnerID(tile, 0);

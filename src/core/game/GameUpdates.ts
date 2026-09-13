@@ -264,6 +264,8 @@ export interface PlayerUpdate {
   goldEarned?: Gold;
   /** Materials on hand (brief §6.3). Per-tick churn: rides the packed lane. */
   materials?: Gold;
+  /** Owned tiles under fallout (brief §6.4). Rare change: object lane. */
+  irradiatedTiles?: number;
   troops?: number;
   allies?: number[];
   embargoes?: Set<PlayerID>;

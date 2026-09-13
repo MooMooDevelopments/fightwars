@@ -57,6 +57,7 @@ function sdConfig(over: Partial<SDConfig> = {}): SDConfig {
     warshipDrainStartPercent: 10, // fixture: same start as troops (linear curve below)
     warshipDrainMaxPercent: 100, // ships ramp to a higher ceiling than troops
     warshipDrainCurveExponent: 1, // fixture uses a linear ramp for exact numbers
+    nuclearWinterSecondsPerFalloutShare: 0, // no fallout in these fixtures
     ...over,
   };
 }

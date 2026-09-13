@@ -78,6 +78,8 @@ export interface PlayerState {
   goldEarned: number;
   /** Materials on hand (live, packed lane). */
   materials: number;
+  /** Owned tiles under fallout (live, object lane). */
+  irradiatedTiles: number;
   troops: number;
   isTraitor: boolean;
   traitorRemainingTicks: number;

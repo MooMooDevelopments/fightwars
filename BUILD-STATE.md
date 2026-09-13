@@ -1,6 +1,6 @@
 # FightWars Build State
 
-Last session: 2026-09-14 (session 11) | Current phase: **5 (depth)** — 6.1 (supply lines) and 6.2 (elevation) done, **6.3 done** (upkeep, materials, blockades, embargo price; Manpower surfaced as `maxTroops`, not rebuilt); Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
+Last session: 2026-09-14 (session 11) | Current phase: **5 (depth)** — 6.1 (supply lines) and 6.2 (elevation) done, **6.3 done** (upkeep, materials, blockades, embargo price; Manpower surfaced as `maxTroops`, not rebuilt), **6.4 half done** (nuke consequences; the six units not started); Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
 
 Repo: `C:\Users\disbo\dev\fightwars` · `upstream` = openfrontio/OpenFrontIO (forked at
 `c77005586`, rebased onto `7d95251f1` the same day) · `origin` = github.com/MooMooDevelopments/fightwars
@@ -27,6 +27,41 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 `npm run load:test -- --clients 150 --map world --turns 600`.
 
 ## Handoff — read this first (written 2026-09-14 at the end of session 11)
+
+### Session 11 (continued) — item 6.4 opens with nuke consequences
+
+- **What shipped.** Fallout gets a clock and the clock gets consequences: it expires after three
+  minutes whoever holds the ground; it outlasts conquest and the owned land and cities under it
+  count for nothing in `maxTroops`; a world more than 5 % irradiated recruits less for everyone,
+  the nuker included; the crossing modifier now rises with world fallout (3 → 5) instead of
+  falling (5 → 3); and world fallout advances the existing Doomsday Clock — one entry in
+  `DOOMSDAY_CLOCK_DEFAULTS`, no second clock. `docs/MECHANICS.md` §04 "Gaps" A–C; files in
+  `FORK-CHANGES.md`. All behind `Config.falloutHasConsequences()`; `--legacy-fallout` flips it.
+- **No per-tile timestamp store.** Durations are constant, so `setFallout(true)` pushes
+  `[expiryTick, tile]` onto a flat array that is therefore already in expiry order, and
+  `expireFallout()` pops from the front once a second. The obvious `Uint32Array` per tile is
+  8 MB on the world map for a value almost every tile never has.
+- **`irradiatedTiles` went to the object lane, not the sextet.** It changes when a nuke lands or
+  a mark expires, not every tick — the opposite case from materials — so it is diffed and merged
+  like the trade counters. The lane decision is per field, and both directions are now on the
+  record.
+- **A test suite's hand-built config caught a design slip.** The first cut put nuclear winter
+  on `Config` as a method; `DoomsdayClockExecution.test.ts` builds the clock's config object by
+  hand and 38 cases failed on "not a function". Moving the value into `DOOMSDAY_CLOCK_DEFAULTS`,
+  where the MECHANICS hook note had said it belonged, fixed 35 of them and left three that read
+  `NaN` from the fixture's missing field until the execution learned to default it. The fixture
+  gained one line. **When a mechanic extends an existing system, its tunables go where that
+  system keeps its tunables.**
+- **The mark now outlives the conquest, and the bots show it.** Same seed, 8000 ticks: under
+  legacy semantics the world ends with **0** fallout tiles — nations do nuke, but every mark is
+  erased the moment the land is retaken; with consequences on it ends with **2 945** irradiated
+  tiles, all of them owned, producing nothing for three minutes each. That is the mechanic doing
+  exactly what §6.4 asks. Alive 23 either way; top-5 share 43.3 % → 46.6 %; posts 17 → 20 —
+  small, because 0.5 % of the world is not yet a burning one. The lever's baseline hash differs
+  from the trade commit's for one unrelated reason: the blockade sweep was inverted after that
+  run, and a port still under construction is no longer blockadable (it is not operating).
+- **Nation economy** (`NationGoldPerMinute`): trade gold −4.8 % (446.0M → 424.8M), train gold +2.9 % (54.1M → 55.7M) —
+  divergence, as with every earlier item.
 
 ### Session 11 (continued) — item 6.3 closes: blockades and the embargo price
 
@@ -582,10 +617,10 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 
 ## Next up (concrete, ordered)
 
-0. **Phase 5 continues.** 6.1, 6.2 and 6.3 are done. Next by value is **6.4** — six new units
-   (`docs/MECHANICS.md` §03 7.1 has the 25-file checklist) and the nuke consequences (§04 A–C,
-   extending the existing Doomsday Clock) — or **6.5 tiered diplomacy** (§05), which the embargo
-   price now has a foothold in. Before either: a retune pass on the economy as a whole (upkeep
+0. **Phase 5 continues.** 6.1, 6.2, 6.3 and the nuke half of 6.4 are done. Next: the **six
+   units** of 6.4 (`docs/MECHANICS.md` §03 7.1 has the 25-file checklist, §04 D–E the hooks;
+   budget ~25 files + atlas + locale per unit, so do them one at a time with a lever each), or
+   **6.5 tiered diplomacy** (§05), which the embargo price now has a foothold in. Before either: a retune pass on the economy as a whole (upkeep
    table, flat materials prices, tariff maximum) now that all of 6.3 is live, and the nation-AI
    note that bots never blockade on purpose. Manpower: surface `maxTroops` in the HUD. The
    **embargo price** was designed as
@@ -678,6 +713,27 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   remains by design.
 - The discord card on a clan overview says "invite is no longer valid" for any invite the
   browser cannot resolve against Discord's public API (offline / fake invite) — expected.
+
+## Numbers last measured — Phase 5 item 6.4, nuke consequences (2026-09-14, session 11)
+
+- Determinism hash at `perf:gate` (1000 ticks): `24015216964771530`, unchanged — nothing is
+  irradiated that early. `perf:gate` idle: **mean 2.62 ms**, p95 4.75, p99 6.8, 0 over budget.
+- `test:determinism:full`: pass 3/3 in 226 s. `npm test`: 504 + 69 files, 6029 + 706 tests —
+  one file, `NationGoldPerMinute`, was red in the full run because its snapshot regeneration
+  ran concurrently with the suite and lost the write; regenerated alone afterwards and green
+  alone. **Do not run a `-u` regeneration beside the suite that reads the same file.**
+- **Bot-vs-bot** (`balance:run --ticks 8000`, world, 150 bots + nations, seed `perf-gate`):
+
+  | after 8000 ticks    | legacy fallout      | consequences on     |
+  | ------------------- | ------------------- | ------------------- |
+  | players alive       | 23                  | 23                  |
+  | top 1 / top 5 share | 12.3 / 43.3 %       | 12.2 / 46.6 %       |
+  | fallout tiles       | 0                   | 2945                |
+  | final hash          | `33068600064576010` | `30525071524541864` |
+
+  Nations nuke on this seed; legacy semantics erase every mark by conquest before the end,
+  consequences keep them on owned land. The golden rows with fallout moved for the inverted
+  crossing modifier and nothing else.
 
 ## Numbers last measured — Phase 5 item 6.3, blockades + embargo price (2026-09-14, session 11)
 
