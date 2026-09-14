@@ -79,6 +79,25 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — item 9 opens: attack presets, client-side
+
+- **What shipped.** Four keybinds — `Shift+1` to `Shift+4` — set the attack ratio to a
+  quarter, half, three quarters and everything (`ATTACK_PRESETS`, `SetAttackRatioEvent`).
+  A step key nudges the ratio; a preset key names it, so a probe becomes an all-in in one
+  press without counting increments. The plain digits stay the build menu's — the key
+  matcher compares the shift state, so the two never collide. Listed and rebindable in the
+  settings' keybinds tab. Like the step keys, a preset changes this game's ratio and not
+  the stored default, which the slider and the settings own.
+- **Item 9 re-read.** HANDOFF §3 said the three features are intents through the lockstep
+  protocol. Presets are not, and neither need the other two be: a build queue is a client
+  that holds a build order and sends the ordinary intent when the gold is there; a rally
+  point is a client that sends the ordinary move intent to each new warship of its own.
+  Nothing new rides the wire and the simulation stays as it is. That is the plan for both
+  (`docs/HANDOFF.md` §3 item 9).
+- **Guards broken and watched fail:** the panel ignoring the event (two cases), the keys
+  not wired. Not photographed: the browser pane's synthetic key press carries no `code`
+  (noted at the HUD-hide entry); the input-handler test is the evidence.
+
 ### Session 13 — the leaderboard tables and the send-resource modal name no raw hue
 
 - **What shipped.** The three leaderboard tables (117 raw hue classes between them and the

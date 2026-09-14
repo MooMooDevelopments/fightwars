@@ -444,17 +444,27 @@ every other locale, unused. An orphan-key sweep is its own job.
 
 ### 9 — Build queue, rally points, attack presets
 
-Keybind remapping already exists (`UserSettingModal.ts`, "keybinds" tab). The other three do
-not, and they are **intents** — player commands travelling through the lockstep protocol — so
-each needs a schema entry in `src/core/Schemas.ts` (beside `AttackIntentSchema`), a `case` in
-`src/core/execution/ExecutionManager.ts` (which dispatches on `"attack"`, `"spawn"`, `"boat"`,
-`"allianceRequest"`, …), an `Execution` class in `src/core/execution/`, a test in
-`tests/ExecutionManagerIntents.test.ts`, and a `docs/MECHANICS.md` note.
+Keybind remapping already exists (`UserSettingModal.ts`, "keybinds" tab).
 
-**This is the only Phase 4 item that touches the simulation** — everything else is render-only.
-So: integer maths, seeded randomness only, a replay record version bump, and the determinism
-gate green after every step. Those are the Phase 5 rules applied early. Treat it as Phase 5
-work that happens to be listed here, and do it last.
+**Done (session 13): attack presets.** `Shift+1`–`Shift+4` set the ratio to 25 / 50 / 75 /
+100 % (`ATTACK_PRESETS`, `SetAttackRatioEvent`, `ControlPanel.applyAttackRatio`); rebindable;
+`tests/client/AttackPresets.test.ts`.
+
+**The other two are client-side too — no intent, no wire change.** An earlier version of this
+section said all three were intents through the lockstep protocol. They need not be:
+
+- **Build queue**: a client controller holds a build order (unit type, tile) and sends the
+  ordinary `buildUnit` intent the tick the player can afford it, then drops it. The sim never
+  knows a queue existed. UI: an unaffordable item in the build menu becomes "queued" on
+  click; the control panel shows the queue as chips with a cancel.
+- **Rally points**: a client controller keeps one tile per player; each new warship of the
+  player's own (seen in `updatesSinceLastTick` with `createdAt === ticks()`) gets the
+  ordinary move intent to it. Set from the radial menu on a water tile; shown as a flag on
+  the map (`MoveIndicatorPass` has the grammar).
+
+Neither touches `src/core`, so the determinism gate is unaffected and no replay version
+bump is needed. If either ever needs the sim to know (a queue that reserves gold, a rally
+that ships know about), that is the intent path described in `docs/MECHANICS.md` §06.
 
 **Phase 4 gate.** Everything above visible in the Browser pane, `impeccable` and
 `web-design-guidelines` run on the real code, all standard gates green, fps and bundle numbers

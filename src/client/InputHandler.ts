@@ -168,6 +168,18 @@ export class AttackRatioEvent implements GameEvent {
   constructor(public readonly attackRatio: number) {}
 }
 
+/**
+ * Set the attack ratio to a preset (brief §7 item 9), in percent. A step
+ * key nudges the ratio; a preset key names it, so a player can go from a
+ * probe to everything in one press without counting increments.
+ */
+export class SetAttackRatioEvent implements GameEvent {
+  constructor(public readonly percent: number) {}
+}
+
+/** The four presets, in the order of their keys: a quarter, half, most, all. */
+export const ATTACK_PRESETS = [25, 50, 75, 100] as const;
+
 export class ReplaySpeedChangeEvent implements GameEvent {
   constructor(public readonly replaySpeedMultiplier: ReplaySpeedMultiplier) {}
 }
@@ -365,6 +377,11 @@ export class InputHandler {
     this.addKeybindAndEvent(this.keybinds.attackRatioUp, () => {
       const increment = this.userSettings.attackRatioIncrement();
       this.eventBus.emit(new AttackRatioEvent(increment));
+    });
+    ATTACK_PRESETS.forEach((percent, i) => {
+      this.addKeybindAndEvent(this.keybinds[`attackPreset${i + 1}`], () => {
+        this.eventBus.emit(new SetAttackRatioEvent(percent));
+      });
     });
     this.addKeybindAndEvent(this.keybinds.swapDirection, () => {
       const nextDirection = !this.uiState.rocketDirectionUp;

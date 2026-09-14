@@ -32,6 +32,7 @@ import {
   type DesktopDisplaySnapshot,
 } from "./DesktopDisplay";
 import { isDesktopShell } from "./DesktopShell";
+import { ATTACK_PRESETS } from "./InputHandler";
 import { pushMapLayerState } from "./MapLayerSettings";
 import { Platform } from "./Platform";
 import type { AudioControls } from "./sound/CuePlayer";
@@ -1470,6 +1471,24 @@ export class UserSettingModal extends BaseModal {
         .display=${this.getKeyChar("attackRatioUp")}
         @change=${this.handleKeybindChange}
       ></setting-keybind>
+
+      ${ATTACK_PRESETS.map(
+        (percent, i) => html`
+          <setting-keybind
+            action=${`attackPreset${i + 1}`}
+            label=${translateText("user_setting.attack_preset", {
+              n: i + 1,
+            })}
+            description=${translateText("user_setting.attack_preset_desc", {
+              percent,
+            })}
+            defaultKey=${this.defaultKeybinds[`attackPreset${i + 1}`]}
+            .value=${this.getKeyValue(`attackPreset${i + 1}`)}
+            .display=${this.getKeyChar(`attackPreset${i + 1}`)}
+            @change=${this.handleKeybindChange}
+          ></setting-keybind>
+        `,
+      )}
 
       <h2
         class="text-blue-200 text-xl font-bold mt-8 mb-3 border-b border-white/10 pb-2"

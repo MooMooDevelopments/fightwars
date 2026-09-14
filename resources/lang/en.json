@@ -2170,6 +2170,8 @@
     "anonymous_names_desc": "Hide real player names with random ones on your screen.",
     "anonymous_names_label": "Hidden Names",
     "attack_keybinds": "Attack Keybinds",
+    "attack_preset": "Attack Ratio Preset {n}",
+    "attack_preset_desc": "Set the attack ratio to {percent}%",
     "attack_ratio_controls": "Attack Ratio Controls",
     "attack_ratio_desc": "What percentage of your troops to send in an attack (1–100%)",
     "attack_ratio_down": "Decrease Attack Ratio",

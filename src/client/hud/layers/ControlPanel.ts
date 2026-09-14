@@ -13,7 +13,7 @@ import {
   UserSettings,
 } from "../../../core/game/UserSettings";
 import { Controller } from "../../Controller";
-import { AttackRatioEvent } from "../../InputHandler";
+import { AttackRatioEvent, SetAttackRatioEvent } from "../../InputHandler";
 import { UIState } from "../../UIState";
 import {
   getGamesPlayed,
@@ -112,22 +112,22 @@ export class ControlPanel extends LitElement implements Controller {
     this.eventBus.on(AttackRatioEvent, (event) => {
       let newAttackRatio = this.attackRatio + event.attackRatio / 100;
 
-      if (newAttackRatio < 0.01) {
-        newAttackRatio = 0.01;
-      }
-
-      if (newAttackRatio > 1) {
-        newAttackRatio = 1;
-      }
-
       if (newAttackRatio === 0.11 && this.attackRatio === 0.01) {
         // If we're changing the ratio from 1%, then set it to 10% instead of 11% to keep a consistency
         newAttackRatio = 0.1;
       }
 
-      this.attackRatio = newAttackRatio;
-      this.onAttackRatioChange(this.attackRatio);
+      this.applyAttackRatio(newAttackRatio);
     });
+    this.eventBus.on(SetAttackRatioEvent, (event) => {
+      this.applyAttackRatio(event.percent / 100);
+    });
+  }
+
+  /** Clamp to the slider's range, then take it as the new ratio. */
+  private applyAttackRatio(ratio: number): void {
+    this.attackRatio = Math.min(1, Math.max(0.01, ratio));
+    this.onAttackRatioChange(this.attackRatio);
   }
 
   tick() {

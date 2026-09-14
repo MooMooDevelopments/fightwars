@@ -1311,3 +1311,20 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
 
 - `tests/client/HudTokens.test.ts` — the podium (three colours to every viewer, legible on
   the surface, bronze apart from `signal`); the four files name no raw hue.
+
+### Attack presets (Phase 4 item 9, session 13)
+
+#### Shared upstream files edited
+
+- `src/core/game/UserSettings.ts` — `attackPreset1`–`4` default keybinds (`Shift+Digit1`–`4`).
+- `src/client/InputHandler.ts` — `SetAttackRatioEvent`, `ATTACK_PRESETS`, the four keys.
+- `src/client/hud/layers/ControlPanel.ts` — `applyAttackRatio` (the clamp the step handler
+  had, shared), the preset handler.
+- `src/client/UserSettingModal.ts` — the four rows in the keybinds tab.
+- `resources/lang/en.json` — `user_setting.attack_preset`, `attack_preset_desc`.
+
+#### FightWars-only files added
+
+- `tests/client/AttackPresets.test.ts` — the keys and their values, no collision with the
+  build digits, the input handler naming the ratio on Shift+digit and not on the plain digit,
+  the panel taking and clamping a preset without touching the stored default.
