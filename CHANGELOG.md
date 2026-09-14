@@ -74,6 +74,9 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   nearest Missile Silo within 120 tiles straight to the tile you click and land as an attack
   from there — over water, mountains, anyone's land. Nothing shoots them down. Hotkey I.
   Nations drop rather than sail when a silo reaches a target they cannot walk to.
+- **Caster view.** Spectators, replay viewers and the fallen get a panel: who leads
+  and how close they are to the win bar, at their pace; the territory chart; and the
+  five largest's troops and gold.
 - **Match report.** The end-of-game screen now charts who held how much of the map
   over time, shows where your gold came from, how many tiles you held per thousand
   troops you sent, and which alliances broke and when.

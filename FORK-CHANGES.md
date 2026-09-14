@@ -1639,3 +1639,17 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
 
 - `src/client/view/MatchTimeline.ts`, `src/client/hud/layers/MatchReport.ts`.
 - `tests/client/view/MatchTimeline.test.ts`, `tests/client/MatchReport.test.ts`.
+
+### The caster view (Phase 6, session 13)
+
+#### Shared upstream files edited
+
+- `index.html` — `<caster-panel>`.
+- `src/client/hud/GameRenderer.ts` — wired and in the controller list.
+- `src/client/hud/layers/MatchReport.ts` — the chart moved out.
+- `resources/lang/en.json` — `caster.*`.
+
+#### FightWars-only files added
+
+- `src/client/hud/layers/CasterPanel.ts`, `src/client/hud/layers/TerritoryChart.ts`.
+- `tests/client/CasterPanel.test.ts`.

@@ -218,6 +218,21 @@
     "cancelled": "Queued build cancelled.",
     "queued": "{unit} queued. It builds when you can afford it."
   },
+  "caster": {
+    "bar": "Win bar: {bar}%",
+    "economy": "The five largest, now",
+    "eta": "At this pace: about {minutes} min",
+    "eta_none": "Not closing at this pace",
+    "eta_now": "Past the bar",
+    "gold": "Gold",
+    "hide": "Hide",
+    "leader": "{name} holds {share}% of the land",
+    "projection": "Win projection",
+    "show": "Caster view",
+    "timer": "Timer ends in {time}",
+    "title": "Caster view",
+    "troops": "Troops"
+  },
   "change_username_modal": {
     "title": "Change Username",
     "unavailable": "Username management isn't available on this account yet."

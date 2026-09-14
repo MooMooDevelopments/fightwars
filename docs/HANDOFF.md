@@ -102,8 +102,9 @@ licenses:check`, `npm run perf:gate` on an idle box; per sim change an 8000-tick
    ring and the hill on the map), the Blitz one-click preset, placements, and the four
    historical scenarios, and Draft. Every mode in §6.7 has shipped. §5's remainders:
    a capital marker for Capital Strike, the scenarios in the rotation, region and
-   doctrine picks in the draft; post-match analytics are in (the match report in the win
-   modal); then spectator/caster, replay scrubbing, challenges, creation tools.
+   doctrine picks in the draft; post-match analytics and the caster view are in (the
+   match report in the win modal, the caster panel for watchers); then replay
+   scrubbing, challenges, creation tools.
 
 ### Things that bit us in session 13 (do not relearn)
 
@@ -652,8 +653,9 @@ Remaining, roughly in the order the brief implies:
   clock; a "Blitz" badge on the lobby card) and **one card in the host and solo modals**
   (session 13: `BLITZ_PRESET`, the speed, the compact map and the clock at once, pressed
   while all three hold).
-- **Spectator/caster mode** with economy graphs and a win projection (`spectator` join
-  exists; graphs are `dataviz` work), **replay viewer** with timeline scrubbing and
+- **Spectator/caster mode is in** (session 13: `<caster-panel>` for spectators, replays
+  and the dead — the win projection off the leader's pace, the territory chart, the
+  five largest's troops and gold). **Replay viewer** with timeline scrubbing and
   jump-to-event (the client already replays records; scrubbing needs snapshotting or
   re-simulation from turn 0). **Post-match analytics are in** (session 13: `MatchTimeline`
   on the client, `<match-report>` in the win modal — land over time for the top five, gold

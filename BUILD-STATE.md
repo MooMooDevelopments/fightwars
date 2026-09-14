@@ -79,6 +79,22 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — the caster view
+
+- **What shipped.** A panel for whoever is watching rather than playing — spectators,
+  replays, the dead — top right under the clock, collapsible: the leader against the win
+  bar with a projection read off their last two and a half minutes ("about N min at this
+  pace", "past the bar", "not closing"), the lobby timer's remainder when there is one,
+  the territory chart, and the five largest's troops and gold with a small bar each on
+  its own scale. Hidden for a living player. The chart moved out of the match report into
+  `<territory-chart>` so both draw it the same way.
+- **Guards broken and watched fail:** a flat pace projecting a time, the panel shown to a
+  living player. The suite gate caught the renderer's wiring test, which seeds every HUD
+  element by name and had no caster panel; it seeds and asserts it now.
+- **Not done:** a screenshot in the browser pane (it needs a spectator, a replay or a
+  death; jsdom rendered it), a caster's own pick of whom to follow, the replay scrubber
+  it wants beside it.
+
 ### Session 13 — the match report
 
 - **What shipped.** A client-side timeline — tiles of every living player every five

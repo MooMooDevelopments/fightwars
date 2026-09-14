@@ -6,6 +6,7 @@ import {
   createRenderer,
   GameRenderer,
 } from "../../../src/client/hud/GameRenderer";
+import type { CasterPanel } from "../../../src/client/hud/layers/CasterPanel";
 import type { EmojiTable } from "../../../src/client/hud/layers/EmojiTable";
 import type { WinModal } from "../../../src/client/hud/layers/WinModal";
 import { ShowEmojiMenuEvent } from "../../../src/client/InputHandler";
@@ -26,6 +27,7 @@ const HUD_TAGS = [
   "chat-display",
   "player-info-overlay",
   "win-modal",
+  "caster-panel",
   "new-lobby-prompt",
   "replay-panel",
   "game-right-sidebar",
@@ -91,6 +93,10 @@ describe("createRenderer", () => {
     const winModal = elements.get("win-modal") as WinModal;
     expect(winModal.eventBus).toBe(eventBus);
     expect(winModal.game).toBe(game);
+    // The caster panel too (brief §6.7).
+    const caster = elements.get("caster-panel") as CasterPanel;
+    expect(caster.eventBus).toBe(eventBus);
+    expect(caster.game).toBe(game);
 
     // Emoji table got its own initEventBus: opening the menu reaches it.
     const emojiTable = elements.get("emoji-table") as EmojiTable;

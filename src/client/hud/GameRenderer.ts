@@ -27,6 +27,7 @@ import { ActionableEvents } from "./layers/ActionableEvents";
 import { AlertFrame } from "./layers/AlertFrame";
 import { AttacksDisplay } from "./layers/AttacksDisplay";
 import { BuildMenu } from "./layers/BuildMenu";
+import { CasterPanel } from "./layers/CasterPanel";
 import { ChatDisplay } from "./layers/ChatDisplay";
 import { ChatModal } from "./layers/ChatModal";
 import { ControlPanel } from "./layers/ControlPanel";
@@ -167,6 +168,13 @@ export function createRenderer(
   }
   winModal.eventBus = eventBus;
   winModal.game = game;
+
+  const casterPanel = document.querySelector("caster-panel") as CasterPanel;
+  if (!(casterPanel instanceof CasterPanel)) {
+    console.error("caster panel not found");
+  }
+  casterPanel.eventBus = eventBus;
+  casterPanel.game = game;
 
   const newLobbyPrompt = document.querySelector(
     "new-lobby-prompt",
@@ -353,6 +361,7 @@ export function createRenderer(
     new ImpactFeedbackController(game, transformHandler, view),
     ...(mapLayerController ? [mapLayerController] : []),
     eventsDisplay,
+    casterPanel,
     actionableEvents,
     attacksDisplay,
     chatDisplay,

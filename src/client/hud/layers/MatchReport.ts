@@ -1,4 +1,4 @@
-import { html, LitElement, nothing, svg } from "lit";
+import { html, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { PlayerType } from "../../../core/game/Game";
 import { AllPlayersStats } from "../../../core/Schemas";
@@ -14,6 +14,10 @@ import {
 } from "../../../core/StatsSchemas";
 import { renderDuration, renderNumber, translateText } from "../../Utils";
 import { GameView } from "../../view";
+import "./TerritoryChart";
+import { fmtShare, labelRows, REPORT_SERIES_COLORS } from "./TerritoryChart";
+
+export { fmtShare, labelRows, REPORT_SERIES_COLORS };
 
 /**
  * Post-match analytics (brief §6.7), shown in the win modal.
@@ -27,14 +31,6 @@ import { GameView } from "../../view";
  * axis, a hover readout, and a table of the same numbers for anyone who
  * would rather read them.
  */
-export const REPORT_SERIES_COLORS = [
-  "#3987e5",
-  "#d95926",
-  "#199e70",
-  "#c98500",
-  "#d55181",
-] as const;
-
 const GOLD_SOURCES: { index: number; key: string }[] = [
   { index: GOLD_INDEX_WORK, key: "win_modal.gold_work" },
   { index: GOLD_INDEX_WAR, key: "win_modal.gold_war" },
@@ -44,44 +40,6 @@ const GOLD_SOURCES: { index: number; key: string }[] = [
   { index: GOLD_INDEX_TRAIN_OTHER, key: "win_modal.gold_train_other" },
   { index: GOLD_INDEX_UPKEEP, key: "win_modal.gold_upkeep" },
 ];
-
-const W = 600;
-const H = 200;
-const PAD = { top: 10, right: 110, bottom: 24, left: 40 };
-const LABEL_GAP = 12;
-
-/** An axis label: whole percents until the scale is small enough to need a decimal. */
-export function fmtShare(share: number, max: number): string {
-  return max < 0.05
-    ? `${(share * 100).toFixed(1)}%`
-    : `${Math.round(share * 100)}%`;
-}
-
-/**
- * The end-of-line labels, pushed apart so none overlaps: sorted by their
- * line's end, each at least LABEL_GAP below the one above, the stack pushed
- * back up if it runs past the bottom.
- */
-export function labelRows(
-  ys: readonly number[],
-  top: number,
-  bottom: number,
-): { index: number; y: number }[] {
-  const rows = ys
-    .map((y, index) => ({ index, y: Math.max(top, y) }))
-    .sort((a, b) => a.y - b.y);
-  for (let i = 1; i < rows.length; i++) {
-    rows[i].y = Math.max(rows[i].y, rows[i - 1].y + LABEL_GAP);
-  }
-  const overflow = rows.length === 0 ? 0 : rows[rows.length - 1].y - bottom;
-  if (overflow > 0) {
-    for (const r of rows) r.y -= overflow;
-    for (let i = 1; i < rows.length; i++) {
-      rows[i].y = Math.max(rows[i].y, rows[i - 1].y + LABEL_GAP);
-    }
-  }
-  return rows;
-}
 
 @customElement("match-report")
 export class MatchReport extends LitElement {
@@ -132,7 +90,7 @@ export class MatchReport extends LitElement {
               <div class="text-xs uppercase tracking-widest text-white/50 mb-1">
                 ${translateText("win_modal.report_territory")}
               </div>
-              ${this.renderChart(series, land)} ${this.renderLegend(ids)}
+              <territory-chart .game=${game} .ids=${ids}></territory-chart>
               <button
                 class="mt-1 text-xs text-white/60 underline"
                 @click=${() => (this.showTable = !this.showTable)}
@@ -149,131 +107,6 @@ export class MatchReport extends LitElement {
         ${this.renderBreaks()}
       </section>
     `;
-  }
-
-  private xOf(i: number, n: number): number {
-    return PAD.left + (n <= 1 ? 0 : (i / (n - 1)) * (W - PAD.left - PAD.right));
-  }
-
-  private yOf(share: number, max: number): number {
-    const inner = H - PAD.top - PAD.bottom;
-    return PAD.top + inner - (max <= 0 ? 0 : (share / max) * inner);
-  }
-
-  private renderChart(
-    series: { smallID: number; points: number[] }[],
-    land: number,
-  ) {
-    const timeline = this.game!.timeline();
-    const n = timeline.samples.length;
-    const maxShare = Math.max(
-      0.01,
-      ...series.map((s) => Math.max(...s.points.map((p) => p / land))),
-    );
-    const ticksAt = (i: number) => timeline.samples[i]?.tick ?? 0;
-    const gridShares = [0, maxShare / 2, maxShare];
-    const hover = this.hover;
-    return html`<div class="relative">
-      <svg
-        viewBox="0 0 ${W} ${H}"
-        class="w-full h-auto"
-        role="img"
-        aria-label=${translateText("win_modal.report_territory")}
-        @mousemove=${(e: MouseEvent) => this.onHover(e, n)}
-        @mouseleave=${() => (this.hover = null)}
-      >
-        ${gridShares.map(
-          (g) => svg`<line
-            x1=${PAD.left} x2=${W - PAD.right}
-            y1=${this.yOf(g, maxShare)} y2=${this.yOf(g, maxShare)}
-            stroke="rgba(255,255,255,0.10)" stroke-width="1" />
-          <text x=${PAD.left - 6} y=${this.yOf(g, maxShare) + 4}
-            text-anchor="end" font-size="11" fill="#898781">${fmtShare(g, maxShare)}</text>`,
-        )}
-        <text x=${PAD.left} y=${H - 6} font-size="11" fill="#898781">0:00</text>
-        <text
-          x=${W - PAD.right}
-          y=${H - 6}
-          text-anchor="end"
-          font-size="11"
-          fill="#898781"
-        >
-          ${renderDuration(ticksAt(n - 1) / 10)}
-        </text>
-        ${series.map((s, k) => {
-          const d = s.points
-            .map(
-              (p, i) =>
-                `${i === 0 ? "M" : "L"}${this.xOf(i, n).toFixed(1)},${this.yOf(p / land, maxShare).toFixed(1)}`,
-            )
-            .join(" ");
-          return svg`<path d=${d} fill="none" stroke=${REPORT_SERIES_COLORS[k]}
-              stroke-width="2" stroke-linejoin="round" data-series=${s.smallID} />`;
-        })}
-        ${labelRows(
-          series.map((s) =>
-            this.yOf(s.points[s.points.length - 1] / land, maxShare),
-          ),
-          PAD.top + 4,
-          H - PAD.bottom,
-        ).map(
-          ({ index, y }) => svg`<text x=${W - PAD.right + 6} y=${y + 4}
-              font-size="11" fill="#ffffff" data-series-label=${series[index].smallID}>${this.nameOf(series[index].smallID)}</text>`,
-        )}
-        ${hover === null
-          ? nothing
-          : svg`<line x1=${this.xOf(hover, n)} x2=${this.xOf(hover, n)}
-              y1=${PAD.top} y2=${H - PAD.bottom} stroke="rgba(255,255,255,0.4)" stroke-width="1" />`}
-      </svg>
-      ${hover === null
-        ? nothing
-        : html`<div
-            class="absolute top-1 left-12 bg-black/70 rounded px-2 py-1 text-xs text-white pointer-events-none"
-            data-report-tooltip
-          >
-            <div class="text-white/60">
-              ${renderDuration(ticksAt(hover) / 10)}
-            </div>
-            ${series.map(
-              (s, k) =>
-                html`<div class="flex items-center gap-1">
-                  <span
-                    class="inline-block w-2 h-2 rounded-full"
-                    style="background:${REPORT_SERIES_COLORS[k]}"
-                  ></span>
-                  ${this.nameOf(s.smallID)}:
-                  ${((s.points[hover] / land) * 100).toFixed(1)}%
-                </div>`,
-            )}
-          </div>`}
-    </div>`;
-  }
-
-  private onHover(e: MouseEvent, n: number) {
-    const svgEl = e.currentTarget as SVGSVGElement;
-    const rect = svgEl.getBoundingClientRect();
-    if (rect.width === 0 || n < 2) return;
-    const x = ((e.clientX - rect.left) / rect.width) * W;
-    const t = (x - PAD.left) / (W - PAD.left - PAD.right);
-    this.hover = Math.max(0, Math.min(n - 1, Math.round(t * (n - 1))));
-  }
-
-  private renderLegend(ids: number[]) {
-    return html`<div
-      class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-white/80 mt-1"
-      data-report-legend
-    >
-      ${ids.map(
-        (id, k) =>
-          html`<span class="flex items-center gap-1">
-            <span
-              class="inline-block w-2.5 h-2.5 rounded-full"
-              style="background:${REPORT_SERIES_COLORS[k]}"
-            ></span>
-            ${this.nameOf(id)}
-          </span>`,
-      )}
-    </div>`;
   }
 
   private renderTable(
