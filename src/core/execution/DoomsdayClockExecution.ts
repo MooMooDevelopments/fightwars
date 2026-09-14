@@ -194,7 +194,11 @@ export class DoomsdayClockExecution implements Execution {
             // attacker is passed, so any loss is environmental, never a credited
             // kill (see UnitImpl.delete). Healing is suppressed for flagged owners
             // in WarshipExecution.healWarship so the decay actually lands.
-            for (const ws of m.units(UnitType.Warship, UnitType.Submarine)) {
+            for (const ws of m.units(
+              UnitType.Warship,
+              UnitType.Submarine,
+              UnitType.Carrier,
+            )) {
               const shipFloor = Math.floor(
                 (ws.maxHealth() * cfg.drainFloorPercent) / 100,
               );

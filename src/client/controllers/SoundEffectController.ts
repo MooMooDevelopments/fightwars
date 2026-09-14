@@ -204,6 +204,7 @@ export class SoundEffectController implements Controller {
         break;
       case UnitType.Warship:
       case UnitType.Submarine:
+      case UnitType.Carrier:
         if (unit.owner() === myPlayer) this.emit("build-warship");
         break;
       // Shells and SAM missiles are scoped to the local player, unlike the

@@ -28,6 +28,7 @@ export function getDefaultKeybinds(isMac: boolean): Record<string, string> {
     buildRadar: "KeyH",
     buildBomber: "KeyN",
     buildSubmarine: "KeyV",
+    buildCarrier: "KeyX",
     buildMissileSilo: "Digit5",
     buildSamLauncher: "Digit6",
     buildWarship: "Digit7",

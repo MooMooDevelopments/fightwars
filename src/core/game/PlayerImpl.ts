@@ -1723,6 +1723,7 @@ export class PlayerImpl implements Player {
         return this.portSpawn(targetTile, validTiles);
       case UnitType.Warship:
       case UnitType.Submarine:
+      case UnitType.Carrier:
         return this.warshipSpawn(targetTile);
       case UnitType.Shell:
       case UnitType.SAMMissile:
@@ -1827,8 +1828,10 @@ export class PlayerImpl implements Player {
     }
 
     const tileComponent = this.mg.getWaterComponent(tile);
+    // A carrier (brief §6.4) is a harbour that sails: a ship spawns at the
+    // nearest port or carrier on the same water.
     const bestPort = findClosestBy(
-      this.units(UnitType.Port),
+      this.units(UnitType.Port, UnitType.Carrier),
       (port) => this.mg.manhattanDist(port.tile(), tile),
       (port) =>
         port.isActive() &&

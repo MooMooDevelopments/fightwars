@@ -43,7 +43,11 @@ export class NationWarshipBehavior {
       return false;
     }
     const ports = this.player.units(UnitType.Port);
-    const ships = this.player.units(UnitType.Warship, UnitType.Submarine);
+    const ships = this.player.units(
+      UnitType.Warship,
+      UnitType.Submarine,
+      UnitType.Carrier,
+    );
     // One standing warship, or as many as the doctrine says (a Naval state
     // keeps two — brief §6.6, session-12 retune).
     const standing = Math.floor(
@@ -233,20 +237,35 @@ export class NationWarshipBehavior {
    * nation lays down a ship — the standing fleet or a retaliation — a
    * Naval nation that has a warship and no submarine builds the submarine.
    */
-  private hullFor(): UnitType.Warship | UnitType.Submarine {
+  private hullFor(): UnitType.Warship | UnitType.Submarine | UnitType.Carrier {
     const config = this.game.config();
+    if (this.player.doctrine() !== Doctrine.Naval) return UnitType.Warship;
+    const ships = this.player.units(
+      UnitType.Warship,
+      UnitType.Submarine,
+      UnitType.Carrier,
+    );
+    const has = (t: UnitType) => ships.some((s) => s.type() === t);
+    if (!has(UnitType.Warship)) return UnitType.Warship;
+    // Carrier (brief §6.4): the second hull — it keeps the first alive and
+    // a raider that follows has somewhere to spawn. The submarine came
+    // second until the carrier landed; a raider is sunk too soon to ever be
+    // the hull a third one waits on.
     if (
-      !config.submarineNationEnabled() ||
-      config.isUnitDisabled(UnitType.Submarine) ||
-      this.player.doctrine() !== Doctrine.Naval
+      config.carrierNationEnabled() &&
+      !config.isUnitDisabled(UnitType.Carrier) &&
+      !has(UnitType.Carrier)
     ) {
-      return UnitType.Warship;
+      return UnitType.Carrier;
     }
-    const ships = this.player.units(UnitType.Warship, UnitType.Submarine);
-    return ships.some((s) => s.type() === UnitType.Warship) &&
-      !ships.some((s) => s.type() === UnitType.Submarine)
-      ? UnitType.Submarine
-      : UnitType.Warship;
+    if (
+      config.submarineNationEnabled() &&
+      !config.isUnitDisabled(UnitType.Submarine) &&
+      !has(UnitType.Submarine)
+    ) {
+      return UnitType.Submarine;
+    }
+    return UnitType.Warship;
   }
 
   private maybeRetaliateWithWarship(

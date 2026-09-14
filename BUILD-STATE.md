@@ -1,6 +1,6 @@
 # FightWars Build State
 
-Last session: 2026-09-15 (session 12) | Current phase: **5 (depth) — retune pass done, the six 6.4 units in progress (Artillery, Radar, Bomber and Submarine built)** — 6.1 (supply lines) and 6.2 (elevation) done, **6.3 done** (upkeep, materials, blockades, embargo price; Manpower surfaced as `maxTroops`, not rebuilt), **6.4 half done** (nuke consequences; the six units not started); Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
+Last session: 2026-09-15 (session 12) | Current phase: **5 (depth) — retune pass done, the six 6.4 units in progress (Artillery, Radar, Bomber, Submarine and Carrier built)** — 6.1 (supply lines) and 6.2 (elevation) done, **6.3 done** (upkeep, materials, blockades, embargo price; Manpower surfaced as `maxTroops`, not rebuilt), **6.4 half done** (nuke consequences; the six units not started); Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
 
 Repo: `C:\Users\disbo\dev\fightwars` · `upstream` = openfrontio/OpenFrontIO (forked at
 `c77005586`, rebased onto `7d95251f1` the same day) · `origin` = github.com/MooMooDevelopments/fightwars
@@ -27,6 +27,40 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 `npm run load:test -- --clients 150 --map world --turns 600`.
 
 ## Handoff — read this first (written 2026-09-14, session 12 in progress)
+
+### Session 12 (continued) — 6.4's fifth unit: Carrier
+
+- **What shipped.** `UnitType.Carrier`: a harbour that sails. Warships and submarines spawn
+  at the nearest port _or carrier_ on the same water (`warshipSpawn`), and ships beside a
+  carrier heal as they do beside a port (`healWarship`'s passive heal, never itself). No guns
+  (the shared `WarshipExecution` gives the third hull no prey), health 2000, prey for any
+  warship, moves like one. `docs/MECHANICS.md` §04 D; `FORK-CHANGES.md` the files. Lever
+  `--no-carrier` reproduces the submarine commit's hash `41848662333804620`.
+- **Two of the four port semantics, on purpose.** The audit listed spawn, passive heal,
+  docking and the retreat target. Spawn and heal generalise to a moving harbour in one line
+  each; docking does not — a retreat is a _tile_ stored in `WarshipState` and matched by
+  `port.tile()` equality, and a carrier moves. Docking to a carrier means the retreat target
+  becoming a unit id, which is a wire change for the whole warship state. Written down in
+  §04 D as the hook; not built.
+- **The hull order changed under it.** A Naval nation's second hull was the submarine; the
+  carrier is now second and the submarine third. The reason is in the submarine commit's
+  own numbers: a raider is sunk too soon to be the hull a third one waits on, and a carrier
+  keeps the first warship alive and gives the raider that follows somewhere to spawn. The
+  submarine test pins the carrier off to test the submarine's turn.
+- **Four guards, four breaks** (the harbour spawn, the heal, the guns, the nation hull), each
+  failing exactly its own case; the nation case was re-broken after the reorder. The heal
+  case's first control — a second warship "far away" — healed two points anyway because
+  ships patrol and it wandered somewhere; the control is now the same ship with the carrier
+  deleted.
+- **The bots cannot afford one at this horizon, and the instrument that can says so.** Same
+  seed, 8000 ticks, off → on: byte-identical on Medium (`41848662333804620`) _and_ on
+  Impossible (`93964623359914700`). Instrumented: the one Naval nation that reached a
+  second-hull decision with a warship in hand held 1 282 materials against a carrier's
+  3 000 (a warship's 1 200 is why fleets are small at all — the materials price is the
+  navy's ceiling). The `NationGoldPerMinute` snapshot — Impossible, 61 nations, no tribes,
+  twenty minutes — is richer and longer, and it moved: alive 22 → 20, trade gold +7.2 %
+  (572.4M → 613.7M), train gold +18.2 % (105.7M → 124.9M), ships arrived 2590 → 2760. The
+  carrier is live where a nation can pay for it; the bot run's horizon is what cannot.
 
 ### Session 12 (continued) — 6.4's fourth unit: Submarine
 
@@ -1068,6 +1102,17 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   remains by design.
 - The discord card on a clan overview says "invite is no longer valid" for any invite the
   browser cannot resolve against Discord's public API (offline / fake invite) — expected.
+
+## Numbers last measured — Phase 5 item 6.4, Carrier (2026-09-15, session 12)
+
+- **Bot-vs-bot** (`balance:run --ticks 8000`, world, 150 bots + nations, seed `perf-gate`):
+  `--no-carrier` and carrier on are byte-identical on Medium (`41848662333804620`, the
+  submarine commit's hash) and on Impossible (`93964623359914700`): no nation affords a
+  carrier's 3 000 materials by tick 8000 (the closest held 1 282).
+- **Nation economy** (`NationGoldPerMinute`, impossible nations, 20 minutes): alive 22 → 20,
+  trade gold +7.2 % (572.4M → 613.7M), train gold +18.2 % (105.7M → 124.9M), ships arrived
+  2590 → 2760 — the second instrument moves; nations that can pay lay carriers down as their
+  second hull.
 
 ## Numbers last measured — Phase 5 item 6.4, Submarine (2026-09-15, session 12)
 

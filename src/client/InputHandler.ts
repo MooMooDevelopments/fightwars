@@ -1164,6 +1164,7 @@ export class InputHandler {
       { key: "buildRadar", type: UnitType.Radar },
       { key: "buildBomber", type: UnitType.Bomber },
       { key: "buildSubmarine", type: UnitType.Submarine },
+      { key: "buildCarrier", type: UnitType.Carrier },
       { key: "buildMissileSilo", type: UnitType.MissileSilo },
       { key: "buildSamLauncher", type: UnitType.SAMLauncher },
       { key: "buildAtomBomb", type: UnitType.AtomBomb },

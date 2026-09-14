@@ -67,6 +67,9 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   engages a warship; an enemy warship sees it only within twelve tiles, or anywhere under
   one of their radars. Spawns at your port, patrols, retreats to heal and moves like a
   warship. Hotkey V. Naval nations keep one as their second hull.
+- **Carrier.** A harbour that sails. Warships and submarines spawn at your nearest port or
+  carrier, and ships beside a carrier heal as they do beside a port. It has no guns and a
+  deep hull; keep it behind the fleet. Hotkey X. Naval nations keep one as their second hull.
 - **Retune: an army costs twice as much to keep.** Defence posts, SAMs, silos and warships
   now cost double the gold per second to hold. Cities, ports and factories are unchanged:
   the bill is for the arsenal, not the country.

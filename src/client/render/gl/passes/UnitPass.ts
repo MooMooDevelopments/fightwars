@@ -40,6 +40,7 @@ import {
   TrainType,
   UT_ATOM_BOMB,
   UT_BOMBER,
+  UT_CARRIER,
   UT_HYDROGEN_BOMB,
   UT_MIRV,
   UT_MIRV_WARHEAD,
@@ -292,6 +293,7 @@ export class UnitPass {
     // until the unit atlas is regenerated — same story as the icon atlas.
     this.typeToAtlasCol.set(UT_BOMBER, UNIT_ORDER.indexOf(UT_ATOM_BOMB));
     this.typeToAtlasCol.set(UT_SUBMARINE, UNIT_ORDER.indexOf(UT_WARSHIP));
+    this.typeToAtlasCol.set(UT_CARRIER, UNIT_ORDER.indexOf(UT_WARSHIP));
 
     // Compile shaders
     this.program = createProgram(

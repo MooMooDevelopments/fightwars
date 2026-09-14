@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="#ffffff">
+  <!-- FightWars carrier: a flat deck on a broad hull, an island to starboard -->
+  <path d="M4 34 h56 l-6 14 h-44 z"/>
+  <rect x="8" y="26" width="48" height="6" rx="2"/>
+  <rect x="40" y="16" width="10" height="10" rx="1.5"/>
+  <rect x="44" y="10" width="2" height="6"/>
+  <path d="M14 22 l6 -4 v4 z" opacity="0.8"/>
+  <path d="M26 22 l6 -4 v4 z" opacity="0.8"/>
+</svg>

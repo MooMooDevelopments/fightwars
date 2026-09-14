@@ -159,6 +159,9 @@ describe("a Naval nation", () => {
       game.ref(14, 4),
     );
     a.setDoctrine(Doctrine.Naval);
+    // The carrier is the hull before the submarine; with it off, the
+    // submarine is the second hull this case is about.
+    vi.spyOn(game.config(), "carrierNationEnabled").mockReturnValue(false);
     vi.spyOn(game.config(), "submarineNationEnabled").mockReturnValue(false);
     expect(behavior.maybeSpawnWarship()).toBe(true);
     game.executeNextTick();
@@ -168,6 +171,7 @@ describe("a Naval nation", () => {
     vi.restoreAllMocks();
     // The lever on: with a warship and no submarine, the next hull hides.
     a.units(UnitType.Warship)[1].delete(false);
+    vi.spyOn(game.config(), "carrierNationEnabled").mockReturnValue(false);
     const random2 = new PseudoRandom(1);
     vi.spyOn(random2, "chance").mockReturnValue(true);
     const behavior2 = new NationWarshipBehavior(

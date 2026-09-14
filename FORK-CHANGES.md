@@ -1118,3 +1118,48 @@ only within 12 tiles or under an enemy radar. `docs/MECHANICS.md` §04 D.
   move order, the nation hull), each caught by the case that names it — the radar clause
   only after the case pinned detection to nothing, because a patrolling warship had
   wandered into plain sight and made the guard vacuous. The 16 × 16 test map pins the ranges.
+
+### Carrier (brief §6.4, session 12)
+
+A harbour that sails: ships spawn at the nearest port or carrier and heal beside one; no
+guns, a deep hull. `docs/MECHANICS.md` §04 D.
+
+#### Shared upstream files edited
+
+- `src/core/game/Game.ts` — `UnitType.Carrier` (appended), in `BuildableAttacks`;
+  `UnitParamsMap` (the warship's shape).
+- `src/core/StatsSchemas.ts` — `carr`.
+- `src/core/configuration/Config.ts` — `unitInfo` (cost curve, health 2000), materials 1500
+  base, upkeep 60 base; `carrierNationEnabled`.
+- `src/core/game/PlayerImpl.ts` — `warshipSpawn` picks the nearest port _or carrier_ on the
+  same water; `canSpawnUnitType`.
+- `src/core/execution/WarshipExecution.ts` — the third hull: no guns, prey for warships,
+  the passive heal counts an owner's carrier.
+- `src/core/execution/ConstructionExecution.ts`, `src/core/execution/MoveWarshipExecution.ts`,
+  `src/core/game/GameImpl.ts`, `src/core/execution/DoomsdayClockExecution.ts`,
+  `src/core/game/UnitImpl.ts` — the hull lists.
+- `src/core/execution/nation/NationWarshipBehavior.ts` — `hullFor()`: the second hull, the submarine now third.
+- `src/client/render/types/UnitType.ts`, `src/client/render/types/index.ts`,
+  `src/client/render/gl/passes/UnitPass.ts`, `src/client/hud/SpriteLoader.ts`,
+  `src/client/controllers/WarshipSelectionController.ts`,
+  `src/client/controllers/HoverHighlightController.ts`,
+  `src/client/hud/layers/PlayerInfoOverlay.ts`,
+  `src/client/controllers/SoundEffectController.ts`.
+- `src/client/hud/HotbarIcons.ts`, `src/client/hud/layers/BuildMenu.ts`,
+  `src/client/hud/layers/UnitDisplay.ts`, `src/client/InputHandler.ts`,
+  `src/core/game/UserSettings.ts` (`buildCarrier: KeyX`), `src/client/UserSettingModal.ts`,
+  `src/client/hud/Tutorial.ts`, `src/client/hud/layers/TutorialPanel.ts`,
+  `src/client/components/GameConfigSettings.ts`, `src/client/HelpModal.ts`,
+  `src/client/components/baseComponents/stats/PlayerStatsTable.ts`.
+- `resources/lang/en.json` — `build_menu.desc.carrier`, `unit_type.carrier`,
+  `help_modal.build_carrier_desc`, `user_setting.build_carrier(_desc)`.
+- `scripts/balanceRun.ts` — `--no-carrier`; carriers in the fleet line.
+
+#### FightWars-only files added
+
+- `resources/images/CarrierIconWhite.svg`.
+- `tests/Carrier.test.ts` — the unit; a warship spawning at the carrier when it is the
+  nearer harbour and at the port once the carrier is gone; the heal beside it (and none once
+  it is gone, and never itself); no guns and prey; the move order; a Naval nation's second
+  hull with the lever (the submarine with it off), driven through the retaliation build. Four breaks (harbour spawn, the
+  heal, the guns, the nation hull), each caught by the case that names it.

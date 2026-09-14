@@ -1109,6 +1109,16 @@ export class Config {
           maxHealth: 1000,
         };
         break;
+      case UnitType.Carrier:
+        info = {
+          cost: this.costWrapper(
+            (numUnits: number) =>
+              Math.min(3_000_000, (numUnits + 1) * 1_000_000),
+            UnitType.Carrier,
+          ),
+          maxHealth: 2000,
+        };
+        break;
       case UnitType.Shell:
         info = {
           cost: () => 0n,
@@ -1834,6 +1844,9 @@ export class Config {
       case UnitType.Submarine:
         base = 800n;
         break;
+      case UnitType.Carrier:
+        base = 1_500n;
+        break;
       case UnitType.SAMLauncher:
       case UnitType.MissileSilo:
         base = 1_000n;
@@ -1918,6 +1931,9 @@ export class Config {
       case UnitType.Warship:
       case UnitType.Submarine:
         base = 40 * this.armsUpkeepScale();
+        break;
+      case UnitType.Carrier:
+        base = 60 * this.armsUpkeepScale();
         break;
       default:
         return 0n;
@@ -2133,6 +2149,16 @@ export class Config {
    * balance lever `--no-submarine` turns that off: the game before the unit.
    */
   submarineNationEnabled(): boolean {
+    return true;
+  }
+
+  /**
+   * Carrier (brief §6.4, session 12): a harbour that sails — warships and
+   * submarines spawn at it, and ships near it heal as they do near a port.
+   * Naval-doctrine nations keep one as their third hull; the balance lever
+   * `--no-carrier` turns that off: the game before the unit.
+   */
+  carrierNationEnabled(): boolean {
     return true;
   }
 

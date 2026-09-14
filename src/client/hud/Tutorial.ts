@@ -85,6 +85,7 @@ export interface TutorialStep {
     | "buildRadar"
     | "buildBomber"
     | "buildSubmarine"
+    | "buildCarrier"
     | "buildFactory"
     | "buildWarship"
     | "buildMissileSilo"

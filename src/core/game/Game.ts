@@ -221,6 +221,7 @@ export enum UnitType {
   Radar = "Radar",
   Bomber = "Bomber",
   Submarine = "Submarine",
+  Carrier = "Carrier",
 }
 
 export enum TrainType {
@@ -243,6 +244,7 @@ export const BuildableAttacks = unitTypeGroup([
   UnitType.Warship,
   UnitType.Bomber,
   UnitType.Submarine,
+  UnitType.Carrier,
 ] as const);
 
 export const Structures = unitTypeGroup([
@@ -343,6 +345,11 @@ export interface UnitParamsMap {
 
   /** A warship hull that hides: the warship's params. */
   [UnitType.Submarine]: {
+    patrolTile: TileRef;
+  };
+
+  /** A harbour that sails: the warship's params. */
+  [UnitType.Carrier]: {
     patrolTile: TileRef;
   };
 

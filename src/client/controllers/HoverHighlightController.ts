@@ -59,6 +59,7 @@ export class HoverHighlightController implements Controller {
       for (const u of this.game.units(
         UnitType.Warship,
         UnitType.Submarine,
+        UnitType.Carrier,
         UnitType.TradeShip,
         UnitType.TransportShip,
       )) {

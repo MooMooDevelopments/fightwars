@@ -33,14 +33,20 @@ export class WarshipExecution implements Execution {
    * or under an own radar's reach. Everything else — patrol, retreat,
    * docking, healing, veterancy — is the warship's.
    */
-  private hull: UnitType.Warship | UnitType.Submarine;
+  private hull: UnitType.Warship | UnitType.Submarine | UnitType.Carrier;
 
   constructor(
     private input: (UnitParams<UnitType.Warship> & OwnerComp) | Unit,
-    hull: UnitType.Warship | UnitType.Submarine = UnitType.Warship,
+    hull:
+      | UnitType.Warship
+      | UnitType.Submarine
+      | UnitType.Carrier = UnitType.Warship,
   ) {
     this.hull = isUnit(input)
-      ? (input.type() as UnitType.Warship | UnitType.Submarine)
+      ? (input.type() as
+          | UnitType.Warship
+          | UnitType.Submarine
+          | UnitType.Carrier)
       : hull;
   }
 
@@ -124,7 +130,8 @@ export class WarshipExecution implements Execution {
     // Priority 2: Fight enemy warship if in range
     if (
       this.warship.targetUnit()?.type() === UnitType.Warship ||
-      this.warship.targetUnit()?.type() === UnitType.Submarine
+      this.warship.targetUnit()?.type() === UnitType.Submarine ||
+      this.warship.targetUnit()?.type() === UnitType.Carrier
     ) {
       this.shootTarget();
       this.patrol();
@@ -152,8 +159,11 @@ export class WarshipExecution implements Execution {
       passiveHealingRange * passiveHealingRange;
     const warshipTile = this.warship.tile();
 
+    // A carrier (brief §6.4) heals the ships beside it as a port does —
+    // every ship but itself.
     let isNearPort = false;
-    for (const port of owner.units(UnitType.Port)) {
+    for (const port of owner.units(UnitType.Port, UnitType.Carrier)) {
+      if (port === this.warship) continue;
       const distSquared = this.mg.euclideanDistSquared(
         warshipTile,
         port.tile(),
@@ -240,14 +250,21 @@ export class WarshipExecution implements Execution {
   }
 
   private findRetreatAggroTarget(): Unit | undefined {
+    if (this.hull === UnitType.Carrier) return undefined; // no guns
     return this.findBestTarget(
       this.hull === UnitType.Submarine
         ? [UnitType.TransportShip]
-        : [UnitType.TransportShip, UnitType.Warship, UnitType.Submarine],
+        : [
+            UnitType.TransportShip,
+            UnitType.Warship,
+            UnitType.Submarine,
+            UnitType.Carrier,
+          ],
     );
   }
 
   private findTargetUnit(): Unit | undefined {
+    if (this.hull === UnitType.Carrier) return undefined; // no guns
     return this.findBestTarget(
       this.hull === UnitType.Submarine
         ? [UnitType.TransportShip, UnitType.TradeShip]
@@ -255,6 +272,7 @@ export class WarshipExecution implements Execution {
             UnitType.TransportShip,
             UnitType.Warship,
             UnitType.Submarine,
+            UnitType.Carrier,
             UnitType.TradeShip,
           ],
       true,
@@ -300,7 +318,8 @@ export class WarshipExecution implements Execution {
         !owner.canAttackPlayer(unit.owner(), true) ||
         this.alreadySentShell.has(unit) ||
         ((unit.type() === UnitType.Warship ||
-          unit.type() === UnitType.Submarine) &&
+          unit.type() === UnitType.Submarine ||
+          unit.type() === UnitType.Carrier) &&
           unit.warshipState().state === "docked")
       ) {
         continue;
@@ -352,7 +371,9 @@ export class WarshipExecution implements Execution {
       const typePriority =
         type === UnitType.TransportShip
           ? 0
-          : type === UnitType.Warship || type === UnitType.Submarine
+          : type === UnitType.Warship ||
+              type === UnitType.Submarine ||
+              type === UnitType.Carrier
             ? 1
             : 2;
 
@@ -570,6 +591,7 @@ export class WarshipExecution implements Execution {
       .nearbyUnits(port.tile(), dockingRadius, [
         UnitType.Warship,
         UnitType.Submarine,
+        UnitType.Carrier,
       ])
       .filter(({ unit: ship }) => {
         if (excludeShip && ship === excludeShip) return false;

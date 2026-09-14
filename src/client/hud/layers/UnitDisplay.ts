@@ -18,6 +18,7 @@ import {
   artilleryIcon,
   atomBombIcon,
   bomberIcon,
+  carrierIcon,
   cityIcon,
   defensePostIcon,
   factoryIcon,
@@ -49,6 +50,7 @@ export class UnitDisplay extends LitElement implements Controller {
   private _artillery = 0;
   private _radar = 0;
   private _submarines = 0;
+  private _carriers = 0;
   private _samLauncher = 0;
   private allDisabled = false;
   private _hoveredUnit: PlayerBuildableUnitType | null = null;
@@ -131,6 +133,7 @@ export class UnitDisplay extends LitElement implements Controller {
     this._artillery = player.totalUnitLevels(UnitType.Artillery);
     this._radar = player.totalUnitLevels(UnitType.Radar);
     this._submarines = player.totalUnitLevels(UnitType.Submarine);
+    this._carriers = player.totalUnitLevels(UnitType.Carrier);
     this._samLauncher = player.totalUnitLevels(UnitType.SAMLauncher);
     this._factories = player.totalUnitLevels(UnitType.Factory);
     this._warships = player.totalUnitLevels(UnitType.Warship);
@@ -223,6 +226,13 @@ export class UnitDisplay extends LitElement implements Controller {
             UnitType.Submarine,
             "submarine",
             this.keybinds["buildSubmarine"]?.key ?? "V",
+          )}
+          ${this.renderUnitItem(
+            carrierIcon,
+            this._carriers,
+            UnitType.Carrier,
+            "carrier",
+            this.keybinds["buildCarrier"]?.key ?? "X",
           )}
           ${this.renderUnitItem(
             bomberIcon,
