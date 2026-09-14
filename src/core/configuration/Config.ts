@@ -1156,6 +1156,11 @@ export class Config {
           cost: this.costWrapper(() => 250_000, UnitType.Bomber),
         };
         break;
+      case UnitType.Paratrooper:
+        info = {
+          cost: this.costWrapper(() => 400_000, UnitType.Paratrooper),
+        };
+        break;
       case UnitType.MIRV:
         info = {
           cost: (game: Game, player: Player) => {
@@ -1857,6 +1862,9 @@ export class Config {
       case UnitType.Bomber:
         base = 300n;
         break;
+      case UnitType.Paratrooper:
+        base = 500n;
+        break;
       case UnitType.HydrogenBomb:
         base = 6_000n;
         break;
@@ -2159,6 +2167,40 @@ export class Config {
    * `--no-carrier` turns that off: the game before the unit.
    */
   carrierNationEnabled(): boolean {
+    return true;
+  }
+
+  /**
+   * Paratrooper (brief §6.4, session 12): an airborne assault flown from
+   * the nearest silo within this many tiles of the drop.
+   */
+  paratrooperRange(): number {
+    return 120;
+  }
+
+  /** The troops a drop carries: a fifth of the owner's, capped. */
+  paratrooperTroops(player: Player): number {
+    return Math.min(
+      this.paratrooperMaxTroops(),
+      Math.floor(player.troops() / 5),
+    );
+  }
+
+  paratrooperMaxTroops(): number {
+    return 25_000;
+  }
+
+  /** Air-path tiles a drop covers per tick (a shell covers three). */
+  paratrooperStepsPerTick(): number {
+    return 2;
+  }
+
+  /**
+   * Nations drop rather than sail when a silo is in range of a target
+   * they cannot reach by land. The balance lever `--no-paratrooper` turns
+   * that off: the game before the unit.
+   */
+  paratrooperNationEnabled(): boolean {
     return true;
   }
 

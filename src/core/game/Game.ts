@@ -222,6 +222,7 @@ export enum UnitType {
   Bomber = "Bomber",
   Submarine = "Submarine",
   Carrier = "Carrier",
+  Paratrooper = "Paratrooper",
 }
 
 export enum TrainType {
@@ -245,6 +246,7 @@ export const BuildableAttacks = unitTypeGroup([
   UnitType.Bomber,
   UnitType.Submarine,
   UnitType.Carrier,
+  UnitType.Paratrooper,
 ] as const);
 
 export const Structures = unitTypeGroup([
@@ -280,6 +282,12 @@ export type TrajectoryTile = {
 };
 export interface UnitParamsMap {
   [UnitType.TransportShip]: {
+    troops?: number;
+    targetTile?: TileRef;
+  };
+
+  /** An airborne assault: the transport's shape, flown from a silo. */
+  [UnitType.Paratrooper]: {
     troops?: number;
     targetTile?: TileRef;
   };

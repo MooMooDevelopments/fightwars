@@ -70,6 +70,10 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
 - **Carrier.** A harbour that sails. Warships and submarines spawn at your nearest port or
   carrier, and ships beside a carrier heal as they do beside a port. It has no guns and a
   deep hull; keep it behind the fleet. Hotkey X. Naval nations keep one as their second hull.
+- **Paratroopers.** An airborne assault: a fifth of your troops (up to 25,000) fly from your
+  nearest Missile Silo within 120 tiles straight to the tile you click and land as an attack
+  from there — over water, mountains, anyone's land. Nothing shoots them down. Hotkey I.
+  Nations drop rather than sail when a silo reaches a target they cannot walk to.
 - **Retune: an army costs twice as much to keep.** Defence posts, SAMs, silos and warships
   now cost double the gold per second to hold. Cities, ports and factories are unchanged:
   the bill is for the arsenal, not the country.

@@ -1,6 +1,6 @@
 # FightWars Build State
 
-Last session: 2026-09-15 (session 12) | Current phase: **5 (depth) — retune pass done, the six 6.4 units in progress (Artillery, Radar, Bomber, Submarine and Carrier built)** — 6.1 (supply lines) and 6.2 (elevation) done, **6.3 done** (upkeep, materials, blockades, embargo price; Manpower surfaced as `maxTroops`, not rebuilt), **6.4 half done** (nuke consequences; the six units not started); Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
+Last session: 2026-09-15 (session 12) | Current phase: **5 (depth) — retune pass done, all six 6.4 units built; Phase 5 is shipped end to end (the remainders are hook points, listed in `docs/HANDOFF.md` §4)** — 6.1 (supply lines) and 6.2 (elevation) done, **6.3 done** (upkeep, materials, blockades, embargo price; Manpower surfaced as `maxTroops`, not rebuilt), **6.4 half done** (nuke consequences; the six units not started); Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
 
 Repo: `C:\Users\disbo\dev\fightwars` · `upstream` = openfrontio/OpenFrontIO (forked at
 `c77005586`, rebased onto `7d95251f1` the same day) · `origin` = github.com/MooMooDevelopments/fightwars
@@ -27,6 +27,40 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 `npm run load:test -- --clients 150 --map world --turns 600`.
 
 ## Handoff — read this first (written 2026-09-14, session 12 in progress)
+
+### Session 12 (continued) — 6.4's sixth unit: Paratrooper, and Phase 5 is whole
+
+- **What shipped.** `UnitType.Paratrooper`: an airborne assault. A fifth of the owner's
+  troops (capped at 25 000) fly from the nearest silo within 120 tiles straight to the tile
+  clicked — over water, mountains, anyone's land — and land as an attack from it, the naval
+  invasion's shape with an air path. Dropped on the owner's own ground by the time it lands,
+  the troops come home. Nothing intercepts it; the silo's range, the cap and the price are
+  its limits. `docs/MECHANICS.md` §04 D; `FORK-CHANGES.md` the files. Lever
+  `--no-paratrooper` reproduces the carrier commit's hash `41848662333804620`.
+- **No new wire.** A drop is a `buildUnit` intent with the target tile, the way a nuke is,
+  so the client's target-click flow and the intent schema carry it unchanged. `buildUnit`
+  takes `params.troops` with the plane exactly as it does for a transport — the first cut
+  deducted them twice, and the "troops leave with the plane" case caught it at once.
+- **Nations drop first.** `AiAttackBehavior.sendBoatAttack` — a player target out of reach by
+  land — tries `maybeDrop` before looking for a shore, and the random-target boat builder
+  does the same. Same seed, 8000 ticks, off → on: alive 28 → 25, top-1 15.0 → 13.9 %, top-5
+  48.6 → 53.1 %, fallout 2004 → 0, hash `41848662333804620` → `44138072306226350`. Nations
+  that could only shell each other across water now put troops on the far shore, and the
+  map consolidates faster in the middle while the leader loses a point.
+- **Three guards broken and watched fail** (the range, the landing attack, the nation hook);
+  the own-land clause's break passed because the friendliness clause beside it refuses the
+  owner's own tile too — recorded, not disguised.
+- **The balance script's config chain became a table.** Twenty-two levers deep, the ternary
+  prettier kept re-wrapping had broken an edit script three commits running. A lever is
+  now one row in a list, and the first flag set picks its `Config`. A refactor of the
+  instrument only: every lever reproduced its hash before and after.
+- **Phase 5 is whole.** Brief §6.1–6.6 are all built, each behind a `Config` switch with a
+  `balance:run` lever, tests whose guards were broken and watched fail, a `docs/MECHANICS.md`
+  section, a `FORK-CHANGES.md` file list and an A/B here. What is left is hook points, all
+  written down: docking at a carrier, the six units' own atlas glyphs, a shell drawn for an
+  artillery volley, SAM interception of drops, forest / marsh / desert terrain (no painted
+  content), vassals, war goals, the readouts and the map shading for supply and occupation,
+  rail as a supply source — see `docs/HANDOFF.md` §3–§4 and the "Next up" list.
 
 ### Session 12 (continued) — 6.4's fifth unit: Carrier
 
@@ -1001,23 +1035,20 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 
 ## Next up (concrete, ordered)
 
-0. **Phase 5 continues.** 6.1, 6.2, 6.3, the nuke half of 6.4, the tiers-and-coalitions
-   half of 6.5 and all of 6.6 are done. Next: the **retune pass** the last four items have
-   been asking for (upkeep table, flat materials prices, tariff maximum, whether
-   `hasTooManyAlliances` counts pacts, nations playing their doctrine, the unrest threshold
-   as a share of the occupier's land) — measured with the levers, one at a time — or the
-   **six units** of 6.4 (`docs/MECHANICS.md` §03 7.1 has the 25-file checklist, §04 D–E the hooks;
-   budget ~25 files + atlas + locale per unit, so do them one at a time with a lever each).
-   Before either: a retune pass on the economy and diplomacy as a whole (upkeep
-   table, flat materials prices, tariff maximum, whether `hasTooManyAlliances` should count
-   pacts) now that all of 6.3 and 6.5 are live, and the nation-AI
-   note that bots never blockade on purpose. Manpower: surface `maxTroops` in the HUD. The
-   **embargo price** was designed as
-   (the embargoed side's remaining trade pays less in proportion to how many partners embargo
-   it — the coalition tool). Manpower already exists as `maxTroops`; surface it, do not
-   duplicate it. Then re-tune the upkeep table against the whole economy. Loose ends to fold
-   into whichever item touches them: rail as a supply source (§03 7.4), map shading for
-   unsupplied territory (a UI pass), the §6.2 remainder that needs painted content (G2).
+0. **Phase 5 is whole (session 12).** The retune pass (five levers) and the six 6.4 units
+   are on `origin/main`, one commit each. What Phase 5 still owes is hook points, every one
+   written up where its system lives: docking at a carrier (`docs/MECHANICS.md` §04 D), the
+   six units' own atlas glyphs (the icon and unit atlases cannot be regenerated on this box —
+   §03 7.1), a shell drawn for an artillery volley, SAM interception of drops, forest /
+   marsh / desert terrain (§02 G2, needs painted content), vassals and war goals (§05 1–2),
+   the manpower / materials / unrest readouts and a doctrine badge (`PlayerView` has the
+   accessors), map shading for unsupplied and occupied land, rail as a supply source
+   (§03 7.4), train delivery of materials, garrison as troops (§05 6). The economy numbers
+   to re-read after any of them: the Impossible `NationGoldPerMinute` alive count sits at 23
+   after the six units (it walked 26 → 21 → 24 → 20 → 20 → 22 → 20 → 23 through them) and
+   the bot-run materials pool is still ~95k unused. Nation ratios for artillery and radar
+   (`artilleryNationRatio`, `radarNationRatio`) and the arms upkeep are the levers if that
+   count falls again.
 
 1. **Rebase check** at session start: `git fetch upstream && git rebase upstream/main`; fix
    conflicts (expect some in `index.html`, nav bars, Footer, SoundManager — the brand sweep
@@ -1102,6 +1133,26 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   remains by design.
 - The discord card on a clan overview says "invite is no longer valid" for any invite the
   browser cannot resolve against Discord's public API (offline / fake invite) — expected.
+
+## Numbers last measured — Phase 5 item 6.4, Paratrooper (2026-09-15, session 12)
+
+- **Bot-vs-bot** (`balance:run --ticks 8000`, world, 150 bots + nations, Medium, seed `perf-gate`):
+
+  | after 8000 ticks       | `--no-paratrooper`  | drops on            |
+  | ---------------------- | ------------------- | ------------------- |
+  | players alive          | 28                  | 25                  |
+  | top 1 / 5 / 20 share   | 15.0 / 48.6 / 97.5  | 13.9 / 53.1 / 99.3  |
+  | cities / ports / fact. | 147 / 104 / 35      | 158 / 100 / 39      |
+  | posts / guns           | 27 / 29             | 23 / 30             |
+  | SAMs / radars          | 19 / 9              | 17 / 9              |
+  | fallout tiles          | 2004                | 0                   |
+  | pacts / defensive      | 30 / 7              | 22 / 10             |
+  | uprisings              | 261 (4 alive)       | 261 (1 alive)       |
+  | final hash             | `41848662333804620` | `44138072306226350` |
+
+  The off hash equals the carrier commit's: the lever restores that game exactly.
+
+- **Nation economy** (`NationGoldPerMinute`, impossible nations, 20 minutes): alive 20 → 23, trade gold −3.9 % (613.7M → 589.7M), train gold 124.9M → 124.9M, ships arrived 2760 → 2650 — three more nations standing at twenty minutes: a drop is a cheaper answer to a neighbour across the water than a fleet, and the six units together leave the Impossible count where the retune pass found it (23).
 
 ## Numbers last measured — Phase 5 item 6.4, Carrier (2026-09-15, session 12)
 

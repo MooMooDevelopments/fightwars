@@ -31,7 +31,11 @@ import {
   EMOJI_ASSIST_TARGET_ME,
   NationEmojiBehavior,
 } from "../nation/NationEmojiBehavior";
-import { findJuiciestTarget } from "../nation/NationUtils";
+import {
+  findJuiciestTarget,
+  randTerritoryTileArray,
+} from "../nation/NationUtils";
+import { ParatrooperExecution } from "../ParatrooperExecution";
 import { TransportShipExecution } from "../TransportShipExecution";
 import { closestTwoTiles } from "../Util";
 
@@ -155,6 +159,19 @@ export class AiAttackBehavior {
 
     // Hard & Impossible: don't attack if we'd send less than 20% of target's troops
     if (owner.isPlayer() && this.isAttackTooWeak(troops, owner)) {
+      return;
+    }
+
+    // Paratrooper (brief §6.4): a silo in range of the target beats a boat.
+    const config = this.game.config();
+    if (
+      config.paratrooperNationEnabled() &&
+      !config.isUnitDisabled(UnitType.Paratrooper) &&
+      this.player.gold() >=
+        this.game.unitInfo(UnitType.Paratrooper).cost(this.game, this.player) &&
+      this.player.canBuild(UnitType.Paratrooper, dst) !== false
+    ) {
+      this.game.addExecution(new ParatrooperExecution(this.player, dst));
       return;
     }
 
@@ -1080,6 +1097,10 @@ export class AiAttackBehavior {
       return false;
     }
 
+    // Paratrooper (brief §6.4): a target out of reach by land is a drop
+    // first, when a silo is in range of any of its ground.
+    if (this.maybeDrop(target)) return true;
+
     const closest = closestTwoTiles(
       this.game,
       this.shoreTiles(this.player),
@@ -1105,6 +1126,33 @@ export class AiAttackBehavior {
       new TransportShipExecution(this.player, closest.y, troops),
     );
     return true;
+  }
+
+  /** An airborne assault on a sampled tile of the target's, if a silo reaches it and the price is met. */
+  private maybeDrop(target: Player): boolean {
+    const config = this.game.config();
+    if (
+      !config.paratrooperNationEnabled() ||
+      config.isUnitDisabled(UnitType.Paratrooper) ||
+      this.player.unitCount(UnitType.MissileSilo) === 0
+    ) {
+      return false;
+    }
+    const cost = this.game
+      .unitInfo(UnitType.Paratrooper)
+      .cost(this.game, this.player);
+    if (this.player.gold() < cost) return false;
+    for (const tile of randTerritoryTileArray(
+      this.random,
+      this.game,
+      target,
+      5,
+    )) {
+      if (this.player.canBuild(UnitType.Paratrooper, tile) === false) continue;
+      this.game.addExecution(new ParatrooperExecution(this.player, tile));
+      return true;
+    }
+    return false;
   }
 
   private calculateBotAttackTroops(target: Player, maxTroops: number): number {

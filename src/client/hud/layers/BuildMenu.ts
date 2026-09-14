@@ -42,6 +42,7 @@ const radarIcon = assetUrl("images/RadarIconWhite.svg");
 const bomberIcon = assetUrl("images/BomberIconWhite.svg");
 const submarineIcon = assetUrl("images/SubmarineIconWhite.svg");
 const carrierIcon = assetUrl("images/CarrierIconWhite.svg");
+const paratrooperIcon = assetUrl("images/ParatrooperIconWhite.svg");
 
 export interface BuildItemDisplay {
   unitType: PlayerBuildableUnitType;
@@ -143,6 +144,13 @@ export const buildTable: BuildItemDisplay[][] = [
       description: "build_menu.desc.carrier",
       key: "unit_type.carrier",
       countable: true,
+    },
+    {
+      unitType: UnitType.Paratrooper,
+      icon: paratrooperIcon,
+      description: "build_menu.desc.paratrooper",
+      key: "unit_type.paratrooper",
+      countable: false,
     },
     {
       unitType: UnitType.City,

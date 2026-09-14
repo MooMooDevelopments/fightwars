@@ -24,7 +24,7 @@
  *                                      [--cheap-materials] [--cheap-arms-upkeep]
  *                                      [--no-artillery] [--no-radar]
  *                                      [--no-bomber] [--no-submarine]
- *                                      [--no-carrier]
+ *                                      [--no-carrier] [--no-paratrooper]
  *
  * `--no-supply` turns the supply penalty and its attrition off, and
  * `--flat-terrain` turns the elevation curves off (the band table stays),
@@ -90,6 +90,13 @@ class FlatAlliances extends Config {
 /** The same game with conquest breeding nothing and nobody rising. */
 class NoUnrest extends Config {
   unrestEnabled(): boolean {
+    return false;
+  }
+}
+
+/** The same game with no nation ever dropping paratroopers: the game before the unit. */
+class NoParatrooper extends Config {
+  paratrooperNationEnabled(): boolean {
     return false;
   }
 }
@@ -285,6 +292,7 @@ async function main(): Promise<void> {
   const noBomber = process.argv.includes("--no-bomber");
   const noSubmarine = process.argv.includes("--no-submarine");
   const noCarrier = process.argv.includes("--no-carrier");
+  const noParatrooper = process.argv.includes("--no-paratrooper");
   if (
     [
       noSupply,
@@ -308,13 +316,14 @@ async function main(): Promise<void> {
       noBomber,
       noSubmarine,
       noCarrier,
+      noParatrooper,
     ].filter(Boolean).length > 1
   ) {
     throw new Error("one lever at a time");
   }
   console.debug = () => {};
   console.log(
-    `[balance] map=${map} difficulty=${Difficulty[difficulty]} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}${noUpkeep ? " upkeep=off" : ""}${noMaterials ? " materials=off" : ""}${noBlockades ? " blockades=off" : ""}${noEmbargoPrice ? " embargo-price=off" : ""}${legacyFallout ? " fallout=legacy" : ""}${flatAlliances ? " alliances=flat" : ""}${noCoalition ? " coalition=off" : ""}${noDoctrines ? " doctrines=off" : ""}${noUnrest ? " unrest=off" : ""}${flatUnrest ? " unrest=flat" : ""}${pactsCount ? " alliance-cap=counts-pacts" : ""}${noDoctrinePlay ? " doctrine-play=off" : ""}${cheapMaterials ? " materials=cheap" : ""}${cheapArmsUpkeep ? " arms-upkeep=cheap" : ""}${noArtillery ? " artillery=off" : ""}${noRadar ? " radar=off" : ""}${noBomber ? " bomber=off" : ""}${noSubmarine ? " submarine=off" : ""}${noCarrier ? " carrier=off" : ""}\n`,
+    `[balance] map=${map} difficulty=${Difficulty[difficulty]} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}${noUpkeep ? " upkeep=off" : ""}${noMaterials ? " materials=off" : ""}${noBlockades ? " blockades=off" : ""}${noEmbargoPrice ? " embargo-price=off" : ""}${legacyFallout ? " fallout=legacy" : ""}${flatAlliances ? " alliances=flat" : ""}${noCoalition ? " coalition=off" : ""}${noDoctrines ? " doctrines=off" : ""}${noUnrest ? " unrest=off" : ""}${flatUnrest ? " unrest=flat" : ""}${pactsCount ? " alliance-cap=counts-pacts" : ""}${noDoctrinePlay ? " doctrine-play=off" : ""}${cheapMaterials ? " materials=cheap" : ""}${cheapArmsUpkeep ? " arms-upkeep=cheap" : ""}${noArtillery ? " artillery=off" : ""}${noRadar ? " radar=off" : ""}${noBomber ? " bomber=off" : ""}${noSubmarine ? " submarine=off" : ""}${noCarrier ? " carrier=off" : ""}${noParatrooper ? " paratrooper=off" : ""}\n`,
   );
 
   const gameConfig: GameConfig = {
@@ -339,61 +348,37 @@ async function main(): Promise<void> {
     players: [],
   };
 
-  const config = noSupply
-    ? new NoSupply(gameConfig, null, false)
-    : flatTerrain
-      ? new FlatTerrain(gameConfig, null, false)
-      : noUpkeep
-        ? new NoUpkeep(gameConfig, null, false)
-        : noMaterials
-          ? new NoMaterials(gameConfig, null, false)
-          : noBlockades
-            ? new NoBlockades(gameConfig, null, false)
-            : noEmbargoPrice
-              ? new NoEmbargoPrice(gameConfig, null, false)
-              : legacyFallout
-                ? new LegacyFallout(gameConfig, null, false)
-                : flatAlliances
-                  ? new FlatAlliances(gameConfig, null, false)
-                  : noCoalition
-                    ? new NoCoalition(gameConfig, null, false)
-                    : noDoctrines
-                      ? new NoDoctrines(gameConfig, null, false)
-                      : noUnrest
-                        ? new NoUnrest(gameConfig, null, false)
-                        : flatUnrest
-                          ? new FlatUnrest(gameConfig, null, false)
-                          : pactsCount
-                            ? new PactsCount(gameConfig, null, false)
-                            : noDoctrinePlay
-                              ? new NoDoctrinePlay(gameConfig, null, false)
-                              : cheapMaterials
-                                ? new CheapMaterials(gameConfig, null, false)
-                                : cheapArmsUpkeep
-                                  ? new CheapArmsUpkeep(gameConfig, null, false)
-                                  : noArtillery
-                                    ? new NoArtillery(gameConfig, null, false)
-                                    : noRadar
-                                      ? new NoRadar(gameConfig, null, false)
-                                      : noBomber
-                                        ? new NoBomber(gameConfig, null, false)
-                                        : noSubmarine
-                                          ? new NoSubmarine(
-                                              gameConfig,
-                                              null,
-                                              false,
-                                            )
-                                          : noCarrier
-                                            ? new NoCarrier(
-                                                gameConfig,
-                                                null,
-                                                false,
-                                              )
-                                            : new Config(
-                                                gameConfig,
-                                                null,
-                                                false,
-                                              );
+  // One lever at a time (enforced above): the first flag set picks its
+  // config, and no flag is the production Config.
+  const levers: [
+    boolean,
+    new (...a: ConstructorParameters<typeof Config>) => Config,
+  ][] = [
+    [noSupply, NoSupply],
+    [flatTerrain, FlatTerrain],
+    [noUpkeep, NoUpkeep],
+    [noMaterials, NoMaterials],
+    [noBlockades, NoBlockades],
+    [noEmbargoPrice, NoEmbargoPrice],
+    [legacyFallout, LegacyFallout],
+    [flatAlliances, FlatAlliances],
+    [noCoalition, NoCoalition],
+    [noDoctrines, NoDoctrines],
+    [noUnrest, NoUnrest],
+    [flatUnrest, FlatUnrest],
+    [pactsCount, PactsCount],
+    [noDoctrinePlay, NoDoctrinePlay],
+    [cheapMaterials, CheapMaterials],
+    [cheapArmsUpkeep, CheapArmsUpkeep],
+    [noArtillery, NoArtillery],
+    [noRadar, NoRadar],
+    [noBomber, NoBomber],
+    [noSubmarine, NoSubmarine],
+    [noCarrier, NoCarrier],
+    [noParatrooper, NoParatrooper],
+  ];
+  const Chosen = levers.find(([on]) => on)?.[1] ?? Config;
+  const config = new Chosen(gameConfig, null, false);
   const mapLoader = new NodeGameMapLoader(
     path.join(PROJECT_ROOT, "resources/maps"),
   );
@@ -486,7 +471,7 @@ async function main(): Promise<void> {
       `${countOf(UnitType.Submarine)} submarines, ` +
       `${countOf(UnitType.Carrier)} carriers, ` +
       `${countOf(UnitType.TradeShip)} trade ships at sea, ` +
-      `${countOf(UnitType.Bomber)} bombers in the air`,
+      `${countOf(UnitType.Bomber)} bombers and ${countOf(UnitType.Paratrooper)} drops in the air`,
   );
   console.log(
     `Structures:     ${countOf(UnitType.City)} cities, ` +

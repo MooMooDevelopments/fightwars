@@ -1163,3 +1163,50 @@ guns, a deep hull. `docs/MECHANICS.md` §04 D.
   it is gone, and never itself); no guns and prey; the move order; a Naval nation's second
   hull with the lever (the submarine with it off), driven through the retaliation build. Four breaks (harbour spawn, the
   heal, the guns, the nation hull), each caught by the case that names it.
+
+### Paratrooper (brief §6.4, session 12)
+
+An airborne assault: a fifth of the owner's troops fly from the nearest silo within range to
+the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
+
+#### Shared upstream files edited
+
+- `src/core/game/Game.ts` — `UnitType.Paratrooper` (appended), in `BuildableAttacks`;
+  `UnitParamsMap` (the transport's shape).
+- `src/core/configuration/Config.ts` — `unitInfo` (400k flat), materials 500 base;
+  `paratrooperRange` / `paratrooperTroops` / `paratrooperMaxTroops` /
+  `paratrooperStepsPerTick` / `paratrooperNationEnabled`.
+- `src/core/game/PlayerImpl.ts` — `paratrooperSpawn`; `canSpawnUnitType`.
+- `src/core/execution/ConstructionExecution.ts` — dispatches the drop (like the bombs, no
+  structure).
+- `src/core/execution/NukeExecution.ts` — the airborne exemption.
+- `src/core/execution/utils/AiAttackBehavior.ts` — `maybeDrop` first in `sendBoatAttack`,
+  and the random-target boat builder tries a drop too.
+- `src/client/render/types/UnitType.ts`, `src/client/render/types/index.ts`,
+  `src/client/render/gl/passes/UnitPass.ts` (the transport's sprite column),
+  `src/client/hud/SpriteLoader.ts`, `src/client/view/GameView.ts` (trail),
+  `src/client/hud/layers/AttacksDisplay.ts` (drops listed with the boats),
+  `src/client/controllers/HoverHighlightController.ts`.
+- `src/client/hud/HotbarIcons.ts`, `src/client/hud/layers/BuildMenu.ts`,
+  `src/client/hud/layers/UnitDisplay.ts` (needs a silo, like the bombs),
+  `src/client/InputHandler.ts`, `src/core/game/UserSettings.ts` (`buildParatrooper: KeyI`),
+  `src/client/UserSettingModal.ts`, `src/client/hud/Tutorial.ts`,
+  `src/client/hud/layers/TutorialPanel.ts`, `src/client/components/GameConfigSettings.ts`,
+  `src/client/HelpModal.ts`.
+- `resources/lang/en.json` — `build_menu.desc.paratrooper`, `unit_type.paratrooper`,
+  `help_modal.build_paratrooper_desc`, `user_setting.build_paratrooper(_desc)`.
+- `scripts/balanceRun.ts` — `--no-paratrooper`; drops in the fleet line. The config chain
+  that picked a lever's `Config` subclass was a twenty-two-deep ternary by now; it is a
+  lever table.
+
+#### FightWars-only files added
+
+- `src/core/execution/ParatrooperExecution.ts` — the drop.
+- `resources/images/ParatrooperIconWhite.svg`.
+- `tests/Paratrooper.test.ts` — the unit (a silo in range, onto land it may take, not its
+  own, not beyond the range; the troop share and cap); a drop (troops leave with the plane,
+  it flies and lands as an attack from the tile; the troops come home if the ground is its
+  own by then); a nation dropping first when a silo reaches the target, and not with the
+  lever off. Breaks: the range, the landing attack and the nation hook each fail their case;
+  the own-land clause does not, because the friendliness clause beside it refuses the
+  owner's own tile too — the assertion holds, the clause is belt and braces.

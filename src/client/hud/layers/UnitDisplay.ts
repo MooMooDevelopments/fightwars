@@ -26,6 +26,7 @@ import {
   hydrogenBombIcon,
   mirvIcon,
   missileSiloIcon,
+  paratrooperIcon,
   portIcon,
   radarIcon,
   samLauncherIcon,
@@ -106,6 +107,7 @@ export class UnitDisplay extends LitElement implements Controller {
       case UnitType.HydrogenBomb:
       case UnitType.MIRV:
       case UnitType.Bomber:
+      case UnitType.Paratrooper:
         return (
           this.cost(item) <= (player?.gold() ?? 0n) &&
           (player?.units(UnitType.MissileSilo).length ?? 0) > 0
@@ -240,6 +242,13 @@ export class UnitDisplay extends LitElement implements Controller {
             UnitType.Bomber,
             "bomber",
             this.keybinds["buildBomber"]?.key ?? "N",
+          )}
+          ${this.renderUnitItem(
+            paratrooperIcon,
+            null,
+            UnitType.Paratrooper,
+            "paratrooper",
+            this.keybinds["buildParatrooper"]?.key ?? "I",
           )}
           ${this.renderUnitItem(
             atomBombIcon,

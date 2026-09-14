@@ -7,6 +7,7 @@ import { FactoryExecution } from "./FactoryExecution";
 import { MirvExecution } from "./MIRVExecution";
 import { MissileSiloExecution } from "./MissileSiloExecution";
 import { NukeExecution } from "./NukeExecution";
+import { ParatrooperExecution } from "./ParatrooperExecution";
 import { PortExecution } from "./PortExecution";
 import { RadarExecution } from "./RadarExecution";
 import { SAMLauncherExecution } from "./SAMLauncherExecution";
@@ -125,6 +126,9 @@ export class ConstructionExecution implements Execution {
         }
         break;
       }
+      case UnitType.Paratrooper:
+        this.mg.addExecution(new ParatrooperExecution(player, this.tile));
+        break;
       case UnitType.MIRV:
         this.mg.addExecution(new MirvExecution(player, this.tile));
         break;

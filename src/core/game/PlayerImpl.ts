@@ -1719,6 +1719,8 @@ export class PlayerImpl implements Player {
         return this.nukeSpawn(targetTile, unitType);
       case UnitType.MIRVWarhead:
         return targetTile;
+      case UnitType.Paratrooper:
+        return this.paratrooperSpawn(targetTile);
       case UnitType.Port:
         return this.portSpawn(targetTile, validTiles);
       case UnitType.Warship:
@@ -1820,6 +1822,31 @@ export class PlayerImpl implements Player {
       }
     }
     return false;
+  }
+
+  /**
+   * Paratrooper (brief §6.4): the nearest active, built silo within
+   * `paratrooperRange()` of a drop on land the player does not hold and may
+   * attack. Cooldown does not matter — a drop is not a warhead.
+   */
+  paratrooperSpawn(tile: TileRef): TileRef | false {
+    const mg = this.mg;
+    if (mg.isSpawnImmunityActive()) return false;
+    if (!mg.isLand(tile) || mg.isImpassable(tile)) return false;
+    const owner = mg.owner(tile);
+    if (owner === this) return false;
+    if (owner.isPlayer() && !this.canAttackPlayer(owner)) return false;
+    const range = mg.config().paratrooperRange();
+    const rangeSquared = range * range;
+    const silo = findClosestBy(
+      this.units(UnitType.MissileSilo),
+      (s) => mg.euclideanDistSquared(s.tile(), tile),
+      (s) =>
+        s.isActive() &&
+        !s.isUnderConstruction() &&
+        mg.euclideanDistSquared(s.tile(), tile) <= rangeSquared,
+    );
+    return silo?.tile() ?? false;
   }
 
   warshipSpawn(tile: TileRef): TileRef | false {

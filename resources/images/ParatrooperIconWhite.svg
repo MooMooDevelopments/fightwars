@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="#ffffff">
+  <!-- FightWars paratroopers: a canopy, lines, and a figure below -->
+  <path d="M8 26 a24 14 0 0 1 48 0 z"/>
+  <path d="M10 26 L30 46 M32 26 L32 46 M54 26 L34 46" stroke="#ffffff" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <circle cx="32" cy="48" r="4"/>
+  <path d="M28 52 h8 v6 l-2 2 h-4 l-2 -2 z"/>
+</svg>
