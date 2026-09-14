@@ -401,12 +401,13 @@ thumb reach, hit-target sizes, and a HUD that survives a phone.
 - **Layout.** "Hides with one key" is done (session 13; on a phone it is the eye in the
   top-right cluster and the "Show HUD" button that brings it back). "Hugs the edges" is not:
   nothing has moved.
-- **The spawn screen wastes a portrait phone.** Fitting a 2:1 map into a 0.46:1 viewport leaves
-  the map 375x170 in an 812-tall screen and the rest dead grey. In-game is fine (the camera
-  zooms to the player on spawn) — it is only the _choose a starting location_ screen. Whether
-  to fit, fill-and-pan, or ask for landscape is a product decision, not a bug to fix blind.
-- **The rest of the HUD at phone width** beyond the control panel: the radial menus, the stats
-  table, the modals.
+- ~~**The spawn screen wastes a portrait phone.**~~ Decided in session 13: _fit_, no change.
+  The space above and below the map holds the prompt, the doctrine picker and the tutorial,
+  and a player choosing where to be wants the whole map in view; pinch is there for a closer
+  look.
+- **The rest of the HUD at phone width**: the leaderboard and the HUD row were photographed
+  in session 13 and hold; the radial menus and the player panel at 375 px are still unseen
+  (the pass died before reaching them), and the modals.
 
 **Definition-of-Done item that cannot be closed here:** real mobile Safari. The pane emulates
 an Android touch device — `resize_window` with a width under 768 sets a mobile user agent and

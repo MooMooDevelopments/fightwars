@@ -79,6 +79,24 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — item 7's remainder, looked at on a phone
+
+- **Photographed at 375 × 812** (the pane's mobile preset: Android user agent, five touch
+  points): the home page (wordmark, the four actions, the lobby cards — nothing overlaps),
+  the spawn screen, the in-game HUD row (gold with materials stacked under it, the troop
+  meter with its rate, the sword and the 44 px slider — all on one row, nothing clipped),
+  the leaderboard (full-width table, five rows, readable), the top-right cluster with the
+  new eye. The radial and the player panel were not reached: the taps that should have
+  opened them attacked instead and the player died at 0:55; a spectator gets no menu.
+- **The spawn-screen decision, taken:** _fit_, and no change. The handoff called the dead
+  grey above and below a 375 × 170 map waste. It is not empty: the prompt sits above the
+  map, the doctrine picker below, the tutorial at the foot, and the whole map is what a
+  player wants to see before choosing a spawn — a filled-and-panned map would hide half
+  the world at the one moment the player is choosing where in it to be. Pinch is there for
+  anyone who wants a closer look.
+- **What item 7 still owes:** the radial and the panel at phone width, seen; real mobile
+  Safari (hardware).
+
 ### Session 13 — item 9 closes: a build queue of one, client-side
 
 - **What shipped.** An unaffordable item in the build ring (and in the Ctrl+click grid) is
