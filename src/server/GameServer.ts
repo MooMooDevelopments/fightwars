@@ -53,6 +53,7 @@ import {
 import { createPartialGameRecord } from "../core/Util";
 import { createGameWireContext, encodeServerMessage } from "../core/ZbinWire";
 import { archive, finalizeGameRecord } from "./Archive";
+import { AutomationScorer } from "./AutomationScorer";
 import { Client } from "./Client";
 import { applyGameConfigPatch, hostCheatsEnabled } from "./ConfigPatch";
 import { LiveStatsVote, WinnerVote } from "./Consensus";
@@ -200,6 +201,9 @@ export class GameServer {
   // Spam caps on the social intents (IntentCaps), and what they dropped.
   private readonly caps = new IntentCaps();
   private spamDrops = 0;
+  // Automation detection over the intent stream (AutomationScorer): a
+  // verdict for the log and the metrics, never a punishment.
+  private readonly automation = new AutomationScorer();
   // Who joined, who is connected, and the per-account reconnect, admission
   // and kick flags (see Roster.ts). The join policy stays here.
   private readonly clients = new Roster();
@@ -450,8 +454,21 @@ export class GameServer {
       }
 
       default: {
-        // Gameplay intents. First the spam caps on the social ones: a
-        // flooder is dropped here, counted, and not kicked.
+        // Gameplay intents. Every one is a data point for the automation
+        // scorer, accepted or not — a script's cadence shows either way.
+        if (!actor.isAdminBot) {
+          const verdict = this.automation.observe(stamped.clientID, Date.now());
+          if (verdict !== null) {
+            this.log.warn("client flagged for automation", {
+              clientID: verdict.clientID,
+              reason: verdict.reason,
+              intentsPerSecond: Number(verdict.rate.toFixed(2)),
+              gapCv: Number(verdict.cv.toFixed(3)),
+            });
+          }
+        }
+        // First the spam caps on the social ones: a flooder is dropped
+        // here, counted, and not kicked.
         if (
           !actor.isAdminBot &&
           !this.caps.allow(stamped.clientID, stamped.type)
@@ -840,6 +857,11 @@ export class GameServer {
   /** Social intents dropped by the spam caps (IntentCaps). */
   public numSpamDrops(): number {
     return this.spamDrops;
+  }
+
+  /** Clients the automation scorer has flagged (AutomationScorer). */
+  public numAutomationFlags(): number {
+    return this.automation.verdicts().length;
   }
 
   // Matchmade ranked games (1v1/2v2) must start with full attendance: the

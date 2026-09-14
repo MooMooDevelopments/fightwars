@@ -1400,6 +1400,14 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
 - `tests/server/IntentCaps.test.ts` — the rate, clients and families apart, every social
   intent in a family and the game's own in none, never capping an attack.
 
+#### FightWars-only files added (automation)
+
+- `src/server/AutomationScorer.ts` — rate and evenness of a client's intent arrivals; a
+  verdict once per client. Hooked in `GameServer.handleIntent`, `numAutomationFlags()`.
+- `tests/server/AutomationScorer.test.ts` — nothing before the window fills, a machine's
+  timing, a superhuman rate, a ragged hand left alone, a slow metronome left alone, once per
+  client and clients apart.
+
 #### FightWars-only files added
 
 - `src/server/ShadowSim.ts` — the server's own `GameRunner`, the turn queue, the rule list.

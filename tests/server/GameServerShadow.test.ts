@@ -204,6 +204,22 @@ describe("GameServer with a shadow simulation", () => {
     }
   });
 
+  it("flags a client whose attacks arrive like clockwork, and plays on", () => {
+    const game = makeGame({ deps: { shadowSim: () => null } });
+    game.joinClient(makeClient({ clientID: ALICE }));
+    startGame(game);
+    for (let i = 0; i < 45; i++) {
+      // Well under the rate limiter's ten a second, exactly even.
+      vi.advanceTimersByTime(200);
+      const outcome = game.handleIntent(
+        { type: "attack", targetID: null, troops: 5 },
+        actorFor(ALICE),
+      );
+      expect(outcome.status).toBe(200);
+    }
+    expect(game.numAutomationFlags()).toBe(1);
+  });
+
   it("runs the relay alone when there is no shadow", () => {
     const game = makeGame({ deps: { shadowSim: () => null } });
     game.joinClient(makeClient({ clientID: ALICE }));

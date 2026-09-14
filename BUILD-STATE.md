@@ -79,6 +79,26 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — automation detection, and the fog-of-war decision
+
+- **What shipped.** `AutomationScorer`: forty arrival times per client; eight intents a
+  second over the window is a rate no hand sustains, four a second with the gaps' coefficient
+  of variation under 0.08 is a machine's timing. Flagged once, to the log with the numbers
+  and to `numAutomationFlags()`. A verdict, never a punishment — the caps and the shadow
+  already bound what a script can do, and a false flag must cost a player nothing. The
+  thresholds are exported and the tests sit on either side of each: a machine at 200 ms
+  even is flagged, twelve a second ragged is flagged, five a second swinging 120–280 ms is
+  a hand and left alone, one a second even is a metronome and left alone.
+- **Fog of war, decided: out of scope.** Every client runs the whole sim from one intent
+  log; server-side fog is a rewrite of lockstep, the replay format and the desync check
+  together, and client-side fog hides nothing from a client that holds the state. Written
+  into `docs/MECHANICS.md` §06 2e so nobody builds the client-side version by mistake.
+- **i18n audit:** continuous rather than a pass — `tests/TranslationSystem.test.ts` fails
+  on any string without a key or any key without a use, and every FightWars string this
+  session went through it.
+- **Guards broken and watched fail:** evenness ignored (a ragged hand became a machine),
+  the server never scoring.
+
 ### Session 13 — spam caps, the clock-only cooldowns, and a map of the game's own
 
 - **What shipped.** `IntentCaps` caps the social intents per client and family with token

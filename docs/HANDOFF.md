@@ -671,17 +671,22 @@ parsed with the client's schemas (the pattern in `tests/api/`).
   (emoji, chat, alliance, donate, target, embargo) token buckets at rates no hand reaches;
   over the cap is a 429, counted (`numSpamDrops()`), never a kick. The game's own intents
   stay under `ClientMsgRateLimiter`'s ten a second only.
-- **Automation detection** (click cadence, pixel-perfect timing) as a server-side scorer over
-  the intent stream; **multi-account detection** on the ranked ladder (the API sees
-  persistent ids, IPs at `/join_verify`, and match co-occurrence).
-- **Fog of war** filtering server-side: `NameVisibility.ts` already filters names per viewer;
-  tile/unit fog would need per-viewer turn filtering, which conflicts with lockstep
-  replay unless fog is a render-only feature. Decide before building.
+- **Automation detection — done (session 13).** `AutomationScorer` over the intent stream:
+  a client is flagged once for a superhuman rate or machine-even timing, to the log and
+  `numAutomationFlags()`; a verdict, never a punishment. **Multi-account detection** on the
+  ranked ladder is the API's (persistent ids, IPs at `/join_verify`, match co-occurrence) —
+  not in this repo.
+- **Fog of war — decided (session 13): out of scope.** Every client runs the whole sim from
+  one intent log; server-side fog is a rewrite of lockstep, replays and the desync check,
+  and client-side fog hides nothing. `docs/MECHANICS.md` §06 2e says so, so nobody builds
+  the client-side version.
 - **Load testing to 500 lobbies** (blocked, above), **accessibility audit**
   (`web-design-guidelines`; full keyboard navigation and screen-reader labels on all chrome
-  are Definition-of-Done items), **i18n** (strings are already extracted to
-  `resources/lang/*.json`, 37 locales; audit new FightWars strings for keys), analytics and a
-  live balance dashboard (`dataviz`; the metrics endpoint is the data source).
+  are Definition-of-Done items — the readouts, the hide-HUD button and the queue chip were
+  audited as they landed; the radial menu is mouse-only and is the gap), **i18n** (every
+  string goes through `translateText` with a key in `en.json`; `tests/TranslationSystem.test.ts`
+  fails the build on an unused or missing key, which is the audit, continuous), analytics
+  and a live balance dashboard (`dataviz`; the metrics endpoint is the data source).
 - **Performance in CI**: server tick, bandwidth and bundle are gated; add cold-load time
   (< 2.5 s on 10 Mbps) and fps once a GPU runner exists.
 
