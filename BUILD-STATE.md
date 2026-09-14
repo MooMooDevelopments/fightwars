@@ -1,6 +1,6 @@
 # FightWars Build State
 
-Last session: 2026-09-15 (session 12) | Current phase: **5 (depth) — retune pass done, the six 6.4 units in progress (Artillery, Radar and Bomber built)** — 6.1 (supply lines) and 6.2 (elevation) done, **6.3 done** (upkeep, materials, blockades, embargo price; Manpower surfaced as `maxTroops`, not rebuilt), **6.4 half done** (nuke consequences; the six units not started); Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
+Last session: 2026-09-15 (session 12) | Current phase: **5 (depth) — retune pass done, the six 6.4 units in progress (Artillery, Radar, Bomber and Submarine built)** — 6.1 (supply lines) and 6.2 (elevation) done, **6.3 done** (upkeep, materials, blockades, embargo price; Manpower surfaced as `maxTroops`, not rebuilt), **6.4 half done** (nuke consequences; the six units not started); Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
 
 Repo: `C:\Users\disbo\dev\fightwars` · `upstream` = openfrontio/OpenFrontIO (forked at
 `c77005586`, rebased onto `7d95251f1` the same day) · `origin` = github.com/MooMooDevelopments/fightwars
@@ -27,6 +27,34 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 `npm run load:test -- --clients 150 --map world --turns 600`.
 
 ## Handoff — read this first (written 2026-09-14, session 12 in progress)
+
+### Session 12 (continued) — 6.4's fourth unit: Submarine
+
+- **What shipped.** `UnitType.Submarine`: a warship hull that hides. It hunts transports and
+  trade ships and never engages a warship; an enemy warship sees it only within 12 tiles or
+  under one of its own radars (the radar's second job). Spawns at a port, patrols, retreats,
+  docks, heals, earns veterancy and answers the move order exactly as a warship does,
+  because **the same `WarshipExecution` drives both hulls** — the constructor takes the hull
+  and only prey and sight differ by it. `docs/MECHANICS.md` §04 D; `FORK-CHANGES.md` the
+  files. Lever `--no-submarine` reproduces the bomber commit's hash `42857537573621660`.
+- **Not a flag on the warship, a hull.** The audit's sketch was a `submerged` flag on
+  `WarshipState`; a second `UnitType` that reuses the execution was cheaper and cleaner —
+  every warship site that should include it (docking, capture, decay, the move intent,
+  selection, hover, sounds) is one added type in a list, and nothing has to ask a warship
+  whether it is secretly a submarine. Cost: those lists, found by grep, not by the compiler.
+- **A guard that could not fail, caught by breaking it — again.** The radar-sight case
+  passed with the radar clause disabled: the far warship was on patrol, wandered inside
+  the plain detection range, and saw the submarine the ordinary way. The case now pins
+  detection to nothing, so the radar is the only pair of eyes; the break fails it. Five
+  breaks in all (detection, prey, the radar clause, the move order, the nation hull).
+- **The first A/B was byte-identical, and that was a real finding.** Nations' standing-fleet
+  build fires a handful of times in 8000 ticks (two entries in 4000, instrumented), so a
+  rule that lived only there never ran. The hull rule moved into `hullFor()` and the
+  retaliation build — where nations actually lay down ships — reads it too. Off → on:
+  warships 8 → 6, hash `42857537573621660` → `41848662333804620`, nothing else moves. The
+  submarines Naval nations built were sunk by the end (0 in the fleet line): a hidden raider
+  that sits next to enemy warships under their radars is found. The unit is live and small,
+  which is honest for a raider in a bot world that never escorts its transports.
 
 ### Session 12 (continued) — 6.4's third unit: Bomber
 
@@ -1040,6 +1068,23 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   remains by design.
 - The discord card on a clan overview says "invite is no longer valid" for any invite the
   browser cannot resolve against Discord's public API (offline / fake invite) — expected.
+
+## Numbers last measured — Phase 5 item 6.4, Submarine (2026-09-15, session 12)
+
+- **Bot-vs-bot** (`balance:run --ticks 8000`, world, 150 bots + nations, Medium, seed `perf-gate`):
+
+  | after 8000 ticks      | `--no-submarine`    | submarine on        |
+  | --------------------- | ------------------- | ------------------- |
+  | players alive         | 28                  | 28                  |
+  | top 1 / 5 / 20 share  | 14.9 / 48.6 / 97.5  | 15.0 / 48.6 / 97.5  |
+  | warships / submarines | 8 / 0               | 6 / 0               |
+  | materials held        | 94603               | 97003               |
+  | fallout tiles         | 2004                | 2004                |
+  | final hash            | `42857537573621660` | `41848662333804620` |
+
+  The off hash equals the bomber commit's: the lever restores that game exactly.
+
+- **Nation economy** (`NationGoldPerMinute`, impossible nations, 20 minutes): alive 20 → 22, trade gold −4.5 % (599.1M → 572.4M), train gold −13.4 % (122.1M → 105.7M), ships arrived 2717 → 2590 — on Impossible every Naval nation lays a submarine down beside its warship, and a raider that sinks trade ships is what the trade column shows.
 
 ## Numbers last measured — Phase 5 item 6.4, Bomber (2026-09-15, session 12)
 

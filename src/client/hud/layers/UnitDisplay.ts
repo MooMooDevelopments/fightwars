@@ -28,6 +28,7 @@ import {
   portIcon,
   radarIcon,
   samLauncherIcon,
+  submarineIcon,
   warshipIcon,
 } from "../HotbarIcons";
 import { TutorialHighlight, TutorialHighlightEvent } from "../Tutorial";
@@ -47,6 +48,7 @@ export class UnitDisplay extends LitElement implements Controller {
   private _defensePost = 0;
   private _artillery = 0;
   private _radar = 0;
+  private _submarines = 0;
   private _samLauncher = 0;
   private allDisabled = false;
   private _hoveredUnit: PlayerBuildableUnitType | null = null;
@@ -128,6 +130,7 @@ export class UnitDisplay extends LitElement implements Controller {
     this._defensePost = player.totalUnitLevels(UnitType.DefensePost);
     this._artillery = player.totalUnitLevels(UnitType.Artillery);
     this._radar = player.totalUnitLevels(UnitType.Radar);
+    this._submarines = player.totalUnitLevels(UnitType.Submarine);
     this._samLauncher = player.totalUnitLevels(UnitType.SAMLauncher);
     this._factories = player.totalUnitLevels(UnitType.Factory);
     this._warships = player.totalUnitLevels(UnitType.Warship);
@@ -213,6 +216,13 @@ export class UnitDisplay extends LitElement implements Controller {
             UnitType.Warship,
             "warship",
             this.keybinds["buildWarship"]?.key ?? "7",
+          )}
+          ${this.renderUnitItem(
+            submarineIcon,
+            this._submarines,
+            UnitType.Submarine,
+            "submarine",
+            this.keybinds["buildSubmarine"]?.key ?? "V",
           )}
           ${this.renderUnitItem(
             bomberIcon,

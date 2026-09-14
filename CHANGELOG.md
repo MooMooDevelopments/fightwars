@@ -63,6 +63,10 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   kills troops and destroys buildings and ships in a small radius, and burns nothing — the
   land keeps its owner and there is no fallout. SAMs can shoot it down. Hotkey N. A nation
   with a silo and no warhead it can afford flies one.
+- **Submarine.** A warship that hides. It hunts transports and trade ships and never
+  engages a warship; an enemy warship sees it only within twelve tiles, or anywhere under
+  one of their radars. Spawns at your port, patrols, retreats to heal and moves like a
+  warship. Hotkey V. Naval nations keep one as their second hull.
 - **Retune: an army costs twice as much to keep.** Defence posts, SAMs, silos and warships
   now cost double the gold per second to hold. Cities, ports and factories are unchanged:
   the bill is for the arsenal, not the country.

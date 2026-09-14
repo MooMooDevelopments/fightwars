@@ -23,7 +23,7 @@ const BUILDING_ORDER = {
   saml: 7,
   radr: 8,
 } as const satisfies Record<
-  Exclude<(typeof otherUnits)[number], "wshp">,
+  Exclude<(typeof otherUnits)[number], "wshp" | "subm">,
   number
 >;
 
@@ -41,6 +41,7 @@ const UNIT_LABEL_KEYS = {
   defp: "unit_type.defense_post",
   arty: "unit_type.artillery",
   radr: "unit_type.radar",
+  subm: "unit_type.submarine",
   fact: "unit_type.factory",
   port: "unit_type.port",
   saml: "unit_type.sam_launcher",

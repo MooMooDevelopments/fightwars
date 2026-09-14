@@ -40,6 +40,7 @@ const shieldIcon = assetUrl("images/ShieldIconWhite.svg");
 const artilleryIcon = assetUrl("images/ArtilleryIconWhite.svg");
 const radarIcon = assetUrl("images/RadarIconWhite.svg");
 const bomberIcon = assetUrl("images/BomberIconWhite.svg");
+const submarineIcon = assetUrl("images/SubmarineIconWhite.svg");
 
 export interface BuildItemDisplay {
   unitType: PlayerBuildableUnitType;
@@ -127,6 +128,13 @@ export const buildTable: BuildItemDisplay[][] = [
       description: "build_menu.desc.bomber",
       key: "unit_type.bomber",
       countable: false,
+    },
+    {
+      unitType: UnitType.Submarine,
+      icon: submarineIcon,
+      description: "build_menu.desc.submarine",
+      key: "unit_type.submarine",
+      countable: true,
     },
     {
       unitType: UnitType.City,

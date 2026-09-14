@@ -45,6 +45,7 @@ import {
   UT_MIRV_WARHEAD,
   UT_SAM_MISSILE,
   UT_SHELL,
+  UT_SUBMARINE,
   UT_TRADE_SHIP,
   UT_TRAIN,
   UT_TRANSPORT,
@@ -290,6 +291,7 @@ export class UnitPass {
     // A bomber (FightWars, session 12) flies with the atom bomb's sprite
     // until the unit atlas is regenerated — same story as the icon atlas.
     this.typeToAtlasCol.set(UT_BOMBER, UNIT_ORDER.indexOf(UT_ATOM_BOMB));
+    this.typeToAtlasCol.set(UT_SUBMARINE, UNIT_ORDER.indexOf(UT_WARSHIP));
 
     // Compile shaders
     this.program = createProgram(

@@ -1070,3 +1070,51 @@ small radius, burns nothing. `docs/MECHANICS.md` §04 D.
   breaks (the conventional branch, the SAM whitelist, the nation branch), each caught by the
   case that names it. `TestConfig` flattens magnitudes and speeds, so the table is asserted
   against a plain `Config` and the strike spies the real blast in.
+
+### Submarine (brief §6.4, session 12)
+
+A warship hull that hides: hunts transports and trade ships, never engages a warship, seen
+only within 12 tiles or under an enemy radar. `docs/MECHANICS.md` §04 D.
+
+#### Shared upstream files edited
+
+- `src/core/game/Game.ts` — `UnitType.Submarine` (appended), in `BuildableAttacks`;
+  `UnitParamsMap` (the warship's shape).
+- `src/core/StatsSchemas.ts` — `subm`.
+- `src/core/configuration/Config.ts` — `unitInfo` (cost curve, health 1000), materials 800
+  base, upkeep 40 base; `submarineDetectionRange`, `submarineNationEnabled`.
+- `src/core/execution/WarshipExecution.ts` — takes a hull; prey and sight by hull
+  (`detectsSubmarine`); docking counts both hulls.
+- `src/core/execution/ShellExecution.ts` (veterancy credit),
+  `src/core/execution/MoveWarshipExecution.ts` (moves both hulls),
+  `src/core/game/GameImpl.ts` (capture on conquest),
+  `src/core/execution/DoomsdayClockExecution.ts` (the decay), `src/core/game/PlayerImpl.ts`
+  (port spawn), `src/core/execution/ConstructionExecution.ts`, `src/core/game/UnitImpl.ts`
+  (stats switches).
+- `src/core/execution/nation/NationWarshipBehavior.ts` — `hullFor()`: a Naval nation's second hull, for the standing fleet and for retaliation.
+- `src/client/render/types/UnitType.ts`, `src/client/render/types/index.ts`,
+  `src/client/render/gl/passes/UnitPass.ts` (the warship's sprite column),
+  `src/client/hud/SpriteLoader.ts`, `src/client/controllers/WarshipSelectionController.ts`
+  (box-select and select-all), `src/client/controllers/HoverHighlightController.ts`,
+  `src/client/hud/layers/PlayerInfoOverlay.ts` (hover list, unit count),
+  `src/client/controllers/SoundEffectController.ts` (the warship's sounds).
+- `src/client/hud/HotbarIcons.ts`, `src/client/hud/layers/BuildMenu.ts`,
+  `src/client/hud/layers/UnitDisplay.ts`, `src/client/InputHandler.ts`,
+  `src/core/game/UserSettings.ts` (`buildSubmarine: KeyV`), `src/client/UserSettingModal.ts`,
+  `src/client/hud/Tutorial.ts`, `src/client/hud/layers/TutorialPanel.ts`,
+  `src/client/components/GameConfigSettings.ts`, `src/client/HelpModal.ts`,
+  `src/client/components/baseComponents/stats/PlayerStatsTable.ts` (kept out of the
+  buildings table like the warship).
+- `resources/lang/en.json` — `build_menu.desc.submarine`, `unit_type.submarine`,
+  `help_modal.build_submarine_desc`, `user_setting.build_submarine(_desc)`.
+- `scripts/balanceRun.ts` — `--no-submarine`; submarines in the fleet line.
+
+#### FightWars-only files added
+
+- `resources/images/SubmarineIconWhite.svg`.
+- `tests/Submarine.test.ts` — the unit; prey and sight (hunts a transport, never a warship;
+  a warship sees it only when close), sight under a radar, the move order, and a Naval
+  nation's second hull with the lever. Five breaks (detection, prey, the radar clause, the
+  move order, the nation hull), each caught by the case that names it — the radar clause
+  only after the case pinned detection to nothing, because a patrolling warship had
+  wandered into plain sight and made the guard vacuous. The 16 × 16 test map pins the ranges.

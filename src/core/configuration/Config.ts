@@ -1100,6 +1100,15 @@ export class Config {
           maxHealth: 1000,
         };
         break;
+      case UnitType.Submarine:
+        info = {
+          cost: this.costWrapper(
+            (numUnits: number) => Math.min(1_500_000, (numUnits + 1) * 400_000),
+            UnitType.Submarine,
+          ),
+          maxHealth: 1000,
+        };
+        break;
       case UnitType.Shell:
         info = {
           cost: () => 0n,
@@ -1822,6 +1831,9 @@ export class Config {
       case UnitType.Warship:
         base = 600n;
         break;
+      case UnitType.Submarine:
+        base = 800n;
+        break;
       case UnitType.SAMLauncher:
       case UnitType.MissileSilo:
         base = 1_000n;
@@ -1904,6 +1916,7 @@ export class Config {
         base = 25 * this.armsUpkeepScale();
         break;
       case UnitType.Warship:
+      case UnitType.Submarine:
         base = 40 * this.armsUpkeepScale();
         break;
       default:
@@ -2103,6 +2116,24 @@ export class Config {
 
   shellLifetime(): number {
     return 50;
+  }
+
+  /**
+   * Submarine (brief §6.4, session 12): a hull that hides. A warship sees
+   * an enemy submarine only within this many tiles of itself, or anywhere
+   * under an own radar's reach (`radarRange`); a submarine hunts transports
+   * and trade ships and never engages a warship.
+   */
+  submarineDetectionRange(): number {
+    return 12;
+  }
+
+  /**
+   * Naval-doctrine nations keep a submarine as their second hull. The
+   * balance lever `--no-submarine` turns that off: the game before the unit.
+   */
+  submarineNationEnabled(): boolean {
+    return true;
   }
 
   warshipPatrolRange(): number {

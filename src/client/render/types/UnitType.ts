@@ -22,6 +22,7 @@ export const UT_SHELL = "Shell" as const;
 export const UT_MIRV_WARHEAD = "MIRV Warhead" as const;
 export const UT_TRAIN = "Train" as const;
 export const UT_BOMBER = "Bomber" as const;
+export const UT_SUBMARINE = "Submarine" as const;
 
 // Structures
 export const UT_CITY = "City" as const;
@@ -101,4 +102,5 @@ export const ALL_UNIT_TYPES = [
   UT_ARTILLERY,
   UT_RADAR,
   UT_BOMBER,
+  UT_SUBMARINE,
 ] as const;

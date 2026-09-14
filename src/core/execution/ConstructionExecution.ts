@@ -133,6 +133,14 @@ export class ConstructionExecution implements Execution {
           new WarshipExecution({ owner: player, patrolTile: this.tile }),
         );
         break;
+      case UnitType.Submarine:
+        this.mg.addExecution(
+          new WarshipExecution(
+            { owner: player, patrolTile: this.tile },
+            UnitType.Submarine,
+          ),
+        );
+        break;
       case UnitType.Port:
         this.mg.addExecution(new PortExecution(this.structure!));
         break;

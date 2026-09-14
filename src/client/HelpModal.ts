@@ -1132,6 +1132,22 @@ export class HelpModal extends BaseModal {
                   </tr>
                   <tr class="bg-white/5 hover:bg-white/10 transition-colors">
                     <td class="py-3 ps-4 border-b border-white/5 font-medium">
+                      ${translateText("unit_type.submarine")}
+                    </td>
+                    <td class="py-3 border-b border-white/5">
+                      <img
+                        src=${assetUrl("images/SubmarineIconWhite.svg")}
+                        class="w-8 h-8 scale-75 origin-left"
+                      />
+                    </td>
+                    <td
+                      class="py-3 border-b border-white/5 text-white/60 text-sm"
+                    >
+                      ${translateText("help_modal.build_submarine_desc")}
+                    </td>
+                  </tr>
+                  <tr class="bg-white/5 hover:bg-white/10 transition-colors">
+                    <td class="py-3 ps-4 border-b border-white/5 font-medium">
                       ${translateText("unit_type.bomber")}
                     </td>
                     <td class="py-3 border-b border-white/5">

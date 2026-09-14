@@ -203,6 +203,7 @@ export class SoundEffectController implements Controller {
         this.emit("mirv-launch");
         break;
       case UnitType.Warship:
+      case UnitType.Submarine:
         if (unit.owner() === myPlayer) this.emit("build-warship");
         break;
       // Shells and SAM missiles are scoped to the local player, unlike the

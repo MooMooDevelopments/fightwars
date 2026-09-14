@@ -1,6 +1,7 @@
 import {
   AllPlayers,
   Difficulty,
+  Doctrine,
   Game,
   Gold,
   Player,
@@ -42,7 +43,7 @@ export class NationWarshipBehavior {
       return false;
     }
     const ports = this.player.units(UnitType.Port);
-    const ships = this.player.units(UnitType.Warship);
+    const ships = this.player.units(UnitType.Warship, UnitType.Submarine);
     // One standing warship, or as many as the doctrine says (a Naval state
     // keeps two — brief §6.6, session-12 retune).
     const standing = Math.floor(
@@ -60,12 +61,13 @@ export class NationWarshipBehavior {
       if (targetTile === null) {
         return false;
       }
-      const canBuild = this.player.canBuild(UnitType.Warship, targetTile);
+      const hull = this.hullFor();
+      const canBuild = this.player.canBuild(hull, targetTile);
       if (canBuild === false) {
         return false;
       }
       this.game.addExecution(
-        new ConstructionExecution(this.player, UnitType.Warship, targetTile),
+        new ConstructionExecution(this.player, hull, targetTile),
       );
       return true;
     }
@@ -226,6 +228,27 @@ export class NationWarshipBehavior {
     }
   }
 
+  /**
+   * Submarine (brief §6.4): a Naval nation's second hull hides. Whenever a
+   * nation lays down a ship — the standing fleet or a retaliation — a
+   * Naval nation that has a warship and no submarine builds the submarine.
+   */
+  private hullFor(): UnitType.Warship | UnitType.Submarine {
+    const config = this.game.config();
+    if (
+      !config.submarineNationEnabled() ||
+      config.isUnitDisabled(UnitType.Submarine) ||
+      this.player.doctrine() !== Doctrine.Naval
+    ) {
+      return UnitType.Warship;
+    }
+    const ships = this.player.units(UnitType.Warship, UnitType.Submarine);
+    return ships.some((s) => s.type() === UnitType.Warship) &&
+      !ships.some((s) => s.type() === UnitType.Submarine)
+      ? UnitType.Submarine
+      : UnitType.Warship;
+  }
+
   private maybeRetaliateWithWarship(
     tile: TileRef,
     enemy: Player,
@@ -249,13 +272,14 @@ export class NationWarshipBehavior {
       (difficulty === Difficulty.Hard && this.random.nextInt(0, 100) < 50) ||
       (difficulty === Difficulty.Impossible && this.random.nextInt(0, 100) < 80)
     ) {
-      const canBuild = this.player.canBuild(UnitType.Warship, tile);
+      const hull = this.hullFor();
+      const canBuild = this.player.canBuild(hull, tile);
       if (canBuild === false) {
         this.maybeMoveWarship(tile);
         return;
       }
       this.game.addExecution(
-        new ConstructionExecution(this.player, UnitType.Warship, tile),
+        new ConstructionExecution(this.player, hull, tile),
       );
       this.emojiBehavior.maybeSendEmoji(enemy, EMOJI_WARSHIP_RETALIATION);
       this.player.updateRelation(enemy, reason === "trade" ? -7.5 : -15);

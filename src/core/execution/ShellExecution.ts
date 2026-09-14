@@ -61,7 +61,8 @@ export class ShellExecution implements Execution {
           targetWasActive &&
           !this.target.isActive() &&
           this.ownerUnit.isActive() &&
-          this.ownerUnit.type() === UnitType.Warship
+          (this.ownerUnit.type() === UnitType.Warship ||
+            this.ownerUnit.type() === UnitType.Submarine)
         ) {
           this.ownerUnit.recordKill(targetType);
         }

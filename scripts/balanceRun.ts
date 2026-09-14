@@ -23,7 +23,7 @@
  *                                      [--pacts-count] [--no-doctrine-play]
  *                                      [--cheap-materials] [--cheap-arms-upkeep]
  *                                      [--no-artillery] [--no-radar]
- *                                      [--no-bomber]
+ *                                      [--no-bomber] [--no-submarine]
  *
  * `--no-supply` turns the supply penalty and its attrition off, and
  * `--flat-terrain` turns the elevation curves off (the band table stays),
@@ -89,6 +89,13 @@ class FlatAlliances extends Config {
 /** The same game with conquest breeding nothing and nobody rising. */
 class NoUnrest extends Config {
   unrestEnabled(): boolean {
+    return false;
+  }
+}
+
+/** The same game with no nation ever laying down a submarine: the game before the unit. */
+class NoSubmarine extends Config {
+  submarineNationEnabled(): boolean {
     return false;
   }
 }
@@ -268,6 +275,7 @@ async function main(): Promise<void> {
   const noArtillery = process.argv.includes("--no-artillery");
   const noRadar = process.argv.includes("--no-radar");
   const noBomber = process.argv.includes("--no-bomber");
+  const noSubmarine = process.argv.includes("--no-submarine");
   if (
     [
       noSupply,
@@ -289,13 +297,14 @@ async function main(): Promise<void> {
       noArtillery,
       noRadar,
       noBomber,
+      noSubmarine,
     ].filter(Boolean).length > 1
   ) {
     throw new Error("one lever at a time");
   }
   console.debug = () => {};
   console.log(
-    `[balance] map=${map} difficulty=${Difficulty[difficulty]} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}${noUpkeep ? " upkeep=off" : ""}${noMaterials ? " materials=off" : ""}${noBlockades ? " blockades=off" : ""}${noEmbargoPrice ? " embargo-price=off" : ""}${legacyFallout ? " fallout=legacy" : ""}${flatAlliances ? " alliances=flat" : ""}${noCoalition ? " coalition=off" : ""}${noDoctrines ? " doctrines=off" : ""}${noUnrest ? " unrest=off" : ""}${flatUnrest ? " unrest=flat" : ""}${pactsCount ? " alliance-cap=counts-pacts" : ""}${noDoctrinePlay ? " doctrine-play=off" : ""}${cheapMaterials ? " materials=cheap" : ""}${cheapArmsUpkeep ? " arms-upkeep=cheap" : ""}${noArtillery ? " artillery=off" : ""}${noRadar ? " radar=off" : ""}${noBomber ? " bomber=off" : ""}\n`,
+    `[balance] map=${map} difficulty=${Difficulty[difficulty]} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}${noUpkeep ? " upkeep=off" : ""}${noMaterials ? " materials=off" : ""}${noBlockades ? " blockades=off" : ""}${noEmbargoPrice ? " embargo-price=off" : ""}${legacyFallout ? " fallout=legacy" : ""}${flatAlliances ? " alliances=flat" : ""}${noCoalition ? " coalition=off" : ""}${noDoctrines ? " doctrines=off" : ""}${noUnrest ? " unrest=off" : ""}${flatUnrest ? " unrest=flat" : ""}${pactsCount ? " alliance-cap=counts-pacts" : ""}${noDoctrinePlay ? " doctrine-play=off" : ""}${cheapMaterials ? " materials=cheap" : ""}${cheapArmsUpkeep ? " arms-upkeep=cheap" : ""}${noArtillery ? " artillery=off" : ""}${noRadar ? " radar=off" : ""}${noBomber ? " bomber=off" : ""}${noSubmarine ? " submarine=off" : ""}\n`,
   );
 
   const gameConfig: GameConfig = {
@@ -358,7 +367,13 @@ async function main(): Promise<void> {
                                       ? new NoRadar(gameConfig, null, false)
                                       : noBomber
                                         ? new NoBomber(gameConfig, null, false)
-                                        : new Config(gameConfig, null, false);
+                                        : noSubmarine
+                                          ? new NoSubmarine(
+                                              gameConfig,
+                                              null,
+                                              false,
+                                            )
+                                          : new Config(gameConfig, null, false);
   const mapLoader = new NodeGameMapLoader(
     path.join(PROJECT_ROOT, "resources/maps"),
   );
@@ -448,6 +463,7 @@ async function main(): Promise<void> {
   );
   console.log(
     `Fleet:          ${countOf(UnitType.Warship)} warships, ` +
+      `${countOf(UnitType.Submarine)} submarines, ` +
       `${countOf(UnitType.TradeShip)} trade ships at sea, ` +
       `${countOf(UnitType.Bomber)} bombers in the air`,
   );

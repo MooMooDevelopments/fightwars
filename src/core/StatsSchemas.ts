@@ -35,6 +35,7 @@ export const otherUnits = [
   "defp",
   "arty",
   "radr",
+  "subm",
   "port",
   "wshp",
   "silo",
@@ -48,6 +49,7 @@ export type OtherUnitType =
   | UnitType.DefensePost
   | UnitType.Artillery
   | UnitType.Radar
+  | UnitType.Submarine
   | UnitType.MissileSilo
   | UnitType.Port
   | UnitType.SAMLauncher
@@ -59,6 +61,7 @@ export const unitTypeToOtherUnit = {
   [UnitType.DefensePost]: "defp",
   [UnitType.Artillery]: "arty",
   [UnitType.Radar]: "radr",
+  [UnitType.Submarine]: "subm",
   [UnitType.MissileSilo]: "silo",
   [UnitType.Port]: "port",
   [UnitType.SAMLauncher]: "saml",

@@ -26,9 +26,23 @@ export class WarshipExecution implements Execution {
   private activeHealingRemainder = 0;
   private lastEmittedCombat = false;
 
+  /**
+   * The hull this execution drives. A submarine (brief §6.4) is a warship
+   * that hides: it hunts transports and trade ships, never engages a
+   * warship, and a warship sees it only within `submarineDetectionRange()`
+   * or under an own radar's reach. Everything else — patrol, retreat,
+   * docking, healing, veterancy — is the warship's.
+   */
+  private hull: UnitType.Warship | UnitType.Submarine;
+
   constructor(
     private input: (UnitParams<UnitType.Warship> & OwnerComp) | Unit,
-  ) {}
+    hull: UnitType.Warship | UnitType.Submarine = UnitType.Warship,
+  ) {
+    this.hull = isUnit(input)
+      ? (input.type() as UnitType.Warship | UnitType.Submarine)
+      : hull;
+  }
 
   init(mg: Game, ticks: number): void {
     this.mg = mg;
@@ -37,21 +51,14 @@ export class WarshipExecution implements Execution {
     if (isUnit(this.input)) {
       this.warship = this.input;
     } else {
-      const spawn = this.input.owner.canBuild(
-        UnitType.Warship,
-        this.input.patrolTile,
-      );
+      const spawn = this.input.owner.canBuild(this.hull, this.input.patrolTile);
       if (spawn === false) {
         console.warn(
           `Failed to spawn warship for ${this.input.owner.name()} at ${this.input.patrolTile}`,
         );
         return;
       }
-      this.warship = this.input.owner.buildUnit(
-        UnitType.Warship,
-        spawn,
-        this.input,
-      );
+      this.warship = this.input.owner.buildUnit(this.hull, spawn, this.input);
     }
     this.lastObservedPatrolTile = this.warship.warshipState().patrolTile;
   }
@@ -115,7 +122,10 @@ export class WarshipExecution implements Execution {
     }
 
     // Priority 2: Fight enemy warship if in range
-    if (this.warship.targetUnit()?.type() === UnitType.Warship) {
+    if (
+      this.warship.targetUnit()?.type() === UnitType.Warship ||
+      this.warship.targetUnit()?.type() === UnitType.Submarine
+    ) {
       this.shootTarget();
       this.patrol();
       return;
@@ -230,12 +240,23 @@ export class WarshipExecution implements Execution {
   }
 
   private findRetreatAggroTarget(): Unit | undefined {
-    return this.findBestTarget([UnitType.TransportShip, UnitType.Warship]);
+    return this.findBestTarget(
+      this.hull === UnitType.Submarine
+        ? [UnitType.TransportShip]
+        : [UnitType.TransportShip, UnitType.Warship, UnitType.Submarine],
+    );
   }
 
   private findTargetUnit(): Unit | undefined {
     return this.findBestTarget(
-      [UnitType.TransportShip, UnitType.Warship, UnitType.TradeShip],
+      this.hull === UnitType.Submarine
+        ? [UnitType.TransportShip, UnitType.TradeShip]
+        : [
+            UnitType.TransportShip,
+            UnitType.Warship,
+            UnitType.Submarine,
+            UnitType.TradeShip,
+          ],
       true,
     );
   }
@@ -278,13 +299,22 @@ export class WarshipExecution implements Execution {
         unit.owner() === owner ||
         !owner.canAttackPlayer(unit.owner(), true) ||
         this.alreadySentShell.has(unit) ||
-        (unit.type() === UnitType.Warship &&
+        ((unit.type() === UnitType.Warship ||
+          unit.type() === UnitType.Submarine) &&
           unit.warshipState().state === "docked")
       ) {
         continue;
       }
 
       const type = unit.type();
+
+      // A submarine is unseen unless close, or under one of our radars.
+      if (
+        type === UnitType.Submarine &&
+        !this.detectsSubmarine(unit, distSquared)
+      ) {
+        continue;
+      }
 
       if (includeTradeShips && type === UnitType.TradeShip) {
         if (warshipComponent === undefined) {
@@ -320,7 +350,11 @@ export class WarshipExecution implements Execution {
       }
 
       const typePriority =
-        type === UnitType.TransportShip ? 0 : type === UnitType.Warship ? 1 : 2;
+        type === UnitType.TransportShip
+          ? 0
+          : type === UnitType.Warship || type === UnitType.Submarine
+            ? 1
+            : 2;
 
       if (
         bestUnit === undefined ||
@@ -504,6 +538,25 @@ export class WarshipExecution implements Execution {
     return true;
   }
 
+  /** Within detection range of this ship, or under one of the owner's active radars. */
+  private detectsSubmarine(sub: Unit, distSquared: number): boolean {
+    const config = this.mg.config();
+    const detect = config.submarineDetectionRange();
+    if (distSquared <= detect * detect) return true;
+    const owner = this.warship.owner();
+    return (
+      this.mg.nearbyUnits(
+        sub.tile(),
+        config.radarRange(),
+        UnitType.Radar,
+        ({ unit }) =>
+          unit.owner() === owner &&
+          unit.isActive() &&
+          !unit.isUnderConstruction(),
+      ).length > 0
+    );
+  }
+
   private isPortFullOfHealing(port: Unit, excludeShip?: Unit): boolean {
     const maxShipsHealing = port.level();
     return this.dockedShipsAtPort(port, excludeShip).length >= maxShipsHealing;
@@ -514,7 +567,10 @@ export class WarshipExecution implements Execution {
     const owner = this.warship.owner();
 
     return this.mg
-      .nearbyUnits(port.tile(), dockingRadius, [UnitType.Warship])
+      .nearbyUnits(port.tile(), dockingRadius, [
+        UnitType.Warship,
+        UnitType.Submarine,
+      ])
       .filter(({ unit: ship }) => {
         if (excludeShip && ship === excludeShip) return false;
         if (ship.owner() !== owner) return false;
