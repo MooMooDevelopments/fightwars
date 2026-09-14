@@ -32,6 +32,7 @@ export const otherUnits = [
   "city",
   "defp",
   "arty",
+  "radr",
   "port",
   "wshp",
   "silo",
@@ -44,6 +45,7 @@ export type OtherUnitType =
   | UnitType.City
   | UnitType.DefensePost
   | UnitType.Artillery
+  | UnitType.Radar
   | UnitType.MissileSilo
   | UnitType.Port
   | UnitType.SAMLauncher
@@ -54,6 +56,7 @@ export const unitTypeToOtherUnit = {
   [UnitType.City]: "city",
   [UnitType.DefensePost]: "defp",
   [UnitType.Artillery]: "arty",
+  [UnitType.Radar]: "radr",
   [UnitType.MissileSilo]: "silo",
   [UnitType.Port]: "port",
   [UnitType.SAMLauncher]: "saml",

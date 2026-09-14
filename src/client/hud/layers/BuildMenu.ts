@@ -38,6 +38,7 @@ const portIcon = assetUrl("images/PortIcon.svg");
 const samlauncherIcon = assetUrl("images/SamLauncherIconWhite.svg");
 const shieldIcon = assetUrl("images/ShieldIconWhite.svg");
 const artilleryIcon = assetUrl("images/ArtilleryIconWhite.svg");
+const radarIcon = assetUrl("images/RadarIconWhite.svg");
 
 export interface BuildItemDisplay {
   unitType: PlayerBuildableUnitType;
@@ -110,6 +111,13 @@ export const buildTable: BuildItemDisplay[][] = [
       icon: artilleryIcon,
       description: "build_menu.desc.artillery",
       key: "unit_type.artillery",
+      countable: true,
+    },
+    {
+      unitType: UnitType.Radar,
+      icon: radarIcon,
+      description: "build_menu.desc.radar",
+      key: "unit_type.radar",
       countable: true,
     },
     {

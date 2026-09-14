@@ -76,6 +76,7 @@ function unitStateFromUpdate(u: UnitUpdate): UnitState {
     samUpgradeStartRange: u.samUpgrade?.startRange ?? null,
     samUpgradeTargetLevel: u.samUpgrade?.targetLevel ?? null,
     samUpgradeDuration: u.samUpgrade?.duration ?? null,
+    samRangeBonus: u.samRangeBonus ?? 0,
   };
 }
 
@@ -109,6 +110,7 @@ function applyUpdateInPlace(target: UnitState, u: UnitUpdate): void {
   target.samUpgradeStartRange = u.samUpgrade?.startRange ?? null;
   target.samUpgradeTargetLevel = u.samUpgrade?.targetLevel ?? null;
   target.samUpgradeDuration = u.samUpgrade?.duration ?? null;
+  target.samRangeBonus = u.samRangeBonus ?? 0;
 }
 
 export class UnitView {
@@ -316,6 +318,10 @@ export class UnitView {
 
   level(): number {
     return this.state.level;
+  }
+  /** Radar reach added to this SAM's range, tiles; 0 without one. */
+  samRangeBonus(): number {
+    return this.state.samRangeBonus ?? 0;
   }
   hasTrainStation(): boolean {
     return this.state.hasTrainStation;

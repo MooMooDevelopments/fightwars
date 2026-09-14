@@ -23,6 +23,11 @@ export function samRange(level: number): number {
   return MAX_SAM_RANGE - SAM_RANGE_DIVISOR / (level + SAM_RANGE_OFFSET);
 }
 
+/** The ring the simulation actually uses: level range plus radar reach, capped (Config.dynamicSamRange). */
+export function samRangeWithBonus(level: number, bonus: number): number {
+  return Math.min(MAX_SAM_RANGE, samRange(level) + bonus);
+}
+
 export interface SAMInfo {
   x: number;
   y: number;

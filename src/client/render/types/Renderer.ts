@@ -136,6 +136,8 @@ export interface UnitState {
   samUpgradeStartRange: number | null;
   samUpgradeTargetLevel: number | null;
   samUpgradeDuration: number | null;
+  /** Radar reach added to a SAM's ring, tiles (0 without one). */
+  samRangeBonus: number;
 }
 
 /** Minimal dead-unit data needed by the FX pass. */

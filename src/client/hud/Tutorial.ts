@@ -82,6 +82,7 @@ export interface TutorialStep {
     | "buildPort"
     | "buildDefensePost"
     | "buildArtillery"
+    | "buildRadar"
     | "buildFactory"
     | "buildWarship"
     | "buildMissileSilo"

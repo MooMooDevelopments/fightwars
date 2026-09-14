@@ -22,7 +22,7 @@
  *                                      [--no-unrest] [--flat-unrest]
  *                                      [--pacts-count] [--no-doctrine-play]
  *                                      [--cheap-materials] [--cheap-arms-upkeep]
- *                                      [--no-artillery]
+ *                                      [--no-artillery] [--no-radar]
  *
  * `--no-supply` turns the supply penalty and its attrition off, and
  * `--flat-terrain` turns the elevation curves off (the band table stays),
@@ -89,6 +89,13 @@ class FlatAlliances extends Config {
 class NoUnrest extends Config {
   unrestEnabled(): boolean {
     return false;
+  }
+}
+
+/** The same game with no nation ever placing a radar: the game before the unit. */
+class NoRadar extends Config {
+  radarNationRatio(): number {
+    return 0;
   }
 }
 
@@ -251,6 +258,7 @@ async function main(): Promise<void> {
   const cheapMaterials = process.argv.includes("--cheap-materials");
   const cheapArmsUpkeep = process.argv.includes("--cheap-arms-upkeep");
   const noArtillery = process.argv.includes("--no-artillery");
+  const noRadar = process.argv.includes("--no-radar");
   if (
     [
       noSupply,
@@ -270,13 +278,14 @@ async function main(): Promise<void> {
       cheapMaterials,
       cheapArmsUpkeep,
       noArtillery,
+      noRadar,
     ].filter(Boolean).length > 1
   ) {
     throw new Error("one lever at a time");
   }
   console.debug = () => {};
   console.log(
-    `[balance] map=${map} difficulty=${Difficulty[difficulty]} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}${noUpkeep ? " upkeep=off" : ""}${noMaterials ? " materials=off" : ""}${noBlockades ? " blockades=off" : ""}${noEmbargoPrice ? " embargo-price=off" : ""}${legacyFallout ? " fallout=legacy" : ""}${flatAlliances ? " alliances=flat" : ""}${noCoalition ? " coalition=off" : ""}${noDoctrines ? " doctrines=off" : ""}${noUnrest ? " unrest=off" : ""}${flatUnrest ? " unrest=flat" : ""}${pactsCount ? " alliance-cap=counts-pacts" : ""}${noDoctrinePlay ? " doctrine-play=off" : ""}${cheapMaterials ? " materials=cheap" : ""}${cheapArmsUpkeep ? " arms-upkeep=cheap" : ""}${noArtillery ? " artillery=off" : ""}\n`,
+    `[balance] map=${map} difficulty=${Difficulty[difficulty]} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}${noUpkeep ? " upkeep=off" : ""}${noMaterials ? " materials=off" : ""}${noBlockades ? " blockades=off" : ""}${noEmbargoPrice ? " embargo-price=off" : ""}${legacyFallout ? " fallout=legacy" : ""}${flatAlliances ? " alliances=flat" : ""}${noCoalition ? " coalition=off" : ""}${noDoctrines ? " doctrines=off" : ""}${noUnrest ? " unrest=off" : ""}${flatUnrest ? " unrest=flat" : ""}${pactsCount ? " alliance-cap=counts-pacts" : ""}${noDoctrinePlay ? " doctrine-play=off" : ""}${cheapMaterials ? " materials=cheap" : ""}${cheapArmsUpkeep ? " arms-upkeep=cheap" : ""}${noArtillery ? " artillery=off" : ""}${noRadar ? " radar=off" : ""}\n`,
   );
 
   const gameConfig: GameConfig = {
@@ -335,7 +344,9 @@ async function main(): Promise<void> {
                                   ? new CheapArmsUpkeep(gameConfig, null, false)
                                   : noArtillery
                                     ? new NoArtillery(gameConfig, null, false)
-                                    : new Config(gameConfig, null, false);
+                                    : noRadar
+                                      ? new NoRadar(gameConfig, null, false)
+                                      : new Config(gameConfig, null, false);
   const mapLoader = new NodeGameMapLoader(
     path.join(PROJECT_ROOT, "resources/maps"),
   );
@@ -430,7 +441,8 @@ async function main(): Promise<void> {
   console.log(
     `Structures:     ${countOf(UnitType.City)} cities, ` +
       `${countOf(UnitType.Port)} ports, ${countOf(UnitType.Factory)} factories, ` +
-      `${countOf(UnitType.DefensePost)} posts, ${countOf(UnitType.Artillery)} guns`,
+      `${countOf(UnitType.DefensePost)} posts, ${countOf(UnitType.Artillery)} guns, ` +
+      `${countOf(UnitType.SAMLauncher)} SAMs, ${countOf(UnitType.Radar)} radars`,
   );
   const tiers = [0, 0, 0, 0];
   for (const p of alive) for (const a of p.alliances()) tiers[a.tier()]++;

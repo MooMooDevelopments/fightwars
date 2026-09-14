@@ -284,7 +284,15 @@ export function stateDigest(game: Game): string {
   }
 
   lines.push(`fallout=${game.numTilesWithFallout()}`);
-  lines.push(`winner=${JSON.stringify(game.getWinner() ?? null)}`);
+  // A decided game names a Player (an object with bigint fields and a
+  // handle on the game) or a Team (a string): digest it by identity, not
+  // by serialising it — JSON.stringify refused the bigints, so a 24000-tick
+  // world match that ended inside the horizon crashed the digest instead of
+  // hashing the win.
+  const winner = game.getWinner();
+  lines.push(
+    `winner=${winner === null ? "null" : typeof winner === "string" ? winner : winner.id()}`,
+  );
   h.update(lines.join("\n"));
 
   const map = game.map();

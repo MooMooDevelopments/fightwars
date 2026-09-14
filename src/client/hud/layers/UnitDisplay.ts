@@ -25,6 +25,7 @@ import {
   mirvIcon,
   missileSiloIcon,
   portIcon,
+  radarIcon,
   samLauncherIcon,
   warshipIcon,
 } from "../HotbarIcons";
@@ -44,6 +45,7 @@ export class UnitDisplay extends LitElement implements Controller {
   private _port = 0;
   private _defensePost = 0;
   private _artillery = 0;
+  private _radar = 0;
   private _samLauncher = 0;
   private allDisabled = false;
   private _hoveredUnit: PlayerBuildableUnitType | null = null;
@@ -123,6 +125,7 @@ export class UnitDisplay extends LitElement implements Controller {
     this._port = player.totalUnitLevels(UnitType.Port);
     this._defensePost = player.totalUnitLevels(UnitType.DefensePost);
     this._artillery = player.totalUnitLevels(UnitType.Artillery);
+    this._radar = player.totalUnitLevels(UnitType.Radar);
     this._samLauncher = player.totalUnitLevels(UnitType.SAMLauncher);
     this._factories = player.totalUnitLevels(UnitType.Factory);
     this._warships = player.totalUnitLevels(UnitType.Warship);
@@ -180,6 +183,13 @@ export class UnitDisplay extends LitElement implements Controller {
             UnitType.Artillery,
             "artillery",
             this.keybinds["buildArtillery"]?.key ?? "J",
+          )}
+          ${this.renderUnitItem(
+            radarIcon,
+            this._radar,
+            UnitType.Radar,
+            "radar",
+            this.keybinds["buildRadar"]?.key ?? "H",
           )}
           ${this.renderUnitItem(
             missileSiloIcon,

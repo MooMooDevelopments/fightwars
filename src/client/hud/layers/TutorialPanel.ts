@@ -80,6 +80,7 @@ const HOTKEY_FALLBACKS = {
   buildPort: "3",
   buildDefensePost: "4",
   buildArtillery: "J",
+  buildRadar: "H",
   buildWarship: "7",
   buildMissileSilo: "5",
   buildAtomBomb: "8",

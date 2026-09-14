@@ -374,6 +374,10 @@
       "radius": 18,
       "intensity": 1.2
     },
+    "Radar": {
+      "radius": 18,
+      "intensity": 1.2
+    },
     "SAM Launcher": {
       "radius": 18,
       "intensity": 1.2

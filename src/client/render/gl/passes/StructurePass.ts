@@ -22,6 +22,7 @@ import {
   UT_FACTORY,
   UT_MISSILE_SILO,
   UT_PORT,
+  UT_RADAR,
   UT_SAM_LAUNCHER,
 } from "../../types";
 import { DynamicInstanceBuffer } from "../DynamicBuffer";
@@ -158,6 +159,7 @@ export class StructurePass {
       UT_ARTILLERY,
       STRUCTURE_ORDER.indexOf(UT_DEFENSE_POST),
     );
+    this.typeToAtlasCol.set(UT_RADAR, STRUCTURE_ORDER.indexOf(UT_SAM_LAUNCHER));
 
     // Compile shaders
     this.program = createProgram(

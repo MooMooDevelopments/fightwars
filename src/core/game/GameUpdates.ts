@@ -206,6 +206,8 @@ export interface UnitUpdate {
   trainType?: TrainType; // Only for trains
   loaded?: boolean; // Only for trains
   samUpgrade?: SamLauncherState;
+  /** Radar reach added to a SAM's range, tiles; absent when 0 (object lane). */
+  samRangeBonus?: number;
 }
 
 export interface AttackUpdate {

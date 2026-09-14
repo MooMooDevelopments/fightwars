@@ -1,6 +1,6 @@
 # FightWars Build State
 
-Last session: 2026-09-15 (session 12) | Current phase: **5 (depth) — retune pass done, the six 6.4 units in progress (Artillery built)** — 6.1 (supply lines) and 6.2 (elevation) done, **6.3 done** (upkeep, materials, blockades, embargo price; Manpower surfaced as `maxTroops`, not rebuilt), **6.4 half done** (nuke consequences; the six units not started); Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
+Last session: 2026-09-15 (session 12) | Current phase: **5 (depth) — retune pass done, the six 6.4 units in progress (Artillery and Radar built)** — 6.1 (supply lines) and 6.2 (elevation) done, **6.3 done** (upkeep, materials, blockades, embargo price; Manpower surfaced as `maxTroops`, not rebuilt), **6.4 half done** (nuke consequences; the six units not started); Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
 
 Repo: `C:\Users\disbo\dev\fightwars` · `upstream` = openfrontio/OpenFrontIO (forked at
 `c77005586`, rebased onto `7d95251f1` the same day) · `origin` = github.com/MooMooDevelopments/fightwars
@@ -27,6 +27,40 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 `npm run load:test -- --clients 150 --map world --turns 600`.
 
 ## Handoff — read this first (written 2026-09-14, session 12 in progress)
+
+### Session 12 (continued) — 6.4's second unit: Radar
+
+- **What shipped.** `UnitType.Radar`: a land structure that extends its owner's SAM launchers
+  — a SAM within 60 tiles of an active radar intercepts 30 tiles further, capped at the SAM
+  maximum of 150. `docs/MECHANICS.md` §04 E; `FORK-CHANGES.md` the files. Lever `--no-radar`
+  reproduces the artillery commit's hash `51679296370667120` to the digit.
+- **One read point, or nations lie to themselves.** The audit had it right: `dynamicSamRange`
+  is where the launcher reads a SAM's reach, and `NationNukeBehavior` duplicated the static
+  formula in four places. A bonus added only in `dynamicSamRange` would have had nations
+  fly warheads into rings they thought they cleared, and the client draw a ring the launcher
+  did not honour. All four nation sites now go through `dynamicSamRange`, and the client
+  gets the bonus on the object lane (`UnitUpdate.samRangeBonus`, absent when 0) — the lane
+  choice again: it changes when a radar goes up or comes down, not per tick.
+- **The SAM did not change, so nobody would have re-sent it.** A unit update goes out when
+  the unit touches itself; a radar appearing beside a SAM changes nothing on the SAM. That
+  is the whole of `RadarExecution`: on the tick it comes up and the tick it falls it
+  `touch()`es every SAM it covers. The test reads the tick's `GameUpdates` directly, the
+  way the coalition test learnt to in session 11.
+- **The `UnitState` fixtures, again.** Every render-state literal (`derive` tests, the trail
+  managers, the SAM radius perf test, `PreviewAnimationTicker`) needed `samRangeBonus: 0`
+  — the compiler found all seven. Five guards, five breaks (the bonus, the owner/active
+  filter, the coverage range, the cap, the wire touch), each failing exactly its own case.
+- **The 24000-tick gate had never seen a decided game.** `test:determinism:full` crashed at
+  this commit — not a divergence, `JSON.stringify` refusing a bigint: the digest serialised
+  `game.getWinner()`, which is a `Player` object, and for the first time a world match with
+  150 bots and 8 humans ended inside the horizon (one human left standing). The digest now
+  names the winner by id. Every earlier full gate passed because nobody had won by tick
+  24000; a gate that only works on undecided games is a gate with a hole in it, closed now.
+- **Nations build them beside their SAMs.** Same seed, 8000 ticks, off → on: **14 radars**
+  next to 22 SAMs, alive 30 → 28, fallout 0 → 7959, guns 40 → 37, top-5 51.1 → 59.6 %,
+  materials held 120k → 95k. Nations spending on defence and the top five gaining together
+  is one seed's story (the retune runs swung as far); what is not noise is that the
+  materials are being spent — 95k is the least left over since the pool existed.
 
 ### Session 12 (continued) — 6.4's first unit: Artillery
 
@@ -981,6 +1015,26 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   remains by design.
 - The discord card on a clan overview says "invite is no longer valid" for any invite the
   browser cannot resolve against Discord's public API (offline / fake invite) — expected.
+
+## Numbers last measured — Phase 5 item 6.4, Radar (2026-09-15, session 12)
+
+- **Bot-vs-bot** (`balance:run --ticks 8000`, world, 150 bots + nations, Medium, seed `perf-gate`):
+
+  | after 8000 ticks       | `--no-radar`        | radar on            |
+  | ---------------------- | ------------------- | ------------------- |
+  | players alive          | 30                  | 28                  |
+  | top 1 / 5 / 20 share   | 19.8 / 51.1 / 97.5  | 20.1 / 59.6 / 99.4  |
+  | cities / ports / fact. | 172 / 111 / 37      | 163 / 107 / 45      |
+  | posts / guns           | 26 / 40             | 26 / 37             |
+  | SAMs / radars          | 22 / 0              | 22 / 14             |
+  | fallout tiles          | 0                   | 7959                |
+  | materials held         | 120561              | 95239               |
+  | uprisings              | 274 (4 alive)       | 248 (5 alive)       |
+  | final hash             | `51679296370667120` | `40696498796941470` |
+
+  The off hash equals the artillery commit's: the lever restores that game exactly.
+
+- **Nation economy** (`NationGoldPerMinute`, impossible nations, 20 minutes): alive **24 → 20**, trade gold −8.1 % (661.7M → 608.3M), train gold −11.6 % (127.1M → 112.4M), ships arrived 2948 → 2758. The arms commits have walked this number 26 → 21 → 24 → 20: on Impossible every nation buys every new line of the arsenal and pays its rent, and four fewer stand at twenty minutes. Each remaining unit adds a line to that bill — re-read this after the sixth, and retune the nation ratios (`artilleryNationRatio`, `radarNationRatio`) or the arms upkeep against it then, not per unit.
 
 ## Numbers last measured — Phase 5 item 6.4, Artillery (2026-09-15, session 12)
 

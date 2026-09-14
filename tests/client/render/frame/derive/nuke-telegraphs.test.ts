@@ -94,6 +94,7 @@ function nuke(overrides: Partial<UnitState> = {}): UnitState {
     samUpgradeStartRange: null,
     samUpgradeTargetLevel: null,
     samUpgradeDuration: null,
+    samRangeBonus: 0,
     ...overrides,
   };
 }

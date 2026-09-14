@@ -200,6 +200,7 @@
       "mirv": "Huge explosion, only targets selected player",
       "missile_silo": "Used to launch nukes",
       "port": "Sends trade ships to generate gold",
+      "radar": "Extends the reach of nearby SAMs",
       "sam_launcher": "Defends against incoming nukes",
       "warship": "Captures trade ships, destroys ships and boats"
     },
@@ -1095,6 +1096,7 @@
     "build_mirv_desc": "The most powerful bomb in the game. Splits up into smaller bombs that will cover a huge range of territory. Only damages the player that you first clicked on to build it. Spawns from the nearest Missile Silo and lands in the area you first clicked to build it.",
     "build_name": "Name",
     "build_port_desc": "Can only be built near water. Allows building Warships. Automatically sends trade ships between ports of your country and other countries (except when trade is stopped), giving gold to both sides. Trade with a player stops automatically when you attack or are attacked by a player. It resumes after 5 minutes or if you become allies. You can manually toggle trading with \"Stop trading\" or \"Start trading\".",
+    "build_radar_desc": "Every SAM launcher within 60 tiles of a radar intercepts 30 tiles further. A radar defends nothing by itself; it makes the launchers you already have reach.",
     "build_sam_desc": "Can intercept enemy missiles in its 100 pixel range. The SAM has a 7.5 second cooldown.",
     "build_silo_desc": "Allows launching missiles.",
     "build_warship_desc": "Patrols in an area, capturing enemy trade ships and destroying their Boats (transport ships) and Warships. Spawns from the nearest Port and patrols the area you first clicked to build it. You can control Warships by attack-clicking on them (see action Attack under Hotkeys) and then attack-clicking the new area you want them to move to. Warships can level up (max level 3) by capturing enemy trade ships and destroying their transport boats and Warships. Leveling up increases the Warship's damage and health.",
@@ -2133,6 +2135,7 @@
     "mirv": "MIRV",
     "missile_silo": "Missile Silo",
     "port": "Port",
+    "radar": "Radar",
     "sam_launcher": "SAM Launcher",
     "warship": "Warship"
   },
@@ -2205,6 +2208,8 @@
     "build_missile_silo_desc": "Build a Missile Silo under your cursor.",
     "build_port": "Build Port",
     "build_port_desc": "Build a Port under your cursor.",
+    "build_radar": "Build Radar",
+    "build_radar_desc": "Build a Radar under your cursor.",
     "build_sam_launcher": "Build SAM Launcher",
     "build_sam_launcher_desc": "Build a SAM Launcher under your cursor.",
     "build_warship": "Build Warship",

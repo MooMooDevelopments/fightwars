@@ -56,6 +56,9 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   two thousand troops off the nearest enemy attack within forty tiles. A defence post makes
   an attack cost more per tile; artillery makes an attack bleed where it stands. Hotkey J.
   Costs materials and upkeep like the rest of the arsenal; nations build them too.
+- **Radar.** A new structure: every SAM launcher within sixty tiles of a radar intercepts
+  thirty tiles further, up to the SAM cap. A radar defends nothing by itself; it makes the
+  launchers you already have reach. Hotkey H. Nations build them beside their SAMs.
 - **Retune: an army costs twice as much to keep.** Defence posts, SAMs, silos and warships
   now cost double the gold per second to hold. Cities, ports and factories are unchanged:
   the bill is for the arsenal, not the country.

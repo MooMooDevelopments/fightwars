@@ -18,7 +18,7 @@ import { UT_SAM_LAUNCHER } from "../../types";
 import { DynamicInstanceBuffer } from "../DynamicBuffer";
 import type { RenderSettings } from "../RenderSettings";
 import { createProgram } from "../utils/GlUtils";
-import { samRange } from "../utils/NukeTrajectory";
+import { samRangeWithBonus } from "../utils/NukeTrajectory";
 
 import fragSrc from "../shaders/sam-radius/sam-radius.frag.glsl?raw";
 import vertSrc from "../shaders/sam-radius/sam-radius.vert.glsl?raw";
@@ -418,7 +418,10 @@ export class SAMRadiusPass {
     ) {
       const elapsed = continuousTick - startTick;
       const progress = Math.max(0, Math.min(1, elapsed / duration));
-      const targetRadius = samRange(u.samUpgradeTargetLevel ?? 0);
+      const targetRadius = samRangeWithBonus(
+        u.samUpgradeTargetLevel ?? 0,
+        u.samRangeBonus,
+      );
       const startRange = u.samUpgradeStartRange ?? 0;
       const currentRadius = startRange + (targetRadius - startRange) * progress;
 
@@ -451,7 +454,7 @@ export class SAMRadiusPass {
       circles.push({
         x,
         y,
-        radius: samRange(u.level),
+        radius: samRangeWithBonus(u.level, u.samRangeBonus),
         r: color[0],
         g: color[1],
         b: color[2],
@@ -464,7 +467,7 @@ export class SAMRadiusPass {
         circles.push({
           x,
           y,
-          radius: samRange(u.level),
+          radius: samRangeWithBonus(u.level, u.samRangeBonus),
           r: color[0],
           g: color[1],
           b: color[2],

@@ -218,6 +218,7 @@ export enum UnitType {
   // Appended, never inserted: z.enum(UnitType) rides the wire by member
   // order (zbin/README.md), and every later FightWars unit goes on the end.
   Artillery = "Artillery",
+  Radar = "Radar",
 }
 
 export enum TrainType {
@@ -244,6 +245,7 @@ export const Structures = unitTypeGroup([
   UnitType.City,
   UnitType.DefensePost,
   UnitType.Artillery,
+  UnitType.Radar,
   UnitType.SAMLauncher,
   UnitType.MissileSilo,
   UnitType.Port,
@@ -326,6 +328,8 @@ export interface UnitParamsMap {
   [UnitType.DefensePost]: Record<string, never>;
 
   [UnitType.Artillery]: Record<string, never>;
+
+  [UnitType.Radar]: Record<string, never>;
 
   [UnitType.SAMLauncher]: Record<string, never>;
 
@@ -654,6 +658,12 @@ export interface Unit {
   isInCooldown(): boolean;
   missileTimerQueue(): number[];
   samLauncherState(): SamLauncherState | undefined;
+  /**
+   * Radar (brief §6.4): the extra interception reach this SAM gets from an
+   * active radar of its owner's within `Config.radarRange()`, in tiles; 0
+   * for anything that is not a SAM or has no radar. Cached per tick.
+   */
+  samRangeBonus(): number;
 
   // Trade Ships
   setSafeFromPirates(): void; // Only for trade ships

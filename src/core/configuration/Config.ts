@@ -1180,6 +1180,15 @@ export class Config {
           constructionDuration: this.instantBuild() ? 0 : 10 * 10,
         };
         break;
+      case UnitType.Radar:
+        info = {
+          cost: this.costWrapper(
+            (numUnits: number) => Math.min(2_000_000, (numUnits + 1) * 750_000),
+            UnitType.Radar,
+          ),
+          constructionDuration: this.instantBuild() ? 0 : 15 * 10,
+        };
+        break;
       case UnitType.SAMLauncher:
         info = {
           cost: this.costWrapper(
@@ -1802,6 +1811,9 @@ export class Config {
       case UnitType.Artillery:
         base = 400n;
         break;
+      case UnitType.Radar:
+        base = 500n;
+        break;
       case UnitType.Warship:
         base = 600n;
         break;
@@ -1875,6 +1887,9 @@ export class Config {
         break;
       case UnitType.Artillery:
         base = 15 * this.armsUpkeepScale();
+        break;
+      case UnitType.Radar:
+        base = 20 * this.armsUpkeepScale();
         break;
       case UnitType.SAMLauncher:
       case UnitType.MissileSilo:
@@ -1993,6 +2008,19 @@ export class Config {
   }
 
   dynamicSamRange(sam: Unit, currentTick: number): number {
+    // Radar (brief §6.4): the one read point every SAM range check goes
+    // through — the launcher, the nation's coverage estimates, and the
+    // client through UnitUpdate.samRangeBonus — so a radar's reach cannot
+    // be true in one place and false in another. Capped at maxSamRange so
+    // the interception sweep's constants still bound the search.
+    return Math.min(
+      this.maxSamRange(),
+      this.baseSamRange(sam, currentTick) + sam.samRangeBonus(),
+    );
+  }
+
+  /** A SAM's own range by level, mid-upgrade interpolation included. */
+  private baseSamRange(sam: Unit, currentTick: number): number {
     const state = sam.samLauncherState();
     if (state === undefined || state.upgradeStartTick === undefined) {
       return this.samRange(sam.level());
@@ -2005,6 +2033,24 @@ export class Config {
     const targetRange = this.samRange(state.targetLevel);
     const diff = targetRange - state.startRange;
     return state.startRange + (diff * elapsed) / duration;
+  }
+
+  /** Radar (brief §6.4): a SAM within this many tiles of an owner's active radar is covered. */
+  radarRange(): number {
+    return 60;
+  }
+
+  /** Tiles of interception reach a covered SAM gains (capped at maxSamRange). */
+  radarSamRangeBonus(): number {
+    return 30;
+  }
+
+  /**
+   * Radars a nation wants per city. The balance lever `--no-radar` sets it
+   * to 0: nations never place one and nothing else draws on the RNG for it.
+   */
+  radarNationRatio(): number {
+    return 0.1;
   }
 
   defaultSamMissileSpeed(): number {

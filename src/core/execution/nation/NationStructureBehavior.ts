@@ -46,6 +46,7 @@ const SAM_RATIO_BY_DIFFICULTY: Record<Difficulty, number> = {
 function getStructureRatios(
   difficulty: Difficulty,
   artilleryRatio: number,
+  radarRatio: number,
 ): Partial<Record<UnitType, StructureRatioConfig>> {
   return {
     [UnitType.Port]: { ratioPerCity: 0.75, perceivedCostIncreasePerOwned: 1 },
@@ -60,6 +61,10 @@ function getStructureRatios(
     [UnitType.Artillery]: {
       ratioPerCity: artilleryRatio,
       perceivedCostIncreasePerOwned: 0.5,
+    },
+    [UnitType.Radar]: {
+      ratioPerCity: radarRatio,
+      perceivedCostIncreasePerOwned: 1,
     },
     [UnitType.MissileSilo]: {
       ratioPerCity: 0.2,
@@ -511,6 +516,7 @@ export class NationStructureBehavior {
       UnitType.SAMLauncher,
       UnitType.MissileSilo,
       UnitType.Artillery,
+      UnitType.Radar,
     ];
 
     const nukesEnabled =
@@ -540,6 +546,15 @@ export class NationStructureBehavior {
 
       // Skip SAM launchers if missile silos are disabled
       if (!missileSilosEnabled && structureType === UnitType.SAMLauncher) {
+        continue;
+      }
+
+      // A radar extends SAMs: none without a SAM to extend, or with SAMs off.
+      if (
+        structureType === UnitType.Radar &&
+        (config.isUnitDisabled(UnitType.SAMLauncher) ||
+          this.player.unitsOwned(UnitType.SAMLauncher) === 0)
+      ) {
         continue;
       }
 
@@ -588,6 +603,7 @@ export class NationStructureBehavior {
     const ratios = getStructureRatios(
       difficulty,
       gameConfig.artilleryNationRatio(),
+      gameConfig.radarNationRatio(),
     );
     const config = ratios[type];
     if (config === undefined) {
@@ -690,6 +706,7 @@ export class NationStructureBehavior {
       const ratios = getStructureRatios(
         difficulty,
         this.game.config().artilleryNationRatio(),
+        this.game.config().radarNationRatio(),
       );
       const config = ratios[type];
       increasePerOwned = config?.perceivedCostIncreasePerOwned ?? 0.1;
@@ -940,6 +957,8 @@ export class NationStructureBehavior {
         return this.samLauncherValue();
       case UnitType.Artillery:
         return this.artilleryValue();
+      case UnitType.Radar:
+        return this.radarValue();
       default:
         throw new Error(`Value function not implemented for ${type}`);
     }
@@ -978,6 +997,34 @@ export class NationStructureBehavior {
       const d = nearestTileDist(game, otherTiles, tile);
       if (d !== Infinity) w += Math.min(d, structureSpacing);
 
+      return w;
+    };
+  }
+
+  /**
+   * Value function for radar (brief §6.4, session 12): as many of the
+   * nation's SAMs in reach as possible, on high ground, away from other
+   * radars.
+   */
+  private radarValue(): (tile: TileRef) => number {
+    const game = this.game;
+    const range = game.config().radarRange();
+    const rangeSquared = range * range;
+    const sams = this.player.units(UnitType.SAMLauncher);
+    const otherUnits = this.player.units(UnitType.Radar);
+    const { structureSpacing } = this.spacingConstants();
+
+    return (tile) => {
+      let w = game.magnitude(tile);
+      for (const sam of sams) {
+        if (game.euclideanDistSquared(tile, sam.tile()) <= rangeSquared) {
+          w += structureSpacing * sam.level();
+        }
+      }
+      const otherTiles: Set<TileRef> = new Set(otherUnits.map((u) => u.tile()));
+      otherTiles.delete(tile);
+      const d = nearestTileDist(game, otherTiles, tile);
+      if (d !== Infinity) w += Math.min(d, structureSpacing);
       return w;
     };
   }

@@ -961,3 +961,63 @@ A land structure that bombards the attacks crossing its range: every five second
   attack in range, once per rate; out of range untouched; nothing under construction;
   never below zero, and an attack shelled to nothing ends). Four breaks — range, rate,
   damage, the construction gate — each caught by the case that names it.
+
+### Radar (brief §6.4, session 12)
+
+A land structure that extends its owner's SAM launchers: a SAM within 60 tiles of an active
+radar intercepts 30 tiles further, capped at the SAM maximum. `docs/MECHANICS.md` §04 E.
+
+#### Shared upstream files edited
+
+- `src/core/game/Game.ts` — `UnitType.Radar` (appended), in `Structures`; `UnitParamsMap`;
+  `Unit.samRangeBonus()`.
+- `src/core/game/UnitImpl.ts` — `samRangeBonus()` (a `nearbyUnits` query, cached per tick);
+  `toUpdate` carries `samRangeBonus` when non-zero; the three stats switches.
+- `src/core/game/GameUpdates.ts` — `UnitUpdate.samRangeBonus?`.
+- `src/core/configuration/Config.ts` — `unitInfo` case, materials 500 base, upkeep 20 base;
+  `dynamicSamRange` = min(max, base + bonus) over a new private `baseSamRange`; `radarRange`,
+  `radarSamRangeBonus`, `radarNationRatio`.
+- `src/core/execution/nation/NationNukeBehavior.ts` — the four static `samRange(level)`
+  reads now go through `dynamicSamRange`.
+- `src/core/game/PlayerImpl.ts`, `src/core/execution/ConstructionExecution.ts`,
+  `src/core/StatsSchemas.ts` (`radr`),
+  `src/core/execution/nation/NationStructureBehavior.ts` (ratio, build order after artillery,
+  never without a SAM, `radarValue()`).
+- `src/client/view/UnitView.ts` — `samRangeBonus` into the render state, and an accessor.
+- `src/client/render/types/Renderer.ts` (`UnitState.samRangeBonus`),
+  `src/client/render/gl/utils/NukeTrajectory.ts` (`samRangeWithBonus`),
+  `src/client/render/gl/index.ts`, `src/client/render/gl/passes/SamRadiusPass.ts` (the
+  three rings use it), `src/client/render/preview/PreviewAnimationTicker.ts` (fixture),
+  `src/client/render/gl/Renderer.ts` (placing a radar shows the SAM rings),
+  `src/client/controllers/BuildPreviewController.ts` (existing SAM rings carry the bonus;
+  the radar ghost shows its reach).
+- `src/client/render/types/UnitType.ts`, `src/client/render/types/index.ts`,
+  `src/client/render/gl/passes/StructurePass.ts` (the SAM's atlas column for now),
+  `src/client/render/gl/render-settings.json`.
+- `src/client/hud/HotbarIcons.ts`, `src/client/hud/layers/BuildMenu.ts`,
+  `src/client/hud/layers/UnitDisplay.ts`, `src/client/InputHandler.ts`,
+  `src/core/game/UserSettings.ts` (`buildRadar: KeyH`), `src/client/UserSettingModal.ts`,
+  `src/client/hud/Tutorial.ts`, `src/client/hud/layers/TutorialPanel.ts`,
+  `src/client/components/GameConfigSettings.ts`,
+  `src/client/controllers/SoundEffectController.ts` (the SAM's build sound),
+  `src/client/HelpModal.ts`, `src/client/components/baseComponents/stats/PlayerStatsTable.ts`.
+- `resources/lang/en.json` — `build_menu.desc.radar`, `unit_type.radar`,
+  `help_modal.build_radar_desc`, `user_setting.build_radar(_desc)`.
+- `scripts/balanceRun.ts` — `--no-radar`; SAMs and radars in the structures line.
+- Fixtures: every render `UnitState` literal (`tests/client/render/frame/**`,
+  `tests/TrailManager.test.ts`, `tests/SpiralTrails.test.ts`,
+  `tests/perf/client/SamRadiusPassPerf.test.ts`) gained `samRangeBonus: 0`; the crowded-map
+  mocks gained `radarNationRatio`; `PlayerStatsTable.test.ts` counts eight buildings.
+
+#### FightWars-only files added
+
+- `src/core/execution/RadarExecution.ts` — keeps the wire honest: re-sends the SAMs it covers
+  when it goes up and when it falls.
+- `tests/determinism/DeterminismRunner.ts` — the digest names a decided game's winner by id
+  (a Player has bigint fields; `JSON.stringify` refused it and the 24000-tick gate crashed
+  the first time a world match ended inside the horizon).
+- `resources/images/RadarIconWhite.svg`.
+- `tests/Radar.test.ts` — the unit; the bonus on the SAM in reach and only that one; the
+  cap; active-built-own only; the re-send on the way up and the way down. Five breaks (the
+  bonus, the owner/active filter, the coverage range, the cap, the wire touch), each caught
+  by the case that names it.

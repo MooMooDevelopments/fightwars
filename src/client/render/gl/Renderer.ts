@@ -94,6 +94,7 @@ import { zoomLegibility } from "./ZoomLegibility";
 const SAM_RADIUS_GHOST_TYPES = new Set([
   "Missile Silo",
   "SAM Launcher",
+  "Radar",
   "City",
   "Atom Bomb",
   "Hydrogen Bomb",

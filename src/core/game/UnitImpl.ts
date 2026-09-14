@@ -107,6 +107,7 @@ export class UnitImpl implements Unit {
       case UnitType.MissileSilo:
       case UnitType.DefensePost:
       case UnitType.Artillery:
+      case UnitType.Radar:
       case UnitType.SAMLauncher:
       case UnitType.City:
       case UnitType.Factory:
@@ -131,6 +132,28 @@ export class UnitImpl implements Unit {
 
   touch(): void {
     this.mg.addUpdate(this.toUpdate());
+  }
+
+  private _samRangeBonus = 0;
+  private _samRangeBonusTick = -1;
+
+  samRangeBonus(): number {
+    if (this._type !== UnitType.SAMLauncher) return 0;
+    const tick = this.mg.ticks();
+    if (this._samRangeBonusTick === tick) return this._samRangeBonus;
+    this._samRangeBonusTick = tick;
+    const config = this.mg.config();
+    const covered = this.mg.nearbyUnits(
+      this._tile,
+      config.radarRange(),
+      UnitType.Radar,
+      ({ unit }) =>
+        unit.owner() === this._owner &&
+        unit.isActive() &&
+        !unit.isUnderConstruction(),
+    );
+    this._samRangeBonus = covered.length > 0 ? config.radarSamRangeBonus() : 0;
+    return this._samRangeBonus;
   }
   setTileTarget(tile: TileRef | undefined): void {
     this._targetTile = tile;
@@ -166,6 +189,10 @@ export class UnitImpl implements Unit {
       samUpgrade:
         this._samLauncherState?.upgradeStartTick !== undefined
           ? { ...this._samLauncherState }
+          : undefined,
+      samRangeBonus:
+        this._type === UnitType.SAMLauncher && this.samRangeBonus() > 0
+          ? this.samRangeBonus()
           : undefined,
       pos: this._tile,
       markedForDeletion: this._deletionAt ?? false,
@@ -241,6 +268,7 @@ export class UnitImpl implements Unit {
       case UnitType.MissileSilo:
       case UnitType.DefensePost:
       case UnitType.Artillery:
+      case UnitType.Radar:
       case UnitType.SAMLauncher:
       case UnitType.City:
       case UnitType.Factory:
@@ -360,6 +388,7 @@ export class UnitImpl implements Unit {
         case UnitType.City:
         case UnitType.DefensePost:
         case UnitType.Artillery:
+        case UnitType.Radar:
         case UnitType.MissileSilo:
         case UnitType.Port:
         case UnitType.SAMLauncher:

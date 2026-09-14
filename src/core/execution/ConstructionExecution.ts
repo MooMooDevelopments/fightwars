@@ -8,6 +8,7 @@ import { MirvExecution } from "./MIRVExecution";
 import { MissileSiloExecution } from "./MissileSiloExecution";
 import { NukeExecution } from "./NukeExecution";
 import { PortExecution } from "./PortExecution";
+import { RadarExecution } from "./RadarExecution";
 import { SAMLauncherExecution } from "./SAMLauncherExecution";
 import { WarshipExecution } from "./WarshipExecution";
 
@@ -143,6 +144,9 @@ export class ConstructionExecution implements Execution {
       case UnitType.Artillery:
         this.mg.addExecution(new ArtilleryExecution(this.structure!));
         break;
+      case UnitType.Radar:
+        this.mg.addExecution(new RadarExecution(this.structure!));
+        break;
       case UnitType.SAMLauncher:
         this.mg.addExecution(
           new SAMLauncherExecution(player, null, this.structure!),
@@ -168,6 +172,7 @@ export class ConstructionExecution implements Execution {
       case UnitType.MissileSilo:
       case UnitType.DefensePost:
       case UnitType.Artillery:
+      case UnitType.Radar:
       case UnitType.SAMLauncher:
       case UnitType.City:
       case UnitType.Factory:

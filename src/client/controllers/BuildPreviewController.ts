@@ -403,7 +403,10 @@ export class BuildPreviewController implements Controller {
       ) {
         continue;
       }
-      const r = this.game.config().samRange(s.level());
+      const r = Math.min(
+        this.game.config().maxSamRange(),
+        this.game.config().samRange(s.level()) + s.samRangeBonus(),
+      );
       sams.push({
         x: this.game.x(s.tile()),
         y: this.game.y(s.tile()),
@@ -464,6 +467,9 @@ export class BuildPreviewController implements Controller {
         break;
       case UnitType.Artillery:
         rangeRadius = this.game.config().artilleryRange();
+        break;
+      case UnitType.Radar:
+        rangeRadius = this.game.config().radarRange();
         break;
     }
     let radiusTileX = this.game.x(tileRef);

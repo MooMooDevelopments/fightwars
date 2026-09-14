@@ -617,7 +617,8 @@ export class NationNukeBehavior {
         if (excludedSamIds?.has(sam.unit.id())) {
           continue;
         }
-        const rangeSquared = this.game.config().samRange(sam.unit.level()) ** 2;
+        const rangeSquared =
+          this.game.config().dynamicSamRange(sam.unit, this.game.ticks()) ** 2;
         if (sam.distSquared <= rangeSquared) {
           return true;
         }
@@ -708,7 +709,9 @@ export class NationNukeBehavior {
         const samLevel = sam.unit.level();
         if (samLevel >= 5) continue; // Can't outrange level 5+ SAMs
 
-        const samRange = this.game.config().samRange(samLevel);
+        const samRange = this.game
+          .config()
+          .dynamicSamRange(sam.unit, this.game.ticks());
         const distToSam = Math.sqrt(
           this.game.euclideanDistSquared(tile, sam.unit.tile()),
         );
@@ -1020,7 +1023,9 @@ export class NationNukeBehavior {
       if (owner === this.player || this.player.isFriendly(owner)) {
         continue;
       }
-      const range = this.game.config().samRange(sam.unit.level());
+      const range = this.game
+        .config()
+        .dynamicSamRange(sam.unit, this.game.ticks());
       if (sam.distSquared <= range * range) {
         result.push(sam.unit);
       }
@@ -1075,7 +1080,9 @@ export class NationNukeBehavior {
 
       let protection = 0;
       for (const sam of ourSams) {
-        const range = this.game.config().samRange(sam.level());
+        const range = this.game
+          .config()
+          .dynamicSamRange(sam, this.game.ticks());
         const distSquared = this.game.euclideanDistSquared(
           silo.tile(),
           sam.tile(),
