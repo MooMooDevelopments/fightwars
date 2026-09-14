@@ -1,6 +1,6 @@
 # FightWars Build State
 
-Last session: 2026-09-15 (session 12) | Current phase: **5 (depth) — retune pass done, all six 6.4 units built; Phase 5 is shipped end to end (the remainders are hook points, listed in `docs/HANDOFF.md` §4)** — 6.1 (supply lines) and 6.2 (elevation) done, **6.3 done** (upkeep, materials, blockades, embargo price; Manpower surfaced as `maxTroops`, not rebuilt), **6.4 half done** (nuke consequences; the six units not started); Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
+Last session: 2026-09-15 (session 13) | Current phase: **5 (depth) — retune pass done, all six 6.4 units built; Phase 5 is shipped end to end (the remainders are hook points, listed in `docs/HANDOFF.md` §4)** — 6.1 (supply lines) and 6.2 (elevation) done, **6.3 done** (upkeep, materials, blockades, embargo price; Manpower surfaced as `maxTroops`, not rebuilt), **6.4 half done** (nuke consequences; the six units not started); Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
 
 Repo: `C:\Users\disbo\dev\fightwars` · `upstream` = openfrontio/OpenFrontIO (forked at
 `c77005586`, rebased onto `7d95251f1` the same day) · `origin` = github.com/MooMooDevelopments/fightwars
@@ -28,6 +28,57 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 
 ## Handoff — read this first (written 2026-09-14, session 12 in progress)
 
+### Session 13 — rebase onto upstream's audio delivery
+
+- **Rebased first** onto upstream `1e973bb53` (4 commits: the new sound set with ambience
+  and a settings Audio tab, Steam locale as default language, the desktop gate's strings).
+  Four conflicts, all at fork commits that touch audio:
+  - `SoundManager.ts` — upstream replaced the playlist with one looping gameplay track plus
+    a home-page theme (`MenuMusic.ts`), both under `/proprietary`, which the fork does not
+    carry. `BRAND.assets.music` (a list) became `gameplayMusic` / `menuMusic`
+    (`string | null`); both null here. `SoundManager` builds no music Howl and `MenuMusic`
+    arms no gesture listener when the track is null. Upstream's own suites run against a
+    mocked brand that names the tracks; `tests/client/sound/SoundManagerNoMusic.test.ts`
+    pins the shipped case. The two new mp3s were removed from `proprietary/`.
+  - `SoundEffectController.ts` — upstream rewrote it (nuke warnings, train-station cues,
+    conquest by player type); the fork's four combat sounds (`sam-shoot`, `sam-hit`,
+    `warship-shot`, `warship-lost`) were re-applied on top, and upstream's new
+    per-effect channel map (`CUE_CATEGORY`, exhaustive by type) gained the four rows.
+  - `Brand.ts` fonts block, `GameRenderer.ts` controller list (Ambience + ImpactFeedback),
+    `ActionableEvents.ts` accept-alliance handler (sound + tier): keep both.
+- **After the rebase** the Brand test found upstream's new `desktopSteamLocale` reading the
+  upstream global by name — routed through `desktopBridge()`; its test and the audio
+  settings test set the marker by `BRAND.desktop.windowObject` now.
+- Suite 528 files / 6558 tests green, quick determinism 3/3, lint / prettier / licences
+  clean.
+
+### Session 13 — the readouts photographed and reviewed (Phase 4, Stage 4)
+
+- **Photographed.** A solo game on the dev server, at the pane's own 800 px (phone row) and
+  at 1600 × 900 (desktop). The control panel's tiles read as designed. The player panel did
+  not: the materials tile sat alone on a second `justify-between` row with the right half
+  empty, and a nation's relation line and doctrine chip stacked on two lines under the name.
+- **Reviewed** with `impeccable /critique` (a design-review agent plus the mechanical
+  detector, which found nothing) and `web-design-guidelines` (one finding: an `aria-label`
+  on a bare `div` is not announced). Seven fixes, all applied:
+  1. Gold, troops and materials are one `grid-cols-3` row, figure over label, so nothing is
+     half a row of nothing.
+  2. The doctrine chip moved into the identity row beside the nation chip, in that chip's
+     exact classes — doctrine is identity, relation is state and keeps its own line.
+  3. The chip's visible word is the name alone (`⚖ Expansionist`); "Expansionist doctrine"
+     is its accessible name, the effect its tooltip.
+  4. The occupied-land row is `role="status"` with the full sentence as its accessible name
+     (`player_panel.occupied_land_aria`); the visible copy is "N tiles occupied".
+  5. One factory glyph across the HUD: the player panel's tile wears the control panel's
+     masked SVG rather than the 🏭 emoji.
+  6. The phone row's materials figure wears ink, not muted ink, with an 11 px glyph — a peer
+     currency, not a caption of gold.
+  7. Both control-panel materials containers carry `role="group"` so their labels announce.
+- Re-photographed: a tribe's panel shows the three tiles in one row. The nation chip in its
+  new position is pinned by `tests/client/HudReadouts.test.ts` (accessible name, visible
+  name) but was not re-photographed — a nation was not in reach on the map by the time the
+  fix landed.
+
 ### Session 12 (continued) — the Phase 5 readouts, the first Phase 4 increment
 
 - **What shipped.** Materials beside gold on the control panel, in the gold tile's grammar
@@ -43,9 +94,8 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   `dataviz` was read before the tiles and its answer for a bare stat tile is a hero figure,
   a label and no colour of its own. `frontend-design` was loaded first per the standing
   procedure; `impeccable` is the next session's review, not this commit's.
-- **Not photographed.** These are text tiles in an existing grammar, not effects; the
-  accessibility and render tests (`tests/client/HudReadouts.test.ts`) pin the names, both
-  layouts and the on/off switches. A dev-server pass is still owed and the handoff says so.
+- **Not photographed in this session** — see the session-13 entry above for the dev-server
+  pass, the review and the seven fixes it produced.
 
 ### Session 12 (continued) — 6.4's sixth unit: Paratrooper, and Phase 5 is whole
 

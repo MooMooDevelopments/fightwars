@@ -1,4 +1,4 @@
-import { html, LitElement } from "lit";
+import { html, LitElement, nothing } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import Countries from "resources/countries.json" with { type: "json" };
 import { assetUrl } from "../../../core/AssetUrls";
@@ -44,6 +44,7 @@ import {
   translateText,
 } from "../../Utils";
 import { GameView, PlayerView } from "../../view";
+import { factoryIcon } from "../HotbarIcons";
 import { ChatModal } from "./ChatModal";
 import { EmojiTable } from "./EmojiTable";
 import "./PlayerModerationModal";
@@ -628,18 +629,20 @@ export class PlayerPanel extends LitElement implements Controller {
               >
             </span>`
           : html``}
+        ${this.renderDoctrineBadge(other)}
       </div>
       ${this.renderTraitorBadge(other)}
       ${this.renderRelationPillIfNation(other, my)}
-      ${this.renderDoctrineBadge(other)}
     `;
   }
 
   /**
-   * Doctrine badge (brief §6.6): who this player decided to be at spawn,
-   * in the chip grammar the panel already uses for nation and traitor.
-   * Words, not a colour — a doctrine is a name, and eight colours would
-   * be eight more things for a dichromat to lose.
+   * Doctrine chip (brief §6.6): who this player decided to be at spawn. It
+   * is identity, so it sits in the identity row in the nation chip's exact
+   * grammar, and the chip's position already says "doctrine" — the visible
+   * word is the name alone; the full phrase is the accessible name and the
+   * effect is the tooltip. Words, not a colour: a doctrine is a name, and
+   * eight colours would be eight more things for a dichromat to lose.
    */
   private renderDoctrineBadge(other: PlayerView) {
     const doctrine = other.doctrine();
@@ -647,21 +650,17 @@ export class PlayerPanel extends LitElement implements Controller {
       return html``;
     }
     const key = `doctrine.${DOCTRINE_KEYS[doctrine]}`;
+    const name = translateText(key);
     return html`
-      <div class="mt-1">
-        <span
-          class="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/4 px-2.5 py-0.5 text-xs font-semibold text-zinc-200"
-          role="status"
-          data-readout="doctrine"
-          title=${translateText(`${key}_desc`)}
-        >
-          <span class="tracking-tight"
-            >${translateText("player_panel.doctrine", {
-              doctrine: translateText(key),
-            })}</span
-          >
-        </span>
-      </div>
+      <span
+        class="inline-flex items-center gap-1.5 rounded-full border border-zinc-400/20 bg-zinc-500/5 px-2 py-0.5 text-xs font-semibold text-zinc-300"
+        data-readout="doctrine"
+        aria-label=${translateText("player_panel.doctrine", { doctrine: name })}
+        title=${translateText(`${key}_desc`)}
+      >
+        <span aria-hidden="true" class="leading-none">⚖</span>
+        <span class="tracking-tight">${name}</span>
+      </span>
     `;
   }
 
@@ -677,6 +676,10 @@ export class PlayerPanel extends LitElement implements Controller {
       <div
         class="mb-1 flex items-center gap-1.5 rounded-lg bg-white/4 px-3 py-1 text-sm text-status-alert"
         data-readout="unrest"
+        role="status"
+        aria-label=${translateText("player_panel.occupied_land_aria", {
+          n: renderNumber(tiles),
+        })}
       >
         <span aria-hidden="true">⚠</span>
         <span translate="no" class="tabular-nums font-semibold"
@@ -690,48 +693,46 @@ export class PlayerPanel extends LitElement implements Controller {
   }
 
   private renderResources(other: PlayerView) {
-    return html`
-      <div class="mb-1 flex justify-between gap-2">
-        <div
-          class="inline-flex items-center gap-1.5 rounded-lg bg-white/4 px-3 py-1.5 shrink-0
-                    text-white w-35"
-        >
-          <span class="mr-0.5">💰</span>
-          <span translate="no" class="tabular-nums w-[5ch] font-semibold">
-            ${renderNumber(other.gold() || 0)}
-          </span>
-          <span class="text-zinc-200 whitespace-nowrap">
-            ${translateText("player_panel.gold")}</span
+    // One row, three equal tiles: the figure leads and wears tabular
+    // numerals, the word under it is the label. Figure over word is what
+    // lets three sit where two used to, with no half-row of nothing.
+    const tile = (
+      icon: unknown,
+      figure: string,
+      labelKey: string,
+      readout?: string,
+    ) => html`
+      <div
+        class="flex min-w-0 flex-col rounded-lg bg-white/4 px-3 py-1.5 text-white"
+        data-readout=${readout ?? nothing}
+      >
+        <span class="flex items-center gap-1.5">
+          <span aria-hidden="true" class="leading-none">${icon}</span>
+          <span translate="no" class="tabular-nums font-semibold truncate"
+            >${figure}</span
           >
-        </div>
-
-        <div
-          class="inline-flex items-center gap-1.5 rounded-lg bg-white/4 px-3 py-1.5
-                    text-white w-35 shrink-0"
+        </span>
+        <span class="text-xs text-zinc-300 truncate"
+          >${translateText(labelKey)}</span
         >
-          <span class="mr-0.5">🛡️</span>
-          <span translate="no" class="tabular-nums w-[5ch] font-semibold">
-            ${renderTroops(other.troops() || 0)}
-          </span>
-          <span class="text-zinc-200 whitespace-nowrap">
-            ${translateText("player_panel.troops")}</span
-          >
-        </div>
       </div>
-      <div class="mb-1 flex justify-between gap-2">
-        <div
-          class="inline-flex items-center gap-1.5 rounded-lg bg-white/4 px-3 py-1.5 shrink-0
-                    text-white w-35"
-          data-readout="materials"
-        >
-          <span class="mr-0.5">🏭</span>
-          <span translate="no" class="tabular-nums w-[5ch] font-semibold">
-            ${renderNumber(other.materials() || 0n)}
-          </span>
-          <span class="text-zinc-200 whitespace-nowrap">
-            ${translateText("player_panel.materials")}</span
-          >
-        </div>
+    `;
+    // The same factory mark the control panel wears, so one currency has
+    // one glyph across the HUD.
+    const factory = html`<span
+      class="icon-mask inline-block"
+      style="--icon: url(${factoryIcon}); width: 14px; height: 14px"
+    ></span>`;
+    return html`
+      <div class="mb-1 grid grid-cols-3 gap-2">
+        ${tile("💰", renderNumber(other.gold() || 0), "player_panel.gold")}
+        ${tile("🛡️", renderTroops(other.troops() || 0), "player_panel.troops")}
+        ${tile(
+          factory,
+          renderNumber(other.materials() || 0n),
+          "player_panel.materials",
+          "materials",
+        )}
       </div>
       ${this.renderUnrest(other)}
     `;

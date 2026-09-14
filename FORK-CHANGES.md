@@ -84,6 +84,12 @@ shared upstream files are listed individually because each one is a future rebas
   `win_modal.support_openfront` is the one key still carrying the old name).
 - `src/client/DesktopShell.ts` — the desktop bridge is `window.fightwarsDesktop` and the scheme
   `app://fightwars`: a separate desktop shell, if ever built, must inject those names.
+  `desktopSteamLocale` (upstream, session 13) reads the bridge through `desktopBridge()`.
+- `src/client/sound/SoundManager.ts`, `src/client/sound/MenuMusic.ts` — the gameplay loop and
+  the menu theme come from `BRAND.assets.gameplayMusic` / `menuMusic`; null (the shipped
+  value — upstream's tracks are under `/proprietary`) means no Howl and no gesture listener.
+  `tests/client/sound/SoundManagerNoMusic.test.ts` pins it; upstream's music suites run
+  against a mocked brand that names the tracks.
 - `tests/Brand.test.ts` — asserts the copyright text, that no `src/` file outside `src/brand/`
   mentions the upstream name except via `BRAND.upstream`, and that `index.html` carries none of
   the ad/tracking markers.
@@ -1218,10 +1224,13 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
 - `src/client/hud/layers/ControlPanel.ts` — `_materials` read each tick; a materials tile
   beside gold on desktop (the gold tile's grammar, a factory glyph via `.icon-mask`), and a
   second figure under gold in the same tile on the phone row.
-- `src/client/hud/layers/PlayerPanel.ts` — `renderDoctrineBadge` (a chip after the relation
-  chip), `renderUnrest` (an occupied-land row), a materials tile in `renderResources`.
+- `src/client/hud/layers/PlayerPanel.ts` — `renderDoctrineBadge` (a chip in the identity
+  row beside the nation chip, since the session-13 review), `renderUnrest` (an
+  occupied-land status row), and `renderResources` as one three-tile grid (gold, troops,
+  materials; the factory glyph is the control panel's masked SVG).
 - `resources/lang/en.json` — `control_panel.materials`, `player_panel.materials`,
-  `player_panel.doctrine`, `player_panel.occupied_land`.
+  `player_panel.doctrine` (the chip's accessible name), `player_panel.occupied_land`,
+  `player_panel.occupied_land_aria`.
 
 #### FightWars-only files added
 

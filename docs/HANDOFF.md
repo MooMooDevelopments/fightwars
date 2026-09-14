@@ -86,12 +86,23 @@ licenses:check`, `npm run perf:gate` on an idle box; per sim change an 8000-tick
    a lever that reproduces the previous commit's hash to the digit.
 1. **Phase 4 identity** (§3 below, per item): load `frontend-design` before any UI code,
    `ui-ux-pro-max` for palette/type, `dataviz` before any chart or stat tile, `impeccable`
-   and `web-design-guidelines` on the result. The readouts landed at the end of session 12 (unphotographed — a
-   dev-server pass is the first thing to do here). Then item 3's halo/flash legibility, item 6's
+   and `web-design-guidelines` on the result. The readouts landed at the end of session 12 and were photographed,
+   reviewed and fixed in session 13 (`BUILD-STATE.md`). Then item 3's halo/flash legibility, item 6's
    layout and radial menus, item 7's mobile remainder, item 9's build queue / rally points /
    attack presets (the one simulation item — a lever and an A/B like any Phase 5 item).
 2. **Then Phase 6** (§5: modes and metagame) and **Phase 7** (§7: hardening), with §6's
    blocked items (Discord OAuth secret, a Docker box, hardware) waiting on the owner.
+
+### Things that bit us in session 13 (do not relearn)
+
+- Upstream's audio rewrite: any fork commit that touches `SoundManager`, `MenuMusic`,
+  `SoundEffectController` or `Sounds.ts` conflicts at rebase. `Sounds.ts` carries an
+  exhaustive `CUE_CATEGORY` map now — a `SoundEffect` without a channel row fails to
+  compile, so add the row with the union member.
+- Upstream keeps reintroducing `window.openfrontDesktop` by name in new code and tests
+  (`desktopSteamLocale`, `UserSettings.audio.test.ts`). The Brand test catches the source;
+  the tests only fail once the source is routed through the brand key. Route through
+  `desktopBridge()` / `BRAND.desktop.windowObject` every time.
 
 ### Things that bit us in session 12 (do not relearn)
 
@@ -302,8 +313,10 @@ should be is an open question — arguably only a big offensive should show from
 switch. A per-effect toggle would need `RenderSettings`, `render-settings.json`,
 `debug/Layout.ts` and `GraphicsAdvancedSettings.ts` changed together.
 
-Audio budget is 2 MB and `resources/sounds` is 1.5 MB, so ~500 KB of headroom. The music
-playlist is deliberately empty (`BRAND.assets.music`) until CC-licensed tracks exist.
+Audio budget is 2 MB. The music is deliberately absent (`BRAND.assets.gameplayMusic` and
+`menuMusic` are null) until CC-licensed tracks exist; upstream's own two tracks live in
+`/proprietary` and are stripped at every rebase. Upstream's session-13 sound set (ambience
+loops for cities, factories and silos, a settings Audio tab) is in and licensed CC BY-SA.
 
 ### 6 — Radial menus, HUD, leaderboard, events feed
 

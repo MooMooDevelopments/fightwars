@@ -652,6 +652,7 @@ export class ControlPanel extends LitElement implements Controller {
         <div
           class="flex items-center gap-1 shrink-0 border border-ink-dim/40 rounded-md text-sm py-0.5 px-1 min-w-[4.5rem]"
           translate="no"
+          role="group"
           title=${translateText("control_panel.materials")}
           aria-label=${translateText("control_panel.materials")}
         >
@@ -737,13 +738,14 @@ export class ControlPanel extends LitElement implements Controller {
               >${renderNumber(this._gold)}</span
             >
             <span
-              class="px-0.5 inline-flex items-center gap-0.5 text-ink-muted font-display font-semibold tabular-nums"
+              class="px-0.5 inline-flex items-center gap-0.5 text-ink font-display font-semibold tabular-nums"
+              role="group"
               title=${translateText("control_panel.materials")}
               aria-label=${translateText("control_panel.materials")}
             >
               <span
                 class="icon-mask"
-                style="--icon: url(${factoryIcon}); width: 9px; height: 9px"
+                style="--icon: url(${factoryIcon}); width: 11px; height: 11px"
                 aria-hidden="true"
               ></span
               ><span data-readout="materials"

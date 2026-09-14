@@ -107,8 +107,11 @@ describe("player panel: doctrine, materials and occupied land", () => {
     render((panel as any).renderDoctrineBadge(player()), host);
     const chip = host.querySelector('[data-readout="doctrine"]');
     expect(chip).not.toBeNull();
-    expect(chip?.textContent).toContain("player_panel.doctrine");
+    // The visible word is the name; the full phrase is the accessible name.
     expect(chip?.textContent).toContain("doctrine.fortress");
+    expect(chip?.textContent).not.toContain("player_panel.doctrine");
+    expect(chip?.getAttribute("aria-label")).toContain("player_panel.doctrine");
+    expect(chip?.getAttribute("aria-label")).toContain("doctrine.fortress");
 
     render(
       (panel as any).renderDoctrineBadge(
@@ -129,6 +132,10 @@ describe("player panel: doctrine, materials and occupied land", () => {
     expect(tile).not.toBeNull();
     expect(tile?.textContent).toContain(renderNumber(1500n));
     expect(tile?.textContent).toContain("player_panel.materials");
+    // Three tiles in one row: gold, troops, materials.
+    const row = tile?.parentElement;
+    expect(row?.className).toContain("grid-cols-3");
+    expect(row?.children.length).toBe(3);
   });
 
   it("shows occupied land only when there is some, with words beside the colour", () => {
@@ -144,6 +151,8 @@ describe("player panel: doctrine, materials and occupied land", () => {
     expect(row?.className).toContain("text-status-alert");
     expect(row?.textContent).toContain(renderNumber(350));
     expect(row?.textContent).toContain("player_panel.occupied_land");
+    expect(row?.getAttribute("role")).toBe("status");
+    expect(row?.getAttribute("aria-label")).toContain(renderNumber(350));
 
     unrestOn = false;
     render(
