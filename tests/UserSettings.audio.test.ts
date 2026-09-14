@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { BRAND } from "../src/brand/Brand";
 import {
   AudioCategory,
   USER_SETTINGS_CHANGED_EVENT,
@@ -19,14 +20,15 @@ function resetUserSettingsState() {
 
 /** The shell sets this global; isDesktopShell() keys off it. */
 function pretendDesktopShell() {
-  (
-    globalThis as unknown as { window: Record<string, unknown> }
-  ).window.openfrontDesktop = {};
+  (globalThis as unknown as { window: Record<string, unknown> }).window[
+    BRAND.desktop.windowObject
+  ] = {};
 }
 
 function pretendWeb() {
-  delete (globalThis as unknown as { window: Record<string, unknown> }).window
-    .openfrontDesktop;
+  delete (globalThis as unknown as { window: Record<string, unknown> }).window[
+    BRAND.desktop.windowObject
+  ];
 }
 
 const INHERITS_EFFECTS: AudioCategory[] = [

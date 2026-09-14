@@ -54,7 +54,7 @@ type LocaleBridge = { steamLocale?: unknown };
  * ever needs to be.
  */
 export function desktopSteamLocale(): string | null {
-  const desktop = window.openfrontDesktop as LocaleBridge | undefined;
+  const desktop = desktopBridge() as LocaleBridge | undefined;
   const locale = desktop?.steamLocale;
   if (typeof locale !== "string") return null;
   // Shape first, then BCP-47 proper. The regex alone accepts tags that are

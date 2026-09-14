@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { BRAND } from "../src/brand/Brand";
 import {
   composeVersionDisplay,
   desktopLinkGate,
@@ -190,11 +191,11 @@ describe("requestDesktopQuit", () => {
 
 describe("desktopSteamLocale", () => {
   afterEach(() => {
-    window.openfrontDesktop = undefined;
+    window[BRAND.desktop.windowObject] = undefined;
   });
 
   it("returns the locale the shell reports", () => {
-    window.openfrontDesktop = { steamLocale: "pt-BR" };
+    window[BRAND.desktop.windowObject] = { steamLocale: "pt-BR" };
     expect(desktopSteamLocale()).toBe("pt-BR");
   });
 
@@ -202,17 +203,17 @@ describe("desktopSteamLocale", () => {
   // same answer: both mean nothing better than navigator.language is known,
   // and both must leave it deciding rather than pinning the player to English.
   it("is null off the desktop shell", () => {
-    window.openfrontDesktop = undefined;
+    window[BRAND.desktop.windowObject] = undefined;
     expect(desktopSteamLocale()).toBeNull();
   });
 
   it("is null when the shell reports no locale", () => {
-    window.openfrontDesktop = { steamLocale: null };
+    window[BRAND.desktop.windowObject] = { steamLocale: null };
     expect(desktopSteamLocale()).toBeNull();
   });
 
   it("is null when the bridge predates the field", () => {
-    window.openfrontDesktop = {};
+    window[BRAND.desktop.windowObject] = {};
     expect(desktopSteamLocale()).toBeNull();
   });
 
@@ -235,14 +236,14 @@ describe("desktopSteamLocale", () => {
       // it to "en" and let it beat a valid navigator.language.
       "en-12",
     ]) {
-      window.openfrontDesktop = { steamLocale: locale };
+      window[BRAND.desktop.windowObject] = { steamLocale: locale };
       expect(desktopSteamLocale(), String(locale)).toBeNull();
     }
   });
 
   it("accepts the shapes the mapping actually emits", () => {
     for (const locale of ["en", "fr", "zh-CN", "pt-BR", "sv-SE", "es-419"]) {
-      window.openfrontDesktop = { steamLocale: locale };
+      window[BRAND.desktop.windowObject] = { steamLocale: locale };
       expect(desktopSteamLocale(), locale).toBe(locale);
     }
   });
