@@ -333,7 +333,10 @@ export class GameRightSidebar extends LitElement implements Controller {
       return;
     }
 
-    const elapsedSeconds = Math.floor(this.game.elapsedGameSeconds());
+    // Wall-clock seconds: game seconds over the game speed. At 4x a five
+    // minute Blitz is twenty game minutes, and the clock says five.
+    const speed = this.game.config().gameSpeed();
+    const elapsedSeconds = Math.floor(this.game.elapsedGameSeconds() / speed);
 
     if (this.hasWinner) {
       return;
@@ -341,7 +344,10 @@ export class GameRightSidebar extends LitElement implements Controller {
 
     const maxTimerValue = this.game.config().gameConfig().maxTimerValue;
     if (maxTimerValue !== null && maxTimerValue !== undefined) {
-      this.timer = Math.max(0, maxTimerValue * 60 - elapsedSeconds);
+      this.timer = Math.max(
+        0,
+        Math.floor((maxTimerValue * 60) / speed) - elapsedSeconds,
+      );
       this.maybeShowOneMinuteWarning();
     } else {
       this.timer = elapsedSeconds;

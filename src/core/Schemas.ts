@@ -563,6 +563,11 @@ export const GameConfigSchema = z.object({
   playerTeams: TeamCountConfigSchema.optional(),
   goldMultiplier: zb.float({ min: 0.1, max: 1000 }).nullable().optional(),
   startingGold: zb.uint({ max: 1000000000 }).nullable().optional(),
+  // Turns per 100 ms of wall clock (brief §6.7 Blitz: "4x speed"). The
+  // simulation is unchanged — a tick is a tick — the server commits turns
+  // this many times faster and the clients run them as they arrive. Absent
+  // is 1. Appended here so the binary wire keeps its field order.
+  gameSpeed: zb.uint({ min: 1, max: 4 }).optional(),
   hostCheats: z
     .object({
       infiniteGold: z.boolean().optional(),

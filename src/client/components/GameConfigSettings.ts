@@ -35,6 +35,15 @@ const INACTIVE_CARD =
 const DISABLED_CARD =
   "w-full rounded-xl border transition-all duration-200 opacity-30 grayscale cursor-not-allowed bg-white/5 border-white/5";
 
+/** The speeds a host may pick: normal, fast, Blitz (brief §6.7). */
+export const GAME_SPEEDS = [1, 2, 4] as const;
+// Literal keys, so the locale audit can see each one is used.
+const GAME_SPEED_LABEL_KEYS: Record<(typeof GAME_SPEEDS)[number], string> = {
+  1: "game_speed.x1",
+  2: "game_speed.x2",
+  4: "game_speed.x4",
+};
+
 function cardClass(active: boolean, extra = ""): string {
   return `w-full rounded-xl border cursor-pointer transition-all duration-200 active:scale-95 ${extra} ${active ? ACTIVE_CARD : INACTIVE_CARD}`;
 }
@@ -210,6 +219,10 @@ export interface GameConfigSettingsData {
   gameMode: {
     selected: GameMode;
   };
+  /** Turns per 100 ms; absent hides the section (the join view, replays). */
+  gameSpeed?: {
+    selected: number;
+  };
   teamCount: {
     selected: TeamCountConfig;
   };
@@ -290,6 +303,10 @@ export class GameConfigSettings extends LitElement {
 
   private handleGameModeSelect = (mode: GameMode) => {
     this.emit("game-mode-selected", { mode });
+  };
+
+  private handleGameSpeedSelect = (speed: number) => {
+    this.emit("game-speed-selected", { speed });
   };
 
   private handleTeamCountSelect = (count: TeamCountConfig) => {
@@ -524,6 +541,35 @@ export class GameConfigSettings extends LitElement {
             </div>
           `,
         )}
+        ${settings.gameSpeed === undefined
+          ? nothing
+          : renderSection(
+              MODE_ICON,
+              "text-purple-400",
+              "bg-purple-500/20",
+              "host_modal.speed",
+              html`
+                <div class="grid grid-cols-3 gap-4">
+                  ${GAME_SPEEDS.map((speed) => {
+                    const isSelected = settings.gameSpeed!.selected === speed;
+                    return html`
+                      <button
+                        class="${cardClass(isSelected, "py-6 text-center")}"
+                        data-game-speed=${speed}
+                        aria-pressed=${isSelected ? "true" : "false"}
+                        @click=${() => this.handleGameSpeedSelect(speed)}
+                      >
+                        <span
+                          class="text-sm font-bold text-white uppercase tracking-widest"
+                        >
+                          ${translateText(GAME_SPEED_LABEL_KEYS[speed])}
+                        </span>
+                      </button>
+                    `;
+                  })}
+                </div>
+              `,
+            )}
         ${settings.gameMode.selected === GameMode.FFA
           ? nothing
           : html`

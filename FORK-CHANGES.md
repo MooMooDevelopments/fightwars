@@ -1419,3 +1419,26 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
 - `tests/server/GameServerShadow.test.ts` — started with the game, every turn handed over,
   a refusal is 403 and counted and kept out of the turn, control intents not asked about,
   the relay alone without a shadow.
+
+### Game speed (Phase 6, the engine under Blitz, session 13)
+
+#### Shared upstream files edited
+
+- `src/core/Schemas.ts` — `GameConfig.gameSpeed` (1–4, optional, appended).
+- `src/core/configuration/Config.ts` — `gameSpeed()`.
+- `src/server/GameServer.ts` — `turnIntervalMs()` divides the deployment's interval by the
+  lobby's speed, for the turn timer and the turn-stats budget.
+- `src/client/LocalServer.ts` — the local pacing divides by it too.
+- `src/client/hud/layers/GameRightSidebar.ts` — the clock in wall time.
+- `src/client/components/GameConfigSettings.ts` — `GAME_SPEEDS`, the speed section,
+  `game-speed-selected`.
+- `src/client/HostLobbyModal.ts`, `src/client/SinglePlayerModal.ts` — the setting, pushed
+  and sent.
+- `resources/lang/en.json` — `host_modal.speed`, `game_speed.x1` / `x2` / `x4`.
+
+#### FightWars-only files added
+
+- `tests/GameSpeed.test.ts` — the default and the schema bounds, the server's turns per
+  second at each speed, the sim's config untouched by it.
+- `tests/client/GameSpeedSettings.test.ts` — three cards with the chosen one pressed, the
+  event, the section absent when not offered, the host pushing the pick.

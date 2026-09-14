@@ -958,6 +958,11 @@
     "starting_gold": "Starting Gold (Millions)",
     "water_nukes": "Water nukes"
   },
+  "game_speed": {
+    "x1": "1× Normal",
+    "x2": "2× Fast",
+    "x4": "4× Blitz"
+  },
   "game_starting_modal": {
     "code_license": "Code licensed under AGPL-3.0 (no warranty)",
     "credits": "Credits",
@@ -1204,6 +1209,7 @@
     "remove_player": "Remove {username}",
     "spectator": "Spectator",
     "spectators": "Spectators",
+    "speed": "Game speed",
     "start_delay": "Start delay (Seconds)",
     "starting_in": "Starting in {time}. Click to cancel",
     "subscription_required_body": "You need a Warlord or Sovereign subscription to make your lobby public.",

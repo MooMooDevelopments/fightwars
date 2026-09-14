@@ -87,8 +87,12 @@ export class LocalServer {
   start() {
     console.log("local server starting");
     this.turnCheckInterval = setInterval(() => {
+      // The lobby's game speed divides the interval the way the server's
+      // does (GameServer.turnIntervalMs); the replay multiplier is the
+      // player's own dial on top.
+      const gameSpeed = this.lobbyConfig.gameStartInfo?.config.gameSpeed ?? 1;
       const turnIntervalMs =
-        ClientEnv.turnIntervalMs() * this.replaySpeedMultiplier;
+        (ClientEnv.turnIntervalMs() * this.replaySpeedMultiplier) / gameSpeed;
       const backlog = Math.max(0, this.turns.length - this.turnsExecuted);
       const allowReplayBacklog =
         this.replaySpeedMultiplier === ReplaySpeedMultiplier.fastest &&

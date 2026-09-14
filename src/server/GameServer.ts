@@ -844,6 +844,15 @@ export class GameServer {
     return this.desync.count();
   }
 
+  /**
+   * Wall-clock milliseconds between turns: the deployment's interval over
+   * the lobby's game speed (GameConfig.gameSpeed, 1 unless a host chose
+   * faster). The shadow and the clients run whatever arrives.
+   */
+  private turnIntervalMs(): number {
+    return this.deps.turnIntervalMs() / (this.gameConfig.gameSpeed ?? 1);
+  }
+
   /** Gameplay intents the shadow simulation refused (ShadowSim). */
   public numShadowRefusals(): number {
     return this.shadowRefusals;
@@ -1148,7 +1157,7 @@ export class GameServer {
 
     this.endTurnIntervalID = setInterval(
       () => this.endTurn(),
-      this.deps.turnIntervalMs(),
+      this.turnIntervalMs(),
     );
     this.clients.active().forEach((c) => {
       this.log.info("sending start message", {
@@ -1437,7 +1446,7 @@ export class GameServer {
         recipients++;
       }
     });
-    this.turnStats ??= new TurnStats(this.deps.turnIntervalMs());
+    this.turnStats ??= new TurnStats(this.turnIntervalMs());
     this.turnStats.record(
       performance.now() - turnStartedAt,
       msg.byteLength * recipients,
@@ -1445,7 +1454,7 @@ export class GameServer {
   }
 
   public turnStatsSnapshot(): TurnStatsSnapshot {
-    this.turnStats ??= new TurnStats(this.deps.turnIntervalMs());
+    this.turnStats ??= new TurnStats(this.turnIntervalMs());
     return this.turnStats.snapshot();
   }
 

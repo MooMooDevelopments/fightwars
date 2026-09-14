@@ -59,6 +59,7 @@ export class HostLobbyModal extends BaseModal {
   @state() private nations: number = 0;
   @state() private defaultNationCount: number = 0;
   @state() private gameMode: GameMode = GameMode.FFA;
+  @state() private gameSpeed: number = 1;
   @state() private teamCount: TeamCountConfig = 2;
 
   constructor() {
@@ -513,6 +514,9 @@ export class HostLobbyModal extends BaseModal {
               gameMode: {
                 selected: this.gameMode,
               },
+              gameSpeed: {
+                selected: this.gameSpeed,
+              },
               teamCount: {
                 selected: this.teamCount,
               },
@@ -611,6 +615,7 @@ export class HostLobbyModal extends BaseModal {
             @doomsday-clock-speed-selected=${this
               .handleConfigDoomsdayClockSpeedSelected}
             @game-mode-selected=${this.handleConfigGameModeSelected}
+            @game-speed-selected=${this.handleConfigGameSpeedSelected}
             @team-count-selected=${this.handleConfigTeamCountSelected}
             @bots-changed=${this.handleBotsChange}
             @nations-changed=${this.handleNationsChange}
@@ -918,6 +923,12 @@ export class HostLobbyModal extends BaseModal {
   private handleConfigTeamCountSelected = (e: Event) => {
     const customEvent = e as CustomEvent<{ count: TeamCountConfig }>;
     void this.handleTeamCountSelection(customEvent.detail.count);
+  };
+
+  private handleConfigGameSpeedSelected = (e: Event) => {
+    const customEvent = e as CustomEvent<{ speed: number }>;
+    this.gameSpeed = customEvent.detail.speed;
+    this.putGameConfig();
   };
 
   private handleConfigOptionToggleChanged = (e: Event) => {
@@ -1407,6 +1418,7 @@ export class HostLobbyModal extends BaseModal {
             instantBuild: this.instantBuild,
             randomSpawn: this.randomSpawn,
             gameMode: this.gameMode,
+            gameSpeed: this.gameSpeed,
             disabledUnits: this.disabledUnits,
             spawnImmunityDuration: this.spawnImmunity
               ? spawnImmunityTicks

@@ -608,9 +608,11 @@ Remaining, roughly in the order the brief implies:
   Capital Strike (a capital unit + `conquerPlayer` on its loss), Survival (co-op vs
   escalating nations — the difficulty enum plus `NationExecution` cadence), Historical
   scenarios (map manifests with fixed spawns and doctrines), Draft (lobby-phase picks are
-  server state, not sim state), **Blitz** — the brief's "4× speed" needs a real game-speed
-  setting in the wire config; today the 100 ms turn is fixed on both sides
-  (`ServerEnv.ts`/`ClientEnv.ts`, see `docs/MECHANICS.md` §06.5).
+  server state, not sim state), **Blitz** — the engine is in (session 13: `gameSpeed` in
+  the wire config, 1× / 2× / 4× in the host and single-player lobbies, the server and the
+  local server pacing by it, the HUD clock in wall time); what is left of Blitz is the
+  preset itself — a small map, 4×, a five-minute timer (`maxTimerValue` 20 at 4×) — as a
+  lobby button and a public-playlist entry.
 - **Spectator/caster mode** with economy graphs and a win projection (`spectator` join
   exists; graphs are `dataviz` work), **replay viewer** with timeline scrubbing and
   jump-to-event (the client already replays records; scrubbing needs snapshotting or

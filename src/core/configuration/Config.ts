@@ -1446,6 +1446,16 @@ export class Config {
     }
     return 3;
   }
+  /**
+   * Turns per 100 ms of wall clock (brief §6.7). The sim never reads this:
+   * a tick is a tick, and every duration in ticks compresses with it. The
+   * server's turn interval and the local server's pacing divide by it, and
+   * the HUD clock divides by it to show wall time.
+   */
+  gameSpeed(): number {
+    return this._gameConfig.gameSpeed ?? 1;
+  }
+
   numSpawnPhaseTurns(): number {
     if (this._gameConfig.gameType === GameType.Singleplayer) {
       return 100;

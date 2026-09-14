@@ -106,6 +106,7 @@ const DEFAULT_OPTIONS = {
   randomSpawn: false,
   useRandomMap: false,
   gameMode: GameMode.FFA,
+  gameSpeed: 1,
   teamCount: 2 as TeamCountConfig,
   goldMultiplier: false,
   goldMultiplierValue: undefined as number | undefined,
@@ -183,6 +184,7 @@ export class SinglePlayerModal extends BaseModal {
   @state() private randomSpawn: boolean = DEFAULT_OPTIONS.randomSpawn;
   @state() private useRandomMap: boolean = DEFAULT_OPTIONS.useRandomMap;
   @state() private gameMode: GameMode = DEFAULT_OPTIONS.gameMode;
+  @state() private gameSpeed: number = DEFAULT_OPTIONS.gameSpeed;
   @state() private teamCount: TeamCountConfig = DEFAULT_OPTIONS.teamCount;
   @state() private showAchievements: boolean = false;
   @state() private mapWins: Map<GameMapType, Set<Difficulty>> = new Map();
@@ -500,6 +502,9 @@ export class SinglePlayerModal extends BaseModal {
               gameMode: {
                 selected: this.gameMode,
               },
+              gameSpeed: {
+                selected: this.gameSpeed,
+              },
               teamCount: {
                 selected: this.teamCount,
               },
@@ -560,6 +565,7 @@ export class SinglePlayerModal extends BaseModal {
             @doomsday-clock-speed-selected=${this
               .handleConfigDoomsdayClockSpeedSelected}
             @game-mode-selected=${this.handleConfigGameModeSelected}
+            @game-speed-selected=${this.handleConfigGameSpeedSelected}
             @team-count-selected=${this.handleConfigTeamCountSelected}
             @bots-changed=${this.handleBotsChange}
             @nations-changed=${this.handleNationsChange}
@@ -666,6 +672,7 @@ export class SinglePlayerModal extends BaseModal {
     this.selectedMap = DEFAULT_OPTIONS.selectedMap;
     this.selectedDifficulty = DEFAULT_OPTIONS.selectedDifficulty;
     this.gameMode = DEFAULT_OPTIONS.gameMode;
+    this.gameSpeed = DEFAULT_OPTIONS.gameSpeed;
     this.useRandomMap = DEFAULT_OPTIONS.useRandomMap;
     this.bots = DEFAULT_OPTIONS.bots;
     this.nations = 0;
@@ -953,6 +960,11 @@ export class SinglePlayerModal extends BaseModal {
     this.gameMode = value;
   }
 
+  private handleConfigGameSpeedSelected = (e: Event) => {
+    const customEvent = e as CustomEvent<{ speed: number }>;
+    this.gameSpeed = customEvent.detail.speed;
+  };
+
   private handleTeamCountSelection(value: TeamCountConfig) {
     this.teamCount = value;
   }
@@ -1137,6 +1149,7 @@ export class SinglePlayerModal extends BaseModal {
                   : GameMapSize.Normal,
                 gameType: GameType.Singleplayer,
                 gameMode: this.gameMode,
+                gameSpeed: this.gameSpeed,
                 playerTeams: this.teamCount,
                 difficulty: this.selectedDifficulty,
                 maxTimerValue: finalMaxTimerValue,

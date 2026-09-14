@@ -79,6 +79,26 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — Phase 6 opens: game speed, the engine under Blitz
+
+- **What shipped.** `GameConfig.gameSpeed` (1–4, absent = 1): turns per 100 ms of wall
+  clock. The simulation never reads it — a tick is a tick, and every duration in ticks
+  compresses with it, which is exactly what "4× speed" means. The server divides its turn
+  interval and its turn-stats budget by it; the local server divides the same way for
+  singleplayer; the HUD clock divides game seconds by it so a five-minute Blitz at 4× reads
+  five on the clock, not twenty. The host lobby and the single-player modal offer 1× / 2× /
+  4× in the settings component's own card grammar; the join view, which only reads, does
+  not. Appended to the config schema so the binary wire keeps its field order.
+- **Measured / pinned:** the server commits 10 / 20 / 40 turns a second at 1× / 2× / 4×
+  under fake timers; the schema refuses 0 and 5; nothing in the sim's config moves with
+  it (spawn phase, cooldowns, costs). Not measured: a real 4× lobby's tick budget on this
+  box — the perf gate's 3 ms tick against a 25 ms interval leaves room, and the
+  turn-stats "over budget" column will say if it does not.
+- **Guards broken and watched fail:** the server ignoring the speed, the selector saying
+  nothing.
+- **Not done in this commit:** the Blitz preset itself (small map, 4×, five minutes) as a
+  lobby button and a public-playlist entry — next.
+
 ### Session 13 — automation detection, and the fog-of-war decision
 
 - **What shipped.** `AutomationScorer`: forty arrival times per client; eight intents a
