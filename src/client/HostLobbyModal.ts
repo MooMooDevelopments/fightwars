@@ -19,6 +19,7 @@ import {
   HumansVsNations,
   UnitType,
 } from "../core/game/Game";
+import { scenarioById } from "../core/game/Scenarios";
 import { UserSettings } from "../core/game/UserSettings";
 import {
   ClientInfo,
@@ -66,6 +67,7 @@ export class HostLobbyModal extends BaseModal {
   @state() private capitalStrike: boolean = false;
   @state() private kingOfTheHill: boolean = false;
   @state() private survival: boolean = false;
+  @state() private scenario: string | null = null;
   @state() private teamCount: TeamCountConfig = 2;
 
   constructor() {
@@ -524,6 +526,9 @@ export class HostLobbyModal extends BaseModal {
                 selected: this.gameSpeed,
                 blitz: this.isBlitzPreset(),
               },
+              scenario: {
+                selected: this.scenario,
+              },
               teamCount: {
                 selected: this.teamCount,
               },
@@ -640,6 +645,7 @@ export class HostLobbyModal extends BaseModal {
             @game-mode-selected=${this.handleConfigGameModeSelected}
             @game-speed-selected=${this.handleConfigGameSpeedSelected}
             @blitz-preset-selected=${this.handleConfigBlitzPreset}
+            @scenario-selected=${this.handleConfigScenarioSelected}
             @team-count-selected=${this.handleConfigTeamCountSelected}
             @bots-changed=${this.handleBotsChange}
             @nations-changed=${this.handleNationsChange}
@@ -961,6 +967,25 @@ export class HostLobbyModal extends BaseModal {
     this.handleCompactMapChange(true);
     this.maxTimer = true;
     this.maxTimerValue = BLITZ_PRESET.timerGameMinutes;
+    this.putGameConfig();
+  };
+
+  /**
+   * A historical scenario (brief §6.7) brings its map, its mode and its
+   * blocs; picking none leaves the lobby as it was.
+   */
+  private handleConfigScenarioSelected = (e: Event) => {
+    const { id } = (e as CustomEvent<{ id: string | null }>).detail;
+    const scenario = scenarioById(id);
+    this.scenario = scenario?.id ?? null;
+    if (scenario !== null) {
+      void this.handleMapSelection(scenario.map);
+      this.gameMode =
+        scenario.blocKeys.length > 0 ? GameMode.Team : GameMode.FFA;
+      if (scenario.blocKeys.length > 1) {
+        this.teamCount = scenario.blocKeys.length as TeamCountConfig;
+      }
+    }
     this.putGameConfig();
   };
 
@@ -1482,6 +1507,7 @@ export class HostLobbyModal extends BaseModal {
             capitalStrike: this.capitalStrike,
             kingOfTheHill: this.kingOfTheHill,
             survival: this.survival,
+            scenario: this.scenario ?? undefined,
             disabledUnits: this.disabledUnits,
             spawnImmunityDuration: this.spawnImmunity
               ? spawnImmunityTicks

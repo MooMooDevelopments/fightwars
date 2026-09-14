@@ -99,8 +99,9 @@ licenses:check`, `npm run perf:gate` on an idle box; per sim change an 8000-tick
    is the capital; taken, the nation collapses into rebels) and King of the Hill (hold
    the centre five minutes, cumulative), Survival (co-op on Humans vs Nations, waves
    every two minutes, twenty minutes to hold out) and the zone layer (`ZonePass`: the
-   ring and the hill on the map), the Blitz one-click preset, and placements. Next in
-   §5: scenarios, Draft; a capital marker for Capital Strike is the small remainder.
+   ring and the hill on the map), the Blitz one-click preset, placements, and the four
+   historical scenarios. Next in §5: Draft; a capital marker for Capital Strike and the
+   scenarios in the rotation are the small remainders.
 
 ### Things that bit us in session 13 (do not relearn)
 
@@ -637,8 +638,10 @@ Remaining, roughly in the order the brief implies:
   **Survival is in** (session 13: `SurvivalExecution` on the Humans-vs-Nations preset —
   waves every two minutes hand every nation a growing share of its ceiling and a purse,
   the humans win at twenty minutes, the nations the second the last human falls; flag,
-  toggle, rotation, badge). Still to do: Historical
-  scenarios (map manifests with fixed spawns and doctrines), Draft (lobby-phase picks are
+  toggle, rotation, badge). **Historical scenarios are in** (session 13: `Scenarios.ts`
+  data — 1914, 1939, Cold War, Warring States — a fixed cast with doctrines and blocs on
+  a real map, a lobby section; not in the rotation, bloc names cosmetic). Still to do:
+  Draft (lobby-phase picks are
   server state, not sim state), **Blitz** — the engine is in (session 13: `gameSpeed` in
   the wire config, 1× / 2× / 4× in the host and single-player lobbies, the server and the
   local server pacing by it, the HUD clock in wall time) and the preset is in the public

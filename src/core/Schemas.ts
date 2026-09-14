@@ -586,6 +586,8 @@ export const GameConfigSchema = z.object({
   // Survival (brief §6.7): every human on one side against nations that
   // reinforce in waves; outlast the clock to win.
   survival: z.boolean().nullable().optional(),
+  // Historical scenarios (brief §6.7): the id of a fixed cast for the map.
+  scenario: z.string().max(40).nullable().optional(),
   hostCheats: z
     .object({
       infiniteGold: z.boolean().optional(),

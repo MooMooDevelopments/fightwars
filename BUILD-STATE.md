@@ -79,6 +79,23 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — historical scenarios
+
+- **What shipped.** Four scenarios as data in the core — 1914 and 1939 on Europe, the Cold
+  War on World, the Warring States on China — each a cast of nations taken from the map's
+  manifest (spawn and flag) with a doctrine from the scenario and, in the team ones, a
+  bloc. A scenario id in the config makes the runner build that cast instead of the
+  manifest's roster; a nation spawned by a scenario keeps its doctrine rather than rolling
+  one; the bloc is a pinned team index, so humans who join are dealt into the same teams.
+  A Scenario section in the host and solo lobbies: none, or a card with the era and the
+  blocs; a pick sets the map, the mode and the team count. Warring States dresses
+  provinces as kingdoms under their own names.
+- **Guards broken and watched fail:** the blocs ignored, the doctrine dropped from the
+  cast, the spawn forgetting the doctrine.
+- **Not done:** the rotation (a `isScenario` roll), bloc names on the teams themselves (the
+  game's teams are colours; the card names the blocs), a scenario's humans placed inside
+  their bloc's ground (spawn areas are the map's, not the scenario's).
+
 ### Session 13 — placements
 
 - **What shipped.** Ten provisional games per ladder. The rating moves from the first game

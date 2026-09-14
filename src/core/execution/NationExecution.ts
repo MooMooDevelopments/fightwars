@@ -137,7 +137,13 @@ export class NationExecution implements Execution {
       // Place nations without a spawn cell (Dynamically created for HumansVsNations) randomly by SpawnExecution
       if (this.nation.spawnCell === undefined) {
         this.mg.addExecution(
-          new SpawnExecution(this.gameID, this.nation.playerInfo),
+          new SpawnExecution(
+            this.gameID,
+            this.nation.playerInfo,
+            undefined,
+            false,
+            this.nation.doctrine ?? undefined,
+          ),
         );
         this.spawnExecAdded = true;
         return;
@@ -157,7 +163,13 @@ export class NationExecution implements Execution {
             cell.y < area.y + area.height;
           if (!inArea) {
             this.mg.addExecution(
-              new SpawnExecution(this.gameID, this.nation.playerInfo),
+              new SpawnExecution(
+                this.gameID,
+                this.nation.playerInfo,
+                undefined,
+                false,
+                this.nation.doctrine ?? undefined,
+              ),
             );
             this.spawnExecAdded = true;
             return;
@@ -174,7 +186,13 @@ export class NationExecution implements Execution {
       }
 
       this.mg.addExecution(
-        new SpawnExecution(this.gameID, this.nation.playerInfo, rl),
+        new SpawnExecution(
+          this.gameID,
+          this.nation.playerInfo,
+          rl,
+          false,
+          this.nation.doctrine ?? undefined,
+        ),
       );
       this.spawnExecAdded = true;
       return;

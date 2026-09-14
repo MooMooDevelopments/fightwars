@@ -1220,6 +1220,7 @@
     "player_whitelist_placeholder": "comma separated",
     "players": "Players",
     "remove_player": "Remove {username}",
+    "scenario": "Scenario",
     "spectator": "Spectator",
     "spectators": "Spectators",
     "speed": "Game speed",
@@ -1893,6 +1894,35 @@
   },
   "rewards_modal": {
     "title": "Rewards"
+  },
+  "scenario": {
+    "bloc": {
+      "allies": "Allies",
+      "axis": "Axis",
+      "central": "Central Powers",
+      "entente": "Entente",
+      "nato": "NATO",
+      "nonaligned": "Non-Aligned",
+      "pact": "Warsaw Pact",
+      "soviets": "Soviet Union"
+    },
+    "coldwar": {
+      "era": "NATO, the Warsaw Pact and the non-aligned",
+      "name": "Cold War"
+    },
+    "none": "None (open map)",
+    "warringstates": {
+      "era": "The kingdoms of ancient China, every one for itself",
+      "name": "Warring States"
+    },
+    "ww1": {
+      "era": "The Great War: the Entente against the Central Powers",
+      "name": "1914"
+    },
+    "ww2": {
+      "era": "The Allies, the Axis and the Soviet Union",
+      "name": "1939"
+    }
   },
   "select_lang": {
     "title": "Select Language"

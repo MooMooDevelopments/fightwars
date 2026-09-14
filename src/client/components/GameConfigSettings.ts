@@ -21,6 +21,7 @@ import {
   Trios,
   UnitType,
 } from "../../core/game/Game";
+import { SCENARIOS } from "../../core/game/Scenarios";
 import { TeamCountConfig } from "../../core/Schemas";
 import { translateText } from "../Utils";
 import "./Difficulties";
@@ -232,6 +233,10 @@ export interface GameConfigSettingsData {
     /** The Blitz preset is what the lobby currently is (speed, map, clock). */
     blitz?: boolean;
   };
+  /** Historical scenarios (brief §6.7); absent hides the section. */
+  scenario?: {
+    selected: string | null;
+  };
   teamCount: {
     selected: TeamCountConfig;
   };
@@ -320,6 +325,10 @@ export class GameConfigSettings extends LitElement {
 
   private handleBlitzPresetSelect = () => {
     this.emit("blitz-preset-selected", { ...BLITZ_PRESET });
+  };
+
+  private handleScenarioSelect = (id: string | null) => {
+    this.emit("scenario-selected", { id });
   };
 
   private handleTeamCountSelect = (count: TeamCountConfig) => {
@@ -600,6 +609,58 @@ export class GameConfigSettings extends LitElement {
                       ${translateText("host_modal.blitz_preset_hint")}
                     </span>
                   </button>
+                </div>
+              `,
+            )}
+        ${settings.scenario === undefined
+          ? nothing
+          : renderSection(
+              MAP_ICON,
+              "text-amber-300",
+              "bg-amber-500/20",
+              "host_modal.scenario",
+              html`
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <button
+                    class="${cardClass(
+                      settings.scenario!.selected === null,
+                      "px-4 py-4 text-left",
+                    )}"
+                    data-scenario="none"
+                    aria-pressed=${settings.scenario!.selected === null
+                      ? "true"
+                      : "false"}
+                    @click=${() => this.handleScenarioSelect(null)}
+                  >
+                    <span class="${CARD_LABEL_CLASS} text-white">
+                      ${translateText("scenario.none")}
+                    </span>
+                  </button>
+                  ${SCENARIOS.map((sc) => {
+                    const isSelected = settings.scenario!.selected === sc.id;
+                    return html`
+                      <button
+                        class="${cardClass(isSelected, "px-4 py-4 text-left")}"
+                        data-scenario=${sc.id}
+                        aria-pressed=${isSelected ? "true" : "false"}
+                        @click=${() => this.handleScenarioSelect(sc.id)}
+                      >
+                        <span class="${CARD_LABEL_CLASS} text-white">
+                          ${translateText(sc.nameKey)}
+                        </span>
+                        <span class="block text-xs text-white/50 mt-1">
+                          ${translateText(sc.eraKey)}
+                        </span>
+                        <span class="block text-xs text-white/40 mt-1">
+                          ${sc.blocKeys.length === 0
+                            ? translateText("game_mode.ffa")
+                            : sc.blocKeys
+                                .map((k) => translateText(k))
+                                .join(" · ")}
+                        </span>
+                      </button>
+                    `;
+                  })}
                 </div>
               `,
             )}

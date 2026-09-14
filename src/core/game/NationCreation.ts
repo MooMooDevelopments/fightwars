@@ -10,6 +10,7 @@ import {
   PlayerInfo,
   PlayerType,
 } from "./Game";
+import { Scenario, scenarioById } from "./Scenarios";
 import { AdditionalNation, Nation as ManifestNation } from "./TerrainMapLoader";
 
 /**
@@ -50,6 +51,13 @@ export function createNationsForGame(
       ),
     );
 
+  // A historical scenario (brief §6.7) is its cast, whole: the manifest
+  // lends each named nation its spawn and flag, the scenario its doctrine
+  // and bloc, and the count settings do not apply.
+  const scenario = scenarioById(gameStart.config.scenario);
+  if (scenario !== null) {
+    return scenarioNations(scenario, manifestNations, random);
+  }
   const isCompactMap = gameStart.config.gameMapSize === GameMapSize.Compact;
 
   const isHumansVsNations =
@@ -96,6 +104,40 @@ export function createNationsForGame(
   }
 
   return manifestNations.map(toNation);
+}
+
+/** The scenario's cast; a name the manifest does not know is skipped. */
+export function scenarioNations(
+  scenario: Scenario,
+  manifestNations: ManifestNation[],
+  random: PseudoRandom,
+): Nation[] {
+  const byName = new Map(manifestNations.map((m) => [m.name, m]));
+  const nations: Nation[] = [];
+  for (const sn of scenario.nations) {
+    const m = byName.get(sn.manifestName ?? sn.name);
+    if (m === undefined) continue;
+    nations.push(
+      new Nation(
+        m.coordinates !== undefined
+          ? new Cell(m.coordinates[0], m.coordinates[1])
+          : undefined,
+        new PlayerInfo(
+          sn.name,
+          PlayerType.Nation,
+          null,
+          random.nextID(),
+          false,
+          null,
+          [],
+          sn.bloc ?? null,
+          m.flag ?? null,
+        ),
+        sn.doctrine,
+      ),
+    );
+  }
+  return nations;
 }
 
 /**

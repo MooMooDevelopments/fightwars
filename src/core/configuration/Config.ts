@@ -21,6 +21,7 @@ import {
   UnitInfo,
   UnitType,
 } from "../game/Game";
+import { Scenario, scenarioById } from "../game/Scenarios";
 import { UserSettings } from "../game/UserSettings";
 import { GameConfig, TeamCountConfig } from "../Schemas";
 import { NukeType } from "../StatsSchemas";
@@ -1544,6 +1545,11 @@ export class Config {
   /** Seconds the humans have to hold out. */
   survivalSeconds(): number {
     return 20 * 60;
+  }
+
+  /** The historical scenario this game plays (brief §6.7), or null. */
+  scenario(): Scenario | null {
+    return scenarioById(this._gameConfig.scenario);
   }
 
   numSpawnPhaseTurns(): number {

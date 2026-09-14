@@ -1590,3 +1590,21 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
 #### FightWars-only files added
 
 - `tests/client/RankedStanding.test.ts` — the card's line.
+
+### Historical scenarios (Phase 6, session 13)
+
+#### Shared upstream files edited
+
+- `src/core/Schemas.ts` — `GameConfig.scenario` (appended).
+- `src/core/configuration/Config.ts` — `scenario()`.
+- `src/core/game/Game.ts` — `Nation.doctrine`.
+- `src/core/game/NationCreation.ts` — `scenarioNations`, the scenario branch.
+- `src/core/execution/NationExecution.ts` — the doctrine handed to the spawn.
+- `src/client/components/GameConfigSettings.ts` — the Scenario section, `scenario-selected`.
+- `src/client/HostLobbyModal.ts`, `src/client/SinglePlayerModal.ts` — the pick and what it sets.
+- `resources/lang/en.json` — `host_modal.scenario`, `scenario.*`.
+
+#### FightWars-only files added
+
+- `src/core/game/Scenarios.ts` — the four casts.
+- `tests/Scenarios.test.ts` — the manifests, the cast, the doctrine kept, the unknown id.

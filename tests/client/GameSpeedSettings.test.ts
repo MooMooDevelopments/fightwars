@@ -155,6 +155,69 @@ describe("game speed in the lobby", () => {
     expect(modal.isBlitzPreset()).toBe(false);
   });
 
+  it("offers the scenarios as cards and the modal takes the map, mode and blocs", async () => {
+    const el = document.createElement(
+      "game-config-settings",
+    ) as GameConfigSettings;
+    el.settings = {
+      map: { selected: GameMapType.World, useRandom: false },
+      difficulty: { selected: Difficulty.Medium, disabled: false },
+      gameMode: { selected: GameMode.FFA },
+      gameSpeed: { selected: 1 },
+      scenario: { selected: null },
+      teamCount: { selected: 2 },
+      options: {
+        titleKey: "game_settings.options",
+        bots: { value: 0, labelKey: "x", disabledKey: "y" },
+        toggles: [],
+        inputCards: [],
+      },
+      unitTypes: { titleKey: "x", disabledUnits: [] },
+    } as unknown as GameConfigSettings["settings"];
+    document.body.appendChild(el);
+    await el.updateComplete;
+    const cards = [
+      ...el.querySelectorAll<HTMLButtonElement>("[data-scenario]"),
+    ];
+    expect(cards.map((c) => c.dataset.scenario)).toEqual([
+      "none",
+      "ww1",
+      "ww2",
+      "coldwar",
+      "warringstates",
+    ]);
+    expect(cards[0].getAttribute("aria-pressed")).toBe("true");
+    const emitted: (string | null)[] = [];
+    el.addEventListener("scenario-selected", (e) =>
+      emitted.push((e as CustomEvent<{ id: string | null }>).detail.id),
+    );
+    cards[2].click();
+    cards[0].click();
+    expect(emitted).toEqual(["ww2", null]);
+    el.remove();
+
+    const modal = new HostLobbyModal() as any;
+    modal.putGameConfig = vi.fn();
+    modal.loadNationCount = vi.fn(async () => undefined);
+    modal.handleConfigScenarioSelected(
+      new CustomEvent("scenario-selected", { detail: { id: "ww2" } }),
+    );
+    expect(modal.scenario).toBe("ww2");
+    expect(modal.selectedMap).toBe(GameMapType.Europe);
+    expect(modal.gameMode).toBe(GameMode.Team);
+    expect(modal.teamCount).toBe(3);
+    modal.handleConfigScenarioSelected(
+      new CustomEvent("scenario-selected", { detail: { id: "warringstates" } }),
+    );
+    expect(modal.selectedMap).toBe(GameMapType.China);
+    expect(modal.gameMode).toBe(GameMode.FFA);
+    modal.handleConfigScenarioSelected(
+      new CustomEvent("scenario-selected", { detail: { id: null } }),
+    );
+    expect(modal.scenario).toBeNull();
+    expect(modal.selectedMap).toBe(GameMapType.China);
+  });
+
   it("the solo modal builds the same Blitz", () => {
     const modal = new SinglePlayerModal() as any;
     modal.handleConfigBlitzPreset();

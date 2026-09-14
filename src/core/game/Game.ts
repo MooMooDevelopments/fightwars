@@ -387,6 +387,8 @@ export class Nation {
   constructor(
     public readonly spawnCell: Cell | undefined,
     public readonly playerInfo: PlayerInfo,
+    // A scenario's fixed doctrine (brief §6.7); null lets the nation pick.
+    public readonly doctrine: Doctrine | null = null,
   ) {}
 }
 

@@ -14,6 +14,7 @@ import {
   maps,
   UnitType,
 } from "../core/game/Game";
+import { scenarioById } from "../core/game/Scenarios";
 import { UserSettings } from "../core/game/UserSettings";
 import { PlayerCosmetics, TeamCountConfig } from "../core/Schemas";
 import { generateID } from "../core/Util";
@@ -113,6 +114,7 @@ const DEFAULT_OPTIONS = {
   capitalStrike: false,
   kingOfTheHill: false,
   survival: false,
+  scenario: null as string | null,
   teamCount: 2 as TeamCountConfig,
   goldMultiplier: false,
   goldMultiplierValue: undefined as number | undefined,
@@ -195,6 +197,7 @@ export class SinglePlayerModal extends BaseModal {
   @state() private capitalStrike: boolean = DEFAULT_OPTIONS.capitalStrike;
   @state() private kingOfTheHill: boolean = DEFAULT_OPTIONS.kingOfTheHill;
   @state() private survival: boolean = DEFAULT_OPTIONS.survival;
+  @state() private scenario: string | null = DEFAULT_OPTIONS.scenario;
   @state() private teamCount: TeamCountConfig = DEFAULT_OPTIONS.teamCount;
   @state() private showAchievements: boolean = false;
   @state() private mapWins: Map<GameMapType, Set<Difficulty>> = new Map();
@@ -516,6 +519,9 @@ export class SinglePlayerModal extends BaseModal {
                 selected: this.gameSpeed,
                 blitz: this.isBlitzPreset(),
               },
+              scenario: {
+                selected: this.scenario,
+              },
               teamCount: {
                 selected: this.teamCount,
               },
@@ -594,6 +600,7 @@ export class SinglePlayerModal extends BaseModal {
             @game-mode-selected=${this.handleConfigGameModeSelected}
             @game-speed-selected=${this.handleConfigGameSpeedSelected}
             @blitz-preset-selected=${this.handleConfigBlitzPreset}
+            @scenario-selected=${this.handleConfigScenarioSelected}
             @team-count-selected=${this.handleConfigTeamCountSelected}
             @bots-changed=${this.handleBotsChange}
             @nations-changed=${this.handleNationsChange}
@@ -705,6 +712,7 @@ export class SinglePlayerModal extends BaseModal {
     this.capitalStrike = DEFAULT_OPTIONS.capitalStrike;
     this.kingOfTheHill = DEFAULT_OPTIONS.kingOfTheHill;
     this.survival = DEFAULT_OPTIONS.survival;
+    this.scenario = DEFAULT_OPTIONS.scenario;
     this.useRandomMap = DEFAULT_OPTIONS.useRandomMap;
     this.bots = DEFAULT_OPTIONS.bots;
     this.nations = 0;
@@ -1017,6 +1025,24 @@ export class SinglePlayerModal extends BaseModal {
     this.maxTimerValue = BLITZ_PRESET.timerGameMinutes;
   };
 
+  /**
+   * A historical scenario (brief §6.7) brings its map, its mode and its
+   * blocs; picking none leaves the lobby as it was.
+   */
+  private handleConfigScenarioSelected = (e: Event) => {
+    const { id } = (e as CustomEvent<{ id: string | null }>).detail;
+    const scenario = scenarioById(id);
+    this.scenario = scenario?.id ?? null;
+    if (scenario !== null) {
+      void this.handleMapSelection(scenario.map);
+      this.gameMode =
+        scenario.blocKeys.length > 0 ? GameMode.Team : GameMode.FFA;
+      if (scenario.blocKeys.length > 1) {
+        this.teamCount = scenario.blocKeys.length as TeamCountConfig;
+      }
+    }
+  };
+
   private isBlitzPreset(): boolean {
     return (
       this.gameSpeed === BLITZ_PRESET.speed &&
@@ -1216,6 +1242,7 @@ export class SinglePlayerModal extends BaseModal {
                 capitalStrike: this.capitalStrike,
                 kingOfTheHill: this.kingOfTheHill,
                 survival: this.survival,
+                scenario: this.scenario ?? undefined,
                 playerTeams: this.survival ? HumansVsNations : this.teamCount,
                 difficulty: this.selectedDifficulty,
                 maxTimerValue: finalMaxTimerValue,
