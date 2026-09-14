@@ -74,6 +74,10 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   nearest Missile Silo within 120 tiles straight to the tile you click and land as an attack
   from there — over water, mountains, anyone's land. Nothing shoots them down. Hotkey I.
   Nations drop rather than sail when a silo reaches a target they cannot walk to.
+- **The player panel in the game's own colours.** A hostile, wary, friendly or neutral
+  relation, an alliance about to run out, a traitor and a trade stopped each wear one of the
+  four status colours the rest of the interface uses — the ones chosen so that no two of them
+  look alike to anyone. A long name is no longer cut short by the chips beside it.
 - **Hide the interface with one key.** Press Z and the map is the whole screen; press it
   again, or tap the button in the corner, and the interface is back. The eye in the top-right
   cluster does the same on a phone. Rebindable in Settings › Keybinds.

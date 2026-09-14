@@ -418,20 +418,20 @@ export class PlayerPanel extends LitElement implements Controller {
       case PlayerType.Nation:
         return {
           labelKey: "player_type.nation",
-          classes: "border-indigo-400/25 bg-indigo-500/10 text-indigo-200",
+          classes: "border-action-ink/30 bg-action-ink/10 text-action-ink",
           icon: "🏛️",
         };
       case PlayerType.Bot:
         return {
           labelKey: "player_type.bot",
-          classes: "border-purple-400/25 bg-purple-500/10 text-purple-200",
+          classes: "border-ink-dim/30 bg-ink/5 text-ink-muted",
           icon: "⚔️",
         };
       case PlayerType.Human:
       default:
         return {
           labelKey: "player_type.player",
-          classes: "border-zinc-400/20 bg-zinc-500/5 text-zinc-300",
+          classes: "border-ink-dim/30 bg-ink/5 text-ink-muted",
           icon: "👤",
         };
     }
@@ -444,14 +444,14 @@ export class PlayerPanel extends LitElement implements Controller {
 
     switch (relation) {
       case Relation.Hostile:
-        return `${base} border-red-400/30 bg-red-500/10 text-red-200`;
+        return `${base} border-status-loss/40 bg-status-loss/10 text-status-loss`;
       case Relation.Distrustful:
-        return `${base} border-red-300/40 bg-red-300/10 text-red-300`;
+        return `${base} border-status-alert/40 bg-status-alert/10 text-status-alert`;
       case Relation.Friendly:
-        return `${base} border-emerald-400/30 bg-emerald-500/10 text-emerald-200`;
+        return `${base} border-status-gain/40 bg-status-gain/10 text-status-gain`;
       case Relation.Neutral:
       default:
-        return `${base} border-zinc-400/30 bg-zinc-500/10 text-zinc-200`;
+        return `${base} border-ink-dim/30 bg-ink/5 text-ink-muted`;
     }
   }
 
@@ -470,11 +470,13 @@ export class PlayerPanel extends LitElement implements Controller {
   }
 
   private getExpiryColorClass(seconds: number | null): string {
-    if (seconds === null) return "text-white"; // Default color
-
-    if (seconds <= 30) return "text-red-400"; // Last 30 seconds: Red
-    if (seconds <= 60) return "text-yellow-400"; // Last 60 seconds: Yellow
-    return "text-emerald-400"; // More than 60 seconds: Green
+    if (seconds === null) return "text-ink";
+    // The feed's roles: loss when it is about to end, alert in the last
+    // minute, gain while there is time — with the seconds printed beside it,
+    // so the colour is the fast channel and never the only one.
+    if (seconds <= 30) return "text-status-loss";
+    if (seconds <= 60) return "text-status-alert";
+    return "text-status-gain";
   }
 
   private getTraitorRemainingSeconds(player: PlayerView): number | null {
@@ -490,15 +492,15 @@ export class PlayerPanel extends LitElement implements Controller {
     const label = secs !== null ? renderDuration(secs) : null;
     const dotCls =
       secs !== null
-        ? `mx-1 size-1 rounded-full bg-red-400/70 ${secs <= 10 ? "animate-pulse" : ""}`
+        ? `mx-1 size-1 rounded-full bg-status-loss/70 ${secs <= 10 ? "animate-pulse" : ""}`
         : "";
 
     return html`
       <div class="mt-1" role="status" aria-live="polite" aria-atomic="true">
         <span
-          class="inline-flex items-center gap-2 rounded-full border border-red-400/30
-            bg-red-500/10 px-2.5 py-0.5 text-sm font-semibold text-red-200
-            shadow-[inset_0_0_8px_rgba(239,68,68,0.12)]"
+          class="inline-flex items-center gap-2 rounded-full border border-status-loss/40
+            bg-status-loss/10 px-2.5 py-0.5 text-sm font-semibold text-status-loss
+            shadow-[inset_0_0_8px_rgba(255,255,255,0.04)]"
           title=${translateText("player_panel.traitor")}
         >
           <img src=${traitorIcon} alt="" aria-hidden="true" class="size-4.5" />
@@ -508,7 +510,7 @@ export class PlayerPanel extends LitElement implements Controller {
           ${label
             ? html`<span class=${dotCls}></span>
                 <span
-                  class="tabular-nums font-bold text-red-100 whitespace-nowrap text-sm"
+                  class="tabular-nums font-bold text-ink whitespace-nowrap text-sm"
                 >
                   ${label}
                 </span>`
@@ -608,28 +610,34 @@ export class PlayerPanel extends LitElement implements Controller {
             />`
           : ""}
 
-        <div class="flex-1 min-w-0">
+        <!-- The name keeps at least ten rem for itself; the chips take what
+             is left and wrap under it rather than truncating it to "Nebr…". -->
+        <div class="flex-1 min-w-[10rem]">
           <h2
-            class="text-xl font-bold tracking-[-0.01em] text-zinc-50 truncate"
+            class="text-xl font-bold tracking-[-0.01em] text-ink truncate"
             title=${other.displayName()}
           >
             ${other.displayName()}
           </h2>
         </div>
-        ${chip
-          ? html`<span
-              class=${`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-semibold ${chip.classes}`}
-              role="status"
-              aria-label=${translateText(chip.labelKey)}
-              title=${translateText(chip.labelKey)}
-            >
-              <span aria-hidden="true" class="leading-none">${chip.icon}</span>
-              <span class="tracking-tight"
-                >${translateText(chip.labelKey)}</span
+        <div class="flex flex-wrap items-center gap-1.5">
+          ${chip
+            ? html`<span
+                class=${`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-semibold ${chip.classes}`}
+                role="status"
+                aria-label=${translateText(chip.labelKey)}
+                title=${translateText(chip.labelKey)}
               >
-            </span>`
-          : html``}
-        ${this.renderDoctrineBadge(other)}
+                <span aria-hidden="true" class="leading-none"
+                  >${chip.icon}</span
+                >
+                <span class="tracking-tight"
+                  >${translateText(chip.labelKey)}</span
+                >
+              </span>`
+            : html``}
+          ${this.renderDoctrineBadge(other)}
+        </div>
       </div>
       ${this.renderTraitorBadge(other)}
       ${this.renderRelationPillIfNation(other, my)}
@@ -653,7 +661,7 @@ export class PlayerPanel extends LitElement implements Controller {
     const name = translateText(key);
     return html`
       <span
-        class="inline-flex items-center gap-1.5 rounded-full border border-zinc-400/20 bg-zinc-500/5 px-2 py-0.5 text-xs font-semibold text-zinc-300"
+        class="inline-flex items-center gap-1.5 rounded-full border border-ink-dim/30 bg-ink/5 px-2 py-0.5 text-xs font-semibold text-ink-muted"
         data-readout="doctrine"
         aria-label=${translateText("player_panel.doctrine", { doctrine: name })}
         title=${translateText(`${key}_desc`)}
@@ -712,7 +720,7 @@ export class PlayerPanel extends LitElement implements Controller {
             >${figure}</span
           >
         </span>
-        <span class="text-xs text-zinc-300 truncate"
+        <span class="text-xs text-ink-muted truncate"
           >${translateText(labelKey)}</span
         >
       </div>
@@ -749,7 +757,7 @@ export class PlayerPanel extends LitElement implements Controller {
           <span class="text-sm font-semibold tracking-tight">
             ${translateText("player_panel.flip_rocket_trajectory")}
           </span>
-          <span class="text-xs text-zinc-300" translate="no">
+          <span class="text-xs text-ink-muted" translate="no">
             ${this.uiState.rocketDirectionUp
               ? translateText("player_panel.arc_up")
               : translateText("player_panel.arc_down")}
@@ -765,12 +773,12 @@ export class PlayerPanel extends LitElement implements Controller {
       <!-- Betrayals -->
       <div class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2">
         <div
-          class="flex items-center gap-2 text-[15px] font-medium text-zinc-100 leading-snug"
+          class="flex items-center gap-2 text-[15px] font-medium text-ink leading-snug"
         >
           <span aria-hidden="true">⚠️</span>
           <span>${translateText("player_panel.betrayals")}</span>
         </div>
-        <div class="text-right text-[14px] font-semibold text-zinc-200">
+        <div class="text-right text-[14px] font-semibold text-ink">
           ${other.betrayals()}
         </div>
       </div>
@@ -778,7 +786,7 @@ export class PlayerPanel extends LitElement implements Controller {
       <!-- Trading / Embargo -->
       <div class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2">
         <div
-          class="flex items-center gap-2 text-[15px] font-medium text-zinc-100 leading-snug"
+          class="flex items-center gap-2 text-[15px] font-medium text-ink leading-snug"
         >
           <span aria-hidden="true">⚓</span>
           <span>${translateText("player_panel.trading")}</span>
@@ -787,10 +795,10 @@ export class PlayerPanel extends LitElement implements Controller {
           class="flex items-center justify-end gap-2 text-[14px] font-semibold"
         >
           ${other.hasEmbargoAgainst(my)
-            ? html`<span class="text-amber-400"
+            ? html`<span class="text-status-alert"
                 >${translateText("player_panel.stopped")}</span
               >`
-            : html`<span class="text-blue-400"
+            : html`<span class="text-status-gain"
                 >${translateText("player_panel.active")}</span
               >`}
         </div>
@@ -825,23 +833,20 @@ export class PlayerPanel extends LitElement implements Controller {
     return html`
       <div class="select-none">
         <div class="flex items-center justify-between mb-2">
-          <div
-            id="alliances-title"
-            class="text-[15px] font-medium text-zinc-200"
-          >
+          <div id="alliances-title" class="text-[15px] font-medium text-ink">
             ${translateText("player_panel.alliances")}
           </div>
           <span
             aria-labelledby="alliances-title"
             class="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-[10px]
-                 text-[12px] text-zinc-100 bg-white/10 border border-white/20"
+                 text-[12px] text-ink bg-white/10 border border-white/20"
           >
             ${allies.length}
           </span>
         </div>
 
         <div
-          class="rounded-lg bg-zinc-800/70 ring-1 ring-zinc-700/60 w-full min-w-0"
+          class="rounded-lg bg-surface-deep/70 ring-1 ring-ink-dim/30 w-full min-w-0"
         >
           <ul
             class="max-h-48 overflow-y-auto p-2
@@ -852,7 +857,7 @@ export class PlayerPanel extends LitElement implements Controller {
             translate="no"
           >
             ${alliesSorted.length === 0
-              ? html`<li class="text-zinc-400 text-[14px] px-1">
+              ? html`<li class="text-ink-dim text-[14px] px-1">
                   ${translateText("common.none")}
                 </li>`
               : alliesSorted.map((p) => {
@@ -860,7 +865,7 @@ export class PlayerPanel extends LitElement implements Controller {
                   return html`<li
                     class="max-w-full inline-flex items-center gap-1.5
                            rounded-md border border-white/10 bg-white/5
-                           px-2.5 py-1 text-[14px] text-zinc-100
+                           px-2.5 py-1 text-[14px] text-ink
                            hover:bg-white/8 active:scale-[0.99] transition"
                     title=${p.displayName()}
                   >
@@ -885,7 +890,7 @@ export class PlayerPanel extends LitElement implements Controller {
     if (this.allianceExpiryText === null) return html``;
     return html`
       <div class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-base">
-        <div class="font-semibold text-zinc-300">
+        <div class="font-semibold text-ink-muted">
           ${translateText("player_panel.alliance_time_remaining")}
         </div>
         <div class="text-right font-semibold">
@@ -1114,7 +1119,7 @@ export class PlayerPanel extends LitElement implements Controller {
               class="absolute inset-2 -z-10 rounded-2xl bg-black/25 backdrop-blur-[2px]"
             ></div>
             <div
-              class=${`relative w-full bg-zinc-900/95 rounded-2xl text-zinc-100 shadow-2xl shadow-black/50
+              class=${`relative w-full bg-surface-deep/95 rounded-2xl text-ink shadow-2xl shadow-black/50
                  ${other.isTraitor() ? "traitor-ring" : "ring-1 ring-white/5"}`}
             >
               <div class="overflow-visible">
@@ -1124,7 +1129,7 @@ export class PlayerPanel extends LitElement implements Controller {
                   <div class="sticky top-0 z-20 flex justify-end p-2">
                     <button
                       @click=${this.handleClose}
-                      class="absolute right-3 top-3 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-700 text-white shadow-sm hover:bg-red-500 transition-colors"
+                      class="absolute right-3 top-3 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-ink/15 text-ink shadow-sm hover:bg-status-loss transition-colors"
                       aria-label=${translateText("common.close") || "Close"}
                       title=${translateText("common.close") || "Close"}
                     >

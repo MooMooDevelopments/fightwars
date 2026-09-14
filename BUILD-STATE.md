@@ -79,6 +79,29 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — the player panel names no raw hue (item 6, the palette sweep)
+
+- **What shipped.** `PlayerPanel.ts` had 51 raw hue classes — the most of any HUD surface —
+  and four of them said something: the relation chip (red / paler red / emerald / grey), the
+  alliance clock (red / yellow / emerald), the traitor badge (red) and the trade line (amber
+  / blue). Every one now speaks a status role the palette measures for all four viewers:
+  hostile is `loss`, distrustful is `alert` (the palette's own finding — a paler red is the
+  one thing a dichromat cannot tell from red), friendly is `gain`, neutral is a note; the
+  clock is loss under thirty seconds, alert under a minute, gain beyond, with the seconds
+  printed beside it. The greys became ink steps, the nation chip wears the action ink, the
+  bot and human chips the dim ink. Zero hue classes remain; `tests/client/HudTokens.test.ts`
+  holds the panel there the way it holds the control panel and the feeds.
+- **Photographed, and it found the previous commit's mistake.** With the doctrine chip in the
+  identity row, a nation's name truncated to "Nebr…" beside two chips. The name keeps ten
+  rem for itself now and the chips wrap under it: "Nigeria", then Nation and Expansionist on
+  the next line, then Neutral. Re-photographed.
+- **The sweep that remains:** `SendResourceModal.ts` 41, the three leaderboard tables 30 / 26
+  / 20, 265 across the HUD in all (from 328 at the start of the session-9 count). The two
+  tick-by-tick surfaces, the feeds and the player panel are the ones held mechanically.
+- **HANDOFF §3 item 6 was stale:** it still listed the feeds as untouched. They were done in
+  session 9 (`EventsDisplay.ts` and `AttacksDisplay.ts` name no raw hue and both trays
+  announce). Corrected.
+
 ### Session 13 — the chrome hides with one key (items 6 and 7, layout)
 
 - **What shipped.** `Z` (a keybind, `toggleHud`, rebindable in the settings and listed in the

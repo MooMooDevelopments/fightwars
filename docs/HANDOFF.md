@@ -88,7 +88,8 @@ licenses:check`, `npm run perf:gate` on an idle box; per sim change an 8000-tick
    `ui-ux-pro-max` for palette/type, `dataviz` before any chart or stat tile, `impeccable`
    and `web-design-guidelines` on the result. The readouts landed at the end of session 12 and were photographed,
    reviewed and fixed in session 13 (`BUILD-STATE.md`), and item 3's halos were widened the
-   same session, as was the one-key HUD hide. Then item 6's feeds, layout and radial menus, item 7's mobile remainder, item 9's build queue / rally points /
+   same session, as were the one-key HUD hide and the player panel's palette. Then item 6's
+   remaining layout and radial menus, item 7's mobile remainder, item 9's build queue / rally points /
    attack presets (the one simulation item — a lever and an A/B like any Phase 5 item).
 2. **Then Phase 6** (§5: modes and metagame) and **Phase 7** (§7: hardening), with §6's
    blocked items (Discord OAuth secret, a Docker box, hardware) waiting on the owner.
@@ -358,17 +359,17 @@ player reads every tick — `ControlPanel.ts` and the shared `StatsTable.ts`.
 
 **What is still open on this item:**
 
-- **The feeds.** `EventsDisplay.ts` (716 lines) and `AttacksDisplay.ts` have not been touched —
-  no typography, no tokens, no information design. This is the biggest remaining piece.
+- ~~**The feeds.**~~ Done in session 9 (`EventsDisplay.ts`, `AttacksDisplay.ts`: the
+  severity roles, both trays announcing) — this line was stale until session 13.
 - **Layout.** The chrome hides with one key since session 13 (`Z`, `HudVisibilityController`,
   `data-hud` in `index.html`). Nothing has _moved_: the control panel, the stats table and the
   build menu still sit where upstream put them.
 - **The radial menus.** `RadialMenu.ts` (1402 lines) and `RadialMenuElements.ts` (819) are
   untouched.
-- **The rest of the palette sweep.** 328 raw hue class names remain across the HUD, mostly in
-  the modals (`PlayerPanel.ts` 48, `SendResourceModal.ts` 31, `MultiTabModal.ts` 30) and the
-  three leaderboard tables. The two tick-by-tick surfaces are clean and a test keeps the
-  control panel that way.
+- **The rest of the palette sweep.** 265 raw hue class names remain across the HUD after
+  session 13 took the player panel to zero: `SendResourceModal.ts` 41 and the three
+  leaderboard tables (30 / 26 / 20) are the bulk. The control panel, the feeds and the
+  player panel are held to zero by `tests/client/HudTokens.test.ts`.
 - **Stat tiles, meters and sparklines beyond the troop meter.** `dataviz` is mandatory before
   the first line of any of them.
 

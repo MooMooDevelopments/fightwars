@@ -1280,3 +1280,16 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
 - `tests/client/HudVisibility.test.ts` — the default key, the key label, the input handler
   firing on release and staying out of text fields, the controller starting visible, toggling
   both ways, leaving a way back that works and names the rebound key.
+
+### The player panel's palette (Phase 4 item 6, session 13)
+
+#### Shared upstream files edited
+
+- `src/client/hud/layers/PlayerPanel.ts` — every raw hue class replaced by a token: the
+  relation chip and the alliance clock in the four status roles, the traitor badge in `loss`,
+  the trade line in `alert` / `gain`, greys as ink steps, the identity chips in `action-ink` /
+  `ink-dim`. The identity row keeps ten rem for the name and wraps the chips under it.
+
+#### FightWars-only files changed
+
+- `tests/client/HudTokens.test.ts` — the player panel names no raw hue.

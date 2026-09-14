@@ -222,6 +222,15 @@ describe("the HUD does not reach past the palette", () => {
     }
   });
 
+  test("the player panel names no raw hue", () => {
+    // The surface a player reads on every click. Relation, identity, the
+    // alliance clock and the trade line all say something in colour, and
+    // every one of them now says it in a status role the palette measures.
+    expect(
+      read("src/client/hud/layers/PlayerPanel.ts").match(HUE_CLASS) ?? [],
+    ).toEqual([]);
+  });
+
   test("the control panel names no raw hue", () => {
     // The panel the player reads every tick is the one place worth holding to
     // this mechanically. A hue name here is a colour decision made outside the
