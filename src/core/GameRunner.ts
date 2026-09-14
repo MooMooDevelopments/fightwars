@@ -1,5 +1,6 @@
 import { placeName, placeSpawnName } from "../client/hud/NameBoxCalculator";
 import { Config } from "./configuration/Config";
+import { BattleRoyaleExecution } from "./execution/BattleRoyaleExecution";
 import { DoomsdayClockExecution } from "./execution/DoomsdayClockExecution";
 import { Executor } from "./execution/ExecutionManager";
 import { RecomputeRailClusterExecution } from "./execution/RecomputeRailClusterExecution";
@@ -132,6 +133,9 @@ export class GameRunner {
     this.game.addExecution(new WinCheckExecution());
     if (this.game.config().unrestEnabled()) {
       this.game.addExecution(new UnrestExecution());
+    }
+    if (this.game.config().battleRoyale()) {
+      this.game.addExecution(new BattleRoyaleExecution());
     }
     if (this.game.config().doomsdayClockConfig().enabled) {
       this.game.addExecution(new DoomsdayClockExecution());

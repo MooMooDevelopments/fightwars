@@ -79,6 +79,50 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — Battle Royale, a shrinking zone
+
+- **What shipped.** `BattleRoyaleExecution` (`src/core/execution/`): a circle on the map's
+  centre, starting wide enough to hold every tile; three game minutes after the spawn
+  phase it shrinks in twelve equal steps of radius, one every thirty seconds, to a tenth
+  of the start. From the first shrink a sweep cycles the map 32 rows a tick, walking only
+  the part of each row outside the circle: land outside is relinquished and irradiated —
+  fallout, the state a nuke leaves, which the win check already discounts, so the win bar
+  tracks the zone — and at the end of every pass every unit outside is destroyed. Integer
+  maths only. Each step posts an event. `GameConfig.battleRoyale` appended to the wire
+  schema, `Config.battleRoyale*()` accessors for the schedule, a toggle in the host and
+  single-player modals, `isBattleRoyale` in the public rotation (three tickets, never
+  beside a doomsday clock or Blitz) with a lobby-card badge.
+- **The first A/B found the design flaw.** The first cut scorched each band once. It ended
+  with zero fallout and 99.9 % of the land claimed: this fork's fallout clears itself after
+  three minutes and irradiated ground can be conquered, so the nations simply walked back
+  out. The zone is now a standing rule — the sweep never stops, and ground reclaimed
+  outside the circle is lost again within one pass (about three seconds on the world map);
+  a test pins a conquest outside the zone undone and the fallout outliving its lifetime.
+- **A/B, 8000 ticks, `balance:run` (lever `--battle-royale`; the off arm reproduces the
+  Blitz commit's hash):**
+
+  | metric (World, Medium, 150 bots, seed `perf-gate`) | off                                      | `--battle-royale`                                                       |
+  | -------------------------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------- |
+  | alive at 8000                                      | 25                                       | 6                                                                       |
+  | land claimed                                       | 100.0 %                                  | 4.3 %                                                                   |
+  | fallout                                            | 0                                        | 624,357 tiles (95.8 %), 715 of them owned mid-sweep                     |
+  | top-1 / top-5 share                                | 13.9 % / 53.1 %                          | 49.1 % / 96.7 %                                                         |
+  | cities / ports / factories                         | 158 / 100 / 39                           | 10 / 3 / 5                                                              |
+  | trade ships at sea                                 | 403                                      | 2                                                                       |
+  | wall time, 8000 ticks                              | 24.9 s                                   | 34.4 s (the sweep, ~1.2 ms a tick averaged; 32 rows a tick is the dial) |
+  | final hash                                         | `44138072306226350` (the Blitz commit's) | `11967845698967392`                                                     |
+
+  The first cut's arm, for the record: 51 alive, 99.9 % claimed, zero fallout, hash
+  `34227311783745136` — a scorch the map healed from.
+
+- **Guards broken and watched fail:** the relinquish dropped, the unit deletion dropped
+  (the first version of that test passed with the guard gone — a defence post goes down
+  with its land already, so the test now uses a warship on ground nobody owns), the sweep
+  stopped after its first pass.
+- **Not done:** the zone drawn on the map (a ring layer in the Pixi renderer) and a
+  countdown to the next shrink in the HUD — the event and the fallout are the only tells
+  today.
+
 ### Session 13 — Blitz in the public rotation
 
 - **What shipped.** `isBlitz` as a public-game modifier: a compact map (forced), 4× speed,

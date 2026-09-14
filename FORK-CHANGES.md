@@ -1458,3 +1458,23 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
 - `tests/server/MapPlaylistBlitz.test.ts` — 4× on a compact map with a five-minute clock; a
   special game without it untouched; in the pool and never beside a peace time or a clock.
 - `tests/client/BlitzModifierBadge.test.ts` — the badge, present and absent.
+
+### Battle Royale (Phase 6, session 13)
+
+#### Shared upstream files edited
+
+- `src/core/Schemas.ts` — `GameConfig.battleRoyale` (appended), `publicGameModifiers.isBattleRoyale`.
+- `src/core/game/Game.ts` — `PublicGameModifiers.isBattleRoyale`, `MessageType.BATTLE_ROYALE_SHRINK`.
+- `src/core/configuration/Config.ts` — `battleRoyale()` and the schedule accessors.
+- `src/core/GameRunner.ts` — registers the execution when the flag is on.
+- `src/server/MapPlaylist.ts` — the modifier, three tickets, exclusive with the clock and Blitz.
+- `src/client/HostLobbyModal.ts`, `src/client/SinglePlayerModal.ts` — the toggle.
+- `src/client/Utils.ts` — the badge and the event colour.
+- `scripts/balanceRun.ts` — `--battle-royale`.
+- `resources/lang/en.json` — `game_settings.battle_royale`, `public_game_modifier.battle_royale`, `events_display.battle_royale_shrink`.
+
+#### FightWars-only files added
+
+- `src/core/execution/BattleRoyaleExecution.ts` — the zone.
+- `tests/BattleRoyale.test.ts` — the schedule, the edge irradiated and relinquished, the
+  centre untouched, a unit outside destroyed, nothing with the flag off.

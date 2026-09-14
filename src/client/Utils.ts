@@ -211,6 +211,12 @@ export function getActiveModifiers(
       formattedValue: `x${modifiers.goldMultiplier}`,
     });
   }
+  if (modifiers.isBattleRoyale) {
+    result.push({
+      labelKey: "game_settings.battle_royale",
+      badgeKey: "public_game_modifier.battle_royale",
+    });
+  }
   if (modifiers.isBlitz) {
     result.push({
       labelKey: "public_game_modifier.blitz_label",
@@ -706,6 +712,7 @@ export function getMessageTypeClasses(type: MessageType): string {
     case MessageType.RENEW_ALLIANCE:
     case MessageType.COALITION_OFFER:
     case MessageType.PARTISANS_RISE:
+    case MessageType.BATTLE_ROYALE_SHRINK:
       return severityColors["warn"];
     case MessageType.CHAT:
     case MessageType.ALLIANCE_REQUEST:

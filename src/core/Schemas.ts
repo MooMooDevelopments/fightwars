@@ -516,6 +516,7 @@ export const GameConfigSchema = z.object({
       isDoomsdayClock: z.boolean().optional(),
       // Brief §6.7 Blitz: a compact map at 4x for five minutes of wall clock.
       isBlitz: z.boolean().optional(),
+      isBattleRoyale: z.boolean().optional(),
     })
     .optional(),
   nations: zb.union(
@@ -570,6 +571,9 @@ export const GameConfigSchema = z.object({
   // this many times faster and the clients run them as they arrive. Absent
   // is 1. Appended here so the binary wire keeps its field order.
   gameSpeed: zb.uint({ min: 1, max: 4 }).optional(),
+  // Battle Royale (brief §6.7): the playable area shrinks toward the map's
+  // centre on a schedule; land left outside is irradiated and let go.
+  battleRoyale: z.boolean().nullable().optional(),
   hostCheats: z
     .object({
       infiniteGold: z.boolean().optional(),

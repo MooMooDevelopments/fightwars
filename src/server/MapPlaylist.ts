@@ -73,7 +73,8 @@ type ModifierKey =
   | "isPeaceTime"
   | "isWaterNukes"
   | "isDoomsdayClock"
-  | "isBlitz";
+  | "isBlitz"
+  | "isBattleRoyale";
 
 /**
  * Blitz (brief §6.7): a compact map at 4x speed for five minutes of wall
@@ -102,6 +103,7 @@ const SPECIAL_MODIFIER_POOL: ModifierKey[] = [
   ...Array<ModifierKey>(4).fill("isWaterNukes"),
   ...Array<ModifierKey>(4).fill("isDoomsdayClock"),
   ...Array<ModifierKey>(4).fill("isBlitz"),
+  ...Array<ModifierKey>(3).fill("isBattleRoyale"),
 ];
 
 // Speeds the Doomsday Clock can roll at when it lands in the rotation. Picked
@@ -125,6 +127,9 @@ const MUTUALLY_EXCLUSIVE_MODIFIERS: [ModifierKey, ModifierKey][] = [
   // Five minutes leaves no room for a four-minute peace or an anti-stall clock.
   ["isBlitz", "isPeaceTime"],
   ["isBlitz", "isDoomsdayClock"],
+  // The zone is the clock; two clocks make a mess.
+  ["isBattleRoyale", "isDoomsdayClock"],
+  ["isBattleRoyale", "isBlitz"],
 ];
 
 // Special games roll ffa/team per-game (see getSpecialConfig), so their
@@ -322,6 +327,7 @@ export class MapPlaylist {
       isWaterNukes,
       isDoomsdayClock,
       isBlitz,
+      isBattleRoyale,
     } = poolResult;
 
     // Apply per-map forced modifiers (already rolled and respecting excludedModifiers).
@@ -340,6 +346,7 @@ export class MapPlaylist {
     if (appliedForced.has("isWaterNukes")) isWaterNukes = true;
     if (appliedForced.has("isDoomsdayClock")) isDoomsdayClock = true;
     if (appliedForced.has("isBlitz")) isBlitz = true;
+    if (appliedForced.has("isBattleRoyale")) isBattleRoyale = true;
     // Blitz is always compact: five minutes on a full-size map is a spawn
     // phase and a scramble.
     if (isBlitz) isCompact = true;
@@ -365,7 +372,8 @@ export class MapPlaylist {
           !isPeaceTime &&
           !isWaterNukes &&
           !isDoomsdayClock &&
-          !isBlitz
+          !isBlitz &&
+          !isBattleRoyale
         ) {
           excludedModifiers.push("isCrowded");
           const fallback = this.getRandomSpecialGameModifiers(
@@ -384,6 +392,7 @@ export class MapPlaylist {
             isWaterNukes,
             isDoomsdayClock,
             isBlitz,
+            isBattleRoyale,
           } = fallback);
           ({ isHardNations } = fallback);
         }
@@ -447,8 +456,10 @@ export class MapPlaylist {
         isWaterNukes,
         isDoomsdayClock,
         isBlitz,
+        isBattleRoyale,
       },
       gameSpeed: isBlitz ? BLITZ_SPEED : undefined,
+      battleRoyale: isBattleRoyale ? true : undefined,
       // Rolled into the rotation: enable the anti-stall clock at a speed picked
       // per game so the pacing varies across the presets.
       doomsdayClock: isDoomsdayClock
@@ -742,6 +753,7 @@ export class MapPlaylist {
       isWaterNukes: selected.has("isWaterNukes") || undefined,
       isDoomsdayClock: selected.has("isDoomsdayClock") || undefined,
       isBlitz: selected.has("isBlitz") || undefined,
+      isBattleRoyale: selected.has("isBattleRoyale") || undefined,
     };
   }
 

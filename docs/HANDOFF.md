@@ -93,9 +93,20 @@ licenses:check`, `npm run perf:gate` on an idle box; per sim change an 8000-tick
    attack presets (the one simulation item — a lever and an A/B like any Phase 5 item).
 2. **Then Phase 6** (§5: modes and metagame) and **Phase 7** (§7: hardening), with §6's
    blocked items (Discord OAuth secret, a Docker box, hardware) waiting on the owner.
+   Session 13 opened both: Phase 7's shadow sim, desync reference, winner truth, spam
+   caps and automation flags; Phase 6's game speed, Blitz in the rotation, and Battle
+   Royale (a standing zone, `BattleRoyaleExecution`). Next in §5: King of the Hill,
+   Capital Strike, Survival, scenarios, Draft, the Blitz one-click preset, placements.
 
 ### Things that bit us in session 13 (do not relearn)
 
+- Fallout is not permanent here (`falloutDurationTicks` 1800) and irradiated ground can be
+  conquered: a mode that scorches once is a mode the map heals from. Battle Royale's first
+  A/B ended with zero fallout and the land reclaimed; the zone became a sweep that never
+  stops. Anything that "removes" land must keep removing it.
+- A structure goes down with its land: a test that expects the zone to destroy a defence
+  post on relinquished ground passes with the destruction dropped. Use a unit on ground
+  nobody owns (a warship) to test unit destruction. Break the guard before trusting it.
 - Upstream's audio rewrite: any fork commit that touches `SoundManager`, `MenuMusic`,
   `SoundEffectController` or `Sounds.ts` conflicts at rebase. `Sounds.ts` carries an
   exhaustive `CUE_CATEGORY` map now — a `SoundEffect` without a channel row fails to
@@ -603,8 +614,12 @@ stats.
 Remaining, roughly in the order the brief implies:
 
 - **Placements** for ranked (N provisional games; `ratings.rd` already expresses uncertainty).
-- **Modes**: Battle Royale (shrinking area — a new execution that irradiates or relinquishes
-  outer tiles on a schedule; the fallout machinery is the cheap path), King of the Hill,
+- **Modes**: **Battle Royale is in** (session 13: `BattleRoyaleExecution`, a circle on the
+  centre shrinking in twelve steps to a tenth of its radius after a three-minute grace,
+  land outside irradiated and relinquished, units outside destroyed; `battleRoyale` in the
+  wire config, a lobby toggle, `isBattleRoyale` in the public rotation with a badge; not
+  drawn on the map yet — the zone is announced by event, the fallout shows where it is).
+  Still to do: King of the Hill,
   Capital Strike (a capital unit + `conquerPlayer` on its loss), Survival (co-op vs
   escalating nations — the difficulty enum plus `NationExecution` cadence), Historical
   scenarios (map manifests with fixed spawns and doctrines), Draft (lobby-phase picks are

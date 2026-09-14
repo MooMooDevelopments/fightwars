@@ -107,6 +107,7 @@ const DEFAULT_OPTIONS = {
   useRandomMap: false,
   gameMode: GameMode.FFA,
   gameSpeed: 1,
+  battleRoyale: false,
   teamCount: 2 as TeamCountConfig,
   goldMultiplier: false,
   goldMultiplierValue: undefined as number | undefined,
@@ -185,6 +186,7 @@ export class SinglePlayerModal extends BaseModal {
   @state() private useRandomMap: boolean = DEFAULT_OPTIONS.useRandomMap;
   @state() private gameMode: GameMode = DEFAULT_OPTIONS.gameMode;
   @state() private gameSpeed: number = DEFAULT_OPTIONS.gameSpeed;
+  @state() private battleRoyale: boolean = DEFAULT_OPTIONS.battleRoyale;
   @state() private teamCount: TeamCountConfig = DEFAULT_OPTIONS.teamCount;
   @state() private showAchievements: boolean = false;
   @state() private mapWins: Map<GameMapType, Set<Difficulty>> = new Map();
@@ -531,6 +533,10 @@ export class SinglePlayerModal extends BaseModal {
                     checked: this.randomSpawn,
                   },
                   {
+                    labelKey: "game_settings.battle_royale",
+                    checked: this.battleRoyale,
+                  },
+                  {
                     labelKey: "game_settings.infinite_gold",
                     checked: this.infiniteGold,
                   },
@@ -673,6 +679,7 @@ export class SinglePlayerModal extends BaseModal {
     this.selectedDifficulty = DEFAULT_OPTIONS.selectedDifficulty;
     this.gameMode = DEFAULT_OPTIONS.gameMode;
     this.gameSpeed = DEFAULT_OPTIONS.gameSpeed;
+    this.battleRoyale = DEFAULT_OPTIONS.battleRoyale;
     this.useRandomMap = DEFAULT_OPTIONS.useRandomMap;
     this.bots = DEFAULT_OPTIONS.bots;
     this.nations = 0;
@@ -778,6 +785,9 @@ export class SinglePlayerModal extends BaseModal {
         break;
       case "game_settings.random_spawn":
         this.randomSpawn = checked;
+        break;
+      case "game_settings.battle_royale":
+        this.battleRoyale = checked;
         break;
       case "game_settings.infinite_gold":
         this.infiniteGold = checked;
@@ -1150,6 +1160,7 @@ export class SinglePlayerModal extends BaseModal {
                 gameType: GameType.Singleplayer,
                 gameMode: this.gameMode,
                 gameSpeed: this.gameSpeed,
+                battleRoyale: this.battleRoyale,
                 playerTeams: this.teamCount,
                 difficulty: this.selectedDifficulty,
                 maxTimerValue: finalMaxTimerValue,

@@ -1456,6 +1456,38 @@ export class Config {
     return this._gameConfig.gameSpeed ?? 1;
   }
 
+  /**
+   * Battle Royale (brief §6.7). The zone is a circle on the map's centre.
+   * It starts wide enough to hold every tile, waits the grace after the
+   * spawn phase, then shrinks in equal steps of radius, one step every
+   * interval, down to the final share of the starting radius. Land that
+   * falls outside is irradiated (fallout, the same state a nuke leaves)
+   * and let go of by its owner; units standing on it are destroyed.
+   */
+  battleRoyale(): boolean {
+    return this._gameConfig.battleRoyale ?? false;
+  }
+  /** Ticks after the spawn phase before the first shrink. */
+  battleRoyaleGraceTicks(): Tick {
+    return 3 * 60 * 10;
+  }
+  /** Ticks between shrinks. */
+  battleRoyaleIntervalTicks(): Tick {
+    return 30 * 10;
+  }
+  /** Shrinks from the full map to the final zone. */
+  battleRoyaleSteps(): number {
+    return 12;
+  }
+  /** The final zone's radius as a share (percent) of the starting radius. */
+  battleRoyaleFinalRadiusPercent(): number {
+    return 10;
+  }
+  /** Map rows irradiated per tick while a shrink is being applied. */
+  battleRoyaleRowsPerTick(): number {
+    return 32;
+  }
+
   numSpawnPhaseTurns(): number {
     if (this._gameConfig.gameType === GameType.Singleplayer) {
       return 100;

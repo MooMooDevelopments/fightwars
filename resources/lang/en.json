@@ -825,6 +825,7 @@
     "atom_bomb_detonated": "{name} - atom bomb detonated",
     "attack_cancelled_retreat": "Attack cancelled, {troops} soldiers killed during retreat",
     "attack_request": "{name} requests you attack {target}",
+    "battle_royale_shrink": "The zone shrinks ({step}/{steps}): land outside it is lost",
     "betrayal_debuff_ends": "{time} seconds left until betrayal debuff ends",
     "betrayal_description": "You broke your alliance with {name}, making you a TRAITOR ({malusPercent}% defense debuff for {durationText})",
     "betrayed_you": "{name} broke their alliance with you",
@@ -938,6 +939,7 @@
     "teams": "Teams"
   },
   "game_settings": {
+    "battle_royale": "Battle Royale (shrinking map)",
     "bots": "Tribes: ",
     "compact_map": "Compact Map",
     "custom_alliances": "Alliance Duration",
@@ -1796,6 +1798,7 @@
     "version_mismatch": "This game was created with a different version. Cannot join."
   },
   "public_game_modifier": {
+    "battle_royale": "Battle Royale",
     "blitz": "Blitz: 4× speed, 5 minutes",
     "blitz_label": "Blitz",
     "compact_map": "Compact Map",

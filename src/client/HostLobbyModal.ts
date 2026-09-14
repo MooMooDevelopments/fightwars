@@ -60,6 +60,7 @@ export class HostLobbyModal extends BaseModal {
   @state() private defaultNationCount: number = 0;
   @state() private gameMode: GameMode = GameMode.FFA;
   @state() private gameSpeed: number = 1;
+  @state() private battleRoyale: boolean = false;
   @state() private teamCount: TeamCountConfig = 2;
 
   constructor() {
@@ -543,6 +544,10 @@ export class HostLobbyModal extends BaseModal {
                     checked: this.randomSpawn,
                   },
                   {
+                    labelKey: "game_settings.battle_royale",
+                    checked: this.battleRoyale,
+                  },
+                  {
                     labelKey: "host_modal.donate_gold",
                     checked: this.donateGold,
                   },
@@ -944,6 +949,10 @@ export class HostLobbyModal extends BaseModal {
         break;
       case "game_settings.random_spawn":
         this.handleRandomSpawnChange(checked);
+        break;
+      case "game_settings.battle_royale":
+        this.battleRoyale = checked;
+        this.putGameConfig();
         break;
       case "host_modal.donate_gold":
         this.handleDonateGoldChange(checked);
@@ -1419,6 +1428,7 @@ export class HostLobbyModal extends BaseModal {
             randomSpawn: this.randomSpawn,
             gameMode: this.gameMode,
             gameSpeed: this.gameSpeed,
+            battleRoyale: this.battleRoyale,
             disabledUnits: this.disabledUnits,
             spawnImmunityDuration: this.spawnImmunity
               ? spawnImmunityTicks
