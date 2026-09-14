@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
 import {
+  HALO_MIN_PX,
+  haloReachTiles,
+  haloWiden,
+  MAX_HALO_WIDEN,
   MAX_ZOOM,
   MIN_ZOOM,
   overviewFraction,
@@ -105,5 +109,77 @@ describe("zoomLegibility", () => {
     expect(zoomLegibility(MIN_ZOOM, 2, BASE_ALPHA).politicalStep).toBe(1);
     // Dense enough and there is nothing left to resolve.
     expect(zoomLegibility(0.5, 4, BASE_ALPHA).politicalStep).toBe(0);
+  });
+});
+
+describe("haloWiden", () => {
+  // The two tile-space blooms: the small-player glow on four-tile cells and
+  // the fallout bloom on eight.
+  const GLOW = 4;
+  const FALLOUT = 8;
+
+  test("leaves both halos alone at the zoom the game is played at", () => {
+    for (const zoom of [1, 1.5, 4, MAX_ZOOM, Infinity]) {
+      expect(haloWiden(zoom, GLOW)).toBe(0);
+      expect(haloWiden(zoom, FALLOUT)).toBe(0);
+    }
+  });
+
+  test("widens until the halo clears the floor, and no further", () => {
+    for (const cell of [GLOW, FALLOUT]) {
+      for (const zoom of [0.9, 0.7, 0.5, 0.4, 0.3, MIN_ZOOM]) {
+        const n = haloWiden(zoom, cell);
+        if (n < MAX_HALO_WIDEN) {
+          expect(haloReachTiles(n, cell) * zoom).toBeGreaterThanOrEqual(
+            HALO_MIN_PX,
+          );
+        }
+        if (n > 0) {
+          expect(haloReachTiles(n - 1, cell) * zoom).toBeLessThan(HALO_MIN_PX);
+        }
+      }
+    }
+  });
+
+  test("holds the floor at the furthest the camera goes", () => {
+    // The guard is not a working limit: MIN_ZOOM must be reachable within it.
+    for (const cell of [GLOW, FALLOUT]) {
+      const n = haloWiden(MIN_ZOOM, cell);
+      expect(n).toBeLessThan(MAX_HALO_WIDEN);
+      expect(haloReachTiles(n, cell) * MIN_ZOOM).toBeGreaterThanOrEqual(
+        HALO_MIN_PX,
+      );
+    }
+  });
+
+  test("never narrows as the camera pulls out", () => {
+    const zooms = [1, 0.9, 0.8, 0.6, 0.5, 0.4, 0.3, MIN_ZOOM];
+    for (const cell of [GLOW, FALLOUT]) {
+      const ns = zooms.map((z) => haloWiden(z, cell));
+      for (let i = 1; i < ns.length; i++) {
+        expect(ns[i]).toBeGreaterThanOrEqual(ns[i - 1]);
+      }
+    }
+  });
+
+  test("asks less of a bloom whose cells are already coarser", () => {
+    // Eight-tile cells reach twice as far per iteration as four-tile ones.
+    for (const zoom of [0.9, 0.5, MIN_ZOOM]) {
+      expect(haloWiden(zoom, FALLOUT)).toBeLessThanOrEqual(
+        haloWiden(zoom, GLOW),
+      );
+    }
+    expect(haloReachTiles(1, FALLOUT)).toBe(2 * haloReachTiles(1, GLOW));
+  });
+
+  test("holds together below MIN_ZOOM rather than looping forever", () => {
+    expect(haloWiden(0, GLOW)).toBe(haloWiden(MIN_ZOOM, GLOW));
+    expect(haloWiden(-1, FALLOUT)).toBeLessThanOrEqual(MAX_HALO_WIDEN);
+  });
+
+  test("stops at the cap when no iteration can reach the floor", () => {
+    // Neither real bloom gets here (both clear the floor inside the cap at
+    // MIN_ZOOM); a cell too fine to reach it is what exercises the guard.
+    expect(haloWiden(MIN_ZOOM, 0.001)).toBe(MAX_HALO_WIDEN);
   });
 });

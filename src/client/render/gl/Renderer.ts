@@ -1329,6 +1329,12 @@ export class GPURenderer {
         };
     this.territoryPass.setLegibility(legibility);
     this.borderStampPass.setPoliticalStep(legibility.politicalStep);
+    // The two tile-space halos keep a width on screen under the same switch.
+    const haloZoom = this.settings.mapOverlay.politicalZoom
+      ? zoom / dpr
+      : Infinity;
+    this.smallPlayerGlowPass.setZoom(haloZoom);
+    this.bloomPass.setZoom(haloZoom);
 
     const cw = this.canvas.width;
     const ch = this.canvas.height;

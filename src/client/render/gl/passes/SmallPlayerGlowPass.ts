@@ -6,6 +6,7 @@
  */
 
 import type { RenderSettings } from "../RenderSettings";
+import { haloWiden } from "../ZoomLegibility";
 import blurFragSrc from "../shaders/shared/blur.frag.glsl?raw";
 import fullscreenNoUvVertSrc from "../shaders/shared/fullscreen-no-uv.vert.glsl?raw";
 import fullscreenVertSrc from "../shaders/shared/fullscreen.vert.glsl?raw";
@@ -28,6 +29,14 @@ import { TILE_DEFINES } from "../utils/TileCodec";
 
 const SET_TEX_WIDTH = getPaletteSize(); // 1 px per owner smallID
 const BLOOM_TILE_SCALE = 4; // bloom buffers run at 1/scale tile resolution
+
+/**
+ * Intensity gain per widening iteration. Spreading a small mask over a wider
+ * kernel spends its energy over more cells, and the peak that survives is
+ * what the composite clamps against; without this a widened aura is wider
+ * and invisible. Two per doubling was chosen by looking at MIN_ZOOM.
+ */
+const WIDEN_GAIN = 2;
 
 export class SmallPlayerGlowPass {
   private gl: WebGL2RenderingContext;
@@ -54,7 +63,8 @@ export class SmallPlayerGlowPass {
   private quadVao: WebGLVertexArrayObject;
 
   private active = false;
-  private dirty = false; // aura needs rebuilding (set changed)
+  private dirty = false; // aura needs rebuilding (set or widening changed)
+  private widen = 0; // extra blur iterations, from ZoomLegibility
   private animTime = 0;
   private lastTime = 0;
 
@@ -144,6 +154,20 @@ export class SmallPlayerGlowPass {
     this.dirty = true;
   }
 
+  /**
+   * Zoom in CSS pixels per tile, or Infinity to draw the aura at its native
+   * width. Below a pixel per tile the aura is widened so it stays at least
+   * HALO_MIN_PX across on screen; see ZoomLegibility.haloWiden. Cheap to call
+   * every frame: the aura is only rebuilt when the answer changes.
+   */
+  setZoom(cssZoom: number): void {
+    const widen = haloWiden(cssZoom, BLOOM_TILE_SCALE);
+    if (widen !== this.widen) {
+      this.widen = widen;
+      this.dirty = true;
+    }
+  }
+
   // One separable-blur axis: sample `src`, write the blurred result into `dst`.
   private blurAxis(
     src: RenderTarget,
@@ -200,11 +224,17 @@ export class SmallPlayerGlowPass {
         gl.drawArrays(gl.TRIANGLES, 0, 6);
       });
 
-      // Separable blur: horizontal A->B, then vertical B->A.
+      // Separable blur: horizontal A->B, then vertical B->A. Then, zoomed
+      // out, the same kernel again at a doubling step so the aura keeps a
+      // width on screen — each pass is no wider than the blur already under
+      // it, so it spreads without tearing into copies.
       gl.useProgram(this.blurProg);
       gl.activeTexture(gl.TEXTURE0);
-      this.blurAxis(a, b, 1 / a.w, 0); // horizontal A->B
-      this.blurAxis(b, a, 0, 1 / b.h); // vertical B->A
+      for (let k = 0; k <= this.widen; k++) {
+        const step = 2 ** k;
+        this.blurAxis(a, b, step / a.w, 0); // horizontal A->B
+        this.blurAxis(b, a, 0, step / b.h); // vertical B->A
+      }
       this.dirty = false;
     }
 
@@ -220,7 +250,10 @@ export class SmallPlayerGlowPass {
       gl.uniform3fv(this.uGlowColor, s.color);
       // Strength fades the glow linearly: 1 = the aura's full alpha, 0.1 =
       // barely visible.
-      gl.uniform1f(this.uIntensity, s.alpha * pulse * strength);
+      gl.uniform1f(
+        this.uIntensity,
+        s.alpha * pulse * strength * WIDEN_GAIN ** this.widen,
+      );
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, a.tex);
       gl.bindVertexArray(this.mapVao);

@@ -79,6 +79,33 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — item 3's remainder: halos keep a width on screen
+
+- **What shipped.** The small-player glow and the fallout bloom are blurred in tile space
+  with a fixed five-tap kernel, so zoomed out they shrank with the tiles: an eight-tile aura
+  is under two pixels at MIN_ZOOM, and a lone small player — the one the aura exists to
+  point at — was a speck nobody found. `ZoomLegibility.haloWiden(zoom, cellTiles)` now says
+  how many extra blur iterations a halo needs to be at least `HALO_MIN_PX` (6 CSS px)
+  across; each iteration re-runs the same kernel at a doubling step, so it spreads without
+  tearing into copies, and the composite gains ×2 per iteration to put back the peak the
+  spread took. Both passes ask the policy each frame with their own cell size (four tiles
+  for the glow, eight for the bloom) — the glow rebuilds its cached aura only when the
+  answer changes, the bloom rebuilds every frame anyway. Inert at and above one pixel per
+  tile, where both draw exactly as before, and off with `mapOverlay.politicalZoom`, the
+  switch the political map already had. Item 3 has no named remainder now.
+- **Photographed.** A solo game, the local player kept to a handful of tiles past the
+  one-minute grace, camera pinned on them at half a pixel per tile, glow strength raised to
+  1 so the pair isolates the widening: with `politicalZoom` off the aura is a three-pixel
+  speck; on, a ten-pixel ring around the same tiles. At a quarter of a pixel per tile the
+  pane's 1.6× downscaled screenshot could not tell the two apart either way — the floor is
+  six CSS pixels and the screenshot has fewer than four of them to show. Not measured in
+  pixels: the map canvas has no `preserveDrawingBuffer`, so a `drawImage` readback is black.
+  The fallout bloom was not photographed (no nuke in reach); it shares the mechanism and the
+  policy tests, with twice the reach per iteration.
+- **Guards broken and watched fail:** never widening (two cases), one iteration too many
+  (two), the cap ignored (one — a cell too fine to reach the floor is what exercises it;
+  neither real bloom gets there, and the test says so).
+
 ### Session 12 (continued) — the Phase 5 readouts, the first Phase 4 increment
 
 - **What shipped.** Materials beside gold on the control panel, in the gold tile's grammar

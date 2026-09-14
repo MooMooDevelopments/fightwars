@@ -87,8 +87,8 @@ licenses:check`, `npm run perf:gate` on an idle box; per sim change an 8000-tick
 1. **Phase 4 identity** (§3 below, per item): load `frontend-design` before any UI code,
    `ui-ux-pro-max` for palette/type, `dataviz` before any chart or stat tile, `impeccable`
    and `web-design-guidelines` on the result. The readouts landed at the end of session 12 and were photographed,
-   reviewed and fixed in session 13 (`BUILD-STATE.md`). Then item 3's halo/flash legibility, item 6's
-   layout and radial menus, item 7's mobile remainder, item 9's build queue / rally points /
+   reviewed and fixed in session 13 (`BUILD-STATE.md`), and item 3's halos were widened the
+   same session. Then item 6's layout and radial menus, item 7's mobile remainder, item 9's build queue / rally points /
    attack presets (the one simulation item — a lever and an A/B like any Phase 5 item).
 2. **Then Phase 6** (§5: modes and metagame) and **Phase 7** (§7: hardening), with §6's
    blocked items (Discord OAuth secret, a Docker box, hardware) waiting on the owner.
@@ -176,18 +176,18 @@ Item 5 was finished in session 8 — the nuke ring and the border wave, plus the
 typography and colour half. Items 3 and 6 keep their named remainders, written at the end of
 their sections.
 
-| #   | Item                                                                                   | State                                                                    |
-| --- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| 1   | Nation colours in OKLCH, three colourblind-safe palettes                               | **done**                                                                 |
-| 2   | Wordmark, favicon, app icons, `og:image`, display font (and the renderer's MSDF atlas) | **done**                                                                 |
-| 3   | Readable at every zoom (political blocks, halos, flashes)                              | **part-done** — blocks and borders; halos and flashes remain             |
-| 4   | Every number explained on hover                                                        | **done** — estimate before, spend during (tiles conquered: see below)    |
-| 5   | Feel: border wave, nuke flash + shake + ring + sound                                   | **done**                                                                 |
-| 6   | Radial menus, HUD, leaderboard, events feed                                            | **part-done** — typography, tokens and a11y; layout and the feeds remain |
-| 7   | Mobile first-class                                                                     | **part-done** — rotation, header and touch targets; layout remains       |
-| 8   | Onboarding: 90-second tutorial                                                         | **done**                                                                 |
-| 9   | Build queue, rally points, attack presets                                              | not started (keybind remapping already existed)                          |
-| 10  | Clan create form; guest-appropriate account page                                       | **done**                                                                 |
+| #   | Item                                                                                   | State                                                                       |
+| --- | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| 1   | Nation colours in OKLCH, three colourblind-safe palettes                               | **done**                                                                    |
+| 2   | Wordmark, favicon, app icons, `og:image`, display font (and the renderer's MSDF atlas) | **done**                                                                    |
+| 3   | Readable at every zoom (political blocks, halos, flashes)                              | **done** — blocks and borders (session 7), halos and the bloom (session 13) |
+| 4   | Every number explained on hover                                                        | **done** — estimate before, spend during (tiles conquered: see below)       |
+| 5   | Feel: border wave, nuke flash + shake + ring + sound                                   | **done**                                                                    |
+| 6   | Radial menus, HUD, leaderboard, events feed                                            | **part-done** — typography, tokens and a11y; layout and the feeds remain    |
+| 7   | Mobile first-class                                                                     | **part-done** — rotation, header and touch targets; layout remains          |
+| 8   | Onboarding: 90-second tutorial                                                         | **done**                                                                    |
+| 9   | Build queue, rally points, attack presets                                              | not started (keybind remapping already existed)                             |
+| 10  | Clan create form; guest-appropriate account page                                       | **done**                                                                    |
 
 What the finished ones measure, and what each left behind, is in `BUILD-STATE.md` — it is kept
 current and is the place to look before re-deriving anything.
@@ -232,9 +232,13 @@ footprint so a one-tile outline survives below a pixel. All of it is inert above
 per tile, and `mapOverlay.politicalZoom` turns it off. Nothing touched the simulation and the
 determinism gate stayed green.
 
-**What is still open on this item:** the brief also asks for a legibility pass over _halos and
-flashes_ at small scale — `SmallPlayerGlowPass` and `FalloutBloomPass` were not touched, and
-they have the same sub-pixel problem the border had. That is the natural next slice.
+**Done (session 13): the halos.** `SmallPlayerGlowPass` and `FalloutBloomPass` had the same
+sub-pixel problem the border had — a tile-space blur that shrank with the tiles. `haloWiden`
+in `ZoomLegibility.ts` gives each pass the extra doubling-step blur iterations that keep its
+halo at least `HALO_MIN_PX` (6 CSS px) wide, with a matching gain in the composite. Same
+switch (`mapOverlay.politicalZoom`), inert at and above one pixel per tile. The pair is in
+`BUILD-STATE.md` (session 13); the fallout bloom was not photographed, only the glow. The
+nuke flash itself (`FlashPass`) is screen-space and never had the problem.
 
 **Still blocked:** real-GPU _fps_ has never been measured. The pane renders WebGL2, so
 appearance is verifiable here and was verified; frame timing is not. Needs the owner on their

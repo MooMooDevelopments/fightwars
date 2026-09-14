@@ -16,7 +16,11 @@
 
 const BLOOM_TILE_SCALE = 8;
 
+/** Intensity gain per widening iteration; see SmallPlayerGlowPass. */
+const WIDEN_GAIN = 2;
+
 import type { RenderSettings } from "../RenderSettings";
+import { haloWiden } from "../ZoomLegibility";
 import {
   createFullscreenQuad,
   createMapQuad,
@@ -92,6 +96,9 @@ export class FalloutBloomPass {
   // Geometry
   private mapVao: WebGLVertexArrayObject;
   private quadVao: WebGLVertexArrayObject;
+
+  // Extra blur iterations at this zoom, from ZoomLegibility.
+  private widen = 0;
 
   constructor(
     gl: WebGL2RenderingContext,
@@ -272,6 +279,15 @@ export class FalloutBloomPass {
     return tex;
   }
 
+  /**
+   * Zoom in CSS pixels per tile, or Infinity for the native width. Below a
+   * pixel per tile the bloom is widened so an irradiated patch keeps at
+   * least HALO_MIN_PX on screen; see ZoomLegibility.haloWiden.
+   */
+  setZoom(cssZoom: number): void {
+    this.widen = haloWiden(cssZoom, BLOOM_TILE_SCALE);
+  }
+
   /** Run the full extract → blur → composite pipeline. */
   draw(cameraMatrix: Float32Array, tick: number): void {
     const gl = this.gl;
@@ -336,24 +352,28 @@ export class FalloutBloomPass {
     gl.bindVertexArray(this.quadVao);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-    // --- 2. Blur: single separable H+V 5-tap Gaussian ---
+    // --- 2. Blur: separable H+V 5-tap Gaussian, then zoomed out the same
+    // kernel again at a doubling step so the glow keeps a width on screen.
     gl.useProgram(this.blurProg);
     gl.bindVertexArray(this.quadVao);
-
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.fboB);
-    gl.viewport(0, 0, bw, bh);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.uniform2f(this.uBlurDir, 1.0 / bw, 0);
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.texA);
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.fboA);
-    gl.viewport(0, 0, bw, bh);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.uniform2f(this.uBlurDir, 0, 1.0 / bh);
-    gl.bindTexture(gl.TEXTURE_2D, this.texB);
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    for (let k = 0; k <= this.widen; k++) {
+      const step = 2 ** k;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this.fboB);
+      gl.viewport(0, 0, bw, bh);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.uniform2f(this.uBlurDir, step / bw, 0);
+      gl.bindTexture(gl.TEXTURE_2D, this.texA);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this.fboA);
+      gl.viewport(0, 0, bw, bh);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.uniform2f(this.uBlurDir, 0, step / bh);
+      gl.bindTexture(gl.TEXTURE_2D, this.texB);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
 
     // --- 3. Composite: camera-projected map quad → screen ---
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -364,7 +384,10 @@ export class FalloutBloomPass {
     gl.useProgram(this.compositeProg);
     gl.uniformMatrix3fv(this.uCompositeCam, false, cameraMatrix);
     gl.uniform2f(this.uCompositeMapSize, mw, mh);
-    gl.uniform1f(this.uBloomCoverage, fb.bloomCoverage);
+    gl.uniform1f(
+      this.uBloomCoverage,
+      fb.bloomCoverage * WIDEN_GAIN ** this.widen,
+    );
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.texA);
     gl.bindVertexArray(this.mapVao);

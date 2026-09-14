@@ -1238,3 +1238,22 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
   names the tile; the player panel names the doctrine (and not without one, nor with
   doctrines off), shows the pool, and shows occupied land only when there is any, with the
   words beside the colour (and not with stability off).
+
+### Halos at every zoom (Phase 4 item 3, session 13)
+
+#### Shared upstream files edited
+
+- `src/client/render/gl/ZoomLegibility.ts` — `HALO_MIN_PX`, `MAX_HALO_WIDEN`,
+  `haloReachTiles`, `haloWiden(zoom, cellTiles)`: the extra doubling-step blur iterations a
+  tile-space halo needs to stay at least six CSS pixels wide.
+- `src/client/render/gl/passes/SmallPlayerGlowPass.ts`, `FalloutBloomPass.ts` — `setZoom`;
+  the blur loop runs the kernel again at steps 2, 4, 8 as the policy asks, the composite
+  gains ×2 per iteration; the glow's cached aura is dirtied when the answer changes.
+- `src/client/render/gl/Renderer.ts` — both passes get the CSS zoom each frame under
+  `mapOverlay.politicalZoom`, or Infinity (native width) when it is off.
+
+#### FightWars-only files added or changed
+
+- `tests/client/ZoomLegibility.test.ts` — `haloWiden`: inert at and above a pixel per tile,
+  the fewest iterations that clear the floor, the floor held at MIN_ZOOM inside the cap,
+  monotone as the camera pulls out, coarser cells need fewer, finite below MIN_ZOOM, the cap.

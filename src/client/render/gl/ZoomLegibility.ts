@@ -93,6 +93,56 @@ export function overviewFraction(zoom: number): number {
 }
 
 /**
+ * Narrowest a halo may be on screen, in CSS pixels, before it stops reading
+ * as a halo. The small-player glow and the fallout bloom are blurred in tile
+ * space with a fixed kernel, so zoomed out they shrink with the tiles: an
+ * eight-tile aura is under two pixels at MIN_ZOOM, and a lone small player
+ * — the one the aura exists to point at — is a smear nobody finds. Six is
+ * the smallest ring the eye still separates from the fill beneath it; it was
+ * chosen by looking, like the opacities in §5 of the handoff.
+ */
+export const HALO_MIN_PX = 6;
+
+/**
+ * Most extra blur iterations a halo may take. Each doubles the step of the
+ * previous one, so three reach fourteen bloom cells past the native two —
+ * fifty-six tiles on the glow's four-tile cells, enough to hold the floor at
+ * MIN_ZOOM with room to spare. A guard rather than a working limit.
+ */
+export const MAX_HALO_WIDEN = 3;
+
+/** Bloom cells the native five-tap blur reaches from the mask's edge. */
+const NATIVE_HALO_CELLS = 2;
+
+/**
+ * How far, in tiles, a halo reaches after `widen` extra iterations on cells
+ * of `cellTiles` tiles. Iteration k steps 2^k cells and adds two of those
+ * steps to the reach, so the sum is a geometric series.
+ */
+export function haloReachTiles(widen: number, cellTiles: number): number {
+  return NATIVE_HALO_CELLS * (2 ** (widen + 1) - 1) * cellTiles;
+}
+
+/**
+ * Extra blur iterations a tile-space halo needs at this zoom to be at least
+ * HALO_MIN_PX across on screen. 0 at and above one pixel per tile, where the
+ * native halo is already wider than the floor and the passes must draw
+ * exactly as they always have; the fewest that clear the floor below it,
+ * capped at MAX_HALO_WIDEN.
+ *
+ * @param zoom CSS pixels per tile (`TransformHandler.scale`)
+ * @param cellTiles tiles per bloom cell — the pass's own resolution
+ */
+export function haloWiden(zoom: number, cellTiles: number): number {
+  if (zoom >= DETAIL_ZOOM) return 0;
+  const safeZoom = Math.max(zoom, MIN_ZOOM);
+  for (let n = 0; n < MAX_HALO_WIDEN; n++) {
+    if (haloReachTiles(n, cellTiles) * safeZoom >= HALO_MIN_PX) return n;
+  }
+  return MAX_HALO_WIDEN;
+}
+
+/**
  * @param zoom CSS pixels per tile (`TransformHandler.scale`)
  * @param devicePixelRatio rendered pixels per CSS pixel
  * @param baseFillAlpha `mapOverlay.territoryAlpha` — the opacity the fill has
