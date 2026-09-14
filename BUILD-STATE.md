@@ -90,6 +90,20 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   seed's story and this commit does not claim to have reversed it. What it claims: nations
   now _decide_ by their doctrine, and the structure counts say so.
 
+- **Fourth lever: arms cost twice the materials.** The pool sat at 100k+ unused at the end of
+  every bot run at the first-cut prices — supply was never the constraint, so industry never
+  was either. `unitMaterialsCost` is now the base table × `materialsPriceScale()` = 2, and
+  `startingMaterials()` is one post's price by construction (400), so "one post and not two"
+  survives any table. Lever `--cheap-materials` (scale 1) reproduces the doctrine-play hash
+  `45473217189748110` to the digit; the guard pins 400 / 40 000 and the scale, and fails
+  when the scale is put back to 1.
+- **The bots built industry.** Same seed, ×1 → ×2: factories 36 → 46, posts 25 → 31, warships
+  14 → 8, fallout 5202 → 0 tiles, alive 29 → 33, top-1 11.5 → 13.3 %, materials still held
+  157k → 132k. Nations answered the price with factories, which is the tall-versus-wide choice
+  the item was built for; the pool is still large because it pools in nations with nothing to
+  spend it on (no silo, no coast). Fallout 0 at 8000 ticks is one seed's story — a 3000-material
+  atom bomb is a hundred seconds of one factory.
+
 - **Three shares measured, one chosen.** Same seed, 8000 ticks: flat / 5 % / 10 % gave 507 /
   342 / 269 uprisings, leader share 12.7 / 13.2 / 11.3 %, top-20 96.2 / 96.1 / 91.8 %, alive
   37 / 33 / 34. Occupied tiles barely move (327k / 352k / 333k) because that number is
@@ -918,6 +932,26 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   remains by design.
 - The discord card on a clan overview says "invite is no longer valid" for any invite the
   browser cannot resolve against Discord's public API (offline / fake invite) — expected.
+
+## Numbers last measured — Phase 5 retune, arms cost twice the materials (2026-09-15, session 12)
+
+- **Bot-vs-bot** (`balance:run --ticks 8000`, world, 150 bots + nations, Medium, seed `perf-gate`):
+
+  | after 8000 ticks       | `--cheap-materials` (×1) | ×2 (shipped)        |
+  | ---------------------- | ------------------------ | ------------------- |
+  | players alive          | 29                       | 33                  |
+  | top 1 / 5 / 20 share   | 11.5 / 47.9 / 99.0       | 13.3 / 50.6 / 95.6  |
+  | cities / ports / fact. | 167 / 104 / 36           | 158 / 100 / 46      |
+  | posts / warships       | 25 / 14                  | 31 / 8              |
+  | materials held         | 156928                   | 131821              |
+  | fallout tiles          | 5202                     | 0                   |
+  | pacts / defensive      | 20 / 7                   | 40 / 10             |
+  | uprisings              | 278 (4 alive)            | 264 (2 alive)       |
+  | final hash             | `45473217189748110`      | `44792639413653100` |
+
+  The ×1 hash equals the doctrine-play commit's: the lever restores that game exactly.
+
+- **Nation economy** (`NationGoldPerMinute`, impossible nations, 20 minutes): alive 25 → 26, trade gold −3.9 % (596.2M → 572.7M), train gold −8.0 % (137.6M → 126.6M), ships arrived 2702 → 2693 — a little less trade, one more nation standing.
 
 ## Numbers last measured — Phase 5 retune, nations play their doctrine (2026-09-14, session 12)
 

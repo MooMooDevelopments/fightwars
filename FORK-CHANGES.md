@@ -642,8 +642,9 @@ gold raises a country, industry arms it. Description, table and what is not done
 
 - `src/core/game/Game.ts` — `UnitInfo.materialsCost?`, `Player.materials/addMaterials/
 removeMaterials`, `BuildableUnit.materialsCost`.
-- `src/core/configuration/Config.ts` — `unitMaterialsCost` (the table), `factoryMaterialsPerTick`,
-  `startingMaterials`; `unitInfo` decorates every non-zero type once, at the cache, so every
+- `src/core/configuration/Config.ts` — `unitMaterialsCost` (the table; session 12: ×
+  `materialsPriceScale()` = 2), `factoryMaterialsPerTick`, `startingMaterials` (session 12: one
+  post's price); `unitInfo` decorates every non-zero type once, at the cache, so every
   caller sees the same object.
 - `src/core/game/PlayerImpl.ts` — the pool, the gate in `canBuildUnitType`, the charge in
   `buildUnit` and `upgradeUnit`, the price on `buildableUnits`, and the packed lane widened from a

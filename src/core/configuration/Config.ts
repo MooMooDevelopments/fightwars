@@ -1783,23 +1783,42 @@ export class Config {
    * for. Flat per unit — a throughput gate, not a price curve.
    */
   unitMaterialsCost(type: UnitType): Gold {
+    let base: bigint;
     switch (type) {
       case UnitType.DefensePost:
-        return 200n;
+        base = 200n;
+        break;
       case UnitType.Warship:
-        return 600n;
+        base = 600n;
+        break;
       case UnitType.SAMLauncher:
       case UnitType.MissileSilo:
-        return 1_000n;
+        base = 1_000n;
+        break;
       case UnitType.AtomBomb:
-        return 1_500n;
+        base = 1_500n;
+        break;
       case UnitType.HydrogenBomb:
-        return 6_000n;
+        base = 6_000n;
+        break;
       case UnitType.MIRV:
-        return 20_000n;
+        base = 20_000n;
+        break;
       default:
         return 0n;
     }
+    return base * BigInt(this.materialsPriceScale());
+  }
+
+  /**
+   * The whole arms table times this (session-12 retune). At the first-cut
+   * prices the pool sat at 100k+ unused at the end of every bot run — supply
+   * was never the constraint, so industry never was either. Doubled, a
+   * level-one factory arms a post every twenty seconds and a silo every
+   * hundred. The balance lever `--cheap-materials` restores 1.
+   */
+  materialsPriceScale(): number {
+    return 2;
   }
 
   /**
@@ -1811,9 +1830,9 @@ export class Config {
     return 2n * BigInt(level);
   }
 
-  /** Enough at spawn for one defense post, and not two. */
+  /** Enough at spawn for one defense post, and not two, whatever a post costs. */
   startingMaterials(): Gold {
-    return 200n;
+    return this.unitMaterialsCost(UnitType.DefensePost);
   }
 
   /**

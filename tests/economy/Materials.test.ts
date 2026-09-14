@@ -37,6 +37,14 @@ describe("materials", () => {
   it("starts with enough for one defense post, and not two", () => {
     const post = game.config().unitMaterialsCost(UnitType.DefensePost);
     expect(player.materials()).toBe(game.config().startingMaterials());
+    // The start is one post, whatever the table says a post costs; the
+    // table is the base times the price scale (session-12 retune: x2).
+    expect(post).toBe(400n);
+    expect(game.config().unitMaterialsCost(UnitType.MIRV)).toBe(40_000n);
+    vi.spyOn(game.config(), "materialsPriceScale").mockReturnValue(1);
+    expect(game.config().unitMaterialsCost(UnitType.DefensePost)).toBe(200n);
+    expect(game.config().startingMaterials()).toBe(200n);
+    vi.restoreAllMocks();
     expect(player.materials()).toBeGreaterThanOrEqual(post);
     expect(player.materials()).toBeLessThan(post * 2n);
   });
