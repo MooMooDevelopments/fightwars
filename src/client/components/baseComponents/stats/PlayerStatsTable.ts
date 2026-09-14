@@ -47,6 +47,7 @@ const UNIT_LABEL_KEYS = {
   silo: "unit_type.missile_silo",
   wshp: "unit_type.warship",
   abomb: "unit_type.atom_bomb",
+  bombr: "unit_type.bomber",
   hbomb: "unit_type.hydrogen_bomb",
   mirv: "unit_type.mirv",
   mirvw: "player_stats_table.unit.mirvw",

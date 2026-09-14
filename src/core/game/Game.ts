@@ -219,6 +219,7 @@ export enum UnitType {
   // order (zbin/README.md), and every later FightWars unit goes on the end.
   Artillery = "Artillery",
   Radar = "Radar",
+  Bomber = "Bomber",
 }
 
 export enum TrainType {
@@ -239,6 +240,7 @@ export const BuildableAttacks = unitTypeGroup([
   UnitType.HydrogenBomb,
   UnitType.MIRV,
   UnitType.Warship,
+  UnitType.Bomber,
 ] as const);
 
 export const Structures = unitTypeGroup([
@@ -330,6 +332,12 @@ export interface UnitParamsMap {
   [UnitType.Artillery]: Record<string, never>;
 
   [UnitType.Radar]: Record<string, never>;
+
+  /** A conventional strike: flies and lands like an atom bomb, burns nothing. */
+  [UnitType.Bomber]: {
+    targetTile?: number;
+    trajectory: TrajectoryTile[];
+  };
 
   [UnitType.SAMLauncher]: Record<string, never>;
 

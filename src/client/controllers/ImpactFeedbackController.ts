@@ -31,6 +31,7 @@ interface Impact {
 const IMPACTS: Partial<Record<UnitType, Impact>> = {
   [UnitType.HydrogenBomb]: { shakePx: 22, flash: 0.55, ring: 0.95 },
   [UnitType.AtomBomb]: { shakePx: 11, flash: 0.34, ring: 0.85 },
+  [UnitType.Bomber]: { shakePx: 4, flash: 0.12, ring: 0.6 },
   // A MIRV puts dozens of rings up at once; at the others' opacity the map
   // disappears under them for the length of the salvo.
   [UnitType.MIRVWarhead]: { shakePx: 5, flash: 0.14, ring: 0.45 },

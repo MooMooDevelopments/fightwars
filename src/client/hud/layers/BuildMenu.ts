@@ -39,6 +39,7 @@ const samlauncherIcon = assetUrl("images/SamLauncherIconWhite.svg");
 const shieldIcon = assetUrl("images/ShieldIconWhite.svg");
 const artilleryIcon = assetUrl("images/ArtilleryIconWhite.svg");
 const radarIcon = assetUrl("images/RadarIconWhite.svg");
+const bomberIcon = assetUrl("images/BomberIconWhite.svg");
 
 export interface BuildItemDisplay {
   unitType: PlayerBuildableUnitType;
@@ -119,6 +120,13 @@ export const buildTable: BuildItemDisplay[][] = [
       description: "build_menu.desc.radar",
       key: "unit_type.radar",
       countable: true,
+    },
+    {
+      unitType: UnitType.Bomber,
+      icon: bomberIcon,
+      description: "build_menu.desc.bomber",
+      key: "unit_type.bomber",
+      countable: false,
     },
     {
       unitType: UnitType.City,

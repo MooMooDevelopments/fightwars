@@ -59,6 +59,10 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
 - **Radar.** A new structure: every SAM launcher within sixty tiles of a radar intercepts
   thirty tiles further, up to the SAM cap. A radar defends nothing by itself; it makes the
   launchers you already have reach. Hotkey H. Nations build them beside their SAMs.
+- **Bomber.** A conventional strike from your nearest silo: it flies like an atom bomb,
+  kills troops and destroys buildings and ships in a small radius, and burns nothing — the
+  land keeps its owner and there is no fallout. SAMs can shoot it down. Hotkey N. A nation
+  with a silo and no warhead it can afford flies one.
 - **Retune: an army costs twice as much to keep.** Defence posts, SAMs, silos and warships
   now cost double the gold per second to hold. Cities, ports and factories are unchanged:
   the bill is for the arsenal, not the country.

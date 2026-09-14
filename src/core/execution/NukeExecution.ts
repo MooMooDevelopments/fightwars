@@ -238,6 +238,14 @@ export class NukeExecution implements Execution {
             MessageType.HYDROGEN_BOMB_INBOUND,
             target.id(),
           );
+        } else if (this.nukeType === UnitType.Bomber) {
+          this.mg.displayIncomingUnit(
+            this.nuke.id(),
+            // TODO TranslateText
+            `${this.player.displayName()} - bomber inbound`,
+            MessageType.NUKE_INBOUND,
+            target.id(),
+          );
         }
 
         // Record stats
@@ -378,14 +386,20 @@ export class NukeExecution implements Execution {
     const magnitude = config.nukeMagnitudes(this.nuke.type());
     const toDestroy = this.tilesToDestroy();
 
+    // A bomber (brief §6.4) is a conventional strike: it kills what stands
+    // in its radius and burns nothing — the land keeps its owner, no tile
+    // turns to water or fallout, and the map's nuked layer is untouched.
+    const conventional = this.nukeType === UnitType.Bomber;
+
     // Retrieve all impacted players and the number of tiles
     const tilesPerPlayers = new Map<Player, number>();
     for (const tile of toDestroy) {
       const owner = mg.owner(tile);
       if (owner.isPlayer()) {
-        owner.relinquish(tile);
+        if (!conventional) owner.relinquish(tile);
         tilesPerPlayers.set(owner, (tilesPerPlayers.get(owner) ?? 0) + 1);
       }
+      if (conventional) continue;
 
       // Queue land tiles for batched water conversion
       if (mg.isLand(tile)) {
@@ -454,6 +468,7 @@ export class NukeExecution implements Execution {
         type === UnitType.HydrogenBomb ||
         type === UnitType.MIRVWarhead ||
         type === UnitType.MIRV ||
+        type === UnitType.Bomber ||
         type === UnitType.SAMMissile
       ) {
         continue;
@@ -470,12 +485,15 @@ export class NukeExecution implements Execution {
 
     if (
       this.nukeType === UnitType.AtomBomb ||
-      this.nukeType === UnitType.HydrogenBomb
+      this.nukeType === UnitType.HydrogenBomb ||
+      this.nukeType === UnitType.Bomber
     ) {
       const messageKey =
         this.nukeType === UnitType.AtomBomb
           ? "events_display.atom_bomb_detonated"
-          : "events_display.hydrogen_bomb_detonated";
+          : this.nukeType === UnitType.Bomber
+            ? "events_display.bomber_detonated"
+            : "events_display.hydrogen_bomb_detonated";
       for (const [impactedPlayer] of tilesPerPlayers) {
         mg.displayMessage(
           messageKey,

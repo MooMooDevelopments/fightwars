@@ -17,6 +17,7 @@ import { GameView } from "../../view";
 import {
   artilleryIcon,
   atomBombIcon,
+  bomberIcon,
   cityIcon,
   defensePostIcon,
   factoryIcon,
@@ -100,6 +101,7 @@ export class UnitDisplay extends LitElement implements Controller {
       case UnitType.AtomBomb:
       case UnitType.HydrogenBomb:
       case UnitType.MIRV:
+      case UnitType.Bomber:
         return (
           this.cost(item) <= (player?.gold() ?? 0n) &&
           (player?.units(UnitType.MissileSilo).length ?? 0) > 0
@@ -213,6 +215,13 @@ export class UnitDisplay extends LitElement implements Controller {
             this.keybinds["buildWarship"]?.key ?? "7",
           )}
           ${this.renderUnitItem(
+            bomberIcon,
+            null,
+            UnitType.Bomber,
+            "bomber",
+            this.keybinds["buildBomber"]?.key ?? "N",
+          )}
+          ${this.renderUnitItem(
             atomBombIcon,
             null,
             UnitType.AtomBomb,
@@ -315,6 +324,7 @@ export class UnitDisplay extends LitElement implements Controller {
             switch (unitType) {
               case UnitType.AtomBomb:
               case UnitType.HydrogenBomb:
+              case UnitType.Bomber:
                 this.eventBus?.emit(
                   new ToggleStructureEvent([
                     UnitType.MissileSilo,

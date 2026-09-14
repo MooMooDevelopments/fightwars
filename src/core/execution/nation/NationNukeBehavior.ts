@@ -38,7 +38,7 @@ export class NationNukeBehavior {
   private readonly recentlySentNukes: [
     Tick,
     TileRef,
-    UnitType.AtomBomb | UnitType.HydrogenBomb,
+    UnitType.AtomBomb | UnitType.HydrogenBomb | UnitType.Bomber,
   ][] = [];
   private atomBombsLaunched = 0;
   private atomBombPerceivedCost = this.cost(UnitType.AtomBomb);
@@ -94,6 +94,14 @@ export class NationNukeBehavior {
       this.player.gold() >= atomCost
     ) {
       nukeType = UnitType.AtomBomb;
+    } else if (
+      // Bomber (brief §6.4): a silo with nothing it can afford to put on
+      // it still flies a conventional strike.
+      config.bomberNationEnabled() &&
+      !config.isUnitDisabled(UnitType.Bomber) &&
+      this.player.gold() >= this.cost(UnitType.Bomber)
+    ) {
+      nukeType = UnitType.Bomber;
     } else {
       return;
     }
@@ -500,7 +508,7 @@ export class NationNukeBehavior {
 
   private isTeammateAlreadyNukingThisSpot(
     tile: TileRef,
-    nukeType: UnitType.AtomBomb | UnitType.HydrogenBomb,
+    nukeType: UnitType.AtomBomb | UnitType.HydrogenBomb | UnitType.Bomber,
   ): boolean {
     // Get the inner radius for our nuke type
     const ourInnerRadius = this.game.config().nukeMagnitudes(nukeType).inner;
@@ -652,7 +660,7 @@ export class NationNukeBehavior {
     tile: TileRef,
     silos: Unit[],
     targets: Unit[],
-    nukeType: UnitType.AtomBomb | UnitType.HydrogenBomb,
+    nukeType: UnitType.AtomBomb | UnitType.HydrogenBomb | UnitType.Bomber,
   ): number {
     const magnitude = this.game.config().nukeMagnitudes(nukeType);
     const dist = euclDistFN(tile, magnitude.outer, false);
@@ -752,7 +760,7 @@ export class NationNukeBehavior {
 
   private sendNuke(
     tile: TileRef,
-    nukeType: UnitType.AtomBomb | UnitType.HydrogenBomb,
+    nukeType: UnitType.AtomBomb | UnitType.HydrogenBomb | UnitType.Bomber,
     targetPlayer: Player,
     waitTicks = 0,
   ) {

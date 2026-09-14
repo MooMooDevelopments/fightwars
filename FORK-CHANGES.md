@@ -1021,3 +1021,52 @@ radar intercepts 30 tiles further, capped at the SAM maximum. `docs/MECHANICS.md
   cap; active-built-own only; the re-send on the way up and the way down. Five breaks (the
   bonus, the owner/active filter, the coverage range, the cap, the wire touch), each caught
   by the case that names it.
+
+### Bomber (brief §6.4, session 12)
+
+A conventional strike flown from a silo like an atom bomb: kills troops and the units in a
+small radius, burns nothing. `docs/MECHANICS.md` §04 D.
+
+#### Shared upstream files edited
+
+- `src/core/game/Game.ts` — `UnitType.Bomber` (appended), in `BuildableAttacks`;
+  `UnitParamsMap` (the atom bomb's shape).
+- `src/core/StatsSchemas.ts` — `bombr`; `NukeType` includes it.
+- `src/core/configuration/Config.ts` — `unitInfo` (250k flat), materials 300 base,
+  `nukeMagnitudes` {4, 8}, `nukeSpeed` 8, `bomberNationEnabled`.
+- `src/core/game/PlayerImpl.ts` — `canSpawnUnitType`: silo spawn.
+- `src/core/execution/ConstructionExecution.ts` — dispatched with the two bombs.
+- `src/core/execution/NukeExecution.ts` — the conventional branch in `detonate` (no
+  relinquish, no water conversion, no nuked layer), the airborne exemption, its inbound line
+  and detonation message.
+- `src/core/execution/SAMLauncherExecution.ts`, `src/core/execution/SAMMissileExecution.ts` —
+  the whitelists and the `unitCount` fast path.
+- `src/core/execution/nation/NationNukeBehavior.ts` — the chooser's bomber branch; the
+  `AtomBomb | HydrogenBomb` unions widened.
+- `src/client/render/types/UnitType.ts`, `src/client/render/types/index.ts`,
+  `src/client/render/gl/passes/UnitPass.ts` (the atom bomb's sprite column),
+  `src/client/hud/SpriteLoader.ts`, `src/client/view/GameView.ts` (trail),
+  `src/client/controllers/ImpactFeedbackController.ts` (a smaller ring),
+  `src/client/controllers/SoundEffectController.ts` (the atom bomb's sounds),
+  `src/client/controllers/BuildPreviewController.ts` (blast ghost).
+- `src/client/hud/HotbarIcons.ts`, `src/client/hud/layers/BuildMenu.ts`,
+  `src/client/hud/layers/UnitDisplay.ts` (needs a silo, like the bombs),
+  `src/client/InputHandler.ts`, `src/core/game/UserSettings.ts` (`buildBomber: KeyN`),
+  `src/client/UserSettingModal.ts`, `src/client/hud/Tutorial.ts`,
+  `src/client/hud/layers/TutorialPanel.ts`, `src/client/components/GameConfigSettings.ts`,
+  `src/client/HelpModal.ts`, `src/client/components/baseComponents/stats/PlayerStatsTable.ts`.
+- `resources/lang/en.json` — `build_menu.desc.bomber`, `unit_type.bomber`,
+  `help_modal.build_bomber_desc`, `user_setting.build_bomber(_desc)`,
+  `events_display.bomber_detonated`.
+- `scripts/balanceRun.ts` — `--no-bomber`; bombers in the fleet line.
+
+#### FightWars-only files added
+
+- `resources/images/BomberIconWhite.svg`.
+- `tests/Bomber.test.ts` — the unit (a buildable attack with a price and a key, flown from a
+  silo and refused without one), a strike (kills what stands in its radius and burns
+  nothing — the atom bomb's opposite on the same landing), the SAM shooting it down, and a
+  nation flying one when it cannot afford a warhead and not with the lever off. Three
+  breaks (the conventional branch, the SAM whitelist, the nation branch), each caught by the
+  case that names it. `TestConfig` flattens magnitudes and speeds, so the table is asserted
+  against a plain `Config` and the strike spies the real blast in.

@@ -50,6 +50,7 @@ const TRAIL_TYPES: ReadonlySet<UnitType> = new Set<UnitType>([
   UnitType.HydrogenBomb,
   UnitType.MIRV,
   UnitType.MIRVWarhead,
+  UnitType.Bomber,
 ]);
 
 type TrainPlanState = {

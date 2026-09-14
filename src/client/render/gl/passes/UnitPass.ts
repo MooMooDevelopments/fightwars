@@ -39,6 +39,7 @@ import {
   SMOOTHED_NUKE_TYPES,
   TrainType,
   UT_ATOM_BOMB,
+  UT_BOMBER,
   UT_HYDROGEN_BOMB,
   UT_MIRV,
   UT_MIRV_WARHEAD,
@@ -286,6 +287,9 @@ export class UnitPass {
         this.typeToAtlasCol.set(header.unitTypes[i], col);
       }
     }
+    // A bomber (FightWars, session 12) flies with the atom bomb's sprite
+    // until the unit atlas is regenerated — same story as the icon atlas.
+    this.typeToAtlasCol.set(UT_BOMBER, UNIT_ORDER.indexOf(UT_ATOM_BOMB));
 
     // Compile shaders
     this.program = createProgram(

@@ -1132,6 +1132,11 @@ export class Config {
           cost: this.costWrapper(() => 5_000_000, UnitType.HydrogenBomb),
         };
         break;
+      case UnitType.Bomber:
+        info = {
+          cost: this.costWrapper(() => 250_000, UnitType.Bomber),
+        };
+        break;
       case UnitType.MIRV:
         info = {
           cost: (game: Game, player: Player) => {
@@ -1824,6 +1829,9 @@ export class Config {
       case UnitType.AtomBomb:
         base = 1_500n;
         break;
+      case UnitType.Bomber:
+        base = 300n;
+        break;
       case UnitType.HydrogenBomb:
         base = 6_000n;
         break;
@@ -1957,12 +1965,23 @@ export class Config {
     switch (unitType) {
       case UnitType.MIRVWarhead:
         return { inner: 12, outer: 18 };
+      case UnitType.Bomber:
+        return { inner: 4, outer: 8 };
       case UnitType.AtomBomb:
         return { inner: 12, outer: 30 };
       case UnitType.HydrogenBomb:
         return { inner: 80, outer: 100 };
     }
     throw new Error(`Unknown nuke type: ${unitType}`);
+  }
+
+  /**
+   * Bomber (brief §6.4, session 12): nations reach for a bomber when they
+   * hold a silo but cannot afford a warhead. The balance lever
+   * `--no-bomber` turns that off, which is the game before the unit.
+   */
+  bomberNationEnabled(): boolean {
+    return true;
   }
 
   nukeAllianceBreakThreshold(): number {
@@ -1974,6 +1993,8 @@ export class Config {
       case UnitType.AtomBomb:
       case UnitType.HydrogenBomb:
         return 10;
+      case UnitType.Bomber:
+        return 8;
       case UnitType.MIRV:
         return 15;
       case UnitType.MIRVWarhead:

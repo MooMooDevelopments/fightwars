@@ -1,6 +1,6 @@
 # FightWars Build State
 
-Last session: 2026-09-15 (session 12) | Current phase: **5 (depth) — retune pass done, the six 6.4 units in progress (Artillery and Radar built)** — 6.1 (supply lines) and 6.2 (elevation) done, **6.3 done** (upkeep, materials, blockades, embargo price; Manpower surfaced as `maxTroops`, not rebuilt), **6.4 half done** (nuke consequences; the six units not started); Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
+Last session: 2026-09-15 (session 12) | Current phase: **5 (depth) — retune pass done, the six 6.4 units in progress (Artillery, Radar and Bomber built)** — 6.1 (supply lines) and 6.2 (elevation) done, **6.3 done** (upkeep, materials, blockades, embargo price; Manpower surfaced as `maxTroops`, not rebuilt), **6.4 half done** (nuke consequences; the six units not started); Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
 
 Repo: `C:\Users\disbo\dev\fightwars` · `upstream` = openfrontio/OpenFrontIO (forked at
 `c77005586`, rebased onto `7d95251f1` the same day) · `origin` = github.com/MooMooDevelopments/fightwars
@@ -27,6 +27,31 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 `npm run load:test -- --clients 150 --map world --turns 600`.
 
 ## Handoff — read this first (written 2026-09-14, session 12 in progress)
+
+### Session 12 (continued) — 6.4's third unit: Bomber
+
+- **What shipped.** `UnitType.Bomber`: a conventional strike flown from the nearest ready
+  silo like an atom bomb — {4, 8} blast, speed 8, 250k gold, 300 base materials — that kills
+  the troops and the units in its radius and burns nothing: no tile relinquished, none turned
+  to water or fallout, the nuked layer untouched. SAMs shoot it down like a warhead. A nation
+  with a silo and no warhead it can afford flies one. `docs/MECHANICS.md` §04 D;
+  `FORK-CHANGES.md` the files. Lever `--no-bomber` reproduces the radar commit's hash
+  `40696498796941470` to the digit.
+- **The audit's shape held exactly.** A new `NukeType`, one `conventional` branch in
+  `detonate`, the airborne exemption, three SAM whitelists — nothing else in the nuke path
+  cared what was flying. The one thing the audit did not list: `NationNukeBehavior`'s
+  helper signatures are `AtomBomb | HydrogenBomb` unions in three places; widened.
+- **Three guards, three breaks** (the conventional branch, the SAM whitelist, the nation
+  branch), each failing exactly its own case. `TestConfig` flattens `nukeMagnitudes` to one
+  tile and `nukeSpeed` to a constant, so the table is asserted against a plain `Config` and
+  the strike spies the real blast in — the `TestConfig` rule from session 11, third time.
+  The nation case had to hold the treasury at 400k every tick: left alone, the nation spent
+  it on cities before it ever thought about a strike.
+- **Cheap strikes flatten the top.** Same seed, 8000 ticks, off → on: top-1 20.1 → 14.9 %,
+  top-5 59.6 → 48.6 %, fallout 7959 → 2004 tiles, cities 163 → 147, guns 37 → 29, radars
+  14 → 9, alive 28 both. Nations that could not afford a warhead now hit back at whoever is
+  winning with what they can afford, and the leader pays for it. The report's "bombers in
+  the air" is what is in flight at the last tick, not a strike count.
 
 ### Session 12 (continued) — 6.4's second unit: Radar
 
@@ -1015,6 +1040,27 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   remains by design.
 - The discord card on a clan overview says "invite is no longer valid" for any invite the
   browser cannot resolve against Discord's public API (offline / fake invite) — expected.
+
+## Numbers last measured — Phase 5 item 6.4, Bomber (2026-09-15, session 12)
+
+- **Bot-vs-bot** (`balance:run --ticks 8000`, world, 150 bots + nations, Medium, seed `perf-gate`):
+
+  | after 8000 ticks       | `--no-bomber`       | bomber on           |
+  | ---------------------- | ------------------- | ------------------- |
+  | players alive          | 28                  | 28                  |
+  | top 1 / 5 / 20 share   | 20.1 / 59.6 / 99.4  | 14.9 / 48.6 / 97.5  |
+  | cities / ports / fact. | 163 / 107 / 45      | 147 / 104 / 35      |
+  | posts / guns           | 26 / 37             | 27 / 29             |
+  | SAMs / radars          | 22 / 14             | 19 / 9              |
+  | fallout tiles          | 7959                | 2004                |
+  | materials held         | 95239               | 94603               |
+  | pacts / defensive      | 16 / 8.5            | 30 / 7              |
+  | uprisings              | 248 (5 alive)       | 261 (4 alive)       |
+  | final hash             | `40696498796941470` | `42857537573621660` |
+
+  The off hash equals the radar commit's: the lever restores that game exactly.
+
+- **Nation economy** (`NationGoldPerMinute`, impossible nations, 20 minutes): alive 20 → 20, trade gold −1.5 % (608.3M → 599.1M), train gold +8.6 % (112.4M → 122.1M), ships arrived 2758 → 2717 — the first arms commit that did not cost a nation on Impossible: a bomber is a cheap line on the bill.
 
 ## Numbers last measured — Phase 5 item 6.4, Radar (2026-09-15, session 12)
 

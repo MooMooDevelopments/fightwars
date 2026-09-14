@@ -13,6 +13,7 @@ export const samLauncherIcon = assetUrl("images/SamLauncherIconWhite.svg");
 export const defensePostIcon = assetUrl("images/ShieldIconWhite.svg");
 export const artilleryIcon = assetUrl("images/ArtilleryIconWhite.svg");
 export const radarIcon = assetUrl("images/RadarIconWhite.svg");
+export const bomberIcon = assetUrl("images/BomberIconWhite.svg");
 export const soldierIcon = assetUrl("images/SoldierIcon.svg");
 export const claimIcon = assetUrl("images/ClaimIcon.svg");
 export const profileIcon = assetUrl("images/ProfileIcon.svg");
