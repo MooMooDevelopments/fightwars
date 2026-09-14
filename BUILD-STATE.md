@@ -28,6 +28,25 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 
 ## Handoff — read this first (written 2026-09-14, session 12 in progress)
 
+### Session 12 (continued) — the Phase 5 readouts, the first Phase 4 increment
+
+- **What shipped.** Materials beside gold on the control panel, in the gold tile's grammar
+  (a factory glyph through `.icon-mask` carries the identity, the figure wears ink in the
+  display face; on the phone row it stacks under the gold figure inside the same tile rather
+  than squeezing a fifth tile in). On the player panel: a materials tile with gold and
+  troops, an occupied-land row (`text-status-alert` beside ⚠ and the words, shown only when
+  there is any), and a doctrine chip in the panel's own chip grammar — a name, not a colour,
+  because eight doctrine colours would be eight more things for a dichromat to lose.
+  Manpower needed nothing: the troop meter already prints `maxTroops` as its cap.
+- **Direction held, stated once.** Dark, map-first, the map the only saturated surface;
+  figures in the display face wearing ink; an icon carries identity. No new colour token —
+  `dataviz` was read before the tiles and its answer for a bare stat tile is a hero figure,
+  a label and no colour of its own. `frontend-design` was loaded first per the standing
+  procedure; `impeccable` is the next session's review, not this commit's.
+- **Not photographed.** These are text tiles in an existing grammar, not effects; the
+  accessibility and render tests (`tests/client/HudReadouts.test.ts`) pin the names, both
+  layouts and the on/off switches. A dev-server pass is still owed and the handoff says so.
+
 ### Session 12 (continued) — 6.4's sixth unit: Paratrooper, and Phase 5 is whole
 
 - **What shipped.** `UnitType.Paratrooper`: an airborne assault. A fifth of the owner's
@@ -1041,8 +1060,8 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
    six units' own atlas glyphs (the icon and unit atlases cannot be regenerated on this box —
    §03 7.1), a shell drawn for an artillery volley, SAM interception of drops, forest /
    marsh / desert terrain (§02 G2, needs painted content), vassals and war goals (§05 1–2),
-   the manpower / materials / unrest readouts and a doctrine badge (`PlayerView` has the
-   accessors), map shading for unsupplied and occupied land, rail as a supply source
+   map shading for unsupplied and occupied land (the readouts themselves landed at the end
+   of session 12), rail as a supply source
    (§03 7.4), train delivery of materials, garrison as troops (§05 6). The economy numbers
    to re-read after any of them: the Impossible `NationGoldPerMinute` alive count sits at 23
    after the six units (it walked 26 → 21 → 24 → 20 → 20 → 22 → 20 → 23 through them) and

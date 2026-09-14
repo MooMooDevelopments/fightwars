@@ -1210,3 +1210,22 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
   lever off. Breaks: the range, the landing attack and the nation hook each fail their case;
   the own-land clause does not, because the friendliness clause beside it refuses the
   owner's own tile too — the assertion holds, the clause is belt and braces.
+
+### Readouts: materials, occupied land, doctrine (Phase 4 item 6 / Phase 5 loose ends, session 12)
+
+#### Shared upstream files edited
+
+- `src/client/hud/layers/ControlPanel.ts` — `_materials` read each tick; a materials tile
+  beside gold on desktop (the gold tile's grammar, a factory glyph via `.icon-mask`), and a
+  second figure under gold in the same tile on the phone row.
+- `src/client/hud/layers/PlayerPanel.ts` — `renderDoctrineBadge` (a chip after the relation
+  chip), `renderUnrest` (an occupied-land row), a materials tile in `renderResources`.
+- `resources/lang/en.json` — `control_panel.materials`, `player_panel.materials`,
+  `player_panel.doctrine`, `player_panel.occupied_land`.
+
+#### FightWars-only files added
+
+- `tests/client/HudReadouts.test.ts` — the control panel prints the pool in both layouts and
+  names the tile; the player panel names the doctrine (and not without one, nor with
+  doctrines off), shows the pool, and shows occupied land only when there is any, with the
+  words beside the colour (and not with stability off).

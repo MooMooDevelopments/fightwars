@@ -63,8 +63,9 @@ Each is written up where its system lives, with the hook named:
   with a neighbour's column (`StructurePass` / `UnitPass` fallbacks). §03 7.1.
 - A shell drawn for an artillery volley (`ArtilleryExecution.tick`); SAM interception of
   drops (a SAM reads a warhead's `trajectory()`, a drop carries none).
-- Readouts: manpower (`maxTroops`), materials, unrest, a doctrine badge — `PlayerView` has
-  every accessor; map shading for unsupplied and occupied land (§02 G1, §05 6).
+- Map shading for unsupplied and occupied land (§02 G1, §05 6). The readouts are done:
+  manpower was already the troop meter's cap; materials sits beside gold on the control
+  panel; the player panel carries materials, an occupied-land row and a doctrine chip.
 - Rail as a supply source (§03 7.4), train delivery of materials (§03 7.2), garrison as
   troops (§05 6), vassals and war goals (§05 1–2), forest / marsh / desert terrain (§02 G2,
   needs painted content nobody has).
@@ -85,9 +86,8 @@ licenses:check`, `npm run perf:gate` on an idle box; per sim change an 8000-tick
    a lever that reproduces the previous commit's hash to the digit.
 1. **Phase 4 identity** (§3 below, per item): load `frontend-design` before any UI code,
    `ui-ux-pro-max` for palette/type, `dataviz` before any chart or stat tile, `impeccable`
-   and `web-design-guidelines` on the result. The cheapest first increment is the readouts
-   above (manpower, materials, unrest, doctrine badge) on the player panel and HUD — the
-   accessors exist, the design pass is the work. Then item 3's halo/flash legibility, item 6's
+   and `web-design-guidelines` on the result. The readouts landed at the end of session 12 (unphotographed — a
+   dev-server pass is the first thing to do here). Then item 3's halo/flash legibility, item 6's
    layout and radial menus, item 7's mobile remainder, item 9's build queue / rally points /
    attack presets (the one simulation item — a lever and an A/B like any Phase 5 item).
 2. **Then Phase 6** (§5: modes and metagame) and **Phase 7** (§7: hardening), with §6's

@@ -74,6 +74,9 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   nearest Missile Silo within 120 tiles straight to the tile you click and land as an attack
   from there — over water, mountains, anyone's land. Nothing shoots them down. Hotkey I.
   Nations drop rather than sail when a silo reaches a target they cannot walk to.
+- **Readouts.** Your materials now sit beside your gold at the bottom of the screen. Click
+  a player and their panel shows their materials, how much of their land is occupied, and
+  the doctrine they chose.
 - **Retune: an army costs twice as much to keep.** Defence posts, SAMs, silos and warships
   now cost double the gold per second to hold. Cities, ports and factories are unchanged:
   the bill is for the arsenal, not the country.

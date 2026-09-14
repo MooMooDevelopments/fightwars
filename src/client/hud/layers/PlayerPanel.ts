@@ -7,6 +7,8 @@ import {
   ALLIANCE_TIER_KEYS,
   AllianceTier,
   AllPlayers,
+  Doctrine,
+  DOCTRINE_KEYS,
   GameType,
   PlayerActions,
   PlayerProfile,
@@ -629,6 +631,61 @@ export class PlayerPanel extends LitElement implements Controller {
       </div>
       ${this.renderTraitorBadge(other)}
       ${this.renderRelationPillIfNation(other, my)}
+      ${this.renderDoctrineBadge(other)}
+    `;
+  }
+
+  /**
+   * Doctrine badge (brief §6.6): who this player decided to be at spawn,
+   * in the chip grammar the panel already uses for nation and traitor.
+   * Words, not a colour — a doctrine is a name, and eight colours would
+   * be eight more things for a dichromat to lose.
+   */
+  private renderDoctrineBadge(other: PlayerView) {
+    const doctrine = other.doctrine();
+    if (doctrine === Doctrine.None || !this.g.config().doctrinesEnabled()) {
+      return html``;
+    }
+    const key = `doctrine.${DOCTRINE_KEYS[doctrine]}`;
+    return html`
+      <div class="mt-1">
+        <span
+          class="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/4 px-2.5 py-0.5 text-xs font-semibold text-zinc-200"
+          role="status"
+          data-readout="doctrine"
+          title=${translateText(`${key}_desc`)}
+        >
+          <span class="tracking-tight"
+            >${translateText("player_panel.doctrine", {
+              doctrine: translateText(key),
+            })}</span
+          >
+        </span>
+      </div>
+    `;
+  }
+
+  /**
+   * Occupied land (brief §6.6): how much of this player's land is still
+   * held from its people. Shown only when there is any — the alert token
+   * plus the words, never the colour alone.
+   */
+  private renderUnrest(other: PlayerView) {
+    const tiles = other.numUnrestTiles();
+    if (tiles <= 0 || !this.g.config().unrestEnabled()) return html``;
+    return html`
+      <div
+        class="mb-1 flex items-center gap-1.5 rounded-lg bg-white/4 px-3 py-1 text-sm text-status-alert"
+        data-readout="unrest"
+      >
+        <span aria-hidden="true">⚠</span>
+        <span translate="no" class="tabular-nums font-semibold"
+          >${renderNumber(tiles)}</span
+        >
+        <span class="whitespace-nowrap"
+          >${translateText("player_panel.occupied_land")}</span
+        >
+      </div>
     `;
   }
 
@@ -661,6 +718,22 @@ export class PlayerPanel extends LitElement implements Controller {
           >
         </div>
       </div>
+      <div class="mb-1 flex justify-between gap-2">
+        <div
+          class="inline-flex items-center gap-1.5 rounded-lg bg-white/4 px-3 py-1.5 shrink-0
+                    text-white w-35"
+          data-readout="materials"
+        >
+          <span class="mr-0.5">🏭</span>
+          <span translate="no" class="tabular-nums w-[5ch] font-semibold">
+            ${renderNumber(other.materials() || 0n)}
+          </span>
+          <span class="text-zinc-200 whitespace-nowrap">
+            ${translateText("player_panel.materials")}</span
+          >
+        </div>
+      </div>
+      ${this.renderUnrest(other)}
     `;
   }
 

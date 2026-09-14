@@ -23,7 +23,7 @@ import {
 } from "../../Utils";
 import { GameView } from "../../view";
 import { PlayerView } from "../../view/PlayerView";
-import { goldCoinIcon, soldierIcon } from "../HotbarIcons";
+import { factoryIcon, goldCoinIcon, soldierIcon } from "../HotbarIcons";
 import { TutorialHighlight, TutorialHighlightEvent } from "../Tutorial";
 const swordIcon = assetUrl("images/SwordIcon.svg");
 
@@ -55,6 +55,7 @@ export class ControlPanel extends LitElement implements Controller {
 
   @state()
   private _gold: Gold;
+  private _materials: bigint = 0n;
 
   @state()
   private _attackingTroops: number = 0;
@@ -145,6 +146,7 @@ export class ControlPanel extends LitElement implements Controller {
     const config = this.game.config();
     this._maxTroops = config.maxTroops(player);
     this._gold = player.gold();
+    this._materials = player.materials();
     this._troops = player.troops();
     this._attackingTroops = player
       .outgoingAttacks()
@@ -644,6 +646,26 @@ export class ControlPanel extends LitElement implements Controller {
             >${renderNumber(this._gold)}</span
           >
         </div>
+        <!-- Materials (brief §6.3): the second currency, in the gold tile's
+             grammar. The factory glyph carries the identity; the figure
+             wears ink. Gold raises a country, industry arms it. -->
+        <div
+          class="flex items-center gap-1 shrink-0 border border-ink-dim/40 rounded-md text-sm py-0.5 px-1 min-w-[4.5rem]"
+          translate="no"
+          title=${translateText("control_panel.materials")}
+          aria-label=${translateText("control_panel.materials")}
+        >
+          <span
+            class="icon-mask shrink-0"
+            style="--icon: url(${factoryIcon}); width: 13px; height: 13px"
+            aria-hidden="true"
+          ></span>
+          <span
+            class="font-display font-semibold tabular-nums text-ink"
+            data-readout="materials"
+            >${renderNumber(this._materials)}</span
+          >
+        </div>
       </div>
       <!-- Row 2: attack ratio | slider -->
       <div
@@ -710,9 +732,25 @@ export class ControlPanel extends LitElement implements Controller {
             width="13"
             height="13"
           />
-          <span class="px-0.5 font-display font-semibold tabular-nums"
-            >${renderNumber(this._gold)}</span
-          >
+          <span class="flex flex-col items-start leading-tight">
+            <span class="px-0.5 font-display font-semibold tabular-nums"
+              >${renderNumber(this._gold)}</span
+            >
+            <span
+              class="px-0.5 inline-flex items-center gap-0.5 text-ink-muted font-display font-semibold tabular-nums"
+              title=${translateText("control_panel.materials")}
+              aria-label=${translateText("control_panel.materials")}
+            >
+              <span
+                class="icon-mask"
+                style="--icon: url(${factoryIcon}); width: 9px; height: 9px"
+                aria-hidden="true"
+              ></span
+              ><span data-readout="materials"
+                >${renderNumber(this._materials)}</span
+              >
+            </span>
+          </span>
         </div>
         <!-- Troop bar -->
         <div
