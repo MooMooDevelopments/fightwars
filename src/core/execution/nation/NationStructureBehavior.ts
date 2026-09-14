@@ -214,6 +214,16 @@ export class NationStructureBehavior {
     } else {
       allowed = Math.ceil(ratio / DEFENSE_POST_RATIO_PER_POST);
     }
+    // A Fortress state garrisons harder (brief §6.6, session-12 retune).
+    allowed = Math.ceil(
+      allowed *
+        this.game
+          .config()
+          .doctrineNationBuildScale(
+            this.player.doctrine(),
+            UnitType.DefensePost,
+          ),
+    );
 
     const frontTiles = this.getAttackFrontTiles(landAttacks);
     if (this.countDefensePostsNearFront(frontTiles, allowed) >= allowed)
@@ -575,7 +585,11 @@ export class NationStructureBehavior {
       return false;
     }
 
-    let ratio = config.ratioPerCity;
+    // A nation plays its doctrine: half again as many of the structure it
+    // builds cheap (brief §6.6, session-12 retune).
+    let ratio =
+      config.ratioPerCity *
+      gameConfig.doctrineNationBuildScale(this.player.doctrine(), type);
 
     // Heavily reduce factory spawning if we have coastal tiles
     if (

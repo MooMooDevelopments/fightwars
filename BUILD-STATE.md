@@ -71,6 +71,25 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   was part of that story, not all of it — the rest is the doctrines commit's 30 → 23, which
   is the next lever's business.
 
+- **Third lever: nations play their doctrine.** A doctrine only changed prices, so a
+  Mercantile nation built no more ports than any other. `Config.doctrineNationBuildScale`
+  now weights the nation's build choice — port / factory / silo targets ×1.5, posts allowed
+  under attack ×1.5 for a Fortress state, a second standing warship for a Naval one — and
+  `doctrineNationExpandReserveScale` lets an Expansionist nation expand with ¾ of the reserve
+  (applied once in `NationExecution.init`, after the roll). Humans untouched. Lever
+  `--no-doctrine-play` reproduces the pacts commit's Medium hash `44195822438377410` to the
+  digit. Four guards, four breaks, each failing exactly its own case (the port target, the
+  Fortress posts, the second warship, the expand reserve). The hand-built mocks in
+  `NationStructureBehavior.test.ts` had to gain `doctrine` / `doctrineNationBuildScale` —
+  the "every mock gains the new method" rule, again.
+- **The bots build differently; who survives is noise at two seeds.** Off → on, seed
+  `perf-gate`: alive 34 → 29, posts 32 → 25, fallout 0 → 5202; seed `retune-2`: alive 35 → 34,
+  posts 16 → 30, warships 10 → 18, fallout 1025 → 4671, top-1 19.7 → 16.3 %. Survivors by
+  doctrine swing both ways between the seeds (Expansionist 4 → 5 then 5 → 3, Nuclear 5 → 1
+  then 2 → 5), so the "Expansionist and Mercantile die more" reading of session 11 was one
+  seed's story and this commit does not claim to have reversed it. What it claims: nations
+  now _decide_ by their doctrine, and the structure counts say so.
+
 - **Three shares measured, one chosen.** Same seed, 8000 ticks: flat / 5 % / 10 % gave 507 /
   342 / 269 uprisings, leader share 12.7 / 13.2 / 11.3 %, top-20 96.2 / 96.1 / 91.8 %, alive
   37 / 33 / 34. Occupied tiles barely move (327k / 352k / 333k) because that number is
@@ -899,6 +918,28 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   remains by design.
 - The discord card on a clan overview says "invite is no longer valid" for any invite the
   browser cannot resolve against Discord's public API (offline / fake invite) — expected.
+
+## Numbers last measured — Phase 5 retune, nations play their doctrine (2026-09-14, session 12)
+
+- **Bot-vs-bot** (`balance:run --ticks 8000`, world, 150 bots + nations, Medium):
+
+  | after 8000 ticks      | seed `perf-gate` off | on                  | seed `retune-2` off | on                  |
+  | --------------------- | -------------------- | ------------------- | ------------------- | ------------------- |
+  | players alive         | 34                   | 29                  | 35                  | 34                  |
+  | top 1 / 5 / 20 share  | 11.3 / 44.2 / 91.8   | 11.5 / 47.9 / 99.0  | 19.7 / 50.2 / 97.1  | 16.3 / 48.7 / 95.1  |
+  | posts / warships      | 32 / 13              | 25 / 14             | 16 / 10             | 30 / 18             |
+  | cities / ports / fact | 170 / 106 / 35       | 167 / 104 / 36      | 173 / 118 / 41      | 174 / 112 / 37      |
+  | fallout tiles         | 0                    | 5202                | 1025                | 4671                |
+  | pacts / defensive     | 43 / 6               | 20 / 7              | 52 / 8              | 35 / 4              |
+  | uprisings             | 269 (1 alive)        | 278 (4 alive)       | 321 (2 alive)       | 289 (0 alive)       |
+  | final hash            | `44195822438377410`  | `45473217189748110` | `47999011053332750` | `46510484518345010` |
+
+  Survivors by doctrine, off → on. `perf-gate`: naval 7 → 4, fortress 5 → 2, nuclear 5 → 1,
+  partisan 4 → 4, expansionist 4 → 5, industrial 3 → 4, diplomatic 3 → 4, mercantile 2 → 1,
+  none 1 → 4. `retune-2`: partisan 6 → 8, expansionist 5 → 3, diplomatic 5 → 5, naval 5 → 4,
+  fortress 4 → 3, mercantile 3 → 3, industrial 3 → 3, nuclear 2 → 5, none 2 → 0.
+
+- **Nation economy** (`NationGoldPerMinute`, impossible nations, 20 minutes): alive 26 → 25, trade gold **+27.9 %** (466.1M → 596.2M), train gold **+41.7 %** (97.1M → 137.6M), ships arrived 2097 → 2702 — Mercantile and Industrial nations building the ports and factories their doctrine says, on Impossible where every nation plays one.
 
 ## Numbers last measured — Phase 5 retune, alliance cap counts allies (2026-09-14, session 12)
 

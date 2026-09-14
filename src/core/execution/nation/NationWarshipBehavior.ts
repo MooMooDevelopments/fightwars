@@ -43,9 +43,16 @@ export class NationWarshipBehavior {
     }
     const ports = this.player.units(UnitType.Port);
     const ships = this.player.units(UnitType.Warship);
+    // One standing warship, or as many as the doctrine says (a Naval state
+    // keeps two — brief §6.6, session-12 retune).
+    const standing = Math.floor(
+      this.game
+        .config()
+        .doctrineNationBuildScale(this.player.doctrine(), UnitType.Warship),
+    );
     if (
       ports.length > 0 &&
-      ships.length === 0 &&
+      ships.length < standing &&
       this.player.gold() > this.cost(UnitType.Warship)
     ) {
       const port = this.random.randElement(ports);

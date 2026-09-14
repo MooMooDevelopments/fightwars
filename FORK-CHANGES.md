@@ -835,7 +835,11 @@ the length of the spawn phase. `docs/MECHANICS.md` §05 "Gaps" 5 has the table a
 - `src/core/Schemas.ts`, `src/core/execution/ExecutionManager.ts`,
   `src/core/execution/SpawnExecution.ts` — `doctrine?` on the spawn intent, stamped after the
   tile; absent keeps what is held.
-- `src/core/execution/NationExecution.ts` — the roll in `init`, only with doctrines on.
+- `src/core/execution/NationExecution.ts` — the roll in `init`, only with doctrines on;
+  (session 12) the Expansionist expand-reserve scale applied after it.
+- `src/core/execution/nation/NationStructureBehavior.ts`,
+  `src/core/execution/nation/NationWarshipBehavior.ts` (session 12) — the nation's per-city
+  structure target, posts under attack and standing warships weighted by its doctrine.
 - `src/core/configuration/Config.ts` — `doctrinesEnabled` and the ten scales; `unitInfo` wraps
   `cost` / `materialsCost` per calling player; `AttackLogicInput.attacker/defender.doctrine`
   (optional); the terra-nullius scale and `AttackExplanation.terraNulliusMod`; the post bonus
@@ -853,9 +857,12 @@ the length of the spawn phase. `docs/MECHANICS.md` §05 "Gaps" 5 has the table a
 - `src/client/hud/GameRenderer.ts`, `index.html`, `resources/lang/en.json`,
   `tests/client/graphics/GameRendererCreate.test.ts` — the picker registered, mounted,
   translated, and in the renderer test's tag list.
-- `scripts/balanceRun.ts` — `--no-doctrines`, and a doctrines line in the report.
+- `scripts/balanceRun.ts` — `--no-doctrines`, and a doctrines line in the report; (session 12)
+  `--no-doctrine-play`.
 - Fixtures: `tests/GameUpdateUtils.test.ts`, the two `derive` tests, `AttackBreakdown`, and
-  the `PlayerInfoOverlay` mock players gained `doctrine`.
+  the `PlayerInfoOverlay` mock players gained `doctrine`; (session 12) the hand-built config
+  and player mocks in `tests/NationStructureBehavior.test.ts` gained
+  `doctrineNationBuildScale` / `doctrine`.
 
 #### FightWars-only files added
 

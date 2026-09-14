@@ -82,6 +82,12 @@ export class NationExecution implements Execution {
         DOCTRINES[this.random.nextInt(0, DOCTRINES.length)],
       );
     }
+    // An Expansionist nation expands with less in reserve (brief §6.6,
+    // session-12 retune). Applied once, here, so the attack behaviour built
+    // below reads the doctrine's ratio for the whole game.
+    this.expandRatio *= this.mg
+      .config()
+      .doctrineNationExpandReserveScale(this.player.doctrine());
   }
 
   private getAttackRate(): number {

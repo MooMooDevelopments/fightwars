@@ -3,6 +3,9 @@ import { BreakAllianceExecution } from "../src/core/execution/alliance/BreakAlli
 import { AttackExecution } from "../src/core/execution/AttackExecution";
 import { isBlockaded } from "../src/core/execution/Blockade";
 import { FactoryExecution } from "../src/core/execution/FactoryExecution";
+import { NationEmojiBehavior } from "../src/core/execution/nation/NationEmojiBehavior";
+import { NationStructureBehavior } from "../src/core/execution/nation/NationStructureBehavior";
+import { NationWarshipBehavior } from "../src/core/execution/nation/NationWarshipBehavior";
 import { NationExecution } from "../src/core/execution/NationExecution";
 import { SpawnExecution } from "../src/core/execution/SpawnExecution";
 import {
@@ -22,6 +25,7 @@ import {
 import { GameUpdateType, PlayerUpdate } from "../src/core/game/GameUpdates";
 import { SUPPLY_UNSUPPLIED } from "../src/core/game/SupplyNetwork";
 import { UserSettings } from "../src/core/game/UserSettings";
+import { PseudoRandom } from "../src/core/PseudoRandom";
 import { GameConfig } from "../src/core/Schemas";
 import { setup } from "./util/Setup";
 
@@ -342,5 +346,120 @@ describe("Naval: a warship blockades half again as far", () => {
     admiral.setDoctrine(Doctrine.Naval);
     game.executeNextTick();
     expect(isBlockaded(game, port)).toBe(true);
+  });
+});
+
+/**
+ * Nations play their doctrine (brief §6.6, session-12 retune). A doctrine
+ * only changed prices, so a Mercantile nation built no more ports than any
+ * other and the survivors skewed away from Expansionist and Mercantile. Now
+ * the nation's build choice is weighted by it; humans are untouched.
+ */
+describe("nations play their doctrine", () => {
+  beforeEach(settle);
+
+  it("wants half again as many of its own structure, a second warship, three quarters the reserve", () => {
+    const pairs: [Doctrine, UnitType, number][] = [
+      [Doctrine.Mercantile, UnitType.Port, 1.5],
+      [Doctrine.Fortress, UnitType.DefensePost, 1.5],
+      [Doctrine.Naval, UnitType.Warship, 2],
+      [Doctrine.Nuclear, UnitType.MissileSilo, 1.5],
+      [Doctrine.Industrial, UnitType.Factory, 1.5],
+    ];
+    for (const [doctrine, type, scale] of pairs) {
+      expect(real.doctrineNationBuildScale(doctrine, type)).toBe(scale);
+      expect(real.doctrineNationBuildScale(doctrine, UnitType.City)).toBe(1);
+      expect(real.doctrineNationBuildScale(Doctrine.None, type)).toBe(1);
+    }
+    expect(real.doctrineNationExpandReserveScale(Doctrine.Expansionist)).toBe(
+      0.75,
+    );
+    expect(real.doctrineNationExpandReserveScale(Doctrine.Mercantile)).toBe(1);
+    // Off, a doctrine is a badge again.
+    vi.spyOn(real, "doctrinesEnabled").mockReturnValue(false);
+    expect(
+      real.doctrineNationBuildScale(Doctrine.Naval, UnitType.Warship),
+    ).toBe(1);
+    expect(real.doctrineNationExpandReserveScale(Doctrine.Expansionist)).toBe(
+      1,
+    );
+    vi.restoreAllMocks();
+  });
+
+  it("Mercantile: four cities and three ports want a fourth port; a plain nation is content", () => {
+    const behavior = new NationStructureBehavior(new PseudoRandom(1), game, a);
+    vi.spyOn(a, "unitsOwned").mockImplementation((type: UnitType) =>
+      type === UnitType.Port ? 3 : 0,
+    );
+    const wants = () =>
+      (behavior as any).shouldBuildStructure(UnitType.Port, 4, true);
+    a.setDoctrine(Doctrine.Industrial);
+    expect(wants()).toBe(false); // floor(4 × 0.75) = 3, held
+    a.setDoctrine(Doctrine.Mercantile);
+    expect(wants()).toBe(true); // floor(4 × 0.75 × 1.5) = 4
+    vi.restoreAllMocks();
+  });
+
+  it("Expansionist: the nation keeps three quarters of the reserve before expanding", () => {
+    const build = (id: string, doctrine: Doctrine) => {
+      const info = new PlayerInfo(id, PlayerType.Nation, null, id);
+      game.addPlayer(info).setDoctrine(doctrine);
+      const exec = new NationExecution("g", new Nation(new Cell(50, 50), info));
+      const before = (exec as any).expandRatio as number;
+      exec.init(game);
+      return [before, (exec as any).expandRatio as number];
+    };
+    const [plainBefore, plainAfter] = build("plain", Doctrine.Fortress);
+    expect(plainAfter).toBe(plainBefore);
+    const [before, after] = build("expander", Doctrine.Expansionist);
+    expect(after).toBeCloseTo(before * 0.75, 10);
+  });
+});
+
+describe("Naval: a nation keeps a second warship", () => {
+  let admiral: Player;
+
+  beforeEach(async () => {
+    game = await setup(
+      "half_land_half_ocean",
+      { infiniteGold: true, instantBuild: true },
+      [new PlayerInfo("admiral", PlayerType.Human, "c-ad", "admiral")],
+    );
+    admiral = game.player("admiral");
+    admiral.addGold(1_000_000_000n);
+    // The land half's north-west corner; x = 7 is the shore, x >= 8 ocean.
+    for (let x = 0; x < 7; x++) {
+      for (let y = 0; y < 8; y++) {
+        const tile = game.ref(x, y);
+        if (game.map().isLand(tile)) admiral.conquer(tile);
+      }
+    }
+    while (game.inSpawnPhase()) game.executeNextTick();
+  });
+
+  it("builds a second where a plain nation stops at one", () => {
+    admiral.buildUnit(UnitType.Port, game.ref(6, 4), {});
+    admiral.buildUnit(UnitType.Warship, game.ref(8, 4), {
+      patrolTile: game.ref(8, 4),
+    });
+    expect(admiral.units(UnitType.Warship).length).toBe(1);
+    const random = new PseudoRandom(1);
+    vi.spyOn(random, "chance").mockReturnValue(true);
+    const behavior = new NationWarshipBehavior(
+      random,
+      game,
+      admiral,
+      new NationEmojiBehavior(random, game, admiral),
+    );
+    // The spawn tile is a random draw near the port that can miss the water
+    // fifty times; pin it to the sea beside the first warship.
+    vi.spyOn(behavior as any, "warshipSpawnTile").mockReturnValue(
+      game.ref(9, 4),
+    );
+    admiral.setDoctrine(Doctrine.Mercantile);
+    expect(behavior.maybeSpawnWarship()).toBe(false);
+    admiral.setDoctrine(Doctrine.Naval);
+    expect(behavior.maybeSpawnWarship()).toBe(true);
+    vi.restoreAllMocks();
   });
 });

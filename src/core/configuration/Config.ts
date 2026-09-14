@@ -479,6 +479,42 @@ export class Config {
     }
   }
 
+  /**
+   * How much more of its doctrine's own thing a *nation* builds (brief §6.6,
+   * session-12 retune). A doctrine only changed prices, so a Mercantile
+   * nation built no more ports than any other and Expansionist and
+   * Mercantile nations died more: a doctrine has to change what a nation
+   * decides, not just what it pays. Half again as many of the structure it
+   * builds cheap — port, factory, silo — half again the posts under attack
+   * for a Fortress state, a second standing warship for a Naval one, and an
+   * Expansionist nation expands into empty land with three quarters of the
+   * reserve. Humans are untouched: they play their doctrine themselves.
+   * The balance lever `--no-doctrine-play` uses this.
+   */
+  doctrineNationBuildScale(doctrine: Doctrine, type: UnitType): number {
+    if (!this.doctrinesEnabled()) return 1;
+    switch (doctrine) {
+      case Doctrine.Mercantile:
+        return type === UnitType.Port ? 1.5 : 1;
+      case Doctrine.Fortress:
+        return type === UnitType.DefensePost ? 1.5 : 1;
+      case Doctrine.Naval:
+        return type === UnitType.Warship ? 2 : 1;
+      case Doctrine.Nuclear:
+        return type === UnitType.MissileSilo ? 1.5 : 1;
+      case Doctrine.Industrial:
+        return type === UnitType.Factory ? 1.5 : 1;
+      default:
+        return 1;
+    }
+  }
+
+  /** Expansionist nations keep three quarters of the usual reserve before expanding. */
+  doctrineNationExpandReserveScale(doctrine: Doctrine): number {
+    if (!this.doctrinesEnabled()) return 1;
+    return doctrine === Doctrine.Expansionist ? 0.75 : 1;
+  }
+
   /** Materials scale: a Nuclear state arms a warhead for half. */
   doctrineMaterialsScale(doctrine: Doctrine, type: UnitType): number {
     if (!this.doctrinesEnabled()) return 1;

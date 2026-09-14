@@ -20,7 +20,7 @@
  *                                      [--legacy-fallout] [--flat-alliances]
  *                                      [--no-coalition] [--no-doctrines]
  *                                      [--no-unrest] [--flat-unrest]
- *                                      [--pacts-count]
+ *                                      [--pacts-count] [--no-doctrine-play]
  *
  * `--no-supply` turns the supply penalty and its attrition off, and
  * `--flat-terrain` turns the elevation curves off (the band table stays),
@@ -87,6 +87,16 @@ class FlatAlliances extends Config {
 class NoUnrest extends Config {
   unrestEnabled(): boolean {
     return false;
+  }
+}
+
+/** The same game with nations holding a doctrine but not playing it (prices only). */
+class NoDoctrinePlay extends Config {
+  doctrineNationBuildScale(): number {
+    return 1;
+  }
+  doctrineNationExpandReserveScale(): number {
+    return 1;
   }
 }
 
@@ -214,6 +224,7 @@ async function main(): Promise<void> {
   const noUnrest = process.argv.includes("--no-unrest");
   const flatUnrest = process.argv.includes("--flat-unrest");
   const pactsCount = process.argv.includes("--pacts-count");
+  const noDoctrinePlay = process.argv.includes("--no-doctrine-play");
   if (
     [
       noSupply,
@@ -229,13 +240,14 @@ async function main(): Promise<void> {
       noUnrest,
       flatUnrest,
       pactsCount,
+      noDoctrinePlay,
     ].filter(Boolean).length > 1
   ) {
     throw new Error("one lever at a time");
   }
   console.debug = () => {};
   console.log(
-    `[balance] map=${map} difficulty=${Difficulty[difficulty]} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}${noUpkeep ? " upkeep=off" : ""}${noMaterials ? " materials=off" : ""}${noBlockades ? " blockades=off" : ""}${noEmbargoPrice ? " embargo-price=off" : ""}${legacyFallout ? " fallout=legacy" : ""}${flatAlliances ? " alliances=flat" : ""}${noCoalition ? " coalition=off" : ""}${noDoctrines ? " doctrines=off" : ""}${noUnrest ? " unrest=off" : ""}${flatUnrest ? " unrest=flat" : ""}${pactsCount ? " alliance-cap=counts-pacts" : ""}\n`,
+    `[balance] map=${map} difficulty=${Difficulty[difficulty]} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}${noUpkeep ? " upkeep=off" : ""}${noMaterials ? " materials=off" : ""}${noBlockades ? " blockades=off" : ""}${noEmbargoPrice ? " embargo-price=off" : ""}${legacyFallout ? " fallout=legacy" : ""}${flatAlliances ? " alliances=flat" : ""}${noCoalition ? " coalition=off" : ""}${noDoctrines ? " doctrines=off" : ""}${noUnrest ? " unrest=off" : ""}${flatUnrest ? " unrest=flat" : ""}${pactsCount ? " alliance-cap=counts-pacts" : ""}${noDoctrinePlay ? " doctrine-play=off" : ""}\n`,
   );
 
   const gameConfig: GameConfig = {
@@ -286,7 +298,9 @@ async function main(): Promise<void> {
                           ? new FlatUnrest(gameConfig, null, false)
                           : pactsCount
                             ? new PactsCount(gameConfig, null, false)
-                            : new Config(gameConfig, null, false);
+                            : noDoctrinePlay
+                              ? new NoDoctrinePlay(gameConfig, null, false)
+                              : new Config(gameConfig, null, false);
   const mapLoader = new NodeGameMapLoader(
     path.join(PROJECT_ROOT, "resources/maps"),
   );

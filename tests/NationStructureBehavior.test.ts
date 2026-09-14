@@ -1,7 +1,12 @@
 import { vi } from "vitest";
 import { ConstructionExecution } from "../src/core/execution/ConstructionExecution";
 import { NationStructureBehavior } from "../src/core/execution/nation/NationStructureBehavior";
-import { Difficulty, PlayerType, UnitType } from "../src/core/game/Game";
+import {
+  Difficulty,
+  Doctrine,
+  PlayerType,
+  UnitType,
+} from "../src/core/game/Game";
 import { Cluster } from "../src/core/game/TrainStation";
 import { PseudoRandom } from "../src/core/PseudoRandom";
 
@@ -339,18 +344,28 @@ describe("NationStructureBehavior.tryBuildDefensePost", () => {
         gameConfig: () => ({ difficulty }),
         isUnitDisabled: () => false,
         nukeMagnitudes: () => ({ outer: 50 }),
+        // A Fortress nation garrisons half again as hard; nobody else more.
+        doctrineNationBuildScale: (doctrine: Doctrine, type: UnitType) =>
+          doctrine === Doctrine.Fortress && type === UnitType.DefensePost
+            ? 1.5
+            : 1,
       }),
       unitInfo: () => ({ cost: () => 0n }),
       euclideanDistSquared: () => Number.MAX_VALUE,
     };
   }
 
-  function makeMinimalPlayer(troops: number, attacks: any[]): any {
+  function makeMinimalPlayer(
+    troops: number,
+    attacks: any[],
+    doctrine: Doctrine = Doctrine.None,
+  ): any {
     return {
       troops: () => troops,
       incomingAttacks: () => attacks,
       gold: () => 1_000_000n,
       units: () => [],
+      doctrine: () => doctrine,
     };
   }
 
@@ -441,6 +456,26 @@ describe("NationStructureBehavior.tryBuildDefensePost", () => {
     vi.spyOn(behavior as any, "getAttackFrontTiles").mockReturnValue([1]);
     vi.spyOn(behavior as any, "countDefensePostsNearFront").mockReturnValue(3);
     expect((behavior as any).tryBuildDefensePost()).toBe(false);
+  });
+
+  // Brief §6.6, session-12 retune: a doctrine changes what a nation decides,
+  // not just what it pays. The same 0.4 ratio that allows a plain nation one
+  // post allows a Fortress nation two.
+  it("Hard: a Fortress nation is allowed half again the posts at the same ratio", () => {
+    const addExecution = vi.fn();
+    const game = { ...makeMinimalGame(Difficulty.Hard), addExecution };
+    const player = {
+      ...makeMinimalPlayer(1000, [makeLandAttack(400)], Doctrine.Fortress),
+      canBuild: vi.fn(() => true),
+    };
+    const behavior = makeBehavior(game, player);
+    (behavior as any).placementsCount = 1;
+    vi.spyOn(behavior as any, "getAttackFrontTiles").mockReturnValue([1]);
+    // One post already at the front: the plain cap (the case below) refuses.
+    vi.spyOn(behavior as any, "countDefensePostsNearFront").mockReturnValue(1);
+    vi.spyOn(behavior as any, "sampleTilesNearFront").mockReturnValue([42]);
+    expect((behavior as any).tryBuildDefensePost()).toBe(true);
+    expect(addExecution).toHaveBeenCalledTimes(1);
   });
 
   it("Hard: returns false once countDefensePostsNearFront exceeds the allowed cap", () => {
@@ -873,6 +908,7 @@ describe("NationStructureBehavior.doHandleStructures — crowded-map exception",
           difficulty: opts.difficulty ?? Difficulty.Medium,
         }),
         startingGold: () => 0n,
+        doctrineNationBuildScale: () => 1,
       }),
       sharedWaterComponents: () => null, // landlocked -> Factory preferred
       nations: () => Array(400).fill({}),
@@ -885,6 +921,7 @@ describe("NationStructureBehavior.doHandleStructures — crowded-map exception",
       unitsOwned: () => 0, // never owns a city
       numTilesOwned: () => 100_000,
       info: () => ({}),
+      doctrine: () => Doctrine.None,
     };
   }
 
@@ -917,6 +954,7 @@ describe("NationStructureBehavior.doHandleStructures — crowded-map exception",
       isUnitDisabled: () => false,
       gameConfig: () => ({ difficulty: Difficulty.Impossible }),
       startingGold: () => 10_000_000n, // above HIGH_STARTING_GOLD_THRESHOLD
+      doctrineNationBuildScale: () => 1,
     });
     const behavior = makeBehavior(game, makeCrowdedPlayer());
     const spy = vi

@@ -52,6 +52,10 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   five minutes; hold enough of one people's land without a defense post over it and their
   partisans rise on your own ground — and you cannot absorb them, only fight them. Their
   people, returning, walk right in.
+- **Retune: nations play their doctrine.** A Mercantile nation now builds more ports, an
+  Industrial one more factories, a Nuclear one more silos, a Fortress one digs in harder
+  when attacked, a Naval one keeps a second warship, and an Expansionist one pushes into
+  empty land with less held back. Before, a nation's doctrine only changed its prices.
 - **Retune: pacts are not alliances.** Hard and Impossible nations refuse a partner who is
   already allied with much of the map. That count no longer includes non-aggression pacts,
   so a peaceable neighbour can still be offered a defensive pact.
