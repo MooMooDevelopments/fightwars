@@ -211,6 +211,13 @@ export function getActiveModifiers(
       formattedValue: `x${modifiers.goldMultiplier}`,
     });
   }
+  if (modifiers.isBlitz) {
+    result.push({
+      labelKey: "public_game_modifier.blitz_label",
+      badgeKey: "public_game_modifier.blitz",
+      formattedValue: "4×",
+    });
+  }
   if (modifiers.isAlliancesDisabled) {
     result.push({
       labelKey: "public_game_modifier.disable_alliances_label",

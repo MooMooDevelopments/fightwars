@@ -72,7 +72,17 @@ type ModifierKey =
   | "isSAMsDisabled"
   | "isPeaceTime"
   | "isWaterNukes"
-  | "isDoomsdayClock";
+  | "isDoomsdayClock"
+  | "isBlitz";
+
+/**
+ * Blitz (brief §6.7): a compact map at 4x speed for five minutes of wall
+ * clock. The timer is in game minutes, and at 4x five wall minutes are
+ * twenty of them. The mode that gets shared, so it rolls often.
+ */
+const BLITZ_SPEED = 4;
+const BLITZ_WALL_MINUTES = 5;
+const BLITZ_TIMER_GAME_MINUTES = BLITZ_WALL_MINUTES * BLITZ_SPEED;
 
 // Each entry represents one "ticket" in the pool. More tickets = higher chance of selection.
 // Weights are roughly informed by the community "favorite modifier" poll.
@@ -91,6 +101,7 @@ const SPECIAL_MODIFIER_POOL: ModifierKey[] = [
   ...Array<ModifierKey>(1).fill("isPeaceTime"),
   ...Array<ModifierKey>(4).fill("isWaterNukes"),
   ...Array<ModifierKey>(4).fill("isDoomsdayClock"),
+  ...Array<ModifierKey>(4).fill("isBlitz"),
 ];
 
 // Speeds the Doomsday Clock can roll at when it lands in the rotation. Picked
@@ -111,6 +122,9 @@ const MUTUALLY_EXCLUSIVE_MODIFIERS: [ModifierKey, ModifierKey][] = [
   ["isHardNations", "startingGold25M"],
   ["isNukesDisabled", "isSAMsDisabled"],
   ["isNukesDisabled", "isWaterNukes"],
+  // Five minutes leaves no room for a four-minute peace or an anti-stall clock.
+  ["isBlitz", "isPeaceTime"],
+  ["isBlitz", "isDoomsdayClock"],
 ];
 
 // Special games roll ffa/team per-game (see getSpecialConfig), so their
@@ -307,6 +321,7 @@ export class MapPlaylist {
       isPeaceTime,
       isWaterNukes,
       isDoomsdayClock,
+      isBlitz,
     } = poolResult;
 
     // Apply per-map forced modifiers (already rolled and respecting excludedModifiers).
@@ -324,6 +339,10 @@ export class MapPlaylist {
     if (appliedForced.has("isPeaceTime")) isPeaceTime = true;
     if (appliedForced.has("isWaterNukes")) isWaterNukes = true;
     if (appliedForced.has("isDoomsdayClock")) isDoomsdayClock = true;
+    if (appliedForced.has("isBlitz")) isBlitz = true;
+    // Blitz is always compact: five minutes on a full-size map is a spawn
+    // phase and a scramble.
+    if (isBlitz) isCompact = true;
 
     // Crowded modifier: if the map's biggest player count (first number of calculateMapPlayerCounts) is 60 or lower (small maps),
     // set player count to MAX_PLAYER_COUNT (or 60 if compact map is also enabled)
@@ -345,7 +364,8 @@ export class MapPlaylist {
           !isSAMsDisabled &&
           !isPeaceTime &&
           !isWaterNukes &&
-          !isDoomsdayClock
+          !isDoomsdayClock &&
+          !isBlitz
         ) {
           excludedModifiers.push("isCrowded");
           const fallback = this.getRandomSpecialGameModifiers(
@@ -363,6 +383,7 @@ export class MapPlaylist {
             isPeaceTime,
             isWaterNukes,
             isDoomsdayClock,
+            isBlitz,
           } = fallback);
           ({ isHardNations } = fallback);
         }
@@ -425,7 +446,9 @@ export class MapPlaylist {
         isPeaceTime,
         isWaterNukes,
         isDoomsdayClock,
+        isBlitz,
       },
+      gameSpeed: isBlitz ? BLITZ_SPEED : undefined,
       // Rolled into the rotation: enable the anti-stall clock at a speed picked
       // per game so the pacing varies across the presets.
       doomsdayClock: isDoomsdayClock
@@ -446,7 +469,7 @@ export class MapPlaylist {
           : Difficulty.Medium,
       infiniteGold: false,
       infiniteTroops: false,
-      maxTimerValue: undefined,
+      maxTimerValue: isBlitz ? BLITZ_TIMER_GAME_MINUTES : undefined,
       instantBuild: false,
       randomSpawn: isRandomSpawn ? true : false,
       nations,
@@ -718,6 +741,7 @@ export class MapPlaylist {
       isPeaceTime: selected.has("isPeaceTime") || undefined,
       isWaterNukes: selected.has("isWaterNukes") || undefined,
       isDoomsdayClock: selected.has("isDoomsdayClock") || undefined,
+      isBlitz: selected.has("isBlitz") || undefined,
     };
   }
 

@@ -514,6 +514,8 @@ export const GameConfigSchema = z.object({
       isPeaceTime: z.boolean().optional(),
       isWaterNukes: z.boolean().optional(),
       isDoomsdayClock: z.boolean().optional(),
+      // Brief §6.7 Blitz: a compact map at 4x for five minutes of wall clock.
+      isBlitz: z.boolean().optional(),
     })
     .optional(),
   nations: zb.union(

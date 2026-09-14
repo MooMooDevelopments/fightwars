@@ -1796,6 +1796,8 @@
     "version_mismatch": "This game was created with a different version. Cannot join."
   },
   "public_game_modifier": {
+    "blitz": "Blitz: 4× speed, 5 minutes",
+    "blitz_label": "Blitz",
     "compact_map": "Compact Map",
     "crowded": "Crowded",
     "disable_alliances": "Alliances Disabled",

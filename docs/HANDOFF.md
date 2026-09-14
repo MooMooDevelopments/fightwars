@@ -610,9 +610,12 @@ Remaining, roughly in the order the brief implies:
   scenarios (map manifests with fixed spawns and doctrines), Draft (lobby-phase picks are
   server state, not sim state), **Blitz** — the engine is in (session 13: `gameSpeed` in
   the wire config, 1× / 2× / 4× in the host and single-player lobbies, the server and the
-  local server pacing by it, the HUD clock in wall time); what is left of Blitz is the
-  preset itself — a small map, 4×, a five-minute timer (`maxTimerValue` 20 at 4×) — as a
-  lobby button and a public-playlist entry.
+  local server pacing by it, the HUD clock in wall time) and the preset is in the public
+  rotation (`isBlitz` in `MapPlaylist`: compact map, 4×, `maxTimerValue` 20 = five wall
+  minutes, four tickets in the special pool, never beside a peace time or a doomsday
+  clock; a "Blitz" badge on the lobby card). A host can build the same by hand (compact
+  - 4× + five minutes); a one-click preset in the host and single-player modals is the
+    small remainder.
 - **Spectator/caster mode** with economy graphs and a win projection (`spectator` join
   exists; graphs are `dataviz` work), **replay viewer** with timeline scrubbing and
   jump-to-event (the client already replays records; scrubbing needs snapshotting or

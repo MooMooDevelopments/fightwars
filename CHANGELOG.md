@@ -74,6 +74,8 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   nearest Missile Silo within 120 tiles straight to the tile you click and land as an attack
   from there — over water, mountains, anyone's land. Nothing shoots them down. Hotkey I.
   Nations drop rather than sail when a silo reaches a target they cannot walk to.
+- **Blitz.** A five-minute game at 4× on a compact map, now in the public rotation with
+  its own badge on the lobby card.
 - **Game speed.** A host can run a lobby at 2× or 4× (and a solo game too): the whole
   game moves that much faster, and the clock still shows real minutes.
 - **The server now runs its own copy of every game.** A hacked client that asks to move

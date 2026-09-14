@@ -79,6 +79,19 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — Blitz in the public rotation
+
+- **What shipped.** `isBlitz` as a public-game modifier: a compact map (forced), 4× speed,
+  `maxTimerValue` 20 game minutes — five wall minutes at 4× — with four tickets in the
+  special pool (it is the mode that gets shared), mutually exclusive with a peace time and a
+  doomsday clock (five minutes has room for neither), and a "Blitz" badge on the lobby card
+  in the modifier-badge grammar. Appended to the modifiers schema so the binary wire keeps
+  its field order.
+- **Guards broken and watched fail:** Blitz at normal speed, Blitz on a full-size map,
+  Blitz beside a peace time.
+- **Not done:** a one-click Blitz preset in the host and single-player modals (a host can
+  set compact + 4× + five minutes by hand today).
+
 ### Session 13 — Phase 6 opens: game speed, the engine under Blitz
 
 - **What shipped.** `GameConfig.gameSpeed` (1–4, absent = 1): turns per 100 ms of wall

@@ -1442,3 +1442,19 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
   second at each speed, the sim's config untouched by it.
 - `tests/client/GameSpeedSettings.test.ts` — three cards with the chosen one pressed, the
   event, the section absent when not offered, the host pushing the pick.
+
+### Blitz in the public rotation (Phase 6, session 13)
+
+#### Shared upstream files edited
+
+- `src/core/Schemas.ts`, `src/core/game/Game.ts` — `publicGameModifiers.isBlitz`.
+- `src/server/MapPlaylist.ts` — the modifier: compact forced, `gameSpeed` 4,
+  `maxTimerValue` 20, four tickets, exclusive with peace time and the doomsday clock.
+- `src/client/Utils.ts` — the "Blitz" badge.
+- `resources/lang/en.json` — `public_game_modifier.blitz`, `blitz_label`.
+
+#### FightWars-only files added
+
+- `tests/server/MapPlaylistBlitz.test.ts` — 4× on a compact map with a five-minute clock; a
+  special game without it untouched; in the pool and never beside a peace time or a clock.
+- `tests/client/BlitzModifierBadge.test.ts` — the badge, present and absent.
