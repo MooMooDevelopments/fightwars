@@ -9,11 +9,31 @@ import { translateText } from "../Utils";
 import { BaseModal } from "./BaseModal";
 import { modalHeader } from "./ui/ModalHeader";
 
+/**
+ * Placements (brief §6.7): while a ladder's first games are being played
+ * the card says how many are done instead of a number that means little.
+ * Null once placed (or with no games at all), so the rating line shows.
+ */
+export function rankedStanding(
+  entry:
+    | { elo?: number; placement?: { played: number; of: number } }
+    | undefined,
+): string | null {
+  const p = entry?.placement;
+  if (p === undefined) return null;
+  return translateText("matchmaking_modal.placement", {
+    played: p.played,
+    of: p.of,
+  });
+}
+
 @customElement("ranked-modal")
 export class RankedModal extends BaseModal {
   protected routerName = "ranked";
 
   @state() private elo: number | string = "...";
+  @state() private standing1v1: string | null = null;
+  @state() private standing2v2: string | null = null;
   @state() private elo2v2: number | string = "...";
   @state() private userMeResponse: UserMeResponse | false = false;
   @state() private errorMessage: string | null = null;
@@ -71,6 +91,8 @@ export class RankedModal extends BaseModal {
       const noElo = translateText("matchmaking_modal.no_elo");
       this.elo = leaderboard?.oneVone?.elo ?? noElo;
       this.elo2v2 = leaderboard?.twoVtwo?.elo ?? noElo;
+      this.standing1v1 = rankedStanding(leaderboard?.oneVone);
+      this.standing2v2 = rankedStanding(leaderboard?.twoVtwo);
     }
   }
 
@@ -116,7 +138,8 @@ export class RankedModal extends BaseModal {
             translateText("mode_selector.ranked_1v1_title"),
             this.errorMessage ??
               (this.isRankedEligible()
-                ? translateText("matchmaking_modal.elo", { elo: this.elo })
+                ? (this.standing1v1 ??
+                  translateText("matchmaking_modal.elo", { elo: this.elo }))
                 : translateText("mode_selector.ranked_title")),
             () => this.handleRanked("1v1"),
           )}
@@ -124,7 +147,8 @@ export class RankedModal extends BaseModal {
             translateText("mode_selector.ranked_2v2_title"),
             this.errorMessage ??
               (this.isRankedEligible()
-                ? translateText("matchmaking_modal.elo", { elo: this.elo2v2 })
+                ? (this.standing2v2 ??
+                  translateText("matchmaking_modal.elo", { elo: this.elo2v2 }))
                 : translateText("mode_selector.ranked_title")),
             () => this.handleRanked("2v2"),
           )}

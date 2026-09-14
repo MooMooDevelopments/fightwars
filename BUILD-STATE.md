@@ -79,6 +79,19 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — placements
+
+- **What shipped.** Ten provisional games per ladder. The rating moves from the first game
+  as it always did — the deviation already says how little it means — but until ten games
+  a player is off the ranked ladder, their profile and `/users/@me` carry
+  `placement: {played, of}`, and the ranked modal's card reads "Placement: n of 10 games"
+  instead of a number. The raw `/public/leaderboard/:ladder` endpoint is untouched: it is
+  data, with `games` on every row.
+- **Guards broken and watched fail:** the ladder listing the unplaced, everyone counted as
+  placed.
+- **Not done:** a placement badge on the profile page and in the leaderboard modal's own
+  row for the viewer (the ranked card is the one place the number is shown today).
+
 ### Session 13 — Blitz in one click
 
 - **What shipped.** A fourth card in the speed section of the host and solo modals:

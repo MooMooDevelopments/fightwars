@@ -149,6 +149,13 @@ export function isVerifiedUsername(
   );
 }
 
+/** Placements (brief §6.7): ranked games played toward the first rating. */
+export const PlacementSchema = z.object({
+  played: z.number(),
+  of: z.number(),
+});
+export type Placement = z.infer<typeof PlacementSchema>;
+
 export const UserMeResponseSchema = z.object({
   user: z.object({
     discord: DiscordUserSchema.optional(),
@@ -207,11 +214,14 @@ export const UserMeResponseSchema = z.object({
         oneVone: z
           .object({
             elo: z.number().optional(),
+            // FightWars: placement in progress (absent once placed).
+            placement: PlacementSchema.optional(),
           })
           .optional(),
         twoVtwo: z
           .object({
             elo: z.number().optional(),
+            placement: PlacementSchema.optional(),
           })
           .optional(),
       })

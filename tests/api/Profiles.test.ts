@@ -7,6 +7,7 @@ import {
   PlayerProfileSchema,
   PublicPlayerGamesResponseSchema,
   RankedLeaderboardResponseSchema,
+  UserMeResponseSchema,
 } from "../../src/core/ApiSchemas";
 import { GameRecordSchema } from "../../src/core/Schemas";
 import { apiTestEnv } from "./fixtures";
@@ -162,6 +163,57 @@ describe("profile routes", () => {
       (await fetch(`${base}/public/player/${alicePublic}/games?cursor=garbage`))
         .status,
     ).toBe(400);
+  });
+
+  it("keeps a player in placement off the ladder and says how far along they are", async () => {
+    const carol = randomUUID();
+    const login = (await (
+      await fetch(`${base}/auth/guest`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ persistentId: carol }),
+      })
+    ).json()) as { publicId: string };
+    for (let i = 0; i < 3; i++) {
+      await ingest(
+        record(
+          `pLac${String(i).padStart(4, "0")}`,
+          [
+            { clientID: "c1000000", persistentID: alice },
+            { clientID: "c3000000", persistentID: carol },
+          ],
+          "c3000000",
+          1_800_000_000_000 + i * 600_000,
+        ),
+      );
+    }
+    const profile = (await (
+      await fetch(`${base}/public/player/${login.publicId}`)
+    ).json()) as {
+      ratings: { ffa: { games: number; placement: unknown } | null };
+    };
+    expect(profile.ratings.ffa).toMatchObject({
+      games: 3,
+      placement: { played: 3, of: 10 },
+    });
+    const aliceProfile = (await (
+      await fetch(`${base}/public/player/${alicePublic}`)
+    ).json()) as { ratings: { ffa: { placement: unknown } | null } };
+    expect(aliceProfile.ratings.ffa?.placement).toBeNull();
+    const me = await fetch(`${base}/users/@me`, {
+      headers: { Authorization: `Bearer ${carol}` },
+    });
+    const parsedMe = UserMeResponseSchema.parse(await me.json());
+    expect(parsedMe.player.leaderboard?.oneVone?.placement).toEqual({
+      played: 3,
+      of: 10,
+    });
+    expect(parsedMe.player.leaderboard?.oneVone?.elo).toBeGreaterThan(1500);
+    const ladder = RankedLeaderboardResponseSchema.parse(
+      await (await fetch(`${base}/leaderboard/ranked?page=1`)).json(),
+    );
+    expect(ladder["1v1"].map((e) => e.public_id)).not.toContain(login.publicId);
+    expect(ladder["1v1"]).toHaveLength(2);
   });
 
   it("serves the ranked leaderboard the client parses, ranked and paged", async () => {

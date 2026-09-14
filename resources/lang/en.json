@@ -1566,6 +1566,7 @@
     "limit_upsell": "Get unlimited ranked",
     "must_login": "You must be logged in to play ranked matchmaking.",
     "no_elo": "No ELO yet",
+    "placement": "Placement: {played} of {of} games",
     "queue_size": "Players in queue: {count}",
     "rejected": "Matchmaking is unavailable right now. Please try again later.",
     "replaced": "You joined matchmaking from another tab or window.",

@@ -1571,3 +1571,22 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
 
 - `tests/client/GameSpeedSettings.test.ts` — the card, the event, both modals building
   the same Blitz, the press released when any of the three moves.
+
+### Placements (Phase 6, session 13)
+
+#### Shared upstream files edited
+
+- `src/core/ApiSchemas.ts` — `PlacementSchema`, `placement` on the user-me leaderboard entries.
+- `src/client/components/RankedModal.ts` — `rankedStanding`, the placement line on the card.
+- `resources/lang/en.json` — `matchmaking_modal.placement`.
+
+#### FightWars-only files edited
+
+- `src/api/Matches.ts` — `PLACEMENT_GAMES`, `placementOf`.
+- `src/api/ProfileRoutes.ts` — the profile's `placement`, the ladder filter.
+- `src/api/App.ts` — `placement` on `/users/@me`.
+- `tests/api/Profiles.test.ts` — the placement case.
+
+#### FightWars-only files added
+
+- `tests/client/RankedStanding.test.ts` — the card's line.

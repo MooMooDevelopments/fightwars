@@ -99,8 +99,8 @@ licenses:check`, `npm run perf:gate` on an idle box; per sim change an 8000-tick
    is the capital; taken, the nation collapses into rebels) and King of the Hill (hold
    the centre five minutes, cumulative), Survival (co-op on Humans vs Nations, waves
    every two minutes, twenty minutes to hold out) and the zone layer (`ZonePass`: the
-   ring and the hill on the map), and the Blitz one-click preset. Next in §5: scenarios,
-   Draft, placements; a capital marker for Capital Strike is the small remainder.
+   ring and the hill on the map), the Blitz one-click preset, and placements. Next in
+   §5: scenarios, Draft; a capital marker for Capital Strike is the small remainder.
 
 ### Things that bit us in session 13 (do not relearn)
 
@@ -617,7 +617,9 @@ stats.
 
 Remaining, roughly in the order the brief implies:
 
-- **Placements** for ranked (N provisional games; `ratings.rd` already expresses uncertainty).
+- **Placements are in** (session 13: ten provisional games per ladder — off the ranked
+  ladder and a "Placement: n of 10" line on the ranked card until then; the rating itself
+  moves from game one, `rd` carries the uncertainty).
 - **Modes**: **Battle Royale is in** (session 13: `BattleRoyaleExecution`, a circle on the
   centre shrinking in twelve steps to a tenth of its radius after a three-minute grace,
   land outside irradiated and relinquished, units outside destroyed; `battleRoyale` in the

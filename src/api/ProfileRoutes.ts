@@ -15,7 +15,12 @@ import { clansFor } from "./ClanRoutes";
 import { decodeCursor, durationSeconds, encodeCursor } from "./Cursor";
 import { Db } from "./Db";
 import { filterSql } from "./GameBuckets";
-import { getRating, seasonParam } from "./Matches";
+import {
+  getRating,
+  PLACEMENT_GAMES,
+  placementOf,
+  seasonParam,
+} from "./Matches";
 import { buildStatsTree, type StatRow } from "./StatsTree";
 
 const HISTORY_PAGE = 20;
@@ -64,7 +69,13 @@ export function registerProfileRoutes(
     const shape = (r: typeof ffa) =>
       r === null
         ? null
-        : { rating: r.rating, rd: r.rd, games: r.games, wins: r.wins };
+        : {
+            rating: r.rating,
+            rd: r.rd,
+            games: r.games,
+            wins: r.wins,
+            placement: placementOf(r.games),
+          };
     res.setHeader("Cache-Control", "no-store");
     res.json({
       createdAt: new Date(account.created_at).toISOString(),
@@ -163,10 +174,10 @@ export function registerProfileRoutes(
         }>(
           `SELECT a.public_id, a.username, r.rating, r.games, r.wins
            FROM ratings r JOIN accounts a ON a.persistent_id = r.persistent_id
-           WHERE r.ladder = $1 AND r.season = $2
+           WHERE r.ladder = $1 AND r.season = $2 AND r.games >= $5
            ORDER BY r.rating DESC, r.games DESC, a.public_id
            LIMIT $3 OFFSET $4`,
-          [ladder, which, LEADERBOARD_PAGE, offset],
+          [ladder, which, LEADERBOARD_PAGE, offset, PLACEMENT_GAMES],
         )
       ).rows.map((r, i) => ({
         rank: offset + i + 1,

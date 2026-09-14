@@ -54,6 +54,7 @@ import {
   getRating,
   ingestMatch,
   leaderboard,
+  placementOf,
   scrubRecord,
   seasonFrom,
   seasonParam,
@@ -342,8 +343,18 @@ export async function createApiApp(
         flares: [],
         achievements: { singleplayerMap: [] },
         leaderboard: {
-          oneVone: ffa ? { elo: Math.round(ffa.rating) } : {},
-          twoVtwo: team ? { elo: Math.round(team.rating) } : {},
+          oneVone: ffa
+            ? {
+                elo: Math.round(ffa.rating),
+                placement: placementOf(ffa.games) ?? undefined,
+              }
+            : {},
+          twoVtwo: team
+            ? {
+                elo: Math.round(team.rating),
+                placement: placementOf(team.games) ?? undefined,
+              }
+            : {},
         },
         clans,
         clanRequests,

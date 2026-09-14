@@ -220,6 +220,23 @@ export async function ingestMatch(
   return { stored: true, ladder, rated: rated.length };
 }
 
+/**
+ * Placements (brief §6.7): a player's first ranked games on a ladder are
+ * provisional. The rating moves as it always did — Glicko-2's deviation
+ * already says how little it means — but the player is not on the ladder
+ * and sees a placement count instead of a number until this many games.
+ */
+export const PLACEMENT_GAMES = 10;
+
+/** The placement still in progress after `games` on a ladder, or null once placed. */
+export function placementOf(
+  games: number,
+): { played: number; of: number } | null {
+  return games >= PLACEMENT_GAMES
+    ? null
+    : { played: games, of: PLACEMENT_GAMES };
+}
+
 export interface LeaderboardEntry {
   publicId: string;
   username: string | null;
