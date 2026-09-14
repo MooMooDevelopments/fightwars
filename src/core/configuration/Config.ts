@@ -1518,6 +1518,34 @@ export class Config {
     return 5 * 60;
   }
 
+  /**
+   * Survival (brief §6.7). Co-op: every human on one side, every nation on
+   * the other (the lobby sets Humans vs Nations), and the nations reinforce
+   * in waves — each wave every living nation is handed a share of its own
+   * troop ceiling, growing with the wave number, and a purse. The humans
+   * win by being alive when the clock runs out; the nations win when the
+   * last human falls.
+   */
+  survival(): boolean {
+    return this._gameConfig.survival ?? false;
+  }
+  /** Ticks between waves. */
+  survivalWaveTicks(): Tick {
+    return 2 * 60 * 10;
+  }
+  /** Troops handed to a nation on wave n: this share of its ceiling, times n. */
+  survivalWaveTroopShare(): number {
+    return 0.15;
+  }
+  /** Gold handed to a nation on wave n, times n. */
+  survivalWaveGold(): Gold {
+    return 200_000n;
+  }
+  /** Seconds the humans have to hold out. */
+  survivalSeconds(): number {
+    return 20 * 60;
+  }
+
   numSpawnPhaseTurns(): number {
     if (this._gameConfig.gameType === GameType.Singleplayer) {
       return 100;

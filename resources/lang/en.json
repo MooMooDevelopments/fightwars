@@ -861,6 +861,9 @@
     "sent_emoji": "Sent {name}: {emoji}",
     "sent_gold_to_player": "Sent {gold} gold to {name}",
     "sent_troops_to_player": "Sent {troops} troops to {name}",
+    "survival_lost": "The last human has fallen after {waves} waves",
+    "survival_wave": "Wave {wave}: the nations reinforce",
+    "survival_won": "The clock has run out: the humans survived {waves} waves",
     "trade_ship_captured": "Your trade ship was captured by {name}",
     "unit_destroyed": "Your {unit} was destroyed",
     "unit_voluntarily_deleted": "Unit voluntarily deleted",
@@ -964,6 +967,7 @@
     "start": "Start Game",
     "starting": "Starting…",
     "starting_gold": "Starting Gold (Millions)",
+    "survival": "Survival (co-op: outlast the nations)",
     "water_nukes": "Water nukes"
   },
   "game_speed": {
@@ -1828,6 +1832,7 @@
     "sams_disabled_label": "SAMs",
     "starting_gold": "{amount}M Starting Gold",
     "starting_gold_label": "Starting Gold",
+    "survival": "Survival",
     "water_nukes": "Water Nukes"
   },
   "public_lobby": {

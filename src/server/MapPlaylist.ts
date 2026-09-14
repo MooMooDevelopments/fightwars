@@ -76,7 +76,8 @@ type ModifierKey =
   | "isBlitz"
   | "isBattleRoyale"
   | "isCapitalStrike"
-  | "isKingOfTheHill";
+  | "isKingOfTheHill"
+  | "isSurvival";
 
 /**
  * Blitz (brief §6.7): a compact map at 4x speed for five minutes of wall
@@ -108,6 +109,7 @@ const SPECIAL_MODIFIER_POOL: ModifierKey[] = [
   ...Array<ModifierKey>(3).fill("isBattleRoyale"),
   ...Array<ModifierKey>(3).fill("isCapitalStrike"),
   ...Array<ModifierKey>(3).fill("isKingOfTheHill"),
+  ...Array<ModifierKey>(3).fill("isSurvival"),
 ];
 
 // Speeds the Doomsday Clock can roll at when it lands in the rotation. Picked
@@ -137,6 +139,11 @@ const MUTUALLY_EXCLUSIVE_MODIFIERS: [ModifierKey, ModifierKey][] = [
   // The hill is the clock; and a shrinking zone already says where to fight.
   ["isKingOfTheHill", "isDoomsdayClock"],
   ["isKingOfTheHill", "isBattleRoyale"],
+  // Survival is Humans vs Nations: nations have no peace-time immunity, and
+  // the 25M purse switches them off.
+  ["isSurvival", "isPeaceTime"],
+  ["isSurvival", "startingGold25M"],
+  ["isSurvival", "isHardNations"],
 ];
 
 // Special games roll ffa/team per-game (see getSpecialConfig), so their
@@ -229,7 +236,7 @@ export class MapPlaylist {
   }
 
   private async getSpecialConfig(): Promise<GameConfig> {
-    const mode = Math.random() < 0.5 ? GameMode.FFA : GameMode.Team;
+    let mode = Math.random() < 0.5 ? GameMode.FFA : GameMode.Team;
     const map = this.getNextMap("special", mode);
     let playerTeams =
       mode === GameMode.Team ? this.getTeamCount(map) : undefined;
@@ -337,6 +344,7 @@ export class MapPlaylist {
       isBattleRoyale,
       isCapitalStrike,
       isKingOfTheHill,
+      isSurvival,
     } = poolResult;
 
     // Apply per-map forced modifiers (already rolled and respecting excludedModifiers).
@@ -358,6 +366,7 @@ export class MapPlaylist {
     if (appliedForced.has("isBattleRoyale")) isBattleRoyale = true;
     if (appliedForced.has("isCapitalStrike")) isCapitalStrike = true;
     if (appliedForced.has("isKingOfTheHill")) isKingOfTheHill = true;
+    if (appliedForced.has("isSurvival")) isSurvival = true;
     // Blitz is always compact: five minutes on a full-size map is a spawn
     // phase and a scramble.
     if (isBlitz) isCompact = true;
@@ -386,7 +395,8 @@ export class MapPlaylist {
           !isBlitz &&
           !isBattleRoyale &&
           !isCapitalStrike &&
-          !isKingOfTheHill
+          !isKingOfTheHill &&
+          !isSurvival
         ) {
           excludedModifiers.push("isCrowded");
           const fallback = this.getRandomSpecialGameModifiers(
@@ -408,6 +418,7 @@ export class MapPlaylist {
             isBattleRoyale,
             isCapitalStrike,
             isKingOfTheHill,
+            isSurvival,
           } = fallback);
           ({ isHardNations } = fallback);
         }
@@ -425,12 +436,19 @@ export class MapPlaylist {
       this.adjustForTeams(unadjustedMaxPlayers, playerTeams),
     );
 
-    const nations: GameConfig["nations"] =
+    let nations: GameConfig["nations"] =
       (mode === GameMode.Team && playerTeams !== HumansVsNations) ||
       // Nations don't have PVP immunity, so 25M starting gold wouldn't work well with them
       (startingGold !== undefined && startingGold >= 25_000_000)
         ? "disabled"
         : "default";
+    // Survival (brief §6.7) is co-op: every human on one side, every nation
+    // on the other, and the nations are the point.
+    if (isSurvival) {
+      mode = GameMode.Team;
+      playerTeams = HumansVsNations;
+      nations = "default";
+    }
 
     // Build disabledUnits from modifiers
     const disabledUnits: UnitType[] = [];
@@ -474,11 +492,13 @@ export class MapPlaylist {
         isBattleRoyale,
         isCapitalStrike,
         isKingOfTheHill,
+        isSurvival,
       },
       gameSpeed: isBlitz ? BLITZ_SPEED : undefined,
       battleRoyale: isBattleRoyale ? true : undefined,
       capitalStrike: isCapitalStrike ? true : undefined,
       kingOfTheHill: isKingOfTheHill ? true : undefined,
+      survival: isSurvival ? true : undefined,
       // Rolled into the rotation: enable the anti-stall clock at a speed picked
       // per game so the pacing varies across the presets.
       doomsdayClock: isDoomsdayClock
@@ -775,6 +795,7 @@ export class MapPlaylist {
       isBattleRoyale: selected.has("isBattleRoyale") || undefined,
       isCapitalStrike: selected.has("isCapitalStrike") || undefined,
       isKingOfTheHill: selected.has("isKingOfTheHill") || undefined,
+      isSurvival: selected.has("isSurvival") || undefined,
     };
   }
 

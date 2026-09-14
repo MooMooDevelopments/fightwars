@@ -10,6 +10,7 @@ import {
   GameMapType,
   GameMode,
   GameType,
+  HumansVsNations,
   maps,
   UnitType,
 } from "../core/game/Game";
@@ -110,6 +111,7 @@ const DEFAULT_OPTIONS = {
   battleRoyale: false,
   capitalStrike: false,
   kingOfTheHill: false,
+  survival: false,
   teamCount: 2 as TeamCountConfig,
   goldMultiplier: false,
   goldMultiplierValue: undefined as number | undefined,
@@ -191,6 +193,7 @@ export class SinglePlayerModal extends BaseModal {
   @state() private battleRoyale: boolean = DEFAULT_OPTIONS.battleRoyale;
   @state() private capitalStrike: boolean = DEFAULT_OPTIONS.capitalStrike;
   @state() private kingOfTheHill: boolean = DEFAULT_OPTIONS.kingOfTheHill;
+  @state() private survival: boolean = DEFAULT_OPTIONS.survival;
   @state() private teamCount: TeamCountConfig = DEFAULT_OPTIONS.teamCount;
   @state() private showAchievements: boolean = false;
   @state() private mapWins: Map<GameMapType, Set<Difficulty>> = new Map();
@@ -549,6 +552,10 @@ export class SinglePlayerModal extends BaseModal {
                     checked: this.kingOfTheHill,
                   },
                   {
+                    labelKey: "game_settings.survival",
+                    checked: this.survival,
+                  },
+                  {
                     labelKey: "game_settings.infinite_gold",
                     checked: this.infiniteGold,
                   },
@@ -694,6 +701,7 @@ export class SinglePlayerModal extends BaseModal {
     this.battleRoyale = DEFAULT_OPTIONS.battleRoyale;
     this.capitalStrike = DEFAULT_OPTIONS.capitalStrike;
     this.kingOfTheHill = DEFAULT_OPTIONS.kingOfTheHill;
+    this.survival = DEFAULT_OPTIONS.survival;
     this.useRandomMap = DEFAULT_OPTIONS.useRandomMap;
     this.bots = DEFAULT_OPTIONS.bots;
     this.nations = 0;
@@ -808,6 +816,9 @@ export class SinglePlayerModal extends BaseModal {
         break;
       case "game_settings.king_of_the_hill":
         this.kingOfTheHill = checked;
+        break;
+      case "game_settings.survival":
+        this.survival = checked;
         break;
       case "game_settings.infinite_gold":
         this.infiniteGold = checked;
@@ -1178,12 +1189,14 @@ export class SinglePlayerModal extends BaseModal {
                   ? GameMapSize.Compact
                   : GameMapSize.Normal,
                 gameType: GameType.Singleplayer,
-                gameMode: this.gameMode,
+                // Survival is co-op by definition: every human on one side.
+                gameMode: this.survival ? GameMode.Team : this.gameMode,
                 gameSpeed: this.gameSpeed,
                 battleRoyale: this.battleRoyale,
                 capitalStrike: this.capitalStrike,
                 kingOfTheHill: this.kingOfTheHill,
-                playerTeams: this.teamCount,
+                survival: this.survival,
+                playerTeams: this.survival ? HumansVsNations : this.teamCount,
                 difficulty: this.selectedDifficulty,
                 maxTimerValue: finalMaxTimerValue,
                 bots: this.bots,

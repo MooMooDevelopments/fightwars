@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { getActiveModifiers } from "../../src/client/Utils";
+import {
+  Difficulty,
+  GameMode,
+  HumansVsNations,
+} from "../../src/core/game/Game";
 import { GameConfigSchema } from "../../src/core/Schemas";
 import { MapPlaylist } from "../../src/server/MapPlaylist";
 
@@ -52,6 +57,21 @@ describe("MapPlaylist modes", () => {
     );
   });
 
+  it("Survival forces Humans vs Nations with the nations on", async () => {
+    const config = await specialWith({ isSurvival: true });
+    expect(config.survival).toBe(true);
+    expect(config.gameMode).toBe(GameMode.Team);
+    expect(config.playerTeams).toBe(HumansVsNations);
+    expect(config.nations).toBe("default");
+    expect(config.difficulty).toBe(Difficulty.Hard);
+    expect(config.publicGameModifiers?.isSurvival).toBe(true);
+    expect(GameConfigSchema.safeParse(config).success).toBe(true);
+    const badges = getActiveModifiers(config.publicGameModifiers ?? {});
+    expect(badges.map((b) => b.badgeKey)).toContain(
+      "public_game_modifier.survival",
+    );
+  });
+
   it("a special game without either carries neither", async () => {
     const config = await specialWith({ isRandomSpawn: true });
     expect(config.battleRoyale).toBeUndefined();
@@ -79,6 +99,10 @@ describe("MapPlaylist modes", () => {
         expect(mods.isBlitz).toBeUndefined();
       }
       if (mods.isCapitalStrike) strike++;
+      if (mods.isSurvival) {
+        expect(mods.isPeaceTime).toBeUndefined();
+        expect(mods.isHardNations).toBeUndefined();
+      }
       if (mods.isKingOfTheHill) {
         hill++;
         expect(mods.isDoomsdayClock).toBeUndefined();

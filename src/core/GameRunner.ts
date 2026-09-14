@@ -7,6 +7,7 @@ import { Executor } from "./execution/ExecutionManager";
 import { KingOfTheHillExecution } from "./execution/KingOfTheHillExecution";
 import { RecomputeRailClusterExecution } from "./execution/RecomputeRailClusterExecution";
 import { SpawnTimerExecution } from "./execution/SpawnTimerExecution";
+import { SurvivalExecution } from "./execution/SurvivalExecution";
 import { UnrestExecution } from "./execution/UnrestExecution";
 import { WinCheckExecution } from "./execution/WinCheckExecution";
 import {
@@ -144,6 +145,9 @@ export class GameRunner {
     }
     if (this.game.config().kingOfTheHill()) {
       this.game.addExecution(new KingOfTheHillExecution());
+    }
+    if (this.game.config().survival()) {
+      this.game.addExecution(new SurvivalExecution());
     }
     if (this.game.config().doomsdayClockConfig().enabled) {
       this.game.addExecution(new DoomsdayClockExecution());

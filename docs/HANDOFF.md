@@ -97,9 +97,10 @@ licenses:check`, `npm run perf:gate` on an idle box; per sim change an 8000-tick
    caps and automation flags; Phase 6's game speed, Blitz in the rotation, and Battle
    Royale (a standing zone, `BattleRoyaleExecution`) and Capital Strike (the spawn tile
    is the capital; taken, the nation collapses into rebels) and King of the Hill (hold
-   the centre five minutes, cumulative). Next in §5: Survival, scenarios, Draft, the
-   Blitz one-click preset, placements. The zone layer is in (`ZonePass`: Battle Royale's
-   ring and the hill on the map); a capital marker for Capital Strike is the remainder.
+   the centre five minutes, cumulative), Survival (co-op on Humans vs Nations, waves
+   every two minutes, twenty minutes to hold out) and the zone layer (`ZonePass`: the
+   ring and the hill on the map). Next in §5: scenarios, Draft, the Blitz one-click
+   preset, placements; a capital marker for Capital Strike is the small remainder.
 
 ### Things that bit us in session 13 (do not relearn)
 
@@ -630,9 +631,11 @@ Remaining, roughly in the order the brief implies:
   the centre, the plurality holder scores a second a second, first to five minutes wins
   through `setWinner`; flag, toggle, rotation, badge, the standing in the feed; no HUD
   score yet). **Both zones are drawn** (session 13: `ZonePass`, fed by a `Zone` game
-  update — Battle Royale's ring and the hill; a capital marker is still missing). Still
-  to do: Survival (co-op vs
-  escalating nations — the difficulty enum plus `NationExecution` cadence), Historical
+  update — Battle Royale's ring and the hill; a capital marker is still missing).
+  **Survival is in** (session 13: `SurvivalExecution` on the Humans-vs-Nations preset —
+  waves every two minutes hand every nation a growing share of its ceiling and a purse,
+  the humans win at twenty minutes, the nations the second the last human falls; flag,
+  toggle, rotation, badge). Still to do: Historical
   scenarios (map manifests with fixed spawns and doctrines), Draft (lobby-phase picks are
   server state, not sim state), **Blitz** — the engine is in (session 13: `gameSpeed` in
   the wire config, 1× / 2× / 4× in the host and single-player lobbies, the server and the

@@ -16,6 +16,7 @@ import {
   GameMapSize,
   GameMapType,
   GameMode,
+  HumansVsNations,
   UnitType,
 } from "../core/game/Game";
 import { UserSettings } from "../core/game/UserSettings";
@@ -63,6 +64,7 @@ export class HostLobbyModal extends BaseModal {
   @state() private battleRoyale: boolean = false;
   @state() private capitalStrike: boolean = false;
   @state() private kingOfTheHill: boolean = false;
+  @state() private survival: boolean = false;
   @state() private teamCount: TeamCountConfig = 2;
 
   constructor() {
@@ -558,6 +560,10 @@ export class HostLobbyModal extends BaseModal {
                     checked: this.kingOfTheHill,
                   },
                   {
+                    labelKey: "game_settings.survival",
+                    checked: this.survival,
+                  },
+                  {
                     labelKey: "host_modal.donate_gold",
                     checked: this.donateGold,
                   },
@@ -970,6 +976,10 @@ export class HostLobbyModal extends BaseModal {
         break;
       case "game_settings.king_of_the_hill":
         this.kingOfTheHill = checked;
+        this.putGameConfig();
+        break;
+      case "game_settings.survival":
+        this.survival = checked;
         this.putGameConfig();
         break;
       case "host_modal.donate_gold":
@@ -1444,16 +1454,18 @@ export class HostLobbyModal extends BaseModal {
             donateTroops: this.donateTroops,
             instantBuild: this.instantBuild,
             randomSpawn: this.randomSpawn,
-            gameMode: this.gameMode,
+            // Survival is co-op by definition: every human on one side.
+            gameMode: this.survival ? GameMode.Team : this.gameMode,
             gameSpeed: this.gameSpeed,
             battleRoyale: this.battleRoyale,
             capitalStrike: this.capitalStrike,
             kingOfTheHill: this.kingOfTheHill,
+            survival: this.survival,
             disabledUnits: this.disabledUnits,
             spawnImmunityDuration: this.spawnImmunity
               ? spawnImmunityTicks
               : null,
-            playerTeams: this.teamCount,
+            playerTeams: this.survival ? HumansVsNations : this.teamCount,
             nations: sliderToNationsConfig(
               this.nations,
               this.defaultNationCount,

@@ -519,6 +519,7 @@ export const GameConfigSchema = z.object({
       isBattleRoyale: z.boolean().optional(),
       isCapitalStrike: z.boolean().optional(),
       isKingOfTheHill: z.boolean().optional(),
+      isSurvival: z.boolean().optional(),
     })
     .optional(),
   nations: zb.union(
@@ -582,6 +583,9 @@ export const GameConfigSchema = z.object({
   // King of the Hill (brief §6.7): a hill on the map's centre; whoever holds
   // the most of it scores, and the first to the target wins.
   kingOfTheHill: z.boolean().nullable().optional(),
+  // Survival (brief §6.7): every human on one side against nations that
+  // reinforce in waves; outlast the clock to win.
+  survival: z.boolean().nullable().optional(),
   hostCheats: z
     .object({
       infiniteGold: z.boolean().optional(),

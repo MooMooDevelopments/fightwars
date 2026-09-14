@@ -19,7 +19,7 @@
  *                                      [--no-blockades] [--no-embargo-price]
  *                                      [--legacy-fallout] [--flat-alliances]
  *                                      [--no-coalition] [--no-doctrines]
- *                                      [--no-unrest] [--flat-unrest] [--battle-royale] [--capital-strike] [--king-of-the-hill]
+ *                                      [--no-unrest] [--flat-unrest] [--battle-royale] [--capital-strike] [--king-of-the-hill] [--survival]
  *                                      [--pacts-count] [--no-doctrine-play]
  *                                      [--cheap-materials] [--cheap-arms-upkeep]
  *                                      [--no-artillery] [--no-radar]
@@ -111,6 +111,13 @@ class CapitalStrike extends Config {
 /** King of the Hill on (off by default): the hill scores, first to the target wins. */
 class KingOfTheHill extends Config {
   kingOfTheHill(): boolean {
+    return true;
+  }
+}
+
+/** Survival on (off by default): the nations reinforce in waves. */
+class Survival extends Config {
+  survival(): boolean {
     return true;
   }
 }
@@ -306,6 +313,7 @@ async function main(): Promise<void> {
   const battleRoyale = process.argv.includes("--battle-royale");
   const capitalStrike = process.argv.includes("--capital-strike");
   const kingOfTheHill = process.argv.includes("--king-of-the-hill");
+  const survival = process.argv.includes("--survival");
   const flatUnrest = process.argv.includes("--flat-unrest");
   const pactsCount = process.argv.includes("--pacts-count");
   const noDoctrinePlay = process.argv.includes("--no-doctrine-play");
@@ -347,7 +355,7 @@ async function main(): Promise<void> {
   }
   console.debug = () => {};
   console.log(
-    `[balance] map=${map} difficulty=${Difficulty[difficulty]} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}${noUpkeep ? " upkeep=off" : ""}${noMaterials ? " materials=off" : ""}${noBlockades ? " blockades=off" : ""}${noEmbargoPrice ? " embargo-price=off" : ""}${legacyFallout ? " fallout=legacy" : ""}${flatAlliances ? " alliances=flat" : ""}${noCoalition ? " coalition=off" : ""}${noDoctrines ? " doctrines=off" : ""}${noUnrest ? " unrest=off" : ""}${battleRoyale ? " battle-royale=on" : ""}${capitalStrike ? " capital-strike=on" : ""}${kingOfTheHill ? " king-of-the-hill=on" : ""}${flatUnrest ? " unrest=flat" : ""}${pactsCount ? " alliance-cap=counts-pacts" : ""}${noDoctrinePlay ? " doctrine-play=off" : ""}${cheapMaterials ? " materials=cheap" : ""}${cheapArmsUpkeep ? " arms-upkeep=cheap" : ""}${noArtillery ? " artillery=off" : ""}${noRadar ? " radar=off" : ""}${noBomber ? " bomber=off" : ""}${noSubmarine ? " submarine=off" : ""}${noCarrier ? " carrier=off" : ""}${noParatrooper ? " paratrooper=off" : ""}\n`,
+    `[balance] map=${map} difficulty=${Difficulty[difficulty]} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}${noUpkeep ? " upkeep=off" : ""}${noMaterials ? " materials=off" : ""}${noBlockades ? " blockades=off" : ""}${noEmbargoPrice ? " embargo-price=off" : ""}${legacyFallout ? " fallout=legacy" : ""}${flatAlliances ? " alliances=flat" : ""}${noCoalition ? " coalition=off" : ""}${noDoctrines ? " doctrines=off" : ""}${noUnrest ? " unrest=off" : ""}${battleRoyale ? " battle-royale=on" : ""}${capitalStrike ? " capital-strike=on" : ""}${kingOfTheHill ? " king-of-the-hill=on" : ""}${survival ? " survival=on" : ""}${flatUnrest ? " unrest=flat" : ""}${pactsCount ? " alliance-cap=counts-pacts" : ""}${noDoctrinePlay ? " doctrine-play=off" : ""}${cheapMaterials ? " materials=cheap" : ""}${cheapArmsUpkeep ? " arms-upkeep=cheap" : ""}${noArtillery ? " artillery=off" : ""}${noRadar ? " radar=off" : ""}${noBomber ? " bomber=off" : ""}${noSubmarine ? " submarine=off" : ""}${noCarrier ? " carrier=off" : ""}${noParatrooper ? " paratrooper=off" : ""}\n`,
   );
 
   const gameConfig: GameConfig = {
@@ -392,6 +400,7 @@ async function main(): Promise<void> {
     [battleRoyale, BattleRoyale],
     [capitalStrike, CapitalStrike],
     [kingOfTheHill, KingOfTheHill],
+    [survival, Survival],
     [flatUnrest, FlatUnrest],
     [pactsCount, PactsCount],
     [noDoctrinePlay, NoDoctrinePlay],

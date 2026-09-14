@@ -229,6 +229,12 @@ export function getActiveModifiers(
       badgeKey: "public_game_modifier.king_of_the_hill",
     });
   }
+  if (modifiers.isSurvival) {
+    result.push({
+      labelKey: "game_settings.survival",
+      badgeKey: "public_game_modifier.survival",
+    });
+  }
   if (modifiers.isBlitz) {
     result.push({
       labelKey: "public_game_modifier.blitz_label",
@@ -727,6 +733,7 @@ export function getMessageTypeClasses(type: MessageType): string {
     case MessageType.BATTLE_ROYALE_SHRINK:
     case MessageType.CAPITAL_FELL:
     case MessageType.HILL_STANDING:
+    case MessageType.SURVIVAL_WAVE:
       return severityColors["warn"];
     case MessageType.CHAT:
     case MessageType.ALLIANCE_REQUEST:

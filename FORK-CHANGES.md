@@ -1538,3 +1538,23 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
 - `src/client/render/gl/passes/ZonePass.ts`, `src/client/render/gl/shaders/zone/zone.vert.glsl`,
   `zone.frag.glsl` — the ring and the hill.
 - `tests/client/view/ZoneView.test.ts` — the view's zones.
+
+### Survival (Phase 6, session 13)
+
+#### Shared upstream files edited
+
+- `src/core/Schemas.ts` — `GameConfig.survival` (appended), `publicGameModifiers.isSurvival`.
+- `src/core/game/Game.ts` — `PublicGameModifiers.isSurvival`, `MessageType.SURVIVAL_WAVE`.
+- `src/core/configuration/Config.ts` — `survival()`, `survivalWaveTicks()`, `survivalWaveTroopShare()`, `survivalWaveGold()`, `survivalSeconds()`.
+- `src/core/GameRunner.ts` — registers the execution when the flag is on.
+- `src/server/MapPlaylist.ts` — the modifier, three tickets, forces team mode and Humans vs Nations.
+- `src/client/HostLobbyModal.ts`, `src/client/SinglePlayerModal.ts` — the toggle, sending team mode and the preset.
+- `src/client/Utils.ts` — the badge and the event colour.
+- `scripts/balanceRun.ts` — `--survival`.
+- `resources/lang/en.json` — `game_settings.survival`, `public_game_modifier.survival`, `events_display.survival_wave` / `survival_won` / `survival_lost`.
+
+#### FightWars-only files added
+
+- `src/core/execution/SurvivalExecution.ts` — the waves and the clock.
+- `tests/Survival.test.ts` — the sides, the waves, the win, the loss, the flag off.
+- `tests/server/MapPlaylistModes.test.ts` — gains the forcing.

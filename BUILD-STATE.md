@@ -79,6 +79,41 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — Survival, co-op against nations that keep coming
+
+- **What shipped.** `SurvivalExecution` on top of the Humans-vs-Nations preset the game
+  already had: the lobby toggle (host and solo) sends team mode and that preset, and the
+  playlist's `isSurvival` forces both after the roll. Every two minutes after the spawn
+  phase, wave n hands each living nation fifteen percent of its own troop ceiling times n
+  (capped at the ceiling) and 200k gold times n, announced in the feed; the humans win at
+  twenty minutes with one alive, the nations win the second the last human falls, both
+  through the ordinary team `setWinner`. The land win keeps running beside it.
+  `GameConfig.survival` appended, a badge, `balance:run --survival`.
+- **A/B, 8000 ticks (the off arm reproduces the zone-layer commit's hash; the instrument
+  has no humans, so the waves inflate the nations against each other):**
+
+  | metric (World, Medium, 150 bots, seed `perf-gate`) | off                                           | `--survival`                                                  |
+  | -------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------- |
+  | winner by 8000                                     | none yet                                      | team Nations, on the first check (no human in the instrument) |
+  | alive at 8000                                      | 25                                            | 31                                                            |
+  | top-1 / top-5 share                                | 13.9 % / 53.1 %                               | 16.8 % / 52.3 %                                               |
+  | ports / cities                                     | 100 / 158                                     | 132 / 166                                                     |
+  | leader's troops                                    | 3.79M (DR Congo)                              | 2.37M (Japan) on 110k tiles                                   |
+  | wall time, 8000 ticks                              | 24.9 s                                        | 54.2 s                                                        |
+  | final hash                                         | `44138072306226350` (the zone-layer commit's) | `48608727574649150`                                           |
+
+  Read: the instrument has no humans, so the loss fires on the first check and the rest is
+  the sim running past a declared winner with six waves of reinforcements landing on
+  every nation — twice the wall time is the cost of nations fighting at their ceilings.
+  What the mode does to a human side is not measurable here; the tests pin the waves,
+  the win and the loss.
+
+- **Guards broken and watched fail:** the reinforcement dropped, the waves not growing,
+  no loss on the last human, no win at the clock.
+- **Not done:** nations that aim at the humans by design (they fight by team already but
+  choose targets as usual), a wave countdown in the HUD, a lobby timer shorter than the
+  survival clock still ends the game the old way (the playlist sets none).
+
 ### Session 13 — the zone layer: the ring and the hill on the map
 
 - **What shipped.** A `Zone` game update from the core (Battle Royale on every shrink,
