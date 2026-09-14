@@ -65,10 +65,13 @@ describe("ladder seasons", () => {
     expect(old.season).toBe("1");
     expect(old.entries).toEqual([]);
 
+    // One game each: both are in placement, so the ranked ladder is empty
+    // while the raw public ladder above lists them. Seasons are filed the
+    // same either way.
     const ranked = RankedLeaderboardResponseSchema.parse(
       (await call(api.base, null, "GET", "/leaderboard/ranked")).json,
     );
-    expect(ranked["1v1"]).toHaveLength(2);
+    expect(ranked["1v1"]).toEqual([]);
     const rankedOld = RankedLeaderboardResponseSchema.parse(
       (await call(api.base, null, "GET", "/leaderboard/ranked?season=1")).json,
     );

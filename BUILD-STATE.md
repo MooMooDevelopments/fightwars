@@ -91,6 +91,11 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   placed.
 - **Not done:** a placement badge on the profile page and in the leaderboard modal's own
   row for the viewer (the ranked card is the one place the number is shown today).
+- **Pushed red, fixed in the next commit.** The commit chain ran the suite, the quick
+  gate, the perf gate and the commit as one line without stopping on the suite's one
+  failure — `tests/api/Seasons.test.ts` expected one-game players on the ranked ladder,
+  which placements now hide. The gate must gate: `&&` between the suite and the commit,
+  never `;`. Same lesson as session 13's game-speed commit, relearned; recorded twice now.
 
 ### Session 13 — Blitz in one click
 
