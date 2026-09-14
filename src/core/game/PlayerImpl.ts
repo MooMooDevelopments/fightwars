@@ -20,6 +20,7 @@ import {
   Cell,
   ColoredTeams,
   DisconnectSnapshot,
+  Doctrine,
   Embargo,
   EmojiMessage,
   GameMode,
@@ -124,6 +125,8 @@ export class PlayerImpl implements Player {
   private _materials: bigint;
   /** Owned tiles under fallout (brief §6.4); rare change, object lane. */
   public _irradiatedTiles = 0;
+  /** Picked at spawn (brief §6.6); changes once, so the object lane. */
+  private _doctrine: Doctrine = Doctrine.None;
 
   /** Cumulative ship-trade revenue (arrival credit for src + dst port owners). */
   private _tradeGold: bigint = 0n;
@@ -395,6 +398,7 @@ export class PlayerImpl implements Player {
       goldEarned: this._goldEarned,
       materials: this._materials,
       irradiatedTiles: this._irradiatedTiles,
+      doctrine: this._doctrine,
       troops: this.troops(),
       allies: allies,
       embargoes: embargoes,
@@ -746,6 +750,14 @@ export class PlayerImpl implements Player {
 
   spawnTile(): TileRef | undefined {
     return this._spawnTile;
+  }
+
+  doctrine(): Doctrine {
+    return this._doctrine;
+  }
+
+  setDoctrine(doctrine: Doctrine): void {
+    this._doctrine = doctrine;
   }
 
   incomingAllianceRequests(): AllianceRequest[] {

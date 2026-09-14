@@ -82,6 +82,8 @@ export interface PlayerState {
   materials: number;
   /** Owned tiles under fallout (live, object lane). */
   irradiatedTiles: number;
+  /** Doctrine picked at spawn (Doctrine enum value; 0 = none). */
+  doctrine: number;
   troops: number;
   isTraitor: boolean;
   traitorRemainingTicks: number;

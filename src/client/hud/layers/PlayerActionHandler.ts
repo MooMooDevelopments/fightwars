@@ -1,5 +1,6 @@
 import { EventBus } from "../../../core/EventBus";
 import { TileRef } from "../../../core/game/GameMap";
+import { getDoctrinePick } from "../../DoctrinePick";
 import {
   SendAllianceExtensionIntentEvent,
   SendAllianceRequestIntentEvent,
@@ -49,7 +50,7 @@ export class PlayerActionHandler {
   }
 
   handleSpawn(tile: TileRef) {
-    this.eventBus.emit(new SendSpawnIntentEvent(tile));
+    this.eventBus.emit(new SendSpawnIntentEvent(tile, getDoctrinePick()));
   }
 
   handleAllianceRequest(player: PlayerView, recipient: PlayerView) {

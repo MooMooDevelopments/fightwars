@@ -1,4 +1,5 @@
 import {
+  Doctrine,
   Execution,
   Game,
   GameType,
@@ -33,6 +34,9 @@ export class SpawnExecution implements Execution {
     // callers (PlayerSpawner, NationExecution) are trusted and place players
     // deliberately, including at the end of the spawn phase; a client may not.
     private fromIntent: boolean = false,
+    // Doctrine picked with the tile (brief §6.6); undefined keeps the one
+    // already held, so a tile re-pick without a choice changes nothing.
+    private doctrine?: Doctrine,
   ) {
     this.random = new PseudoRandom(
       simpleHash(playerInfo.id) + simpleHash(gameID),
@@ -104,6 +108,9 @@ export class SpawnExecution implements Execution {
     }
 
     player.setSpawnTile(spawn.center);
+    if (this.doctrine !== undefined && this.mg.config().doctrinesEnabled()) {
+      player.setDoctrine(this.doctrine);
+    }
 
     if (
       this.mg.config().gameConfig().gameType === GameType.Singleplayer &&

@@ -2822,9 +2822,29 @@ Unchanged: nothing exists, and the hooks noted in the Phase 0 audit still stand 
 
 The brief itself says to keep it out of the deterministic core; it is server infrastructure fed in as a lobby-join parameter. The Phase 0 hook analysis (a `PlayerSchema` field, threaded through `PlayerInfo`, read only in rendering unless nations use it — then it must be in the archived record) stands unchanged. `_betrayalCount` still counts in-game betrayals and nothing reads it.
 
-#### 5. Doctrines at spawn
+#### 5. Doctrines at spawn — **built (Phase 5, brief §6.6, session 11)**
 
-- Spawn intent is `SpawnIntentSchema{type:"spawn", tile}` (`Schemas.ts:623-628`) → `ExecutionManager.createExec` (`:74-82`) → `SpawnExecution(fromIntent=true)`; validation is `isValidRef` + spawn-phase gating in `SpawnExecution.tick` (`:50-81`). A `doctrine` enum field rides on the intent, is stamped onto the player in `SpawnExecution.tick` after `setSpawnTile` (`:106`) (re-picks overwrite it, matching tile re-pick semantics), and is exposed via `PlayerImpl.toUpdate`. The only spots that switch on `PlayerType` for stat scaling are `Config.startManpower/maxTroops/troopIncreaseRate/goldAdditionRate/attackAmount` (`:957-1066`) — a doctrine multiplier belongs there. Nations would need a doctrine chosen in `NationExecution.init` (`:62-72`) from the seeded RNG.
+**What exists.** `Doctrine` in `Game.ts` — `None` (0) and the brief's eight: `Expansionist`, `Mercantile`, `Fortress`, `Naval`, `Nuclear`, `Diplomatic`, `Industrial`, `Partisan` — with `DOCTRINES` (the pickable eight, in picker order) and `DOCTRINE_KEYS` (locale stems). `Player.doctrine()` / `setDoctrine()`; `PlayerUpdate.doctrine` on the object lane (it changes once), through `diffPlayerUpdate` / `applyStateUpdate` to `PlayerState.doctrine` and `PlayerView.doctrine()`.
+
+- **The pick rides the spawn intent.** `SpawnIntentSchema.doctrine` (`1..8`, optional) → `ExecutionManager` → `SpawnExecution(…, fromIntent, doctrine?)`, stamped after `setSpawnTile`. Absent keeps whatever is held, so a tile re-pick without a choice changes nothing; the picker sends the same tile again with the new doctrine when the choice comes second. Tribes never have one. **Nations roll one in `NationExecution.init`** from their seeded RNG — only with doctrines on, so the lever leaves the PRNG sequence, and every later nation decision, exactly as it was.
+- **One passive and one unlock each**, every one a scale on a number the game already had (`Config`):
+
+  | Doctrine     | Passive                                               | Unlock                                                             |
+  | ------------ | ----------------------------------------------------- | ------------------------------------------------------------------ |
+  | Expansionist | terra nullius for ¾ (`doctrineTerraNulliusCostScale`) | over-extension starts 15 tiles further out (`doctrineSupplyReach`) |
+  | Mercantile   | trade pays +15 % (`doctrineTradeGoldScale`)           | ports for ¾ (`doctrineUnitCostScale`)                              |
+  | Fortress     | defense posts for ¾                                   | posts defend ×1.3 (`doctrineDefensePostBonusScale`)                |
+  | Naval        | warships for ¾                                        | blockade range ×1.5 (`doctrineBlockadeRangeScale`)                 |
+  | Nuclear      | silos for ¾                                           | warheads for half the materials (`doctrineMaterialsScale`)         |
+  | Diplomatic   | traitor mark ×0.5 (`doctrineTraitorScale`)            | alliances either side holds ×1.5 (`doctrineAllianceDurationScale`) |
+  | Industrial   | factories for ¾                                       | factory output ×1.5 (`doctrineFactoryOutputScale`)                 |
+  | Partisan     | recruiting +10 % (`doctrineTroopRegenScale`)          | _lands with stability (§05 6): its lost land rebels twice as fast_ |
+
+- **Where each hook sits.** Costs: `unitInfo` wraps the unit's `cost` and `materialsCost` per calling player, on top of the curve (a Fortress state's fifth post is still dearer than its first). Attack: `AttackLogicInput.attacker.doctrine` / `defender.doctrine` (optional, so the golden fixtures stand) — terra-nullius scale in the `defender === null` branch (`AttackExplanation.terraNulliusMod`, an `attack_cost.expansionist` row on the client), post bonus beside `defensePostDefenseBonus`; reach in `AttackExecution.withDoctrineReach` on the front's supply distance, mirrored in `AttackCostEstimate.clientSupplyDistance` — a tile out of the field stays out (reach forgives distance, not absence). `Blockade.computeBlockaded` scales range per fleet owner. `AllianceImpl.duration()` takes the longer of the two parties' scales at creation and at renewal. `GameImpl.breakAlliance` multiplies the tier scale by the breaker's. `FactoryExecution` scales the per-tick grant. `Config.tradeShipGold` and `troopIncreaseRate` read the player's doctrine directly.
+- **Client.** `doctrine-picker` (`src/client/hud/layers/DoctrinePicker.ts`): eight buttons under the spawn hint for the length of the spawn phase, hidden for spectators and replays and with doctrines off; the pick is session state (`src/client/DoctrinePick.ts`) sent with the next spawn intent, and what the simulation holds is what shows as chosen. `doctrine.*` locale keys. No doctrine is shown on the player panel yet — the panel is Phase 4 item 6 work.
+- **Switch and lever.** `Config.doctrinesEnabled()`; `balance:run --no-doctrines` turns it off and reproduces the previous build's 8000-tick hash exactly.
+
+**Deliberately not built.** A Draft mode (captains pick doctrines in turn — brief §5.7) and a doctrine readout on the player panel and leaderboard; a Vassal doctrine; nations _playing_ their doctrine (a Naval nation building more ports) — today a nation's doctrine only changes its prices and numbers, not its choices, which is the §05 7 personality work.
 
 #### 6. Stability / partisans — the tribe machinery to reuse
 

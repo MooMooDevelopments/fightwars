@@ -45,6 +45,9 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
 - **Coalitions.** When anyone holds 40 % of the map, everyone else is offered a coalition —
   one card, one button, defensive pacts with every other player who will have you. The leader
   knowing it is coming is the late game.
+- **Doctrines.** Pick one of eight when you pick where to spawn — Expansionist, Mercantile,
+  Fortress, Naval, Nuclear, Diplomatic, Industrial, Partisan — for a small passive and one
+  unlock. Nations pick too.
 
 ### Phase 2 — Infrastructure (2026-09-12)
 

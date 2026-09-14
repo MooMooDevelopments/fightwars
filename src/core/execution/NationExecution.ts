@@ -1,5 +1,7 @@
 import {
   Difficulty,
+  Doctrine,
+  DOCTRINES,
   Execution,
   Game,
   GameMode,
@@ -68,6 +70,17 @@ export class NationExecution implements Execution {
       this.player = this.mg.addPlayer(this.nation.playerInfo);
     } else {
       this.player = this.mg.player(this.nation.playerInfo.id);
+    }
+    // A nation picks a doctrine the way a human does, from the seeded RNG
+    // (brief §6.6). Only with doctrines on, so the lever leaves the PRNG
+    // sequence — and so every later nation decision — exactly as it was.
+    if (
+      this.mg.config().doctrinesEnabled() &&
+      this.player.doctrine() === Doctrine.None
+    ) {
+      this.player.setDoctrine(
+        DOCTRINES[this.random.nextInt(0, DOCTRINES.length)],
+      );
     }
   }
 

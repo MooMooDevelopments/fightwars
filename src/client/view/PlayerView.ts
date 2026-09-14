@@ -7,6 +7,7 @@ import { createRandomName } from "../../core/Util";
 import {
   BuildableUnit,
   Cell,
+  Doctrine,
   EmojiMessage,
   Gold,
   NameViewData,
@@ -87,6 +88,7 @@ function stateFromUpdate(pu: PlayerUpdate): PlayerState {
     goldEarned: Number(pu.goldEarned ?? 0n),
     materials: Number(pu.materials ?? 0n),
     irradiatedTiles: pu.irradiatedTiles ?? 0,
+    doctrine: pu.doctrine ?? 0,
     troops: pu.troops!,
     isTraitor: pu.isTraitor!,
     traitorRemainingTicks: Math.max(0, pu.traitorRemainingTicks ?? 0),
@@ -543,6 +545,15 @@ export class PlayerView {
   /** Owned tiles under fallout; they count for nothing. */
   numIrradiatedTiles(): number {
     return this.state.irradiatedTiles;
+  }
+
+  doctrine(): Doctrine {
+    return this.state.doctrine as Doctrine;
+  }
+
+  /** The tile picked as spawn, once the simulation has honoured a pick. */
+  spawnTile(): number | undefined {
+    return this.state.spawnTile;
   }
 
   troops(): number {

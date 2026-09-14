@@ -27,6 +27,7 @@ import { BuildMenu } from "./layers/BuildMenu";
 import { ChatDisplay } from "./layers/ChatDisplay";
 import { ChatModal } from "./layers/ChatModal";
 import { ControlPanel } from "./layers/ControlPanel";
+import { DoctrinePicker } from "./layers/DoctrinePicker";
 import { EmojiTable } from "./layers/EmojiTable";
 import { EventsDisplay } from "./layers/EventsDisplay";
 import { GameLeftSidebar } from "./layers/GameLeftSidebar";
@@ -268,6 +269,15 @@ export function createRenderer(
   }
   headsUpMessage.game = game;
 
+  const doctrinePicker = document.querySelector(
+    "doctrine-picker",
+  ) as DoctrinePicker;
+  if (!(doctrinePicker instanceof DoctrinePicker)) {
+    console.error("doctrine picker not found");
+  }
+  doctrinePicker.game = game;
+  doctrinePicker.eventBus = eventBus;
+
   const performanceOverlay = document.querySelector(
     "performance-overlay",
   ) as PerformanceOverlay;
@@ -363,6 +373,7 @@ export function createRenderer(
     settingsModal,
     playerPanel,
     headsUpMessage,
+    doctrinePicker,
     multiTabModal,
     inGamePromo,
     tutorialPanel,

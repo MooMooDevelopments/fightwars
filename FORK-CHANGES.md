@@ -805,3 +805,53 @@ reputation are deliberately not built; §05 2 and 4 say why.
   update map at its start, so a `setLeader` between ticks never reaches the client); nations
   accepting a fellow non-leader they would otherwise weigh, not the leader, and not once the
   leader falls back below the line.
+
+### Doctrines (brief §6.6, session 11)
+
+At spawn a player picks one of eight doctrines — a small passive and one unique unlock each,
+every one a scale on a number the game already had — and nations roll one from their seeded
+RNG. The pick rides the spawn intent; the client shows eight buttons under the spawn hint for
+the length of the spawn phase. `docs/MECHANICS.md` §05 "Gaps" 5 has the table and the hooks.
+
+#### Shared upstream files edited
+
+- `src/core/game/Game.ts` — `Doctrine`, `DOCTRINES`, `DOCTRINE_KEYS`; `Player.doctrine` /
+  `setDoctrine`.
+- `src/core/game/PlayerImpl.ts`, `src/core/game/GameUpdates.ts`,
+  `src/core/game/GameUpdateUtils.ts`, `src/client/render/types/Renderer.ts`,
+  `src/client/view/PlayerView.ts` — `doctrine` on the object lane, through diff/apply to the
+  view; `PlayerView.spawnTile()`.
+- `src/core/Schemas.ts`, `src/core/execution/ExecutionManager.ts`,
+  `src/core/execution/SpawnExecution.ts` — `doctrine?` on the spawn intent, stamped after the
+  tile; absent keeps what is held.
+- `src/core/execution/NationExecution.ts` — the roll in `init`, only with doctrines on.
+- `src/core/configuration/Config.ts` — `doctrinesEnabled` and the ten scales; `unitInfo` wraps
+  `cost` / `materialsCost` per calling player; `AttackLogicInput.attacker/defender.doctrine`
+  (optional); the terra-nullius scale and `AttackExplanation.terraNulliusMod`; the post bonus
+  scale; `tradeShipGold` and `troopIncreaseRate` read the doctrine.
+- `src/core/execution/AttackExecution.ts` — doctrines on the attack input;
+  `withDoctrineReach` on the front's supply distance.
+- `src/core/execution/Blockade.ts`, `src/core/game/AllianceImpl.ts`,
+  `src/core/game/GameImpl.ts`, `src/core/execution/FactoryExecution.ts` — the Naval,
+  Diplomatic (both halves) and Industrial hooks.
+- `src/client/AttackCostEstimate.ts` — doctrines on the client's estimate input, the reach on
+  its supply distance, an `expansionist` row.
+- `src/client/Transport.ts`, `src/client/ClientGameRunner.ts`,
+  `src/client/hud/layers/PlayerActionHandler.ts` — `SendSpawnIntentEvent(tile, doctrine?)`,
+  None sent as absent.
+- `src/client/hud/GameRenderer.ts`, `index.html`, `resources/lang/en.json`,
+  `tests/client/graphics/GameRendererCreate.test.ts` — the picker registered, mounted,
+  translated, and in the renderer test's tag list.
+- `scripts/balanceRun.ts` — `--no-doctrines`, and a doctrines line in the report.
+- Fixtures: `tests/GameUpdateUtils.test.ts`, the two `derive` tests, `AttackBreakdown`, and
+  the `PlayerInfoOverlay` mock players gained `doctrine`.
+
+#### FightWars-only files added
+
+- `src/client/DoctrinePick.ts`, `src/client/hud/layers/DoctrinePicker.ts` — the session pick
+  and the eight buttons.
+- `tests/Doctrines.test.ts` — the pick (stamped, kept on a tile re-pick, on the wire, rolled by
+  a nation, ignored with doctrines off), every passive and every unlock against the real
+  formula (`TestConfig` flattens `attackLogic`, so the two attack cases build a plain `Config`),
+  and the lever. The suite is a Public game with the spawn phase left open: in singleplayer
+  the first pick ends the phase and a second intent is refused.

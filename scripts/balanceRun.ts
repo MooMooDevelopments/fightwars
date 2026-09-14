@@ -17,7 +17,7 @@
  *                                      [--no-upkeep] [--no-materials]
  *                                      [--no-blockades] [--no-embargo-price]
  *                                      [--legacy-fallout] [--flat-alliances]
- *                                      [--no-coalition]
+ *                                      [--no-coalition] [--no-doctrines]
  *
  * `--no-supply` turns the supply penalty and its attrition off, and
  * `--flat-terrain` turns the elevation curves off (the band table stays),
@@ -32,6 +32,7 @@ import { Config } from "../src/core/configuration/Config";
 import { Executor } from "../src/core/execution/ExecutionManager";
 import {
   Difficulty,
+  DOCTRINE_KEYS,
   GameMapSize,
   GameMapType,
   GameMode,
@@ -75,6 +76,13 @@ class NoSupply extends Config {
 /** The same game with every alliance a full one and no ladder to climb. */
 class FlatAlliances extends Config {
   allianceTiersEnabled(): boolean {
+    return false;
+  }
+}
+
+/** The same game with nobody holding a doctrine and nations not rolling one. */
+class NoDoctrines extends Config {
+  doctrinesEnabled(): boolean {
     return false;
   }
 }
@@ -166,6 +174,7 @@ async function main(): Promise<void> {
   const legacyFallout = process.argv.includes("--legacy-fallout");
   const flatAlliances = process.argv.includes("--flat-alliances");
   const noCoalition = process.argv.includes("--no-coalition");
+  const noDoctrines = process.argv.includes("--no-doctrines");
   if (
     [
       noSupply,
@@ -177,13 +186,14 @@ async function main(): Promise<void> {
       legacyFallout,
       flatAlliances,
       noCoalition,
+      noDoctrines,
     ].filter(Boolean).length > 1
   ) {
     throw new Error("one lever at a time");
   }
   console.debug = () => {};
   console.log(
-    `[balance] map=${map} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}${noUpkeep ? " upkeep=off" : ""}${noMaterials ? " materials=off" : ""}${noBlockades ? " blockades=off" : ""}${noEmbargoPrice ? " embargo-price=off" : ""}${legacyFallout ? " fallout=legacy" : ""}${flatAlliances ? " alliances=flat" : ""}${noCoalition ? " coalition=off" : ""}\n`,
+    `[balance] map=${map} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}${noUpkeep ? " upkeep=off" : ""}${noMaterials ? " materials=off" : ""}${noBlockades ? " blockades=off" : ""}${noEmbargoPrice ? " embargo-price=off" : ""}${legacyFallout ? " fallout=legacy" : ""}${flatAlliances ? " alliances=flat" : ""}${noCoalition ? " coalition=off" : ""}${noDoctrines ? " doctrines=off" : ""}\n`,
   );
 
   const gameConfig: GameConfig = {
@@ -226,7 +236,9 @@ async function main(): Promise<void> {
                   ? new FlatAlliances(gameConfig, null, false)
                   : noCoalition
                     ? new NoCoalition(gameConfig, null, false)
-                    : new Config(gameConfig, null, false);
+                    : noDoctrines
+                      ? new NoDoctrines(gameConfig, null, false)
+                      : new Config(gameConfig, null, false);
   const mapLoader = new NodeGameMapLoader(
     path.join(PROJECT_ROOT, "resources/maps"),
   );
@@ -328,6 +340,17 @@ async function main(): Promise<void> {
   console.log(
     `Alliances:      ${tiers[1] / 2} pacts, ${tiers[2] / 2} defensive, ${tiers[3] / 2} full; ` +
       `leader share ${pct(game.leaderShare(), 1)}`,
+  );
+  const doctrines = new Map<string, number>();
+  for (const p of alive) {
+    const key = DOCTRINE_KEYS[p.doctrine()];
+    doctrines.set(key, (doctrines.get(key) ?? 0) + 1);
+  }
+  console.log(
+    `Doctrines:      ${[...doctrines.entries()]
+      .sort((x, y) => y[1] - x[1])
+      .map(([k, n]) => `${k} ${n}`)
+      .join(", ")}`,
   );
   console.log(`Final hash:     ${lastHash?.hash} (tick ${lastHash?.tick})`);
   console.log("\nTop 10 by territory:");

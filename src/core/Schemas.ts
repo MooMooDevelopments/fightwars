@@ -643,6 +643,9 @@ export const SpawnIntentSchema = z.object({
   // A TileRef indexes the typed-array terrain buffers, so it must be a
   // non-negative integer. Fractional refs silently corrupt those lookups.
   tile: zb.uint(),
+  // Doctrine (brief §6.6), 1-8; absent keeps whatever the player picked
+  // before, so a re-pick of the tile does not silently drop the doctrine.
+  doctrine: zb.uint({ min: 1, max: 8 }).optional(),
 });
 
 export const BoatAttackIntentSchema = z.object({

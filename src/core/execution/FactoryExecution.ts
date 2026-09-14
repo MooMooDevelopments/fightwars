@@ -22,11 +22,17 @@ export class FactoryExecution implements Execution {
       return;
     }
     if (this.factory.isUnderConstruction()) return;
-    this.factory
-      .owner()
-      .addMaterials(
-        this.game.config().factoryMaterialsPerTick(this.factory.level()),
-      );
+    const owner = this.factory.owner();
+    const perTick = this.game
+      .config()
+      .factoryMaterialsPerTick(this.factory.level());
+    // An Industrial state's factories turn out more (brief §6.6).
+    const scale = this.game
+      .config()
+      .doctrineFactoryOutputScale(owner.doctrine());
+    owner.addMaterials(
+      scale === 1 ? perTick : BigInt(Math.floor(Number(perTick) * scale)),
+    );
   }
 
   isActive(): boolean {

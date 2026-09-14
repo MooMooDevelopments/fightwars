@@ -13,6 +13,7 @@ import {
   UnitType,
 } from "../game/Game";
 import { GameMap, TileRef } from "../game/GameMap";
+import { SUPPLY_UNSUPPLIED } from "../game/SupplyNetwork";
 import { PseudoRandom } from "../PseudoRandom";
 import { assertNever } from "../Util";
 import { FlatBinaryHeap } from "./utils/FlatBinaryHeap"; // adjust path if needed
@@ -366,6 +367,7 @@ export class AttackExecution implements Execution {
       attacker: {
         type: this._owner.type(),
         numTiles: this._owner.numTilesOwned(),
+        doctrine: this._owner.doctrine(),
       },
       defender:
         defender === null
@@ -377,6 +379,7 @@ export class AttackExecution implements Execution {
               isTraitor: defender.isTraitor(),
               isDisconnectedTeammate:
                 defender.isDisconnected() && this._owner.isOnSameTeam(defender),
+              doctrine: defender.doctrine(),
             },
       defenderHasDefensePost,
       // Measured from the attacker's side of the border: the tile being taken
@@ -384,9 +387,9 @@ export class AttackExecution implements Execution {
       // own. One more than the best of the attacker's neighbours is both the
       // distance this tile will have once taken and the reach the attack is
       // paying for now.
-      supplyDistance: this.mg
-        .supplyNetwork()
-        .frontDistance(tile, this.ownerSmallID),
+      supplyDistance: this.withDoctrineReach(
+        this.mg.supplyNetwork().frontDistance(tile, this.ownerSmallID),
+      ),
       elevation,
       climb: elevation - this.vantageElevation(tile, elevation),
       falloutRatio: this.mg.hasFallout(tile)
@@ -499,6 +502,17 @@ export class AttackExecution implements Execution {
 
   owner(): Player {
     return this._owner;
+  }
+
+  /**
+   * An Expansionist's over-extension starts further out (brief §6.6): the
+   * front's supply distance is read that many tiles nearer. A tile out of
+   * the field stays out of it — reach forgives distance, not absence.
+   */
+  private withDoctrineReach(distance: number): number {
+    if (distance >= SUPPLY_UNSUPPLIED) return distance;
+    const reach = this.mg.config().doctrineSupplyReach(this._owner.doctrine());
+    return distance > reach ? distance - reach : 0;
   }
 
   isActive(): boolean {

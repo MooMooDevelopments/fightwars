@@ -912,8 +912,10 @@ export class GameImpl implements Game {
       );
     }
     if (!other.isTraitor() && !other.isDisconnected()) {
+      // A Diplomatic breaker is forgiven sooner (brief §6.6).
       breaker.markTraitor(
-        this._config.allianceBreakTraitorScale(alliance.tier()),
+        this._config.allianceBreakTraitorScale(alliance.tier()) *
+          this._config.doctrineTraitorScale(breaker.doctrine()),
       );
     }
 

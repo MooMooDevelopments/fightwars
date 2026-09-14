@@ -7,6 +7,7 @@ import { DoomsdayClockSpeed } from "../game/DoomsdayClock";
 import {
   AllianceTier,
   Difficulty,
+  Doctrine,
   Game,
   GameType,
   Gold,
@@ -82,10 +83,15 @@ export function parseGameEnv(value: string | undefined): GameEnv {
   }
 }
 
+/** Scales a gold amount, flooring, and leaves it untouched at scale 1. */
+function scaleGold(gold: bigint, scale: number): bigint {
+  return scale === 1 ? gold : BigInt(Math.floor(Number(gold) * scale));
+}
+
 export interface AttackLogicInput {
   terrain: TerrainType;
   attackTroops: number;
-  attacker: { type: PlayerType; numTiles: number };
+  attacker: { type: PlayerType; numTiles: number; doctrine?: Doctrine };
   /** null when attacking terra nullius. */
   defender: {
     type: PlayerType;
@@ -94,6 +100,7 @@ export interface AttackLogicInput {
     isTraitor: boolean;
     /** Defender is disconnected and on the attacker's team. */
     isDisconnectedTeammate: boolean;
+    doctrine?: Doctrine;
   } | null;
   /** A defense post owned by the defender is in range of the tile. */
   defenderHasDefensePost: boolean;
@@ -147,6 +154,8 @@ export interface AttackExplanation {
   /** How far the tile is from the attacker's supply, and what that costs. */
   supplyDistance: number;
   supplyMod: number;
+  /** Expansionist terra-nullius discount (brief §6.6); 1 otherwise. */
+  terraNulliusMod: number;
   /** The tile's height above the band's base, and what the climb to it costs. */
   elevation: number;
   heightMod: number;
@@ -423,6 +432,104 @@ export class Config {
    */
   coalitionThreshold(): number {
     return 0.4;
+  }
+
+  /**
+   * Doctrines (brief §6.6): a passive and an unlock each, picked at spawn.
+   * Off, nobody has one and nations do not roll — the game as it was; the
+   * balance lever `--no-doctrines` uses this.
+   */
+  doctrinesEnabled(): boolean {
+    return true;
+  }
+
+  /**
+   * Gold-cost scale of a unit type under a doctrine. Each doctrine has one
+   * structure it builds for three quarters: the Mercantile port, the
+   * Fortress post, the Naval warship, the Nuclear silo, the Industrial
+   * factory.
+   */
+  doctrineUnitCostScale(doctrine: Doctrine, type: UnitType): number {
+    if (!this.doctrinesEnabled()) return 1;
+    switch (doctrine) {
+      case Doctrine.Mercantile:
+        return type === UnitType.Port ? 0.75 : 1;
+      case Doctrine.Fortress:
+        return type === UnitType.DefensePost ? 0.75 : 1;
+      case Doctrine.Naval:
+        return type === UnitType.Warship ? 0.75 : 1;
+      case Doctrine.Nuclear:
+        return type === UnitType.MissileSilo ? 0.75 : 1;
+      case Doctrine.Industrial:
+        return type === UnitType.Factory ? 0.75 : 1;
+      default:
+        return 1;
+    }
+  }
+
+  /** Materials scale: a Nuclear state arms a warhead for half. */
+  doctrineMaterialsScale(doctrine: Doctrine, type: UnitType): number {
+    if (!this.doctrinesEnabled()) return 1;
+    if (doctrine !== Doctrine.Nuclear) return 1;
+    return type === UnitType.AtomBomb ||
+      type === UnitType.HydrogenBomb ||
+      type === UnitType.MIRV
+      ? 0.5
+      : 1;
+  }
+
+  /** Mercantile: every trade pays 15 % more. */
+  doctrineTradeGoldScale(doctrine: Doctrine): number {
+    if (!this.doctrinesEnabled()) return 1;
+    return doctrine === Doctrine.Mercantile ? 1.15 : 1;
+  }
+
+  /** Partisan: the people take up arms 10 % faster. */
+  doctrineTroopRegenScale(doctrine: Doctrine): number {
+    if (!this.doctrinesEnabled()) return 1;
+    return doctrine === Doctrine.Partisan ? 1.1 : 1;
+  }
+
+  /** Expansionist: empty land is taken for three quarters of the price. */
+  doctrineTerraNulliusCostScale(doctrine: Doctrine): number {
+    if (!this.doctrinesEnabled()) return 1;
+    return doctrine === Doctrine.Expansionist ? 0.75 : 1;
+  }
+
+  /** Expansionist: over-extension starts this many tiles further out. */
+  doctrineSupplyReach(doctrine: Doctrine): number {
+    if (!this.doctrinesEnabled()) return 0;
+    return doctrine === Doctrine.Expansionist ? 15 : 0;
+  }
+
+  /** Fortress: a defense post defends 30 % harder. */
+  doctrineDefensePostBonusScale(doctrine: Doctrine): number {
+    if (!this.doctrinesEnabled()) return 1;
+    return doctrine === Doctrine.Fortress ? 1.3 : 1;
+  }
+
+  /** Naval: a warship blockades half again as far. */
+  doctrineBlockadeRangeScale(doctrine: Doctrine): number {
+    if (!this.doctrinesEnabled()) return 1;
+    return doctrine === Doctrine.Naval ? 1.5 : 1;
+  }
+
+  /** Diplomatic: an alliance either party holds lasts half again as long. */
+  doctrineAllianceDurationScale(doctrine: Doctrine): number {
+    if (!this.doctrinesEnabled()) return 1;
+    return doctrine === Doctrine.Diplomatic ? 1.5 : 1;
+  }
+
+  /** Diplomatic: the traitor mark for breaking a bond lasts half as long. */
+  doctrineTraitorScale(doctrine: Doctrine): number {
+    if (!this.doctrinesEnabled()) return 1;
+    return doctrine === Doctrine.Diplomatic ? 0.5 : 1;
+  }
+
+  /** Industrial: a factory turns out half again as much. */
+  doctrineFactoryOutputScale(doctrine: Doctrine): number {
+    if (!this.doctrinesEnabled()) return 1;
+    return doctrine === Doctrine.Industrial ? 1.5 : 1;
   }
 
   traitorDefenseDebuff(): number {
@@ -825,7 +932,13 @@ export class Config {
     // Sigmoid: concave start, sharp S-curve middle, linear end - heavily punishes trades under range debuff.
     const debuff = this.tradeShipShortRangeDebuff();
     const baseGold = 75_000 / (1 + exp(-0.03 * (dist - debuff))) + 50 * dist;
-    return BigInt(Math.floor(baseGold * this.goldMultiplierFor(player)));
+    return BigInt(
+      Math.floor(
+        baseGold *
+          this.goldMultiplierFor(player) *
+          this.doctrineTradeGoldScale(player.doctrine()),
+      ),
+    );
   }
 
   /**
@@ -1010,9 +1123,23 @@ export class Config {
         materialsCost: (_game: Game, player: Player) =>
           player.type() === PlayerType.Human && this.hasInfiniteGoldFor(player)
             ? 0n
-            : materials,
+            : scaleGold(
+                materials,
+                this.doctrineMaterialsScale(player.doctrine(), type),
+              ),
       };
     }
+    // Doctrine passives (brief §6.6) sit on top of whatever curve the unit
+    // has, so a Fortress state's fifth post is still dearer than its first.
+    const baseCost = info.cost;
+    info = {
+      ...info,
+      cost: (game: Game, player: Player, extraUnits?: number) =>
+        scaleGold(
+          baseCost(game, player, extraUnits),
+          this.doctrineUnitCostScale(player.doctrine(), type),
+        ),
+    };
     this.unitInfoCache.set(type, info);
     return info;
   }
@@ -1215,6 +1342,7 @@ export class Config {
       out.falloutMod = 1;
       out.supplyDistance = input.supplyDistance;
       out.supplyMod = 1;
+      out.terraNulliusMod = 1;
       out.elevation = input.elevation;
       out.heightMod = 1;
       out.climb = input.climb;
@@ -1263,10 +1391,14 @@ export class Config {
     }
 
     if (defender !== null && input.defenderHasDefensePost) {
-      mag *= this.defensePostDefenseBonus();
+      // A Fortress state's posts defend harder (brief §6.6).
+      const postLoss =
+        this.defensePostDefenseBonus() *
+        this.doctrineDefensePostBonusScale(defender.doctrine ?? Doctrine.None);
+      mag *= postLoss;
       tileCost *= this.defensePostSpeedBonus();
       if (out !== undefined) {
-        out.defensePostLossMod = this.defensePostDefenseBonus();
+        out.defensePostLossMod = postLoss;
         out.defensePostSpeedMod = this.defensePostSpeedBonus();
       }
     }
@@ -1278,6 +1410,13 @@ export class Config {
     }
 
     if (defender === null) {
+      // An Expansionist takes empty land for less (brief §6.6).
+      const tn = this.doctrineTerraNulliusCostScale(
+        attacker.doctrine ?? Doctrine.None,
+      );
+      mag *= tn;
+      tileCost *= tn;
+      if (out !== undefined) out.terraNulliusMod = tn;
       const tickBudget = input.borderSize * 2;
       return {
         attackerTroopLoss: mag / (attacker.type === PlayerType.Bot ? 10 : 5),
@@ -1528,6 +1667,8 @@ export class Config {
           assertNever(this._gameConfig.difficulty);
       }
     }
+
+    toAdd *= this.doctrineTroopRegenScale(player.doctrine());
 
     return Math.min(player.troops() + toAdd, max) - player.troops();
   }

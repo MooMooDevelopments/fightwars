@@ -36,6 +36,7 @@ import {
 } from "../core/game/UserSettings";
 import { WorkerClient } from "../core/worker/WorkerClient";
 import { isDesktopShell } from "./DesktopShell";
+import { getDoctrinePick } from "./DoctrinePick";
 import { showInGameAlert } from "./InGameModal";
 import {
   AutoUpgradeEvent,
@@ -1199,7 +1200,7 @@ export class ClientGameRunner {
       this.gameView.inSpawnPhase() &&
       !this.gameView.config().isRandomSpawn()
     ) {
-      this.eventBus.emit(new SendSpawnIntentEvent(tile));
+      this.eventBus.emit(new SendSpawnIntentEvent(tile, getDoctrinePick()));
       return;
     }
     if (this.gameView.inSpawnPhase()) {

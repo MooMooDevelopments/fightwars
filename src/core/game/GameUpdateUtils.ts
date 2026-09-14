@@ -52,6 +52,7 @@ export function diffPlayerUpdate(
     prev.trainGold === next.trainGold &&
     prev.piracyGold === next.piracyGold &&
     prev.irradiatedTiles === next.irradiatedTiles &&
+    prev.doctrine === next.doctrine &&
     prev.isTraitor === next.isTraitor &&
     prev.traitorRemainingTicks === next.traitorRemainingTicks &&
     prev.inDoomsdayClock === next.inDoomsdayClock &&
@@ -109,6 +110,7 @@ export function diffPlayerUpdate(
     "irradiatedTiles",
     prev.irradiatedTiles === next.irradiatedTiles,
   );
+  setIfDifferent("doctrine", prev.doctrine === next.doctrine);
   // tilesOwned / gold / troops / goldEarned intentionally absent — see
   // EXCEPTION above (goldEarned churns every tick via worker income).
   setIfDifferent("isTraitor", prev.isTraitor === next.isTraitor);
@@ -191,6 +193,7 @@ export function applyStateUpdate(target: PlayerState, pu: PlayerUpdate): void {
   if (pu.irradiatedTiles !== undefined) {
     target.irradiatedTiles = pu.irradiatedTiles;
   }
+  if (pu.doctrine !== undefined) target.doctrine = pu.doctrine;
   if (pu.troops !== undefined) target.troops = pu.troops;
   if (pu.isTraitor !== undefined) target.isTraitor = pu.isTraitor;
   if (pu.traitorRemainingTicks !== undefined) {

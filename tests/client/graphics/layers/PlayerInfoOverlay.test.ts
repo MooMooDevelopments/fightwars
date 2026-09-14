@@ -131,6 +131,7 @@ describe("PlayerInfoOverlay", () => {
         troops: () => 10_000,
         numTilesOwned: () => 500,
         type: () => PlayerType.Human,
+        doctrine: () => 0,
       }),
       // The shared fixture is only rich enough for the name card; the cost
       // estimate reads the defender's army and territory too.
@@ -139,6 +140,7 @@ describe("PlayerInfoOverlay", () => {
         numTilesOwned: () => 400,
         isTraitor: () => false,
         isDisconnected: () => false,
+        doctrine: () => 0,
       }),
       isLand: () => true,
       terrainType: () => TerrainType.Plains,

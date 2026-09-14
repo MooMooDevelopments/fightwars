@@ -63,7 +63,10 @@ function clientSupplyDistance(
       return 0;
     }
   }
-  return game.config().supplyMaxRange();
+  // Same forgiveness the simulation grants an Expansionist (brief §6.6).
+  const max = game.config().supplyMaxRange();
+  const reach = game.config().doctrineSupplyReach(me.doctrine());
+  return max > reach ? max - reach : 0;
 }
 
 /**
@@ -106,7 +109,11 @@ export function estimateAttackCost(
   const input: AttackLogicInput = {
     terrain: game.terrainType(tile),
     attackTroops,
-    attacker: { type: me.type(), numTiles: me.numTilesOwned() },
+    attacker: {
+      type: me.type(),
+      numTiles: me.numTilesOwned(),
+      doctrine: me.doctrine(),
+    },
     defender:
       defender === null
         ? null
@@ -117,6 +124,7 @@ export function estimateAttackCost(
             isTraitor: defender.isTraitor(),
             isDisconnectedTeammate:
               defender.isDisconnected() && me.isOnSameTeam(defender),
+            doctrine: defender.doctrine(),
           },
     // Same check the simulation makes: an active defense post of the
     // defender's within range of this tile.
@@ -205,6 +213,7 @@ export function significantFactors(estimate: AttackEstimate): AttackFactor[] {
     },
     { key: "fallout", value: e.falloutMod, affects: "both" },
     { key: "supply", value: e.supplyMod, affects: "both" },
+    { key: "expansionist", value: e.terraNulliusMod, affects: "both" },
     { key: "height", value: e.heightMod, affects: "both" },
     { key: "climb", value: e.climbMod, affects: "both" },
     { key: "high_ground", value: e.highGroundMod, affects: "loss" },
@@ -249,6 +258,7 @@ function blankExplanation(): AttackExplanation {
     falloutMod: 1,
     supplyDistance: 0,
     supplyMod: 1,
+    terraNulliusMod: 1,
     elevation: 0,
     heightMod: 1,
     climb: 0,

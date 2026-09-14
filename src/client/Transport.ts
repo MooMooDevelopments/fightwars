@@ -9,6 +9,7 @@ import {
 import { EventBus, GameEvent } from "../core/EventBus";
 import {
   AllPlayers,
+  Doctrine,
   GameType,
   Gold,
   PlayerID,
@@ -86,7 +87,11 @@ export class SendAllianceExtensionIntentEvent implements GameEvent {
 }
 
 export class SendSpawnIntentEvent implements GameEvent {
-  constructor(public readonly tile: TileRef) {}
+  constructor(
+    public readonly tile: TileRef,
+    /** Doctrine to spawn with (brief §6.6); None or absent sends nothing. */
+    public readonly doctrine?: Doctrine,
+  ) {}
 }
 
 export class SendAttackIntentEvent implements GameEvent {
@@ -723,6 +728,10 @@ export class Transport {
     this.sendIntent({
       type: "spawn",
       tile: event.tile,
+      doctrine:
+        event.doctrine === undefined || event.doctrine === Doctrine.None
+          ? undefined
+          : event.doctrine,
     });
   }
 

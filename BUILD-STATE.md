@@ -28,6 +28,46 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 
 ## Handoff — read this first (written 2026-09-14 at the end of session 11)
 
+### Session 11 (continued) — item 6.6 opens with doctrines
+
+- **Rebased first** onto upstream `0e0fb9ea6` (18 commits: the GAME_DOMAIN page/game host
+  split, the server list from the API, smarter Hard/Impossible betrayal, two maps). 58 fork
+  commits replayed; the `NationGoldPerMinute` snapshot conflicted at every Phase 5 commit and
+  was taken from the fork side each time, then regenerated alone at the end. Two fork gates
+  caught what the merge could not: the Brand test found 27 upstream comment lines naming the
+  upstream domains (rewritten generically), and upstream's new ServerList tests set the
+  desktop marker by the upstream global (now `BRAND.desktop.windowObject`). Both bot hashes
+  were unchanged by the rebase — nothing upstream touched reaches a Medium-difficulty run.
+- **What shipped.** Doctrines (brief §6.6, first half): eight of them, a small passive and one
+  unlock each, every one a scale on a number the game already had; picked with the spawn tile
+  (the pick rides the spawn intent, absent keeps what is held), rolled by nations from their
+  seeded RNG, and shown as eight buttons under the spawn hint for the length of the spawn
+  phase. `docs/MECHANICS.md` §05 "Gaps" 5 has the table and every hook; files in
+  `FORK-CHANGES.md`. Lever: `--no-doctrines`, which reproduces the previous build's
+  8000-tick hash to the digit.
+- **The costs wrap the curve, they do not replace it.** `unitInfo` is cached per type, so the
+  discount is a wrapper around the unit's own `cost` that reads the calling player's doctrine
+  at call time — a Fortress state's fifth post is still dearer than its first, and the
+  infinite-gold rule underneath it is untouched. The same wrapper halves a Nuclear state's
+  warhead materials.
+- **`TestConfig` flattens `attackLogic`.** The first cut of the terra-nullius and post-bonus
+  tests asserted a ratio of 0.75 against `game.config()` and got 1: the test config replaces
+  the formula with a flat one for every other suite. Those two cases build a plain `Config`.
+  And a singleplayer game ends its spawn phase on the first pick, so the suite is a Public
+  game with the phase left open — the second intent of the "re-pick keeps the doctrine" case
+  was being refused, not ignored.
+- **Every guard broken and watched fail**: the spawn stamp (two cases), the cost wrapper, the
+  blockade reach, the nation roll.
+- **The bots spread out.** Same seed, 8000 ticks: doctrines on ends with **35** alive (34
+  off), top 1 / 5 / 20 at 11.3 / 41.5 / 89.1 % (14.3 / 48.0 / 91.0 off), materials held
+  +26 %, fallout **doubled** (1 973 → 3 894 tiles) — Nuclear states with cheap silos and
+  half-price warheads use them. Survivors by doctrine: partisan 7, naval 7, nuclear 6,
+  fortress 6, industrial 3, diplomatic 3, expansionist 2, mercantile 1 — from a uniform roll,
+  so Expansionist and Mercantile nations die more; a nation does not yet _play_ its doctrine
+  (a Mercantile one builds no more ports than any other), which is the §05 7 personality work
+  and the retune's first question.
+- **Nation economy** (`NationGoldPerMinute`): trade gold +25.7 % (378.6M → 475.9M), train gold -8.5 % (108.8M → 99.6M), alive nations 30 → 23 — every nation now plays a rolled doctrine; the retune pass owns it.
+
 ### Session 11 (continued) — item 6.5: relations have rungs, and the map has a leader
 
 - **What shipped.** An alliance is now one of three rungs — non-aggression pact, defensive
@@ -663,8 +703,11 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 
 ## Next up (concrete, ordered)
 
-0. **Phase 5 continues.** 6.1, 6.2, 6.3, the nuke half of 6.4 and the tiers-and-coalitions
-   half of 6.5 are done. Next: **6.6 doctrines and stability** (§05 5–6), or the **six
+0. **Phase 5 continues.** 6.1, 6.2, 6.3, the nuke half of 6.4, the tiers-and-coalitions
+   half of 6.5 and the doctrines half of 6.6 are done. Next: **stability and partisans**
+   (§05 6 — note the enclave-absorption rule in `PlayerExecution.removeClusters`: a partisan
+   spawned inside occupied land is surrounded by definition and must be exempt from it, or it
+   vanishes on the next cluster pass), the Partisan doctrine's unlock with it, or the **six
    units** of 6.4 (`docs/MECHANICS.md` §03 7.1 has the 25-file checklist, §04 D–E the hooks;
    budget ~25 files + atlas + locale per unit, so do them one at a time with a lever each).
    Before either: a retune pass on the economy and diplomacy as a whole (upkeep
@@ -761,6 +804,28 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   remains by design.
 - The discord card on a clan overview says "invite is no longer valid" for any invite the
   browser cannot resolve against Discord's public API (offline / fake invite) — expected.
+
+## Numbers last measured — Phase 5 item 6.6, doctrines (2026-09-14, session 11)
+
+- Determinism hash at `perf:gate` (1000 ticks): `23351105707837370` → `23271086399647930` — moved,
+  as it must: nations roll a doctrine in `init` and every price and rate reads it.
+  `perf:gate` idle: **mean 3.36 ms**, p95 6.2, p99 8.37, 0 over budget.
+- `test:determinism:full`: pass 3/3 in 476 s. `npm test`: 513 files, 6254 tests —
+  `NationGoldPerMinute` regenerated alone before the suite.
+- **Bot-vs-bot** (`balance:run --ticks 8000`, world, 150 bots + nations, seed `perf-gate`):
+
+  | after 8000 ticks          | `--no-doctrines`    | doctrines on        |
+  | ------------------------- | ------------------- | ------------------- |
+  | players alive             | 34                  | 35                  |
+  | top 1 / 5 / 20 share      | 14.3 / 48.0 / 91.0  | 11.3 / 41.5 / 89.1  |
+  | materials held            | 75 962              | 95 878              |
+  | fallout tiles             | 1 973               | 3 894               |
+  | ports / factories / posts | 93 / 35 / 27        | 104 / 34 / 31       |
+  | pacts / defensive         | 44 / 7              | 52 / 6              |
+  | final hash                | `29973981493118710` | `45194573167176620` |
+
+  The off hash equals the 6.5 commit's: the lever restores the previous game exactly, PRNG
+  sequence included, because a nation only rolls with doctrines on.
 
 ## Numbers last measured — Phase 5 item 6.5, tiers + coalitions (2026-09-14, session 11)
 

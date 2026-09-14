@@ -143,6 +143,7 @@
       "climb": "Climb",
       "defense_post": "Defense post",
       "defense_post_speed": "Defense post (speed)",
+      "expansionist": "Expansionist doctrine",
       "fallout": "Fallout",
       "height": "Elevation",
       "high_ground": "High ground",
@@ -722,6 +723,27 @@
   },
   "discord_user_header": {
     "avatar_alt": "Avatar"
+  },
+  "doctrine": {
+    "diplomatic": "Diplomatic",
+    "diplomatic_desc": "Bonds you hold last half again as long; breaking one is forgiven in half the time.",
+    "expansionist": "Expansionist",
+    "expansionist_desc": "Empty land for three quarters of the price; over-extension starts 15 tiles further out.",
+    "fortress": "Fortress",
+    "fortress_desc": "Defense posts cost a quarter less and defend 30% harder.",
+    "industrial": "Industrial",
+    "industrial_desc": "Factories cost a quarter less and turn out half again as much.",
+    "mercantile": "Mercantile",
+    "mercantile_desc": "Every trade pays 15% more; ports cost a quarter less.",
+    "naval": "Naval",
+    "naval_desc": "Warships cost a quarter less and blockade half again as far.",
+    "none": "No doctrine",
+    "nuclear": "Nuclear",
+    "nuclear_desc": "Missile silos cost a quarter less; warheads need half the materials.",
+    "partisan": "Partisan",
+    "partisan_desc": "Your people take up arms 10% faster.",
+    "picked": "Doctrine: {name}",
+    "title": "Choose a doctrine"
   },
   "doomsday_clock": {
     "collapsing": "Collapsing -{rate}/s",

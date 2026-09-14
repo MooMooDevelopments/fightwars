@@ -454,6 +454,48 @@ export function nextAllianceTier(current: AllianceTier | null): AllianceTier {
     : ((current + 1) as AllianceTier);
 }
 
+/**
+ * Doctrines (brief §6.6): picked at spawn, one small passive and one unique
+ * unlock each. Instant asymmetry for the price of a switch per hook. `None`
+ * is a tribe, a player who never picked, or the lever off.
+ */
+export enum Doctrine {
+  None = 0,
+  Expansionist = 1,
+  Mercantile = 2,
+  Fortress = 3,
+  Naval = 4,
+  Nuclear = 5,
+  Diplomatic = 6,
+  Industrial = 7,
+  Partisan = 8,
+}
+
+/** The eight a player can pick, in the order the picker shows them. */
+export const DOCTRINES: readonly Doctrine[] = [
+  Doctrine.Expansionist,
+  Doctrine.Mercantile,
+  Doctrine.Fortress,
+  Doctrine.Naval,
+  Doctrine.Nuclear,
+  Doctrine.Diplomatic,
+  Doctrine.Industrial,
+  Doctrine.Partisan,
+];
+
+/** Locale-key stems per doctrine (`doctrine.<key>`, `doctrine.<key>_desc`). */
+export const DOCTRINE_KEYS: Record<Doctrine, string> = {
+  [Doctrine.None]: "none",
+  [Doctrine.Expansionist]: "expansionist",
+  [Doctrine.Mercantile]: "mercantile",
+  [Doctrine.Fortress]: "fortress",
+  [Doctrine.Naval]: "naval",
+  [Doctrine.Nuclear]: "nuclear",
+  [Doctrine.Diplomatic]: "diplomatic",
+  [Doctrine.Industrial]: "industrial",
+  [Doctrine.Partisan]: "partisan",
+};
+
 export interface AllianceRequest {
   accept(): void;
   reject(): void;
@@ -686,6 +728,9 @@ export interface Player {
   hasSpawned(): boolean;
   setSpawnTile(spawnTile: TileRef): void;
   spawnTile(): TileRef | undefined;
+  /** The doctrine picked at spawn (brief §6.6); None until then. */
+  doctrine(): Doctrine;
+  setDoctrine(doctrine: Doctrine): void;
 
   // Territory
   tiles(): ReadonlyTileSet;

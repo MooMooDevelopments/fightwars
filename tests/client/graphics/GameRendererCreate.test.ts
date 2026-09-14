@@ -36,6 +36,7 @@ const HUD_TAGS = [
   "chat-modal",
   "multi-tab-modal",
   "heads-up-message",
+  "doctrine-picker",
   "performance-overlay",
   "alert-frame",
   "spawn-timer",

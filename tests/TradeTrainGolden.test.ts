@@ -26,7 +26,10 @@ function makeConfig(gameConfig: Partial<GameConfig> = {}): Config {
 const config = makeConfig();
 
 function player(isLobbyCreator = false): Player {
-  return { isLobbyCreator: () => isLobbyCreator } as unknown as Player;
+  return {
+    isLobbyCreator: () => isLobbyCreator,
+    doctrine: () => 0,
+  } as unknown as Player;
 }
 
 const DISTANCES = [

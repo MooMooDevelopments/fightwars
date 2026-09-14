@@ -39,6 +39,7 @@ function blankExplanation(): AttackExplanation {
     falloutMod: 0,
     supplyDistance: 0,
     supplyMod: 0,
+    terraNulliusMod: 0,
     elevation: 0,
     heightMod: 0,
     climb: 0,

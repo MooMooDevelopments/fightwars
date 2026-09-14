@@ -1,5 +1,6 @@
 import { AllPlayersStats, ClientID, Winner } from "../Schemas";
 import {
+  Doctrine,
   EmojiMessage,
   GameUpdates,
   Gold,
@@ -268,6 +269,8 @@ export interface PlayerUpdate {
   materials?: Gold;
   /** Owned tiles under fallout (brief §6.4). Rare change: object lane. */
   irradiatedTiles?: number;
+  /** Doctrine picked at spawn (brief §6.6). Changes once: object lane. */
+  doctrine?: Doctrine;
   troops?: number;
   allies?: number[];
   embargoes?: Set<PlayerID>;

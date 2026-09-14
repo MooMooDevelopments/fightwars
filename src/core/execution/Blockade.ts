@@ -35,9 +35,13 @@ function computeBlockaded(game: Game): Set<number> {
   for (const warship of game.units(UnitType.Warship)) {
     if (!warship.isActive()) continue;
     const fleet = warship.owner();
+    // A Naval state's ships reach further (brief §6.6).
+    const reach = Math.floor(
+      range * game.config().doctrineBlockadeRangeScale(fleet.doctrine()),
+    );
     const ports = game.nearbyUnits(
       warship.tile(),
-      range,
+      reach,
       UnitType.Port,
       ({ unit }) => {
         const port = unit as Unit;

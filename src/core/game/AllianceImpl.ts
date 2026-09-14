@@ -15,7 +15,20 @@ export class AllianceImpl implements MutableAlliance {
     private readonly id_: number,
     private tier_: AllianceTier = AllianceTier.FullAlliance,
   ) {
-    this.expiresAt_ = createdAt_ + mg.config().allianceDuration();
+    this.expiresAt_ = createdAt_ + this.duration();
+  }
+
+  /**
+   * How long this bond runs (brief §6.6): a Diplomatic state on either side
+   * makes it last half again as long, and the longer of the two applies.
+   */
+  private duration(): Tick {
+    const config = this.mg.config();
+    const scale = Math.max(
+      config.doctrineAllianceDurationScale(this.requestor_.doctrine()),
+      config.doctrineAllianceDurationScale(this.recipient_.doctrine()),
+    );
+    return Math.floor(config.allianceDuration() * scale);
   }
 
   other(player: Player): Player {
@@ -91,7 +104,7 @@ export class AllianceImpl implements MutableAlliance {
   extend(): void {
     this.extensionRequestedRequestor_ = false;
     this.extensionRequestedRecipient_ = false;
-    this.expiresAt_ = this.mg.ticks() + this.mg.config().allianceDuration();
+    this.expiresAt_ = this.mg.ticks() + this.duration();
   }
 
   expiresAt(): Tick {
