@@ -1,6 +1,6 @@
 # FightWars Build State
 
-Last session: 2026-09-14 (session 12) | Current phase: **5 (depth, retune pass)** — 6.1 (supply lines) and 6.2 (elevation) done, **6.3 done** (upkeep, materials, blockades, embargo price; Manpower surfaced as `maxTroops`, not rebuilt), **6.4 half done** (nuke consequences; the six units not started); Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
+Last session: 2026-09-15 (session 12) | Current phase: **5 (depth) — retune pass done, the six 6.4 units in progress (Artillery built)** — 6.1 (supply lines) and 6.2 (elevation) done, **6.3 done** (upkeep, materials, blockades, embargo price; Manpower surfaced as `maxTroops`, not rebuilt), **6.4 half done** (nuke consequences; the six units not started); Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
 
 Repo: `C:\Users\disbo\dev\fightwars` · `upstream` = openfrontio/OpenFrontIO (forked at
 `c77005586`, rebased onto `7d95251f1` the same day) · `origin` = github.com/MooMooDevelopments/fightwars
@@ -27,6 +27,38 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 `npm run load:test -- --clients 150 --map world --turns 600`.
 
 ## Handoff — read this first (written 2026-09-14, session 12 in progress)
+
+### Session 12 (continued) — 6.4's first unit: Artillery
+
+- **What shipped.** `UnitType.Artillery`: a land structure that bombards the attacks crossing
+  its range — every five seconds it takes 2000 troops off the nearest attack on its owner
+  within 40 tiles. A defense post makes an attack cost more per tile; artillery makes a
+  standing attack bleed where it stands, so a front under guns is one the attacker has to
+  commit to crossing quickly or not at all. `docs/MECHANICS.md` §04 D has the whole design;
+  `FORK-CHANGES.md` the 30-odd files. Lever `--no-artillery` (nation ratio 0) reproduces the
+  upkeep commit's hash `41594670571444300` to the digit.
+- **Attacks are not units, so this is not a shell emitter.** The audit's plan was to revive
+  `DefensePostExecution`'s commented ship-targeting; `ShellExecution` homes on a `Unit`, and
+  an attack has only border tiles. The gun reads `clusteredPositions()` (one representative
+  tile per disconnected border segment) and measures to those — bounded by the owner's
+  incoming attacks, once per volley per gun. No shell is drawn for a volley; that is Phase 4
+  render work, and the hook is `ArtilleryExecution.tick`'s volley.
+- **Append, never insert, a `UnitType`.** `z.enum(UnitType)` rides the wire by member order
+  (`zbin/README.md`), so `Artillery` went on the end of the enum and of the client's
+  `ALL_UNIT_TYPES`. And the icon atlas is a pre-built PNG whose generator is not in the repo;
+  node-canvas is not built under `--ignore-scripts`, so nothing here can rasterise an SVG. The
+  gun draws with the defense post's atlas column (`StructurePass` maps it) and has its own
+  SVG everywhere the client uses an image URL; the atlas column is the Phase 4 asset pass's.
+- **The checklist held.** Five core switches enforced by the compiler (`unitInfo`,
+  `canSpawnUnitType`, the three stats switches through `satisfies`), plus the ones only a test
+  finds: `PlayerStatsTable` counts buildings, `NationStructureBehavior`'s hand-built config
+  mocks needed `artilleryNationRatio`, the tutorial's default-key table is typed from a const.
+  Four guards, four breaks (range, rate, damage, the construction gate), each failing exactly
+  its own case.
+- **Nations build them, and spend on them instead of nukes.** Same seed, 8000 ticks, off → on:
+  **40 guns**, alive 33 → 30, fallout 3523 → 0 tiles, factories 51 → 37, ports 104 → 111,
+  leader 20.3 → 19.8 %. The materials that were warheads are guns now — at 0.2 per city
+  the ratio may be high; a lower ratio or a dearer gun is the retune question this leaves.
 
 ### Session 12 — the retune pass opens: uprisings scale with the conqueror
 
@@ -949,6 +981,26 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   remains by design.
 - The discord card on a clan overview says "invite is no longer valid" for any invite the
   browser cannot resolve against Discord's public API (offline / fake invite) — expected.
+
+## Numbers last measured — Phase 5 item 6.4, Artillery (2026-09-15, session 12)
+
+- **Bot-vs-bot** (`balance:run --ticks 8000`, world, 150 bots + nations, Medium, seed `perf-gate`):
+
+  | after 8000 ticks       | `--no-artillery`    | artillery on        |
+  | ---------------------- | ------------------- | ------------------- |
+  | players alive          | 33                  | 30                  |
+  | top 1 / 5 / 20 share   | 20.3 / 50.9 / 99.5  | 19.8 / 51.1 / 97.5  |
+  | cities / ports / fact. | 172 / 104 / 51      | 172 / 111 / 37      |
+  | posts / guns           | 27 / 0              | 26 / 40             |
+  | fallout tiles          | 3523                | 0                   |
+  | materials held         | 122622              | 120561              |
+  | pacts / defensive      | 11 / 8              | 17 / 10             |
+  | uprisings              | 285 (10 alive)      | 274 (4 alive)       |
+  | final hash             | `41594670571444300` | `51679296370667120` |
+
+  The off hash equals the upkeep commit's: the lever restores that game exactly.
+
+- **Nation economy** (`NationGoldPerMinute`, impossible nations, 20 minutes): alive 21 → 24, trade gold +4.6 % (632.9M → 661.7M), train gold +13.1 % (112.4M → 127.1M), ships arrived 2875 → 2948 — three of the five nations the upkeep commit lost are standing again, behind guns.
 
 ## Numbers last measured — Phase 5 retune, arms upkeep ×2 (2026-09-15, session 12)
 

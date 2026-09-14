@@ -215,6 +215,9 @@ export enum UnitType {
   MIRVWarhead = "MIRV Warhead",
   Train = "Train",
   Factory = "Factory",
+  // Appended, never inserted: z.enum(UnitType) rides the wire by member
+  // order (zbin/README.md), and every later FightWars unit goes on the end.
+  Artillery = "Artillery",
 }
 
 export enum TrainType {
@@ -240,6 +243,7 @@ export const BuildableAttacks = unitTypeGroup([
 export const Structures = unitTypeGroup([
   UnitType.City,
   UnitType.DefensePost,
+  UnitType.Artillery,
   UnitType.SAMLauncher,
   UnitType.MissileSilo,
   UnitType.Port,
@@ -320,6 +324,8 @@ export interface UnitParamsMap {
   [UnitType.MissileSilo]: Record<string, never>;
 
   [UnitType.DefensePost]: Record<string, never>;
+
+  [UnitType.Artillery]: Record<string, never>;
 
   [UnitType.SAMLauncher]: Record<string, never>;
 

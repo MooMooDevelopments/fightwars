@@ -106,6 +106,7 @@ export class UnitImpl implements Unit {
       case UnitType.Port:
       case UnitType.MissileSilo:
       case UnitType.DefensePost:
+      case UnitType.Artillery:
       case UnitType.SAMLauncher:
       case UnitType.City:
       case UnitType.Factory:
@@ -239,6 +240,7 @@ export class UnitImpl implements Unit {
       case UnitType.Port:
       case UnitType.MissileSilo:
       case UnitType.DefensePost:
+      case UnitType.Artillery:
       case UnitType.SAMLauncher:
       case UnitType.City:
       case UnitType.Factory:
@@ -357,6 +359,7 @@ export class UnitImpl implements Unit {
           break;
         case UnitType.City:
         case UnitType.DefensePost:
+        case UnitType.Artillery:
         case UnitType.MissileSilo:
         case UnitType.Port:
         case UnitType.SAMLauncher:

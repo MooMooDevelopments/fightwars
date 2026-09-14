@@ -497,7 +497,9 @@ export class Config {
       case Doctrine.Mercantile:
         return type === UnitType.Port ? 1.5 : 1;
       case Doctrine.Fortress:
-        return type === UnitType.DefensePost ? 1.5 : 1;
+        return type === UnitType.DefensePost || type === UnitType.Artillery
+          ? 1.5
+          : 1;
       case Doctrine.Naval:
         return type === UnitType.Warship ? 2 : 1;
       case Doctrine.Nuclear:
@@ -1169,6 +1171,15 @@ export class Config {
           constructionDuration: this.instantBuild() ? 0 : 5 * 10,
         };
         break;
+      case UnitType.Artillery:
+        info = {
+          cost: this.costWrapper(
+            (numUnits: number) => Math.min(500_000, (numUnits + 1) * 100_000),
+            UnitType.Artillery,
+          ),
+          constructionDuration: this.instantBuild() ? 0 : 10 * 10,
+        };
+        break;
       case UnitType.SAMLauncher:
         info = {
           cost: this.costWrapper(
@@ -1788,6 +1799,9 @@ export class Config {
       case UnitType.DefensePost:
         base = 200n;
         break;
+      case UnitType.Artillery:
+        base = 400n;
+        break;
       case UnitType.Warship:
         base = 600n;
         break;
@@ -1858,6 +1872,9 @@ export class Config {
         break;
       case UnitType.DefensePost:
         base = 5 * this.armsUpkeepScale();
+        break;
+      case UnitType.Artillery:
+        base = 15 * this.armsUpkeepScale();
         break;
       case UnitType.SAMLauncher:
       case UnitType.MissileSilo:
@@ -2086,6 +2103,35 @@ export class Config {
   /** Trade ships a warship must capture to gain one veterancy level. */
   warshipVeterancyTradeCaptures(): number {
     return 25;
+  }
+
+  /**
+   * Artillery (brief §6.4, session 12): a gun bombards the attacks crossing
+   * its range. Tiles from the gun to the nearest border cluster of an
+   * attack on its owner.
+   */
+  artilleryRange(): number {
+    return 40;
+  }
+
+  /** Ticks between volleys: five seconds. */
+  artilleryAttackRate(): number {
+    return 50;
+  }
+
+  /** Troops one volley takes off the attack it lands on. */
+  artilleryDamage(): number {
+    return 2000;
+  }
+
+  /**
+   * How many guns a nation wants per city (the `getStructureRatios` entry).
+   * The balance lever `--no-artillery` sets it to 0, which is the game
+   * before the unit existed: nations never place one and nothing else in
+   * the build loop draws on the RNG for it.
+   */
+  artilleryNationRatio(): number {
+    return 0.2;
   }
 
   defensePostShellAttackRate(): number {

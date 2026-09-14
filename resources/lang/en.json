@@ -191,6 +191,7 @@
   },
   "build_menu": {
     "desc": {
+      "artillery": "Bombards attacks crossing its range",
       "atom_bomb": "Small explosion",
       "city": "Increases max population",
       "defense_post": "Increases defenses of nearby borders",
@@ -1081,6 +1082,7 @@
     "ally_donate": "Donate some of your troops to your ally. Used when they're low on troops and are being attacked, or when they need that extra power to crush an enemy.",
     "ally_donate_gold": "Donate some of your gold to your ally. Used when they're low on gold and need it for buildings, or when your team member is saving for that MIRV.",
     "bomb_direction": "Atom / Hydrogen bomb arc direction",
+    "build_artillery_desc": "Every five seconds, takes troops off the nearest enemy attack within 40 tiles of the gun. An attack standing under artillery bleeds whether it advances or not.",
     "build_atom_desc": "Small explosive bomb that destroys territory, buildings, ships and boats. Spawns from the nearest Missile Silo and lands in the area you first clicked to build it.",
     "build_city_desc": "Increases your max population. Useful when you can't expand your territory or you're about to hit your population limit.",
     "build_defense_desc": "Increases defenses around nearby borders, which show a checkered pattern. Attacks from enemies are slower and have more casualties.",
@@ -2121,6 +2123,7 @@
     "title": "Tutorial"
   },
   "unit_type": {
+    "artillery": "Artillery",
     "atom_bomb": "Atom Bomb",
     "boat": "Boat",
     "city": "City",
@@ -2181,6 +2184,8 @@
     "box_select_warships_desc": "Hold this key and drag to select multiple warships.",
     "break_alliance": "Break Alliance (Betray)",
     "break_alliance_desc": "Break alliance with the player whose tile is under your cursor.",
+    "build_artillery": "Build Artillery",
+    "build_artillery_desc": "Build Artillery under your cursor.",
     "build_atom_bomb": "Build Atom Bomb",
     "build_atom_bomb_desc": "Build an Atom Bomb under your cursor.",
     "build_city": "Build City",

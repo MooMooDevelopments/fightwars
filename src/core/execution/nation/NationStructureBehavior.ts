@@ -45,6 +45,7 @@ const SAM_RATIO_BY_DIFFICULTY: Record<Difficulty, number> = {
  */
 function getStructureRatios(
   difficulty: Difficulty,
+  artilleryRatio: number,
 ): Partial<Record<UnitType, StructureRatioConfig>> {
   return {
     [UnitType.Port]: { ratioPerCity: 0.75, perceivedCostIncreasePerOwned: 1 },
@@ -55,6 +56,10 @@ function getStructureRatios(
     [UnitType.SAMLauncher]: {
       ratioPerCity: SAM_RATIO_BY_DIFFICULTY[difficulty],
       perceivedCostIncreasePerOwned: 0.3,
+    },
+    [UnitType.Artillery]: {
+      ratioPerCity: artilleryRatio,
+      perceivedCostIncreasePerOwned: 0.5,
     },
     [UnitType.MissileSilo]: {
       ratioPerCity: 0.2,
@@ -505,6 +510,7 @@ export class NationStructureBehavior {
       UnitType.Factory,
       UnitType.SAMLauncher,
       UnitType.MissileSilo,
+      UnitType.Artillery,
     ];
 
     const nukesEnabled =
@@ -579,7 +585,10 @@ export class NationStructureBehavior {
   ): boolean {
     const gameConfig = this.game.config();
     const { difficulty } = gameConfig.gameConfig();
-    const ratios = getStructureRatios(difficulty);
+    const ratios = getStructureRatios(
+      difficulty,
+      gameConfig.artilleryNationRatio(),
+    );
     const config = ratios[type];
     if (config === undefined) {
       return false;
@@ -678,7 +687,10 @@ export class NationStructureBehavior {
       increasePerOwned = CITY_PERCEIVED_COST_INCREASE_PER_OWNED;
     } else {
       const { difficulty } = this.game.config().gameConfig();
-      const ratios = getStructureRatios(difficulty);
+      const ratios = getStructureRatios(
+        difficulty,
+        this.game.config().artilleryNationRatio(),
+      );
       const config = ratios[type];
       increasePerOwned = config?.perceivedCostIncreasePerOwned ?? 0.1;
     }
@@ -926,9 +938,48 @@ export class NationStructureBehavior {
         return this.portValue();
       case UnitType.SAMLauncher:
         return this.samLauncherValue();
+      case UnitType.Artillery:
+        return this.artilleryValue();
       default:
         throw new Error(`Value function not implemented for ${type}`);
     }
+  }
+
+  /**
+   * Value function for artillery (brief §6.4, session 12). The opposite of a
+   * silo's: a gun wants the border within its range, high ground, and room
+   * from other guns.
+   */
+  private artilleryValue(): (tile: TileRef) => number {
+    const game = this.game;
+    const borderTiles = this.player.borderTiles();
+    const otherUnits = this.player.units(UnitType.Artillery);
+    const { borderSpacing, structureSpacing } = this.spacingConstants();
+    const range = game.config().artilleryRange();
+
+    return (tile) => {
+      let w = 0;
+
+      // Prefer higher ground.
+      w += game.magnitude(tile);
+
+      // Prefer the border in range, but not on it: best at half the range.
+      const closestBorderDist = nearestTileDistCapped(
+        game,
+        borderTiles,
+        tile,
+        borderSpacing,
+      );
+      w += borderSpacing - Math.abs(closestBorderDist - range / 2);
+
+      // Prefer to be away from other guns.
+      const otherTiles: Set<TileRef> = new Set(otherUnits.map((u) => u.tile()));
+      otherTiles.delete(tile);
+      const d = nearestTileDist(game, otherTiles, tile);
+      if (d !== Infinity) w += Math.min(d, structureSpacing);
+
+      return w;
+    };
   }
 
   /**

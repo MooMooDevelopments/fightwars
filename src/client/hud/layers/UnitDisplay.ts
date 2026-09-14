@@ -15,6 +15,7 @@ import { UIState } from "../../UIState";
 import { renderNumber, translateText } from "../../Utils";
 import { GameView } from "../../view";
 import {
+  artilleryIcon,
   atomBombIcon,
   cityIcon,
   defensePostIcon,
@@ -42,6 +43,7 @@ export class UnitDisplay extends LitElement implements Controller {
   private _missileSilo = 0;
   private _port = 0;
   private _defensePost = 0;
+  private _artillery = 0;
   private _samLauncher = 0;
   private allDisabled = false;
   private _hoveredUnit: PlayerBuildableUnitType | null = null;
@@ -120,6 +122,7 @@ export class UnitDisplay extends LitElement implements Controller {
     this._missileSilo = player.totalUnitLevels(UnitType.MissileSilo);
     this._port = player.totalUnitLevels(UnitType.Port);
     this._defensePost = player.totalUnitLevels(UnitType.DefensePost);
+    this._artillery = player.totalUnitLevels(UnitType.Artillery);
     this._samLauncher = player.totalUnitLevels(UnitType.SAMLauncher);
     this._factories = player.totalUnitLevels(UnitType.Factory);
     this._warships = player.totalUnitLevels(UnitType.Warship);
@@ -170,6 +173,13 @@ export class UnitDisplay extends LitElement implements Controller {
             UnitType.DefensePost,
             "defense_post",
             this.keybinds["buildDefensePost"]?.key ?? "4",
+          )}
+          ${this.renderUnitItem(
+            artilleryIcon,
+            this._artillery,
+            UnitType.Artillery,
+            "artillery",
+            this.keybinds["buildArtillery"]?.key ?? "J",
           )}
           ${this.renderUnitItem(
             missileSiloIcon,

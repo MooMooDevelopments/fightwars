@@ -370,6 +370,10 @@
       "radius": 18,
       "intensity": 1.2
     },
+    "Artillery": {
+      "radius": 18,
+      "intensity": 1.2
+    },
     "SAM Launcher": {
       "radius": 18,
       "intensity": 1.2

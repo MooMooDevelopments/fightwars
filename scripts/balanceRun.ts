@@ -22,6 +22,7 @@
  *                                      [--no-unrest] [--flat-unrest]
  *                                      [--pacts-count] [--no-doctrine-play]
  *                                      [--cheap-materials] [--cheap-arms-upkeep]
+ *                                      [--no-artillery]
  *
  * `--no-supply` turns the supply penalty and its attrition off, and
  * `--flat-terrain` turns the elevation curves off (the band table stays),
@@ -88,6 +89,13 @@ class FlatAlliances extends Config {
 class NoUnrest extends Config {
   unrestEnabled(): boolean {
     return false;
+  }
+}
+
+/** The same game with no nation ever placing artillery: the game before the unit. */
+class NoArtillery extends Config {
+  artilleryNationRatio(): number {
+    return 0;
   }
 }
 
@@ -242,6 +250,7 @@ async function main(): Promise<void> {
   const noDoctrinePlay = process.argv.includes("--no-doctrine-play");
   const cheapMaterials = process.argv.includes("--cheap-materials");
   const cheapArmsUpkeep = process.argv.includes("--cheap-arms-upkeep");
+  const noArtillery = process.argv.includes("--no-artillery");
   if (
     [
       noSupply,
@@ -260,13 +269,14 @@ async function main(): Promise<void> {
       noDoctrinePlay,
       cheapMaterials,
       cheapArmsUpkeep,
+      noArtillery,
     ].filter(Boolean).length > 1
   ) {
     throw new Error("one lever at a time");
   }
   console.debug = () => {};
   console.log(
-    `[balance] map=${map} difficulty=${Difficulty[difficulty]} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}${noUpkeep ? " upkeep=off" : ""}${noMaterials ? " materials=off" : ""}${noBlockades ? " blockades=off" : ""}${noEmbargoPrice ? " embargo-price=off" : ""}${legacyFallout ? " fallout=legacy" : ""}${flatAlliances ? " alliances=flat" : ""}${noCoalition ? " coalition=off" : ""}${noDoctrines ? " doctrines=off" : ""}${noUnrest ? " unrest=off" : ""}${flatUnrest ? " unrest=flat" : ""}${pactsCount ? " alliance-cap=counts-pacts" : ""}${noDoctrinePlay ? " doctrine-play=off" : ""}${cheapMaterials ? " materials=cheap" : ""}${cheapArmsUpkeep ? " arms-upkeep=cheap" : ""}\n`,
+    `[balance] map=${map} difficulty=${Difficulty[difficulty]} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}${noUpkeep ? " upkeep=off" : ""}${noMaterials ? " materials=off" : ""}${noBlockades ? " blockades=off" : ""}${noEmbargoPrice ? " embargo-price=off" : ""}${legacyFallout ? " fallout=legacy" : ""}${flatAlliances ? " alliances=flat" : ""}${noCoalition ? " coalition=off" : ""}${noDoctrines ? " doctrines=off" : ""}${noUnrest ? " unrest=off" : ""}${flatUnrest ? " unrest=flat" : ""}${pactsCount ? " alliance-cap=counts-pacts" : ""}${noDoctrinePlay ? " doctrine-play=off" : ""}${cheapMaterials ? " materials=cheap" : ""}${cheapArmsUpkeep ? " arms-upkeep=cheap" : ""}${noArtillery ? " artillery=off" : ""}\n`,
   );
 
   const gameConfig: GameConfig = {
@@ -323,7 +333,9 @@ async function main(): Promise<void> {
                                 ? new CheapMaterials(gameConfig, null, false)
                                 : cheapArmsUpkeep
                                   ? new CheapArmsUpkeep(gameConfig, null, false)
-                                  : new Config(gameConfig, null, false);
+                                  : noArtillery
+                                    ? new NoArtillery(gameConfig, null, false)
+                                    : new Config(gameConfig, null, false);
   const mapLoader = new NodeGameMapLoader(
     path.join(PROJECT_ROOT, "resources/maps"),
   );
@@ -418,7 +430,7 @@ async function main(): Promise<void> {
   console.log(
     `Structures:     ${countOf(UnitType.City)} cities, ` +
       `${countOf(UnitType.Port)} ports, ${countOf(UnitType.Factory)} factories, ` +
-      `${countOf(UnitType.DefensePost)} posts`,
+      `${countOf(UnitType.DefensePost)} posts, ${countOf(UnitType.Artillery)} guns`,
   );
   const tiers = [0, 0, 0, 0];
   for (const p of alive) for (const a of p.alliances()) tiers[a.tier()]++;

@@ -52,6 +52,10 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   five minutes; hold enough of one people's land without a defense post over it and their
   partisans rise on your own ground — and you cannot absorb them, only fight them. Their
   people, returning, walk right in.
+- **Artillery.** A new structure: build it behind a front and every five seconds it takes
+  two thousand troops off the nearest enemy attack within forty tiles. A defence post makes
+  an attack cost more per tile; artillery makes an attack bleed where it stands. Hotkey J.
+  Costs materials and upkeep like the rest of the arsenal; nations build them too.
 - **Retune: an army costs twice as much to keep.** Defence posts, SAMs, silos and warships
   now cost double the gold per second to hold. Cities, ports and factories are unchanged:
   the bill is for the arsenal, not the country.

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="#ffffff">
+  <!-- FightWars artillery: a barrel on a carriage, drawn to read at 16 px -->
+  <path d="M10 34 L44 12 a5 5 0 0 1 6 8 L20 42 z"/>
+  <circle cx="22" cy="46" r="9"/>
+  <circle cx="22" cy="46" r="3.5" fill="#000000" opacity="0.35"/>
+  <path d="M28 44 L52 44 a3 3 0 0 1 0 6 L30 50 z"/>
+  <rect x="6" y="50" width="52" height="5" rx="2.5"/>
+</svg>

@@ -16,6 +16,7 @@
 
 import type { GhostPreviewData, RendererConfig, UnitState } from "../../types";
 import {
+  UT_ARTILLERY,
   UT_CITY,
   UT_DEFENSE_POST,
   UT_FACTORY,
@@ -149,6 +150,14 @@ export class StructurePass {
         this.typeToAtlasCol.set(header.unitTypes[i], col);
       }
     }
+    // Artillery (FightWars, session 12) has no column of its own yet: the
+    // icon atlas is a pre-built PNG whose generator is not in the repo and
+    // this box cannot rasterise an SVG, so a gun draws with the defense
+    // post's glyph until the Phase 4 asset pass regenerates the atlas.
+    this.typeToAtlasCol.set(
+      UT_ARTILLERY,
+      STRUCTURE_ORDER.indexOf(UT_DEFENSE_POST),
+    );
 
     // Compile shaders
     this.program = createProgram(

@@ -915,3 +915,49 @@ cannot absorb as an enclave. `docs/MECHANICS.md` §05 "Gaps" 6.
   a queue entry must carry the tile's current settle tick or a re-taken tile settles early,
   and `PlayerExecution`'s cluster pass is staggered — an enclave is checked only after a tile
   change later than its last check, so the test takes one more tile after the first pass.
+
+### Artillery (brief §6.4, session 12)
+
+A land structure that bombards the attacks crossing its range: every five seconds it takes
+2000 troops off the nearest attack on its owner within 40 tiles. `docs/MECHANICS.md` §04 D.
+
+#### Shared upstream files edited
+
+- `src/core/game/Game.ts` — `UnitType.Artillery` (appended last: the enum rides the wire by
+  member order), in `Structures`; `UnitParamsMap` entry.
+- `src/core/configuration/Config.ts` — `unitInfo` case (cost curve, 10 s), materials 400 base,
+  upkeep 15 base; `artilleryRange` / `artilleryAttackRate` / `artilleryDamage` /
+  `artilleryNationRatio`; the Fortress build scale covers it.
+- `src/core/game/PlayerImpl.ts` — `canSpawnUnitType`: land-based structure spawn.
+- `src/core/execution/ConstructionExecution.ts` — completes into `ArtilleryExecution`;
+  `isStructure`.
+- `src/core/game/UnitImpl.ts`, `src/core/StatsSchemas.ts` — the three stats switches; `arty`.
+- `src/core/execution/nation/NationStructureBehavior.ts` — `getStructureRatios` takes the
+  artillery ratio from `Config`; build order; `artilleryValue()` placement.
+- `src/client/render/types/UnitType.ts`, `src/client/render/types/index.ts`,
+  `src/client/render/gl/passes/StructurePass.ts`, `src/client/render/gl/render-settings.json`
+  — `UT_ARTILLERY` (appended to `ALL_UNIT_TYPES`), drawn with the defense post's atlas column
+  until the atlas is regenerated, a point light.
+- `src/client/hud/HotbarIcons.ts`, `src/client/hud/layers/BuildMenu.ts`,
+  `src/client/hud/layers/UnitDisplay.ts`, `src/client/InputHandler.ts`,
+  `src/core/game/UserSettings.ts` (`buildArtillery: KeyJ`), `src/client/UserSettingModal.ts`,
+  `src/client/hud/Tutorial.ts`, `src/client/hud/layers/TutorialPanel.ts`,
+  `src/client/components/GameConfigSettings.ts`,
+  `src/client/controllers/BuildPreviewController.ts` (range ghost),
+  `src/client/controllers/SoundEffectController.ts` (the post's build sound),
+  `src/client/HelpModal.ts`, `src/client/components/baseComponents/stats/PlayerStatsTable.ts`.
+- `resources/lang/en.json` — `build_menu.desc.artillery`, `unit_type.artillery`,
+  `help_modal.build_artillery_desc`, `user_setting.build_artillery(_desc)`.
+- `scripts/balanceRun.ts` — `--no-artillery`, and guns in the structures line.
+- Fixtures: the crowded-map config mocks in `tests/NationStructureBehavior.test.ts` gained
+  `artilleryNationRatio`; `tests/client/PlayerStatsTable.test.ts` counts seven buildings.
+
+#### FightWars-only files added
+
+- `src/core/execution/ArtilleryExecution.ts` — the gun.
+- `resources/images/ArtilleryIconWhite.svg` — the hotbar / build-menu / help icon.
+- `tests/Artillery.test.ts` — the unit (a land structure with a materials price, upkeep and a
+  stats key; what a Fortress nation builds more of) and the gun (one volley off the nearest
+  attack in range, once per rate; out of range untouched; nothing under construction;
+  never below zero, and an attack shelled to nothing ends). Four breaks — range, rate,
+  damage, the construction gate — each caught by the case that names it.

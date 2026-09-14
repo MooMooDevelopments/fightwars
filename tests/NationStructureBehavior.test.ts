@@ -909,6 +909,7 @@ describe("NationStructureBehavior.doHandleStructures — crowded-map exception",
         }),
         startingGold: () => 0n,
         doctrineNationBuildScale: () => 1,
+        artilleryNationRatio: () => 0,
       }),
       sharedWaterComponents: () => null, // landlocked -> Factory preferred
       nations: () => Array(400).fill({}),
@@ -955,6 +956,7 @@ describe("NationStructureBehavior.doHandleStructures — crowded-map exception",
       gameConfig: () => ({ difficulty: Difficulty.Impossible }),
       startingGold: () => 10_000_000n, // above HIGH_STARTING_GOLD_THRESHOLD
       doctrineNationBuildScale: () => 1,
+      artilleryNationRatio: () => 0,
     });
     const behavior = makeBehavior(game, makeCrowdedPlayer());
     const spy = vi
