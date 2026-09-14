@@ -52,6 +52,9 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   five minutes; hold enough of one people's land without a defense post over it and their
   partisans rise on your own ground — and you cannot absorb them, only fight them. Their
   people, returning, walk right in.
+- **Retune: an army costs twice as much to keep.** Defence posts, SAMs, silos and warships
+  now cost double the gold per second to hold. Cities, ports and factories are unchanged:
+  the bill is for the arsenal, not the country.
 - **Retune: arms cost twice the materials.** Defence posts, warships, SAMs, silos and nukes
   need double the materials they did, so a factory line is a real choice against a city
   line. You still start with enough for one defence post.

@@ -140,20 +140,41 @@ describe("upkeep", () => {
 
   it("keeps foreclosing, dearest first, until the bill fits the income", async () => {
     await boot(0);
-    // Three warships and a city: 130/tick against a human's 100. Each grace
-    // period takes the dearest unit; once the warships are gone the city's
-    // 10 is affordable and the foreclosures stop.
+    // Three warships (80 each since the session-12 retune) and a city:
+    // 250/tick against a human's 100. Each grace period takes the dearest
+    // unit: 250 -> 170 -> 90, and 90 fits.
     const city = player.buildUnit(UnitType.City, game.ref(15, 15), {});
     for (let i = 0; i < 3; i++) {
       player.buildUnit(UnitType.Warship, game.ref(0, i), { patrolTile: 0 });
     }
     const grace = game.config().upkeepGraceTicks();
-    // One foreclosure takes a warship and the bill drops to 90, which 100 of
-    // income covers: the clock resets and nothing else is lost, however long
-    // the game runs on.
-    for (let i = 0; i < grace * 3; i++) game.executeNextTick();
-    expect(player.units(UnitType.Warship).length).toBe(2);
+    // Two foreclosures take two warships and the bill drops to 90, which
+    // 100 of income covers: the clock resets and nothing else is lost,
+    // however long the game runs on.
+    for (let i = 0; i < grace * 4; i++) game.executeNextTick();
+    expect(player.units(UnitType.Warship).length).toBe(1);
     expect(city.isActive()).toBe(true);
     expect(player.gold()).toBeGreaterThan(0n);
+  });
+});
+
+// Session-12 retune: the arms rows of the table carry armsUpkeepScale() = 2;
+// the economy rows do not.
+describe("arms upkeep scale", () => {
+  it("doubles posts, SAMs, silos and warships and leaves cities, ports and factories alone", () => {
+    const config = game.config();
+    const at = (type: UnitType) => config.unitUpkeep(type, player);
+    expect(at(UnitType.DefensePost)).toBe(10n);
+    expect(at(UnitType.MissileSilo)).toBe(50n);
+    expect(at(UnitType.SAMLauncher)).toBe(50n);
+    expect(at(UnitType.Warship)).toBe(80n);
+    expect(at(UnitType.City)).toBe(10n);
+    expect(at(UnitType.Port)).toBe(10n);
+    expect(at(UnitType.Factory)).toBe(15n);
+    vi.spyOn(config, "armsUpkeepScale").mockReturnValue(1);
+    expect(at(UnitType.Warship)).toBe(40n);
+    expect(at(UnitType.DefensePost)).toBe(5n);
+    expect(at(UnitType.City)).toBe(10n);
+    vi.restoreAllMocks();
   });
 });

@@ -1857,19 +1857,33 @@ export class Config {
         base = 15;
         break;
       case UnitType.DefensePost:
-        base = 5;
+        base = 5 * this.armsUpkeepScale();
         break;
       case UnitType.SAMLauncher:
       case UnitType.MissileSilo:
-        base = 25;
+        base = 25 * this.armsUpkeepScale();
         break;
       case UnitType.Warship:
-        base = 40;
+        base = 40 * this.armsUpkeepScale();
         break;
       default:
         return 0n;
     }
     return BigInt(Math.floor(base * this.goldMultiplierFor(player)));
+  }
+
+  /**
+   * The arms rows of the upkeep table (posts, SAMs, silos, warships) times
+   * this — session-12 retune. At the first-cut rates upkeep was a pressure
+   * and not a wall: against a nation's trade-and-train income at scale it
+   * never bit. A standing army now costs a real share of a treasury to keep
+   * (a warship 80/tick, a silo 50), while the economy rows stay where a
+   * five-city, three-port human still pays 95 of 100 — the wall is for the
+   * arsenal, not the country. The balance lever `--cheap-arms-upkeep`
+   * restores 1.
+   */
+  armsUpkeepScale(): number {
+    return 2;
   }
 
   /**

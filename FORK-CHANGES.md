@@ -612,7 +612,7 @@ exempt. Description and table: `docs/MECHANICS.md` §01 "Upkeep".
 
 #### Shared upstream files edited
 
-- `src/core/configuration/Config.ts` — `unitUpkeep(type, player)` (the table, scaled by the lobby
+- `src/core/configuration/Config.ts` — `unitUpkeep(type, player)` (the table — session 12: arms rows × `armsUpkeepScale()` = 2 — scaled by the lobby
   gold multiplier like income), `upkeepDue(player)`, `upkeepGraceTicks()` = 300.
 - `src/core/execution/PlayerExecution.ts` — the charge, the "no recruits while short" rule (troop
   growth now happens after upkeep, and only on a paid tick), `unpaidUpkeepTicks`, and

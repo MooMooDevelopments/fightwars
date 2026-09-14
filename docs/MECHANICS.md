@@ -845,14 +845,16 @@ trainSpawnRate(numPlayerFactories, numTrainUnits) { const rate = (numPlayerFacto
 
 **Per tick, per level, per active built unit** (× the lobby's gold multiplier, like income):
 
-| Unit                     | Upkeep |
-| ------------------------ | ------ |
-| City, Port               | 10     |
-| Factory                  | 15     |
-| DefensePost              | 5      |
-| SAMLauncher, MissileSilo | 25     |
-| Warship                  | 40     |
-| everything else          | 0      |
+| Unit                     | Upkeep                        |
+| ------------------------ | ----------------------------- |
+| City, Port               | 10                            |
+| Factory                  | 15                            |
+| DefensePost              | 5 × `armsUpkeepScale()` = 10  |
+| SAMLauncher, MissileSilo | 25 × `armsUpkeepScale()` = 50 |
+| Warship                  | 40 × `armsUpkeepScale()` = 80 |
+| everything else          | 0                             |
+
+The arms rows carry `armsUpkeepScale()` = 2 since the session-12 retune: at ×1 upkeep was a pressure and not a wall (session 11's A/B moved three cities and six posts), so a standing army now costs a real share of a treasury to keep while the economy rows stay where they were. Lever `--cheap-arms-upkeep` restores ×1.
 
 Against a human's 100/tick of worker income, five cities, three ports and a factory pay 95 back before trade — enough to make the next city a decision rather than a reflex. Under construction pays nothing (`isUnderConstruction()`), so a half-built silo is not a bill.
 

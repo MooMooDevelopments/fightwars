@@ -104,6 +104,23 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   spend it on (no silo, no coast). Fallout 0 at 8000 ticks is one seed's story — a 3000-material
   atom bomb is a hundred seconds of one factory.
 
+- **Fifth lever: an army costs twice as much to keep.** Session 11 left upkeep "a pressure,
+  not a wall" on purpose, to be retuned once 6.3 was whole. The arms rows of `unitUpkeep`
+  (post, SAM, silo, warship) now carry `armsUpkeepScale()` = 2 — a warship 80/tick, a silo
+  50 — and the economy rows stay where a five-city, three-port human still pays 95 of 100:
+  the wall is for the arsenal, not the country. Lever `--cheap-arms-upkeep` reproduces the
+  materials commit's hash `44792639413653100` to the digit. The foreclosure test's arithmetic
+  was rewritten before its assertion (250 → 170 → 90 against 100, so two warships go, not
+  one), and the table guard fails with the scale put back to 1 — as does that test, which is
+  the point of writing the arithmetic down.
+- **Two seeds, no verdict on the leader, a verdict on the arsenal.** ×1 → ×2, seed
+  `perf-gate`: top-1 13.3 → 20.3 %, posts 31 → 27, warships 8 → 10, fallout 0 → 3523;
+  seed `retune-2`: top-1 13.9 → 11.4 %, posts 33 → 37, warships 11 → 15, fallout 0 → 1902,
+  alive 38 → 35. The leader share swings seven points each way, which is what one seed is
+  worth at this horizon (the doctrine-play A/B swung as far). What both seeds agree on:
+  nations still build the arsenal at twice the rent, and cities go up (158 → 172, 173 → 178)
+  — the bill is paid out of growth, which is where it should come from.
+
 - **Three shares measured, one chosen.** Same seed, 8000 ticks: flat / 5 % / 10 % gave 507 /
   342 / 269 uprisings, leader share 12.7 / 13.2 / 11.3 %, top-20 96.2 / 96.1 / 91.8 %, alive
   37 / 33 / 34. Occupied tiles barely move (327k / 352k / 333k) because that number is
@@ -932,6 +949,25 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   remains by design.
 - The discord card on a clan overview says "invite is no longer valid" for any invite the
   browser cannot resolve against Discord's public API (offline / fake invite) — expected.
+
+## Numbers last measured — Phase 5 retune, arms upkeep ×2 (2026-09-15, session 12)
+
+- **Bot-vs-bot** (`balance:run --ticks 8000`, world, 150 bots + nations, Medium):
+
+  | after 8000 ticks       | seed `perf-gate` ×1 | ×2                  | seed `retune-2` ×1  | ×2                  |
+  | ---------------------- | ------------------- | ------------------- | ------------------- | ------------------- |
+  | players alive          | 33                  | 33                  | 38                  | 35                  |
+  | top 1 / 5 / 20 share   | 13.3 / 50.6 / 95.6  | 20.3 / 50.9 / 99.5  | 13.9 / 43.4 / 91.5  | 11.4 / 43.7 / 91.5  |
+  | cities / ports / fact. | 158 / 100 / 46      | 172 / 104 / 51      | 173 / 119 / 43      | 178 / 109 / 42      |
+  | posts / warships       | 31 / 8              | 27 / 10             | 33 / 11             | 37 / 15             |
+  | fallout tiles          | 0                   | 3523                | 0                   | 1902                |
+  | pacts / defensive      | 40 / 10             | 11 / 8              | 51 / 8              | 44 / 11             |
+  | uprisings              | 264 (2 alive)       | 285 (10 alive)      | 293 (6 alive)       | 298 (2 alive)       |
+  | final hash             | `44792639413653100` | `41594670571444300` | `49937020157577090` | `52556608536748910` |
+
+  The `perf-gate` ×1 hash equals the materials commit's: the lever restores that game exactly.
+
+- **Nation economy** (`NationGoldPerMinute`, impossible nations, 20 minutes): alive **26 → 21**, trade gold +10.5 % (572.7M → 632.9M), train gold −11.2 % (126.6M → 112.4M), ships arrived 2693 → 2875. Five fewer nations standing on Impossible, where every nation arms; the run has swung 23 → 26 → 25 → 26 → 21 across the five retune commits, so this is inside what one 20-minute game has moved on before — but it is the number to re-read when the six units land, since each of them is a new line on this bill.
 
 ## Numbers last measured — Phase 5 retune, arms cost twice the materials (2026-09-15, session 12)
 
