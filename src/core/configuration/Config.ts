@@ -1499,6 +1499,25 @@ export class Config {
     return this._gameConfig.capitalStrike ?? false;
   }
 
+  /**
+   * King of the Hill (brief §6.7). The hill is a circle of land on the
+   * map's centre (moved to the nearest land when the centre is water).
+   * Once a second the player — or, in a team game, the team — holding the
+   * most of it scores a point, and the first to the target wins. Nobody
+   * scores a tie or an empty hill.
+   */
+  kingOfTheHill(): boolean {
+    return this._gameConfig.kingOfTheHill ?? false;
+  }
+  /** The hill's radius as a share (percent) of the map's shorter side. */
+  hillRadiusPercent(): number {
+    return 6;
+  }
+  /** Seconds of holding the hill, cumulative, that win the game. */
+  hillSecondsToWin(): number {
+    return 5 * 60;
+  }
+
   numSpawnPhaseTurns(): number {
     if (this._gameConfig.gameType === GameType.Singleplayer) {
       return 100;

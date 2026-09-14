@@ -40,6 +40,18 @@ describe("MapPlaylist modes", () => {
     );
   });
 
+  it("King of the Hill reaches the config and the lobby card", async () => {
+    const config = await specialWith({ isKingOfTheHill: true });
+    expect(config.kingOfTheHill).toBe(true);
+    expect(config.battleRoyale).toBeUndefined();
+    expect(config.publicGameModifiers?.isKingOfTheHill).toBe(true);
+    expect(GameConfigSchema.safeParse(config).success).toBe(true);
+    const badges = getActiveModifiers(config.publicGameModifiers ?? {});
+    expect(badges.map((b) => b.badgeKey)).toContain(
+      "public_game_modifier.king_of_the_hill",
+    );
+  });
+
   it("a special game without either carries neither", async () => {
     const config = await specialWith({ isRandomSpawn: true });
     expect(config.battleRoyale).toBeUndefined();
@@ -58,6 +70,7 @@ describe("MapPlaylist modes", () => {
     const playlist = new MapPlaylist() as any;
     let royale = 0;
     let strike = 0;
+    let hill = 0;
     for (let i = 0; i < 600; i++) {
       const mods = playlist.getRandomSpecialGameModifiers([], 3);
       if (mods.isBattleRoyale) {
@@ -66,8 +79,14 @@ describe("MapPlaylist modes", () => {
         expect(mods.isBlitz).toBeUndefined();
       }
       if (mods.isCapitalStrike) strike++;
+      if (mods.isKingOfTheHill) {
+        hill++;
+        expect(mods.isDoomsdayClock).toBeUndefined();
+        expect(mods.isBattleRoyale).toBeUndefined();
+      }
     }
     expect(royale).toBeGreaterThan(0);
     expect(strike).toBeGreaterThan(0);
+    expect(hill).toBeGreaterThan(0);
   });
 });

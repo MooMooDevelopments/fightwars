@@ -79,6 +79,40 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — King of the Hill, hold the middle
+
+- **What shipped.** `KingOfTheHillExecution`: the hill is every land tile within six
+  percent of the shorter side of the map's centre, moved ring by ring to the nearest land
+  when the centre is water so every map has one. Once a second the owner with the most of
+  it — a player in FFA, a team in a team game — scores a point; a tie or an empty hill
+  scores nobody; the first to five minutes, cumulative, wins through the same `setWinner`
+  the land win uses, so records, ratings and the post-match screen see an ordinary win.
+  The standing is posted to the feed every thirty seconds. `GameConfig.kingOfTheHill`
+  appended, a lobby toggle, `isKingOfTheHill` in the rotation (three tickets, never with
+  the doomsday clock or Battle Royale) with a badge, `balance:run --king-of-the-hill`.
+- **A/B, 8000 ticks (the off arm reproduces the Capital Strike commit's hash):**
+
+  | metric (World, Medium, 150 bots, seed `perf-gate`) | off                                               | `--king-of-the-hill`                                                  |
+  | -------------------------------------------------- | ------------------------------------------------- | --------------------------------------------------------------------- |
+  | winner by 8000                                     | none yet                                          | DR Congo, on the hill (the centre of the world map is central Africa) |
+  | alive at 8000                                      | 25                                                | 22                                                                    |
+  | top-1 / top-5 share                                | 13.9 % / 53.1 %                                   | 19.9 % / 63.3 %                                                       |
+  | uprisings (alive)                                  | 261 (1)                                           | 262 (0)                                                               |
+  | final hash                                         | `44138072306226350` (the Capital Strike commit's) | `40177875890187300`                                                   |
+
+  Read: the win lands inside 800 game seconds because a nation that spawned on the hill
+  keeps it — nobody contests the middle on purpose, so the mode is decided by the spawn
+  until nations learn to want the hill. Everything after the win is the sim running past
+  a declared winner (nations stop attacking once one is set), which is why the arms
+  differ beyond the hill. The balance report now prints the winner, for every mode.
+
+- **Guards broken and watched fail:** a tie scoring the first counted, no winner at the
+  target, water counted as hill, the score not kept.
+- **Not done:** the hill drawn on the map and a score readout in the HUD — the feed is the
+  only tell, every thirty seconds — and nations that contest the hill on purpose. Three
+  modes now share the same gap: nothing draws Battle Royale's ring, the hill, or a capital.
+  One zone layer in the renderer closes all three; it is the next UI item in §5.
+
 ### Session 13 — Capital Strike, the nation collapses into rebels
 
 - **What shipped.** `CapitalStrikeExecution`: a nation's capital is its spawn tile — the

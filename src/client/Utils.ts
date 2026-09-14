@@ -223,6 +223,12 @@ export function getActiveModifiers(
       badgeKey: "public_game_modifier.capital_strike",
     });
   }
+  if (modifiers.isKingOfTheHill) {
+    result.push({
+      labelKey: "game_settings.king_of_the_hill",
+      badgeKey: "public_game_modifier.king_of_the_hill",
+    });
+  }
   if (modifiers.isBlitz) {
     result.push({
       labelKey: "public_game_modifier.blitz_label",
@@ -720,6 +726,7 @@ export function getMessageTypeClasses(type: MessageType): string {
     case MessageType.PARTISANS_RISE:
     case MessageType.BATTLE_ROYALE_SHRINK:
     case MessageType.CAPITAL_FELL:
+    case MessageType.HILL_STANDING:
       return severityColors["warn"];
     case MessageType.CHAT:
     case MessageType.ALLIANCE_REQUEST:

@@ -75,7 +75,8 @@ type ModifierKey =
   | "isDoomsdayClock"
   | "isBlitz"
   | "isBattleRoyale"
-  | "isCapitalStrike";
+  | "isCapitalStrike"
+  | "isKingOfTheHill";
 
 /**
  * Blitz (brief §6.7): a compact map at 4x speed for five minutes of wall
@@ -106,6 +107,7 @@ const SPECIAL_MODIFIER_POOL: ModifierKey[] = [
   ...Array<ModifierKey>(4).fill("isBlitz"),
   ...Array<ModifierKey>(3).fill("isBattleRoyale"),
   ...Array<ModifierKey>(3).fill("isCapitalStrike"),
+  ...Array<ModifierKey>(3).fill("isKingOfTheHill"),
 ];
 
 // Speeds the Doomsday Clock can roll at when it lands in the rotation. Picked
@@ -132,6 +134,9 @@ const MUTUALLY_EXCLUSIVE_MODIFIERS: [ModifierKey, ModifierKey][] = [
   // The zone is the clock; two clocks make a mess.
   ["isBattleRoyale", "isDoomsdayClock"],
   ["isBattleRoyale", "isBlitz"],
+  // The hill is the clock; and a shrinking zone already says where to fight.
+  ["isKingOfTheHill", "isDoomsdayClock"],
+  ["isKingOfTheHill", "isBattleRoyale"],
 ];
 
 // Special games roll ffa/team per-game (see getSpecialConfig), so their
@@ -331,6 +336,7 @@ export class MapPlaylist {
       isBlitz,
       isBattleRoyale,
       isCapitalStrike,
+      isKingOfTheHill,
     } = poolResult;
 
     // Apply per-map forced modifiers (already rolled and respecting excludedModifiers).
@@ -351,6 +357,7 @@ export class MapPlaylist {
     if (appliedForced.has("isBlitz")) isBlitz = true;
     if (appliedForced.has("isBattleRoyale")) isBattleRoyale = true;
     if (appliedForced.has("isCapitalStrike")) isCapitalStrike = true;
+    if (appliedForced.has("isKingOfTheHill")) isKingOfTheHill = true;
     // Blitz is always compact: five minutes on a full-size map is a spawn
     // phase and a scramble.
     if (isBlitz) isCompact = true;
@@ -378,7 +385,8 @@ export class MapPlaylist {
           !isDoomsdayClock &&
           !isBlitz &&
           !isBattleRoyale &&
-          !isCapitalStrike
+          !isCapitalStrike &&
+          !isKingOfTheHill
         ) {
           excludedModifiers.push("isCrowded");
           const fallback = this.getRandomSpecialGameModifiers(
@@ -399,6 +407,7 @@ export class MapPlaylist {
             isBlitz,
             isBattleRoyale,
             isCapitalStrike,
+            isKingOfTheHill,
           } = fallback);
           ({ isHardNations } = fallback);
         }
@@ -464,10 +473,12 @@ export class MapPlaylist {
         isBlitz,
         isBattleRoyale,
         isCapitalStrike,
+        isKingOfTheHill,
       },
       gameSpeed: isBlitz ? BLITZ_SPEED : undefined,
       battleRoyale: isBattleRoyale ? true : undefined,
       capitalStrike: isCapitalStrike ? true : undefined,
+      kingOfTheHill: isKingOfTheHill ? true : undefined,
       // Rolled into the rotation: enable the anti-stall clock at a speed picked
       // per game so the pacing varies across the presets.
       doomsdayClock: isDoomsdayClock
@@ -763,6 +774,7 @@ export class MapPlaylist {
       isBlitz: selected.has("isBlitz") || undefined,
       isBattleRoyale: selected.has("isBattleRoyale") || undefined,
       isCapitalStrike: selected.has("isCapitalStrike") || undefined,
+      isKingOfTheHill: selected.has("isKingOfTheHill") || undefined,
     };
   }
 

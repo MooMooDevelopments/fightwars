@@ -518,6 +518,7 @@ export const GameConfigSchema = z.object({
       isBlitz: z.boolean().optional(),
       isBattleRoyale: z.boolean().optional(),
       isCapitalStrike: z.boolean().optional(),
+      isKingOfTheHill: z.boolean().optional(),
     })
     .optional(),
   nations: zb.union(
@@ -578,6 +579,9 @@ export const GameConfigSchema = z.object({
   // Capital Strike (brief §6.7): a nation whose capital — its spawn tile —
   // is taken by another player collapses into rebels.
   capitalStrike: z.boolean().nullable().optional(),
+  // King of the Hill (brief §6.7): a hill on the map's centre; whoever holds
+  // the most of it scores, and the first to the target wins.
+  kingOfTheHill: z.boolean().nullable().optional(),
   hostCheats: z
     .object({
       infiniteGold: z.boolean().optional(),

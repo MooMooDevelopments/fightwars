@@ -170,6 +170,7 @@ export interface PublicGameModifiers {
   isBlitz?: boolean;
   isBattleRoyale?: boolean;
   isCapitalStrike?: boolean;
+  isKingOfTheHill?: boolean;
 }
 
 // Largest bulk-purchase amount an intent may carry (mirrored by the intent
@@ -1257,6 +1258,7 @@ export enum MessageType {
   // Appended: the wire and the category table both key on member order.
   BATTLE_ROYALE_SHRINK = "BATTLE_ROYALE_SHRINK",
   CAPITAL_FELL = "CAPITAL_FELL",
+  HILL_STANDING = "HILL_STANDING",
 }
 
 // Message categories used for filtering events in the EventsDisplay
@@ -1272,6 +1274,7 @@ export enum MessageCategory {
 export const MESSAGE_TYPE_CATEGORIES: Record<MessageType, MessageCategory> = {
   [MessageType.BATTLE_ROYALE_SHRINK]: MessageCategory.ATTACK,
   [MessageType.CAPITAL_FELL]: MessageCategory.ATTACK,
+  [MessageType.HILL_STANDING]: MessageCategory.ATTACK,
   [MessageType.ATTACK_FAILED]: MessageCategory.ATTACK,
   [MessageType.ATTACK_CANCELLED]: MessageCategory.ATTACK,
   [MessageType.ATTACK_REQUEST]: MessageCategory.ATTACK,

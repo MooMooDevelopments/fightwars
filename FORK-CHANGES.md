@@ -1500,3 +1500,24 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
   flag off.
 - `tests/server/MapPlaylistModes.test.ts` — Battle Royale and Capital Strike through the
   rotation to the config and the lobby card.
+
+### King of the Hill (Phase 6, session 13)
+
+#### Shared upstream files edited
+
+- `src/core/Schemas.ts` — `GameConfig.kingOfTheHill` (appended), `publicGameModifiers.isKingOfTheHill`.
+- `src/core/game/Game.ts` — `PublicGameModifiers.isKingOfTheHill`, `MessageType.HILL_STANDING`.
+- `src/core/configuration/Config.ts` — `kingOfTheHill()`, `hillRadiusPercent()`, `hillSecondsToWin()`.
+- `src/core/GameRunner.ts` — registers the execution when the flag is on.
+- `src/server/MapPlaylist.ts` — the modifier, three tickets, exclusive with the clock and Battle Royale.
+- `src/client/HostLobbyModal.ts`, `src/client/SinglePlayerModal.ts` — the toggle.
+- `src/client/Utils.ts` — the badge and the event colour.
+- `scripts/balanceRun.ts` — `--king-of-the-hill`.
+- `resources/lang/en.json` — `game_settings.king_of_the_hill`, `public_game_modifier.king_of_the_hill`, `events_display.hill_standing` / `hill_unheld` / `hill_won`.
+
+#### FightWars-only files added
+
+- `src/core/execution/KingOfTheHillExecution.ts` — the hill.
+- `tests/KingOfTheHill.test.ts` — the hill's place and land, scoring and the win, an empty
+  hill, a tie, the centre moved onto land.
+- `tests/server/MapPlaylistModes.test.ts` — gains the hill.

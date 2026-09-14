@@ -4,6 +4,7 @@ import { BattleRoyaleExecution } from "./execution/BattleRoyaleExecution";
 import { CapitalStrikeExecution } from "./execution/CapitalStrikeExecution";
 import { DoomsdayClockExecution } from "./execution/DoomsdayClockExecution";
 import { Executor } from "./execution/ExecutionManager";
+import { KingOfTheHillExecution } from "./execution/KingOfTheHillExecution";
 import { RecomputeRailClusterExecution } from "./execution/RecomputeRailClusterExecution";
 import { SpawnTimerExecution } from "./execution/SpawnTimerExecution";
 import { UnrestExecution } from "./execution/UnrestExecution";
@@ -140,6 +141,9 @@ export class GameRunner {
     }
     if (this.game.config().capitalStrike()) {
       this.game.addExecution(new CapitalStrikeExecution());
+    }
+    if (this.game.config().kingOfTheHill()) {
+      this.game.addExecution(new KingOfTheHillExecution());
     }
     if (this.game.config().doomsdayClockConfig().enabled) {
       this.game.addExecution(new DoomsdayClockExecution());
