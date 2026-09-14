@@ -3,8 +3,8 @@ import { NationAllianceBehavior } from "../src/core/execution/nation/NationAllia
 import { NationEmojiBehavior } from "../src/core/execution/nation/NationEmojiBehavior";
 import {
   AllianceRequest,
-  Difficulty,
   AllianceTier,
+  Difficulty,
   Game,
   GameMode,
   Player,

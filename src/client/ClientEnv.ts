@@ -332,13 +332,13 @@ export class ClientEnv {
   // desktop shell opening account settings in a browser, say.
   //
   // NOT serverHttpBase(): that is a game server, and once the API's list has
-  // picked one it is a deployment host (falk2-b.openfront.io) with no site
+  // picked one it is a deployment host (falk2-b.<domain>) with no site
   // on it. This reads only the page's own injected values, which name sites:
   // the apex a web page was rendered behind (siteHost) first, because a
   // server-rendered page carries serverHost too and there it is one
-  // deployment (blue.openfront.io), not the site; else the shell's
-  // serverHost, which IS the site on desktop (openfront.io,
-  // nightly.openfront.dev, main.openfront.dev) and injects no siteHost.
+  // deployment (blue.<domain>), not the site; else the shell's
+  // serverHost, which IS the site on desktop (<domain>,
+  // nightly.<dev domain>, main.<dev domain>) and injects no siteHost.
   // Undefined when neither was injected; callers fall back themselves.
   static siteOrigin(): string | undefined {
     const v = ClientEnv.get();

@@ -150,11 +150,11 @@ export function resetServerList(): void {
  * players load the page from, so branch previews, main, nightly and prod
  * never share one. Decided by the shell, not by whether serverHost is
  * present: while game servers still render the page they inject serverHost
- * as their own host (blue.openfront.io), which is not a site.
+ * as their own host (blue.<domain>), which is not a site.
  *
  * - Desktop: the injected serverHost, whose values are exactly the sites
- *   (openfront.io, nightly.openfront.dev, main.openfront.dev). Under
- *   app://openfront the document host means nothing.
+ *   (<domain>, nightly.<dev domain>, main.<dev domain>). Under
+ *   app://<app> the document host means nothing.
  * - Web: the apex when the page was rendered behind one (siteHost), else
  *   the document host. A page fetched straight from a deployment host
  *   still asks for its site's list rather than a host nobody registers.
@@ -755,19 +755,19 @@ export function reloadWouldRescue(listStatus: ServerListStatus): boolean {
  *   `latest` from the static Worker, which is by definition not one
  *   deployment.
  * - Behind an apex — siteHost defined, not the page's own server, and the
- *   page's cluster map has siblings (prod: page openfront.io, servers blue
- *   and green.openfront.io) — reloadForUpdate re-enters through the site
+ *   page's cluster map has siblings (prod: page <domain>, servers blue
+ *   and green.<domain>) — reloadForUpdate re-enters through the site
  *   host, which the load balancer answers from a live deployment.
  * - Standalone (no siteHost, or siteHost IS the page's own server, or the
- *   map names only this server — dev's main.openfront.dev, previews, beta):
+ *   map names only this server — dev's main.<dev domain>, previews, beta):
  *   the reload re-serves the same page from the same server. If that server
  *   is gone the reload fails with it; if it is alive with a
  *   WebSocket-specific problem, the prompt loops. Nothing a prompt can do
  *   helps.
  *
  * The siblings check is what catches a standalone deployment with
- * GAME_DOMAIN set: its page host (main.openfront.dev) and game host
- * (main.server.openfront.dev) differ, yet both names reach the one
+ * GAME_DOMAIN set: its page host (main.<dev domain>) and game host
+ * (main.server.<dev domain>) differ, yet both names reach the one
  * container behind Traefik, so a differing siteHost alone proves nothing.
  * Same rule as the server's own apex poll
  * (ActiveDeployment.shouldPollApex).

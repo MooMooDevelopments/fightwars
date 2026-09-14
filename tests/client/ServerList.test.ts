@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { BRAND } from "../../src/brand/Brand";
 import { ClientEnv } from "../../src/client/ClientEnv";
 import { resetPagePinForTests } from "../../src/client/PagePin";
 import {
@@ -127,7 +128,7 @@ beforeEach(() => {
   vi.stubGlobal("fetch", fetchMock);
   vi.spyOn(console, "warn").mockImplementation(() => {});
   stubLocation("openfront.io");
-  delete (window as any).openfrontDesktop;
+  delete (window as any)[BRAND.desktop.windowObject];
   setBootstrap();
 });
 
@@ -137,7 +138,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   delete (window as any).BOOTSTRAP_CONFIG;
-  delete (window as any).openfrontDesktop;
+  delete (window as any)[BRAND.desktop.windowObject];
   ClientEnv.reset();
   resetServerList();
 });
@@ -153,7 +154,7 @@ describe("which list a page asks for", () => {
   });
 
   it("the desktop shell asks for its injected serverHost, whatever the document host", () => {
-    (window as any).openfrontDesktop = {};
+    (window as any)[BRAND.desktop.windowObject] = {};
     setBootstrap({ serverHost: "nightly.openfront.dev", siteHost: undefined });
     stubLocation("openfront");
     expect(serverListSite()).toBe("nightly.openfront.dev");
@@ -1051,7 +1052,7 @@ describe("picking between open, draining and fenced", () => {
   // "outdated". The isDesktopShell() exemption still covers a shell that
   // injects no host at all.
   it("leaves the desktop shell to its updater", async () => {
-    (window as any).openfrontDesktop = {};
+    (window as any)[BRAND.desktop.windowObject] = {};
     setBootstrap({ gitCommit: OLD, serverHost: "openfront.io" });
     const loc = stubLocation("openfront");
     fetchMock.mockImplementation(async () =>
@@ -1611,7 +1612,7 @@ describe("reloadWouldRescue", () => {
     await ensureServerList();
     expect(reloadWouldRescue("fallback")).toBe(false);
 
-    (window as any).openfrontDesktop = {};
+    (window as any)[BRAND.desktop.windowObject] = {};
     setBootstrap({ gitCommit: OLD, serverHost: "openfront.io" });
     stubLocation("openfront");
     await ensureServerList();
@@ -1675,7 +1676,7 @@ describe("redirectToGameVersion", () => {
   it("never navigates the desktop shell", async () => {
     const loc = stubLocation("openfront.io", "/game/cAbCd12345");
     await withList();
-    (window as any).openfrontDesktop = {};
+    (window as any)[BRAND.desktop.windowObject] = {};
     expect(redirectToGameVersion("cAbCd12345")).toBe(false);
     expect(loc.href).toBe("https://openfront.io/game/cAbCd12345");
   });

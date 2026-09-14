@@ -159,7 +159,7 @@ export class ServerEnv {
     return v && v.length > 0 ? v : undefined;
   }
   // The PAGE host that pairs with a game host under GAME_DOMAIN:
-  // `blue.server.openfront.dev` -> `blue.openfront.dev`. Undefined when
+  // `blue.server.<dev domain>` -> `blue.<dev domain>`. Undefined when
   // GAME_DOMAIN is unset (page and game host are one name) or the host is
   // not under it. A player who loads a colour's page directly, bypassing the
   // apex, arrives from exactly this origin, so CORS must know it.
@@ -174,7 +174,7 @@ export class ServerEnv {
     return `${label}.${domain}`;
   }
   // The GAME host: the name this deployment is reachable on directly
-  // (`blue.openfront.io`, or `main.server.openfront.dev` with GAME_DOMAIN),
+  // (`blue.<domain>`, or `main.server.<dev domain>` with GAME_DOMAIN),
   // bypassing the load balancer and the static Worker. Injected into
   // index.html as `serverHost` so a tab keeps talking to the deployment that
   // served it — including reconnects mid-game — after the load balancer flips
@@ -265,7 +265,7 @@ export class ServerEnv {
   }
 
   // The page host: SITE_HOST. Behind a load balancer that is the apex
-  // (`openfront.io` for blue/green); with GAME_DOMAIN it is
+  // (`<domain>` for blue/green); with GAME_DOMAIN it is
   // `<subdomain>.<DOMAIN>`, the name the static Worker serves the page on.
   // Unset only for old-style standalone deploys (beta, staging branches) and
   // local dev, where the page host and the game host coincide and publicHost

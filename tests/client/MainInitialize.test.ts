@@ -9,8 +9,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { capturePagePin } from "../../src/client/PagePin";
 import { BRAND } from "../../src/brand/Brand";
+import { capturePagePin } from "../../src/client/PagePin";
 import { SendKickPlayerIntentEvent } from "../../src/client/Transport";
 import { translateText } from "../../src/client/Utils";
 import { EventBus } from "../../src/core/EventBus";

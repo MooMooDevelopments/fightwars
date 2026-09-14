@@ -41,7 +41,7 @@ export function shouldPollApex(
 }
 
 /**
- * Ask the site host (the load balancer, e.g. `openfront.io`) which deployment
+ * Ask the site host (the load balancer, e.g. `<domain>`) which deployment
  * COLOR it currently routes to, by reading the color its /api/health reports.
  *
  * Color, not instanceId: with several machines per color behind the apex, an

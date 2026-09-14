@@ -35,7 +35,7 @@ export interface CheckinBody {
   // GAME_DOMAIN gives the deployment two names (docs/MultiServer.md, "Two
   // hostnames per deployment"), else this deployment's own host, so an
   // old-style beta, nightly, alpha or branch preview registers under itself.
-  // Lists are keyed by it. Mirrors, such as the openfront.dev apex serving
+  // Lists are keyed by it. Mirrors, such as the <dev domain> apex serving
   // nightly, are an alias table in the API, never something a server reports
   // about itself.
   site: string;

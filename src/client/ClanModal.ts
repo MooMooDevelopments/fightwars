@@ -1,7 +1,7 @@
 import { html } from "lit";
 import { customElement, state } from "lit/decorators.js";
-import { GameEnv } from "../core/configuration/Config";
 import { BRAND } from "../brand/Brand";
+import { GameEnv } from "../core/configuration/Config";
 import { getUserMe, invalidateUserMe } from "./Api";
 import { type ClanInfo, type ClanMember } from "./ClanApi";
 import { ClientEnv } from "./ClientEnv";
