@@ -659,15 +659,18 @@ parsed with the client's schemas (the pattern in `tests/api/`).
   affordability, reachability, alliances — they move within a tick and a shadow one turn
   behind would drop honest intents. The shadow's own hash is the desync reference now
   (session 13, same commit series): where it has one, a client that disagrees is out of
-  sync whatever the other clients say, and a lone client is checked too. Next on this:
-  cooldowns once the shadow can read them.
+  sync whatever the other clients say, and a lone client is checked too. The clock-only
+  cooldowns (emoji, quick chat, embargo-all) are read from the shadow too; the
+  relation-dependent ones (donate, alliance, target) deliberately not.
 - **Winner and stats by client vote — settled by the shadow now (session 13).** A vote for
   anyone other than the shadow's winner is overruled and counted
   (`numOverruledWinnerVotes()`); the archived record carries the shadow's winner and its
   stats whenever the shadow saw the end. Without a shadow the vote stands. Ingest is
   unchanged: it trusts the record, which is now the server's for every shadowed game.
-- **Rate limits and spam caps** per client per tick (`SocketIngress` has the hook); alliance,
-  emoji, donation caps beyond today's cooldowns.
+- **Rate limits and spam caps — done (session 13).** `IntentCaps`: per client, per family
+  (emoji, chat, alliance, donate, target, embargo) token buckets at rates no hand reaches;
+  over the cap is a 429, counted (`numSpamDrops()`), never a kick. The game's own intents
+  stay under `ClientMsgRateLimiter`'s ten a second only.
 - **Automation detection** (click cadence, pixel-perfect timing) as a server-side scorer over
   the intent stream; **multi-account detection** on the ranked ladder (the API sees
   persistent ids, IPs at `/join_verify`, and match co-occurrence).

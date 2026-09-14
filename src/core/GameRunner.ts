@@ -38,6 +38,14 @@ export async function createGameRunner(
   clientID: ClientID | undefined,
   mapLoader: GameMapLoader,
   callBack: (gu: GameUpdateViewData | ErrorUpdate) => void,
+  options: {
+    /**
+     * A GameMap of this game's own rather than the process-wide cached one.
+     * The map carries tile state; a process running several games (the
+     * server's shadow simulations) must not let them share it.
+     */
+    freshMap?: boolean;
+  } = {},
 ): Promise<GameRunner> {
   const config = new Config(gameStart.config, null, false, gameStart.listed);
   const gameMap = await loadGameMap(
@@ -45,6 +53,7 @@ export async function createGameRunner(
     gameStart.config.gameMapSize,
     mapLoader,
     false, // Worker never renders layers — skip image loading to save memory.
+    !options.freshMap,
   );
   const random = new PseudoRandom(simpleHash(gameStart.gameID));
 

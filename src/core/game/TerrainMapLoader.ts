@@ -72,9 +72,17 @@ export async function loadTerrainMap(
   /** Whether to load layer PNG images inline. The Web Worker path should
    *  pass false — it never renders layers and should not retain ImageBitmaps. */
   loadImages: boolean = true,
+  /**
+   * Whether to serve (and keep) the process-wide cached copy. The GameMap in
+   * it carries per-game tile state, so anything that runs more than one
+   * game in one process — the server's shadow simulations — must pass false
+   * and get a map of its own. A client runs one game per worker and keeps
+   * the cache.
+   */
+  useCache: boolean = true,
 ): Promise<TerrainMapData> {
   const cacheKey = `${map}:${mapSize}`;
-  const cached = loadedMaps.get(cacheKey);
+  const cached = useCache ? loadedMaps.get(cacheKey) : undefined;
   if (cached !== undefined) return cached;
   const mapFiles = terrainMapFileLoader.getMapData(map);
   const manifest = await mapFiles.manifest();
@@ -188,7 +196,7 @@ export async function loadTerrainMap(
     layers,
     layerImages,
   };
-  loadedMaps.set(cacheKey, result);
+  if (useCache) loadedMaps.set(cacheKey, result);
   return result;
 }
 

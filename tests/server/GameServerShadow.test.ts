@@ -181,6 +181,29 @@ describe("GameServer with a shadow simulation", () => {
     expect(record.info.winner).toEqual(["player", a.clientID]);
   });
 
+  it("drops a flood of emoji with 429, counts it, and keeps the rest of the game flowing", () => {
+    const game = makeGame({ deps: { shadowSim: () => null } });
+    game.joinClient(makeClient({ clientID: ALICE }));
+    startGame(game);
+    const emoji = { type: "emoji", recipient: ALICE, emoji: "😀" } as const;
+    let dropped = 0;
+    for (let i = 0; i < 12; i++) {
+      const outcome = game.handleIntent(emoji as never, actorFor(ALICE));
+      if (outcome.status === 429) dropped++;
+    }
+    expect(dropped).toBe(2);
+    expect(game.numSpamDrops()).toBe(2);
+    // An attack is not a social intent and is never capped.
+    for (let i = 0; i < 50; i++) {
+      expect(
+        game.handleIntent(
+          { type: "attack", targetID: null, troops: 5 },
+          actorFor(ALICE),
+        ).status,
+      ).toBe(200);
+    }
+  });
+
   it("runs the relay alone when there is no shadow", () => {
     const game = makeGame({ deps: { shadowSim: () => null } });
     game.joinClient(makeClient({ clientID: ALICE }));

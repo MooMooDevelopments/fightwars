@@ -79,6 +79,28 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — spam caps, the clock-only cooldowns, and a map of the game's own
+
+- **What shipped.** `IntentCaps` caps the social intents per client and family with token
+  buckets — emoji 10 / 10 s, quick chat 10 / 10 s, alliance intents 15 / min, donations
+  10 / min, targeting 10 / min, embargoes 20 / min — dropped with 429 and counted, never a
+  kick; attacks, builds and moves are never capped. The shadow reads the sim's cooldown
+  predicates that depend on nothing but the clock (emoji, quick chat, embargo-all) and
+  refuses an intent inside one; the relation-dependent predicates (donate, alliance,
+  target) are deliberately left alone, an alliance made this turn would make them wrong.
+- **A bug the shadow would have shipped.** `loadTerrainMap` caches `TerrainMapData` per map
+  and size for the whole process, and the `GameMap` inside carries tile ownership. Every
+  client runs one game per worker, so nobody had noticed; two shadows in one server process
+  shared territory — the second test's spawn failed on land the first test's game owned.
+  `createGameRunner` takes `{ freshMap: true }` now and the shadow passes it. Found by the
+  tests interfering with each other, which is the kind of finding the note in HANDOFF §2
+  about test-order coupling is for.
+- **Guards broken and watched fail:** the emoji cooldown ignored, the shared map (two
+  cases), the caps unconsulted. Two things learned writing the tests: an intent's execution
+  is added on its turn and runs on the next tick, so a check right after `applyTurn` sees
+  the state before it; and an emoji intent carries an index into the emoji table, not the
+  glyph.
+
 ### Session 13 — the winner is the server's
 
 - **What shipped.** The shadow keeps the `WinUpdate` its sim declared — the same update

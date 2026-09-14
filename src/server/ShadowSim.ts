@@ -1,4 +1,4 @@
-import { Game } from "../core/game/Game";
+import { AllPlayers, Game } from "../core/game/Game";
 import { GameMapLoader } from "../core/game/GameMapLoader";
 import {
   GameUpdateType,
@@ -90,6 +90,9 @@ export class ShadowSim implements ShadowSimLike {
             this.win ??= { winner, allPlayersStats };
           }
         },
+        // A map of this game's own: the loader's cached GameMap carries tile
+        // state, and a worker runs many lobbies in one process.
+        { freshMap: true },
       );
       this.runner = runner;
       for (const turn of this.queued) this.step(turn);
@@ -188,6 +191,31 @@ export class ShadowSim implements ShadowSimLike {
           if (unit.owner() !== player) return "unit not owned";
         }
         return null;
+      // The cooldowns that depend on nothing but the clock: the sim's own
+      // predicates, read one turn behind. An intent sent the very tick a
+      // cooldown ends can be refused a tick early; the client's button is
+      // greyed by the same predicate on its own state, so a player does not
+      // reach that window by hand. The predicates that also read relations
+      // (donations, alliance requests, targeting) are not consulted: an
+      // alliance made this turn would make their answer wrong.
+      case "emoji": {
+        const recipient =
+          intent.recipient === AllPlayers
+            ? AllPlayers
+            : game.hasPlayer(intent.recipient)
+              ? game.player(intent.recipient)
+              : null;
+        if (recipient === null) return "unknown recipient";
+        return player.canSendEmoji(recipient) ? null : "emoji cooldown";
+      }
+      case "quick_chat": {
+        if (!game.hasPlayer(intent.recipient)) return "unknown recipient";
+        return player.canSendQuickChat(game.player(intent.recipient))
+          ? null
+          : "quick chat cooldown";
+      }
+      case "embargo_all":
+        return player.canEmbargoAll() ? null : "embargo cooldown";
       case "delete_unit":
       case "cancel_boat":
       case "upgrade_structure": {

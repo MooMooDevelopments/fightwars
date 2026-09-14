@@ -1387,6 +1387,18 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
   hash as the reference when there is one; a lone client is checked against it.
 - `src/server/GameServer.ts` (winner) — a vote against the shadow's winner is overruled
   and counted; `archiveGame` records the shadow's winner and stats when it has them.
+- `src/server/GameServer.ts` (caps) — `IntentCaps` consulted before the shadow on the
+  gameplay path; `numSpamDrops()`.
+- `src/core/game/TerrainMapLoader.ts`, `src/core/GameRunner.ts` — `useCache` /
+  `{ freshMap }`: a game of its own map when a process runs several.
+- `src/server/ShadowSim.ts` — the clock-only cooldowns (emoji, quick chat, embargo-all);
+  `freshMap`.
+
+#### FightWars-only files added (caps)
+
+- `src/server/IntentCaps.ts` — per client, per family token buckets on the social intents.
+- `tests/server/IntentCaps.test.ts` — the rate, clients and families apart, every social
+  intent in a family and the game's own in none, never capping an attack.
 
 #### FightWars-only files added
 

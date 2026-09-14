@@ -64,6 +64,7 @@ import {
   IntentActor,
   IntentOutcome,
 } from "./IntentAuthorization";
+import { IntentCaps } from "./IntentCaps";
 import { ListingState } from "./ListingState";
 import { identityFor, MatchTelemetryRecorder } from "./MatchTelemetryRecorder";
 import { friendsLookup, NameVisibility } from "./NameVisibility";
@@ -196,6 +197,9 @@ export class GameServer {
   private shadowRefusals = 0;
   // Winner votes that named someone other than the winner the shadow saw.
   private overruledWinnerVotes = 0;
+  // Spam caps on the social intents (IntentCaps), and what they dropped.
+  private readonly caps = new IntentCaps();
+  private spamDrops = 0;
   // Who joined, who is connected, and the per-account reconnect, admission
   // and kick flags (see Roster.ts). The join policy stays here.
   private readonly clients = new Roster();
@@ -446,8 +450,17 @@ export class GameServer {
       }
 
       default: {
-        // Gameplay intents: what the server's own copy of the game says is
-        // impossible is refused here, before it reaches a turn.
+        // Gameplay intents. First the spam caps on the social ones: a
+        // flooder is dropped here, counted, and not kicked.
+        if (
+          !actor.isAdminBot &&
+          !this.caps.allow(stamped.clientID, stamped.type)
+        ) {
+          this.spamDrops++;
+          return finish({ status: 429, error: `too many ${stamped.type}` });
+        }
+        // Then what the server's own copy of the game says is impossible,
+        // refused before it reaches a turn.
         const refusal = this.shadow?.check(stamped) ?? null;
         if (refusal !== null) {
           this.shadowRefusals++;
@@ -822,6 +835,11 @@ export class GameServer {
   /** Winner votes that named someone other than the winner the shadow saw. */
   public numOverruledWinnerVotes(): number {
     return this.overruledWinnerVotes;
+  }
+
+  /** Social intents dropped by the spam caps (IntentCaps). */
+  public numSpamDrops(): number {
+    return this.spamDrops;
   }
 
   // Matchmade ranked games (1v1/2v2) must start with full attendance: the

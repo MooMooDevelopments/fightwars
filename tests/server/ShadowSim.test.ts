@@ -102,6 +102,68 @@ describe("ShadowSim", () => {
     expect(shadow.ticks()).toBe(2);
   });
 
+  it("refuses an emoji or a quick chat inside its cooldown, and one to nobody", async () => {
+    const shadow = new ShadowSim(startInfo(), new PlainsLoader(), log);
+    await shadow.start();
+    const game = shadow.game()!;
+    const bob = game.playerByClientID("bob")!;
+    const emojiToBob = {
+      type: "emoji",
+      recipient: bob.id(),
+      emoji: 0,
+    };
+    // Executions do not run in the spawn phase, so both spawn first.
+    let n = 0;
+    shadow.applyTurn(
+      turn(n++, [
+        stamped("alice", { type: "spawn", tile: game.ref(20, 20) }),
+        stamped("bob", { type: "spawn", tile: game.ref(70, 20) }),
+      ]),
+    );
+    n = runPastSpawn(shadow, n);
+    expect(shadow.check(stamped("alice", emojiToBob))).toBeNull();
+    // Alice sends it; the next one inside five seconds is the cooldown.
+    shadow.applyTurn(turn(n++, [stamped("alice", emojiToBob)]));
+    // The execution runs on the tick after its turn.
+    shadow.applyTurn(turn(n++));
+    expect(shadow.check(stamped("alice", emojiToBob))).toBe("emoji cooldown");
+    // To everyone is a different recipient with its own cooldown.
+    expect(
+      shadow.check(
+        stamped("alice", { ...emojiToBob, recipient: "AllPlayers" }),
+      ),
+    ).toBeNull();
+    expect(
+      shadow.check(stamped("alice", { ...emojiToBob, recipient: "nobody" })),
+    ).toBe("unknown recipient");
+    for (let i = 0; i < 60; i++) shadow.applyTurn(turn(n++));
+    expect(shadow.check(stamped("alice", emojiToBob))).toBeNull();
+
+    const chat = {
+      type: "quick_chat",
+      recipient: bob.id(),
+      quickChatKey: "help.help",
+    };
+    expect(shadow.check(stamped("alice", chat))).toBeNull();
+  });
+
+  it("gives every game a map of its own", async () => {
+    // The terrain loader caches per map and size, and the GameMap in the
+    // cache carries tile ownership. Two shadows on one worker must not see
+    // each other's territory.
+    const first = new ShadowSim(startInfo(), new PlainsLoader(), log);
+    const second = new ShadowSim(startInfo(), new PlainsLoader(), log);
+    await first.start();
+    await second.start();
+    const tile = first.game()!.ref(20, 20);
+    first.applyTurn(turn(0, [stamped("alice", { type: "spawn", tile })]));
+    // An intent's execution is added on its turn and runs on the next tick.
+    first.applyTurn(turn(1));
+    expect(first.game()!.hasOwner(tile)).toBe(true);
+    expect(second.game()!.hasOwner(tile)).toBe(false);
+    expect(first.game()!.map()).not.toBe(second.game()!.map());
+  });
+
   it("has no win until the sim declares one", async () => {
     const shadow = new ShadowSim(startInfo(), new PlainsLoader(), log);
     await shadow.start();
