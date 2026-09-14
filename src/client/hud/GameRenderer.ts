@@ -4,6 +4,7 @@ import { Controller } from "../Controller";
 import { AmbienceController } from "../controllers/AmbienceController";
 import { AttackingTroopsController } from "../controllers/AttackingTroopsController";
 import { BuildPreviewController } from "../controllers/BuildPreviewController";
+import { BuildQueueController } from "../controllers/BuildQueueController";
 import { HoverHighlightController } from "../controllers/HoverHighlightController";
 import { HudVisibilityController } from "../controllers/HudVisibilityController";
 import { ImpactFeedbackController } from "../controllers/ImpactFeedbackController";
@@ -348,6 +349,7 @@ export function createRenderer(
     new AmbienceController(game, eventBus, transformHandler),
     new HudVisibilityController(eventBus, userSettings),
     new RallyPointController(game, eventBus, transformHandler, view),
+    new BuildQueueController(game, eventBus, uiState),
     new ImpactFeedbackController(game, transformHandler, view),
     ...(mapLayerController ? [mapLayerController] : []),
     eventsDisplay,

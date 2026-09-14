@@ -1,4 +1,4 @@
-import { css, html, LitElement } from "lit";
+import { css, html, LitElement, nothing } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { translateText } from "../../../client/Utils";
 import { assetUrl } from "../../../core/AssetUrls";
@@ -15,6 +15,7 @@ import { Controller } from "../../Controller";
 import {
   CloseViewEvent,
   MouseDownEvent,
+  QueueBuildEvent,
   ShowBuildMenuEvent,
   ShowEmojiMenuEvent,
 } from "../../InputHandler";
@@ -281,6 +282,14 @@ export class BuildMenu extends LitElement implements Controller {
     .build-button:disabled .build-cost {
       color: #ff4444;
     }
+    /* Not affordable yet: still a button, because a click queues it. */
+    .build-button--queue {
+      border-style: dashed;
+      opacity: 0.75;
+    }
+    .build-button--queue .build-cost {
+      color: #ff4444;
+    }
     .build-icon {
       font-size: 40px;
       margin-bottom: 5px;
@@ -430,6 +439,32 @@ export class BuildMenu extends LitElement implements Controller {
     return player.totalUnitLevels(item.unitType).toString();
   }
 
+  /**
+   * Queue a build the player cannot afford yet (BuildQueueController). The
+   * same item on the same tile queued again cancels it, so a phone with no
+   * control panel chip to tap still has a way out.
+   */
+  public queue(
+    buildableUnit: BuildableUnit,
+    item: BuildItemDisplay,
+    tile: TileRef,
+  ): void {
+    const rocketDirectionUp =
+      buildableUnit.type === UnitType.AtomBomb ||
+      buildableUnit.type === UnitType.HydrogenBomb
+        ? this.uiState.rocketDirectionUp
+        : undefined;
+    this.eventBus.emit(
+      new QueueBuildEvent(
+        buildableUnit.type,
+        tile,
+        item.key ?? "",
+        rocketDirectionUp,
+      ),
+    );
+    this.hideMenu();
+  }
+
   public sendBuildOrUpgrade(buildableUnit: BuildableUnit, tile: TileRef): void {
     if (buildableUnit.canUpgrade !== false) {
       this.eventBus.emit(
@@ -472,12 +507,17 @@ export class BuildMenu extends LitElement implements Controller {
                   buildableUnit.canUpgrade !== false;
                 return html`
                   <button
-                    class="build-button"
+                    class="build-button ${enabled ? "" : "build-button--queue"}"
+                    data-queue=${enabled ? nothing : ""}
                     @click=${() =>
-                      this.sendBuildOrUpgrade(buildableUnit, this.clickedTile)}
-                    ?disabled=${!enabled}
+                      enabled
+                        ? this.sendBuildOrUpgrade(
+                            buildableUnit,
+                            this.clickedTile,
+                          )
+                        : this.queue(buildableUnit, item, this.clickedTile)}
                     title=${!enabled
-                      ? translateText("build_menu.not_enough_money")
+                      ? `${translateText("build_menu.not_enough_money")} ${translateText("build_menu.queue_hint")}`
                       : ""}
                   >
                     <img

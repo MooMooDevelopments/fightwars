@@ -209,8 +209,14 @@
       "warship": "Captures trade ships, destroys ships and boats"
     },
     "not_enough_money": "Not enough money",
+    "queue_hint": "Click to queue it; it builds when you can afford it.",
     "upgrade_amount": "x{amount}",
     "warship_shift_hint": "Hold Shift and drag to select multiple warships at once"
+  },
+  "build_queue": {
+    "built": "Queued {unit} started.",
+    "cancelled": "Queued build cancelled.",
+    "queued": "{unit} queued. It builds when you can afford it."
   },
   "change_username_modal": {
     "title": "Change Username",
@@ -577,8 +583,10 @@
     "allied_afk_neighbor_info": "You can attack disconnected players even if you are allied with them.",
     "army_limit_warning": "You're near your army limit! Consider sending troops to teammates.",
     "attack_ratio_slider": "Attack ratio",
+    "cancel_queue": "Cancel the queued {unit}",
     "low_troops_warning": "You are very low on troops - You should always keep some troops for defense.",
     "materials": "Materials",
+    "queued": "Queued: {unit}",
     "teammate_afk_neighbor_info": "You can attack disconnected teammates.",
     "traitor_neighbor_info": "You can betray traitors without becoming a traitor yourself.",
     "troop_meter": "Troops",

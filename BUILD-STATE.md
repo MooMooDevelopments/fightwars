@@ -79,6 +79,29 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — item 9 closes: a build queue of one, client-side
+
+- **What shipped.** An unaffordable item in the build ring (and in the Ctrl+click grid) is
+  no longer dead: it wears the disabled grey, its tooltip says "Click to queue it; it builds
+  when you can afford it", and a click queues it. `BuildQueueController` holds the one
+  queued build, asks the worker once a second whether it can be built now — the same
+  question the build menu asks when it opens — and the tick the answer is yes sends the
+  ordinary build intent and forgets. The control panel shows "Queued: City ✕" on a strip of
+  its own under the readouts, with a cancel; asking for the same build again also cancels,
+  which is the phone's way out. A player who dies loses the queue. One, not many: a second
+  queued build would sit behind the first for whatever the first costs, and a player who
+  wants two things says which comes first by asking for it first.
+- **Photographed.** The build ring at 28K gold with a 125K city: grey, the hint in the
+  tooltip, the click, the toast, the chip. The first cut put the chip in the readout row and
+  it squeezed the troop meter until "12.1K / 12.1K" lost its second figure — the strip is
+  what fixed it. Re-photographed with the meter whole. The queue firing was not seen live:
+  the player died at 2:39 with the city still 90 K short, and the chip went with them —
+  which is the death clause doing its job; the firing is the unit test's.
+- **Guards broken and watched fail:** building when the worker says it cannot, asking every
+  tick instead of once a second, the queue outliving the player.
+- **Item 9 is closed.** Presets, rally point and build queue are all client-side, none
+  touched `src/core`, the determinism gate never moved.
+
 ### Session 13 — item 9: a rally point for warships, client-side
 
 - **What shipped.** `O` over water sets the rally point; the tick a new warship, submarine

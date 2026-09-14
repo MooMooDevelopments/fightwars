@@ -1347,3 +1347,27 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
 - `tests/client/RallyPoint.test.ts` — the key; set over water and marked, cleared over land,
   off-map ignored; each new own hull sent and nothing else; nothing without a point or after
   it is cleared.
+
+### Build queue (Phase 4 item 9, session 13)
+
+#### Shared upstream files edited
+
+- `src/client/InputHandler.ts` — `QueueBuildEvent`, `CancelBuildQueueEvent`.
+- `src/client/UIState.ts` — `buildQueue` (the one queued build, for the panel).
+- `src/client/hud/layers/RadialMenuElements.ts` — build items are never disabled: an
+  unaffordable one is grey, its tooltip says so, and its click queues.
+- `src/client/hud/layers/BuildMenu.ts` — the grid's unaffordable item does the same
+  (`queue`, `.build-button--queue`).
+- `src/client/hud/layers/ControlPanel.ts` — `renderBuildQueue`, a strip under the readouts.
+- `src/client/hud/GameRenderer.ts` — registers `BuildQueueController`.
+- `resources/lang/en.json` — `build_menu.queue_hint`, `control_panel.queued`,
+  `control_panel.cancel_queue`, `build_queue.queued` / `built` / `cancelled`.
+
+#### FightWars-only files added
+
+- `src/client/controllers/BuildQueueController.ts` — the one queued build, the once-a-second
+  ask, the ordinary intent when it can.
+- `tests/client/BuildQueue.test.ts` — holds and shows the build; asks once a second and sends
+  nothing while it cannot; sends once and forgets when it can, with the rocket direction;
+  cancel by chip or by asking again; a newer build replaces; death forgets; the grid and the
+  radial both queue with the name and the rocket direction.

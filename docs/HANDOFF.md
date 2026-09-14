@@ -187,7 +187,7 @@ their sections.
 | 6   | Radial menus, HUD, leaderboard, events feed                                            | **part-done** — typography, tokens and a11y; layout and the feeds remain    |
 | 7   | Mobile first-class                                                                     | **part-done** — rotation, header and touch targets; layout remains          |
 | 8   | Onboarding: 90-second tutorial                                                         | **done**                                                                    |
-| 9   | Build queue, rally points, attack presets                                              | not started (keybind remapping already existed)                             |
+| 9   | Build queue, rally points, attack presets                                              | **done** (session 13) — all three client-side, nothing on the wire          |
 | 10  | Clan create form; guest-appropriate account page                                       | **done**                                                                    |
 
 What the finished ones measure, and what each left behind, is in `BUILD-STATE.md` — it is kept
@@ -453,10 +453,10 @@ Keybind remapping already exists (`UserSettingModal.ts`, "keybinds" tab).
 **The other two are client-side too — no intent, no wire change.** An earlier version of this
 section said all three were intents through the lockstep protocol. They need not be:
 
-- **Build queue**: a client controller holds a build order (unit type, tile) and sends the
-  ordinary `buildUnit` intent the tick the player can afford it, then drops it. The sim never
-  knows a queue existed. UI: an unaffordable item in the build menu becomes "queued" on
-  click; the control panel shows the queue as chips with a cancel.
+- **Build queue — done (session 13).** `BuildQueueController`: an unaffordable item in the
+  build ring or the grid queues on click, the worker is asked once a second, the ordinary
+  intent goes the tick it can; "Queued: City ✕" on the control panel, the same build
+  queued again cancels. `tests/client/BuildQueue.test.ts`. One build at a time by design.
 - **Rally points — done (session 13).** `RallyPointController`: `O` over water sets it, `O`
   over land clears it; each new warship, submarine or carrier of the player's own gets the
   ordinary move intent the tick it appears. `tests/client/RallyPoint.test.ts`. Hook point: a

@@ -25,6 +25,7 @@ import { PlayerPanel } from "./PlayerPanel";
 import { TooltipItem } from "./RadialMenu";
 
 import { EventBus } from "../../../core/EventBus";
+import { QueueBuildEvent } from "../../InputHandler";
 import {
   BuildUnitIntentEvent,
   SendUpgradeStructureIntentEvent,
@@ -434,14 +435,16 @@ function createMenuElements(
         name: item.key
           ? item.key.replace("unit_type.", "")
           : item.unitType.toString(),
-        disabled: (p: MenuElementParams) =>
-          !p.buildMenu.canBuildOrUpgrade(item),
+        // Never disabled: what cannot be built now can be queued
+        // (BuildQueueController), so the click always has somewhere to go.
+        // It wears the disabled grey so the eye still reads "not yet".
+        disabled: () => false,
         color: (p: MenuElementParams) =>
           p.buildMenu.canBuildOrUpgrade(item)
             ? filterType === "attack"
               ? COLORS.attack
               : COLORS.building
-            : COLORS.building,
+            : COLORS.disabled,
         icon: item.icon,
         tooltipItems: [
           { text: translateText(item.key ?? ""), className: "title" },
@@ -449,6 +452,12 @@ function createMenuElements(
             text: translateText(item.description ?? ""),
             className: "description",
           },
+          params.buildMenu.canBuildOrUpgrade(item)
+            ? null
+            : {
+                text: translateText("build_menu.queue_hint"),
+                className: "description",
+              },
           {
             text: `${renderNumber(params.buildMenu.cost(item))} ${translateText("player_panel.gold")}`,
             className: "cost",
@@ -596,6 +605,24 @@ function createMenuElements(
                 ),
               );
             }
+          } else if (
+            buildableUnit.canBuild === false &&
+            buildableUnit.canUpgrade === false
+          ) {
+            // Not now: queue it, and it builds the tick it can.
+            const rocketDirectionUp =
+              item.unitType === UnitType.AtomBomb ||
+              item.unitType === UnitType.HydrogenBomb
+                ? params.uiState?.rocketDirectionUp
+                : undefined;
+            params.eventBus.emit(
+              new QueueBuildEvent(
+                buildableUnit.type,
+                params.tile,
+                item.key ?? "",
+                rocketDirectionUp,
+              ),
+            );
           }
           params.closeMenu();
         },

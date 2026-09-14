@@ -776,7 +776,9 @@ describe("RadialMenuElements", () => {
       ).toBe(COLORS.attack);
     });
 
-    it("should use disabled color when element is disabled", () => {
+    it("wears the disabled grey when it cannot be built now, and stays clickable", () => {
+      // FightWars: an unaffordable build is never disabled — a click queues
+      // it (BuildQueueController) — so the grey is worn by the colour itself.
       mockBuildMenu.canBuildOrUpgrade = vi.fn(() => false);
 
       const subMenu = buildMenuElement.subMenu!(mockParams);
@@ -786,7 +788,8 @@ describe("RadialMenuElements", () => {
         (cityElement!.color as (params: MenuElementParams) => string)(
           mockParams,
         ),
-      ).toBe(COLORS.building);
+      ).toBe(COLORS.disabled);
+      expect(cityElement!.disabled(mockParams)).toBe(false);
     });
   });
 

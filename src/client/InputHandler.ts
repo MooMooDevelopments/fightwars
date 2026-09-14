@@ -1,5 +1,6 @@
 import { EventBus, GameEvent } from "../core/EventBus";
 import { PlayerBuildableUnitType, UnitType } from "../core/game/Game";
+import { TileRef } from "../core/game/GameMap";
 import {
   KEYBINDS_KEY,
   USER_SETTINGS_CHANGED_EVENT,
@@ -218,6 +219,24 @@ export class SetRallyPointEvent implements GameEvent {
     public readonly y: number,
   ) {}
 }
+
+/**
+ * Queue a build the player cannot yet afford (brief §7 item 9). The build
+ * menu fires it for an unaffordable item; BuildQueueController holds it and
+ * sends the ordinary build intent the tick it can. The same unit on the
+ * same tile queued again cancels it.
+ */
+export class QueueBuildEvent implements GameEvent {
+  constructor(
+    public readonly unit: PlayerBuildableUnitType,
+    public readonly tile: TileRef,
+    /** The build menu's translation key for the unit's name. */
+    public readonly labelKey: string,
+    public readonly rocketDirectionUp?: boolean,
+  ) {}
+}
+
+export class CancelBuildQueueEvent implements GameEvent {}
 
 export class TickMetricsEvent implements GameEvent {
   constructor(

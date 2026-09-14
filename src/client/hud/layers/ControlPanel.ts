@@ -13,7 +13,11 @@ import {
   UserSettings,
 } from "../../../core/game/UserSettings";
 import { Controller } from "../../Controller";
-import { AttackRatioEvent, SetAttackRatioEvent } from "../../InputHandler";
+import {
+  AttackRatioEvent,
+  CancelBuildQueueEvent,
+  SetAttackRatioEvent,
+} from "../../InputHandler";
 import { UIState } from "../../UIState";
 import {
   getGamesPlayed,
@@ -456,6 +460,40 @@ export class ControlPanel extends LitElement implements Controller {
     `;
   }
 
+  /**
+   * The one queued build (BuildQueueController), as a chip with its own
+   * cancel. Nothing when there is none — the queue is the exception, not a
+   * slot the panel keeps open for it.
+   */
+  private renderBuildQueue() {
+    const queued = this.uiState?.buildQueue;
+    if (!queued) return html``;
+    const unit = translateText(queued.labelKey);
+    // Its own strip under the readouts, not a fifth tile in their row: a
+    // tile there squeezed the troop meter until "12.1K / 12.1K" lost its
+    // second figure.
+    return html`
+      <div
+        class="mt-1 flex items-center justify-end gap-1 border border-dashed border-ink-dim/40 rounded-md text-sm py-0.5 px-1.5 text-ink-muted"
+        data-readout="build-queue"
+        role="status"
+      >
+        <span class="whitespace-nowrap"
+          >${translateText("control_panel.queued", { unit })}</span
+        >
+        <button
+          type="button"
+          class="leading-none px-1 text-ink hover:text-status-loss focus-visible:outline-2 focus-visible:outline-white rounded"
+          aria-label=${translateText("control_panel.cancel_queue", { unit })}
+          title=${translateText("control_panel.cancel_queue", { unit })}
+          @click=${() => this.eventBus.emit(new CancelBuildQueueEvent())}
+        >
+          ✕
+        </button>
+      </div>
+    `;
+  }
+
   private renderMobileTroopBar() {
     return html`
       <div
@@ -668,6 +706,7 @@ export class ControlPanel extends LitElement implements Controller {
           >
         </div>
       </div>
+      ${this.renderBuildQueue()}
       <!-- Row 2: attack ratio | slider -->
       <div
         class="flex items-center gap-1.5 ${this.tutorialHighlightClass(
