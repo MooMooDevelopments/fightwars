@@ -1,6 +1,6 @@
 # FightWars Build State
 
-Last session: 2026-09-14 (session 11) | Current phase: **5 (depth)** — 6.1 (supply lines) and 6.2 (elevation) done, **6.3 done** (upkeep, materials, blockades, embargo price; Manpower surfaced as `maxTroops`, not rebuilt), **6.4 half done** (nuke consequences; the six units not started); Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
+Last session: 2026-09-14 (session 12) | Current phase: **5 (depth, retune pass)** — 6.1 (supply lines) and 6.2 (elevation) done, **6.3 done** (upkeep, materials, blockades, embargo price; Manpower surfaced as `maxTroops`, not rebuilt), **6.4 half done** (nuke consequences; the six units not started); Phase 4 is **not** closed behind it (items 3, 6 and 7 are part-done and item 9 is folded into Phase 5), and two Phase 2 items are still blocked on the owner/hardware | Build status: green
 
 Repo: `C:\Users\disbo\dev\fightwars` · `upstream` = openfrontio/OpenFrontIO (forked at
 `c77005586`, rebased onto `7d95251f1` the same day) · `origin` = github.com/MooMooDevelopments/fightwars
@@ -26,7 +26,38 @@ follows it). In the Claude desktop session the launch configs `fightwars-dev` /
 shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 `npm run load:test -- --clients 150 --map world --turns 600`.
 
-## Handoff — read this first (written 2026-09-14 at the end of session 11)
+## Handoff — read this first (written 2026-09-14, session 12 in progress)
+
+### Session 12 — the retune pass opens: uprisings scale with the conqueror
+
+- **Rebased first** onto upstream `56a171d27` (6 commits: backend reachability in the UI, the
+  machine at check-in, a server-rendered page preferring its own server, Steam link needing a
+  real account, a zh-hant flag, mls). One conflict (`MainInitialize.test.ts` imports). Then
+  the fork's gates: the Brand test found two more upstream comment lines naming its domains
+  (`ServerList.ts`, rewritten generically), upstream's new `DesktopStatusBar` suite set the
+  desktop marker by the upstream global (now `BRAND.desktop.windowObject`), two new
+  `en.json` strings said "OpenFront servers" (now FightWars), and upstream's new "a guest must
+  log in before linking Steam" cases contradict the fork's _a session is an account_ decision
+  (`BUILD-STATE.md` Decisions, 2026-09-12) — rewritten to assert the fork rule in
+  `tests/client/SteamLink.test.ts` and `SteamLinkModal.test.ts`, `FORK-CHANGES.md` says so.
+- **A worktree has no `node_modules`.** The session opened in a git worktree; vitest resolved
+  through the main checkout's install, so every test that spawns a child process with a
+  worktree-relative path (`determinism`, `RenderDesktopDescriptor`, the PGlite migrations,
+  the zbin fuzz) failed until `npm run inst` ran _in the worktree_. Five of eight red files
+  were that. Install first in any worktree.
+- **What shipped.** The first retune lever: `Config.unrestPartisanThreshold(occupierTiles)` is
+  max(300, `unrestPartisanShare()` = 10 % of the occupier's own land), so a small conqueror
+  feels an occupation at 300 tiles and an empire only at a real invasion. `UnrestExecution`
+  passes `numTilesOwned()`. Lever `--flat-unrest` (share 0) reproduces the stability commit's
+  8000-tick hash `47153110926552660` to the digit. Guard broken and watched fail: the
+  execution reading the flat threshold fails only the new "share of the occupier's own land"
+  case.
+- **Three shares measured, one chosen.** Same seed, 8000 ticks: flat / 5 % / 10 % gave 507 /
+  342 / 269 uprisings, leader share 12.7 / 13.2 / 11.3 %, top-20 96.2 / 96.1 / 91.8 %, alive
+  37 / 33 / 34. Occupied tiles barely move (327k / 352k / 333k) because that number is
+  five-minute churn from ongoing wars, not the threshold's business. 10 % cuts the revolt
+  spam by nearly half and leaves the leader where the lever-off game had it; the mechanic is
+  still live (269 uprisings), which is the brief's ask.
 
 ### Session 11 (continued) — item 6.6 closes: conquest is a commitment
 
@@ -849,6 +880,22 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   remains by design.
 - The discord card on a clan overview says "invite is no longer valid" for any invite the
   browser cannot resolve against Discord's public API (offline / fake invite) — expected.
+
+## Numbers last measured — Phase 5 retune, unrest share (2026-09-14, session 12)
+
+- **Bot-vs-bot** (`balance:run --ticks 8000`, world, 150 bots + nations, seed `perf-gate`):
+
+  | after 8000 ticks     | `--flat-unrest` (300 flat) | share 5 % (measured, not kept) | share 10 % (shipped) |
+  | -------------------- | -------------------------- | ------------------------------ | -------------------- |
+  | players alive        | 37                         | 33                             | 34                   |
+  | top 1 / 5 / 20 share | 12.7 / 46.8 / 96.2         | 13.2 / 45.7 / 96.1             | 11.3 / 44.2 / 91.8   |
+  | occupied tiles       | 327170                     | 352219                         | 333386               |
+  | uprisings            | 507 (7 alive)              | 342 (4 alive)                  | 269 (1 alive)        |
+  | fallout tiles        | 0                          | 2901                           | 0                    |
+  | pacts / defensive    | 39 / 10                    | 24 / 12                        | 43 / 6               |
+  | final hash           | `47153110926552660`        | `44537865805050056`            | `44195822438377410`  |
+
+  The flat hash equals the stability commit's: the lever restores that game exactly.
 
 ## Numbers last measured — Phase 5 item 6.6, stability (2026-09-14, session 11)
 

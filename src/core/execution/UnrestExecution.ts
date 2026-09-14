@@ -45,7 +45,9 @@ export class UnrestExecution implements Execution {
         const former = this.mg.playerBySmallID(formerID);
         if (!former.isPlayer()) continue;
         const scale = config.doctrineUnrestScale((former as Player).doctrine());
-        const threshold = Math.ceil(config.unrestPartisanThreshold() / scale);
+        const threshold = Math.ceil(
+          config.unrestPartisanThreshold(occupier.numTilesOwned()) / scale,
+        );
         if (tiles < threshold) continue;
         const last = occupier.lastUprising(formerID);
         if (last >= 0 && ticks - last < config.partisanCooldownTicks()) {

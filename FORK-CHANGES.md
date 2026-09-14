@@ -182,7 +182,14 @@ shared upstream files are listed individually because each one is a future rebas
   response: in FightWars every session is a guest account, so ranked, the account button, the
   lobby card and the not-logged-in warning treat guests as signed in. Tests updated:
   `tests/client/{AccountIdentity,LobbyCardTrust,Matchmaking}.test.ts`,
-  `tests/client/components/NotLoggedInWarning.test.ts`.
+  `tests/client/components/NotLoggedInWarning.test.ts`; and (session 12, upstream
+  `09720270c`) `tests/client/{SteamLink,SteamLinkModal}.test.ts` — upstream gates the Steam
+  link on a linked identity so a guest cannot bind Steam to a throwaway account; here the
+  guest account is the account the player keeps, so the four "route a guest to log in" cases
+  assert the guest reaching confirm instead.
+- `tests/DesktopStatusBar.test.ts` (upstream `335c18fa7`) — desktop marker is
+  `BRAND.desktop.windowObject`; `resources/lang/en.json` `desktop_status.offline` and
+  `common.backend_unreachable` name FightWars.
 - `src/client/ClanModal.ts` — signed-out means no session (not an empty `me.user`); the
   Donations tab renders only when `BRAND.monetisation.store` is on. `tests/client/clan/
 {ClanModalGuest,ClanModal.handlers,ClanModalProfileHandoff}.test.ts` updated / mocked with
@@ -879,10 +886,11 @@ cannot absorb as an enclave. `docs/MECHANICS.md` §05 "Gaps" 6.
   enclave.
 - `src/core/GameRunner.ts` — registers `UnrestExecution` when stability is on.
 - `src/core/configuration/Config.ts` — `unrestEnabled`, `unrestAssimilationTicks`,
-  `unrestPartisanThreshold`, `partisanCooldownTicks`, `partisanTroops`,
-  `doctrineUnrestScale`.
+  `unrestPartisanThreshold` (session 12: max(300, `unrestPartisanShare()` = 10 % of the
+  occupier's land)), `partisanCooldownTicks`, `partisanTroops`, `doctrineUnrestScale`.
 - `src/client/Utils.ts`, `resources/lang/en.json` — the uprising message and its colour.
-- `scripts/balanceRun.ts` — `--no-unrest`, and an unrest line in the report.
+- `scripts/balanceRun.ts` — `--no-unrest`, `--flat-unrest` (session 12), and an unrest line
+  in the report.
 - Fixtures: `tests/GameUpdateUtils.test.ts` and the two `derive` tests gained `unrestTiles`.
 
 #### FightWars-only files added

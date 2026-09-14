@@ -235,6 +235,30 @@ describe("uprisings", () => {
     expect(occupier.isAlliedWith(rising)).toBe(false);
   });
 
+  it("need a share of the occupier's own land, never less than the floor", () => {
+    const config = game.config();
+    const floor = config.unrestPartisanThreshold();
+    expect(floor).toBe(300);
+    expect(config.unrestPartisanThreshold(1000)).toBe(floor);
+    expect(config.unrestPartisanThreshold(3000)).toBe(floor);
+    expect(config.unrestPartisanThreshold(3010)).toBe(301);
+    expect(config.unrestPartisanThreshold(100_000)).toBe(10_000);
+    // The execution reads the share against the occupier's land: with the
+    // share at the whole of it (400 tiles, 300 of them the people's), the
+    // floor's worth of occupied land raises nobody...
+    vi.spyOn(config, "unrestPartisanShare").mockReturnValue(100);
+    occupyRows(10, 10 + floor / 30 - 1);
+    expect(occupier.unrestTiles()).toBe(floor);
+    expect(occupier.numTilesOwned()).toBe(400);
+    ticks(10);
+    expect(partisans().length).toBe(0);
+    // ...and the same land does the moment the share no longer reaches it.
+    vi.spyOn(config, "unrestPartisanShare").mockReturnValue(0);
+    ticks(10);
+    expect(partisans().length).toBe(1);
+    vi.restoreAllMocks();
+  });
+
   it("halve the land and double the time for a Partisan-doctrine people", () => {
     people.setDoctrine(Doctrine.Partisan);
     const threshold = game.config().unrestPartisanThreshold();

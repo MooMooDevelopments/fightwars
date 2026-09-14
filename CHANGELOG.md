@@ -52,6 +52,10 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   five minutes; hold enough of one people's land without a defense post over it and their
   partisans rise on your own ground — and you cannot absorb them, only fight them. Their
   people, returning, walk right in.
+- **Retune: uprisings scale with the conqueror.** "Enough of one people's land" is now
+  300 tiles or a tenth of everything you own, whichever is more — a small state feels
+  its first conquest, an empire is not kept in permanent revolt by every border it ever
+  crossed.
 
 ### Phase 2 — Infrastructure (2026-09-12)
 

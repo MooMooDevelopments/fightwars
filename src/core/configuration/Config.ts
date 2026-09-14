@@ -672,9 +672,23 @@ export class Config {
     return 3000;
   }
 
-  /** Unassimilated tiles held from one people before their partisans rise. */
-  unrestPartisanThreshold(): number {
-    return 300;
+  /**
+   * Unassimilated tiles held from one people before their partisans rise:
+   * a flat floor, or a share of the occupier's own land, whichever is
+   * larger — so a small conqueror feels it before an empire does, and an
+   * empire is not kept in permanent revolt by the first 300 tiles of every
+   * neighbour it ever bordered.
+   */
+  unrestPartisanThreshold(occupierTiles: number = 0): number {
+    return Math.max(
+      300,
+      Math.floor((occupierTiles * this.unrestPartisanShare()) / 100),
+    );
+  }
+
+  /** The share (whole percent) of the occupier's land behind the threshold. */
+  unrestPartisanShare(): number {
+    return 10;
   }
 
   /** Ticks between uprisings of the same people against the same occupier. */
