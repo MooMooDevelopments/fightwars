@@ -14,6 +14,7 @@ import {
 } from "../../core/game/Game";
 import { GameMap, TileRef } from "../../core/game/GameMap";
 import {
+  BrokeAllianceUpdate,
   GameUpdateType,
   GameUpdateViewData,
   SpawnPhaseEndUpdate,
@@ -42,6 +43,7 @@ import { TrailManager } from "../render/frame/TrailManager";
 import type { FrameData, NameEntry, ZoneData } from "../render/types";
 import { STRUCTURE_TYPES } from "../render/types";
 import { resolveTeamClanTag } from "../Utils";
+import { MatchTimeline } from "./MatchTimeline";
 import { PlayerView } from "./PlayerView";
 import { UnitView } from "./UnitView";
 
@@ -321,6 +323,11 @@ export class GameView implements GameMap {
     if (gu.updates[GameUpdateType.Win].length > 0) {
       this._gameOver = true;
     }
+    for (const b of gu.updates[
+      GameUpdateType.BrokeAlliance
+    ] as BrokeAllianceUpdate[]) {
+      this._timeline.noteBreak(gu.tick, b.traitorID, b.betrayedID);
+    }
     const zoneUpdates = gu.updates[GameUpdateType.Zone] as ZoneUpdate[];
     if (zoneUpdates.length > 0) {
       for (const z of zoneUpdates) {
@@ -548,6 +555,16 @@ export class GameView implements GameMap {
     this.rebuildMotionPlannedUnitIdsCacheIfDirty();
 
     this.populateFrame(gu);
+    if (gu.tick % MatchTimeline.SAMPLE_EVERY === 0) {
+      this._timeline.sample(
+        gu.tick,
+        this.players().map((p) => ({
+          smallID: p.smallID(),
+          tiles: p.numTilesOwned(),
+          alive: p.isAlive(),
+        })),
+      );
+    }
   }
 
   // ── FrameData population ────────────────────────────────────────────────
@@ -733,6 +750,10 @@ export class GameView implements GameMap {
   }
 
   /** Public accessor: the renderer reads this and uploads to the GPU. */
+  timeline(): MatchTimeline {
+    return this._timeline;
+  }
+
   frameData(): FrameData {
     return this._frame;
   }
@@ -1147,6 +1168,8 @@ export class GameView implements GameMap {
   // Set once the sim has decided the game (WinUpdate). Play may go on for
   // those who stay, but the server archives the record at that point.
   private _gameOver = false;
+  /** Post-match analytics (brief §6.7): the client's own record of the game. */
+  private _timeline = new MatchTimeline();
   /** The mode zones (brief §6.7), one per kind, as last announced. */
   private _zones = new Map<number, ZoneData>();
   private _zonesDirty = false;

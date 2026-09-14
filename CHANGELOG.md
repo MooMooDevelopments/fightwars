@@ -74,6 +74,9 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   nearest Missile Silo within 120 tiles straight to the tile you click and land as an attack
   from there — over water, mountains, anyone's land. Nothing shoots them down. Hotkey I.
   Nations drop rather than sail when a silo reaches a target they cannot walk to.
+- **Match report.** The end-of-game screen now charts who held how much of the map
+  over time, shows where your gold came from, how many tiles you held per thousand
+  troops you sent, and which alliances broke and when.
 - **Draft.** In a private lobby the host and the first player to join are captains and
   take turns picking the teams; the game starts with the sides they built.
 - **Fixed:** a host changing game speed or any of the new modes after creating the lobby

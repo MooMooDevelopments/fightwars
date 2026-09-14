@@ -1626,3 +1626,16 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
 
 - `tests/server/Draft.test.ts`, `tests/client/LobbyDraft.test.ts`.
 - `tests/server/ConfigPatch.test.ts` — gains the mode keys.
+
+### The match report (Phase 6, session 13)
+
+#### Shared upstream files edited
+
+- `src/client/view/GameView.ts` — the timeline fed every fifty ticks and on every broken alliance.
+- `src/client/hud/layers/WinModal.ts` — `<match-report>` at the top, the win's stats kept for it.
+- `resources/lang/en.json` — `win_modal.report_*`, `win_modal.gold_*`, `win_modal.betrayed`.
+
+#### FightWars-only files added
+
+- `src/client/view/MatchTimeline.ts`, `src/client/hud/layers/MatchReport.ts`.
+- `tests/client/view/MatchTimeline.test.ts`, `tests/client/MatchReport.test.ts`.

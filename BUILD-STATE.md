@@ -79,6 +79,31 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — the match report
+
+- **What shipped.** A client-side timeline — tiles of every living player every five
+  seconds, and every alliance the tick it broke — and a match report at the top of the
+  win modal: land share over time for the five largest at the end (the viewer always
+  charted), the viewer's gold by source, tiles held per thousand troops sent, and the
+  alliances broken with the minute. The death modal shows the report so far; the gold
+  waits for the game's end because it rides the win update.
+- **Chart discipline (`dataviz`, loaded earlier this session).** Five categorical hues in
+  fixed rank order from the reference palette's dark set, validated on the modal's
+  surface (`#1f2937`): every check passed, worst adjacent pair ΔE 8.4 under protanopia,
+  above the floor without leaning on the secondary encoding — which is there anyway:
+  direct labels at the line ends, a legend, a hover readout, and the table. One axis,
+  two-pixel lines, three hairlines. Text wears the ink tokens, never the series colour.
+- **Guards broken and watched fail:** the timeline sampling every tick, the leaders
+  ranked smallest first, the series colours handed out in reverse rank.
+- **Looked at, and fixed on the spot.** The modal was opened by script over a running
+  solo game at a minute and a quarter (tablet viewport). Two defects the tests could not
+  see: the axis rounded to whole percents, so at a 0.5 % scale it read 1 %, 1 %, 0 % —
+  now a decimal below a 5 % scale (`fmtShare`); and the five end-of-line labels sat on
+  top of each other where the lines end close — now pushed apart by twelve pixels and
+  the stack pulled up if it runs past the bottom (`labelRows`), both pinned in the test.
+- **Not done:** the efficiency figure for the whole roster (viewer only), the same report
+  on the profile's game history.
+
 ### Session 13 — Draft, and the config patch that dropped every mode
 
 - **What shipped.** Draft as server lobby state: the host and the first other seated

@@ -12,6 +12,7 @@ import { Pattern } from "../../../core/CosmeticSchemas";
 import { EventBus } from "../../../core/EventBus";
 import { RankedType } from "../../../core/game/Game";
 import { GameUpdateType } from "../../../core/game/GameUpdates";
+import { AllPlayersStats } from "../../../core/Schemas";
 import { getUserMe } from "../../Api";
 import "../../components/CosmeticCard";
 import { cosmeticSelectionLabel } from "../../components/CosmeticPresentation";
@@ -28,6 +29,7 @@ import { PlaySoundEffectEvent } from "../../sound/Sounds";
 import { steamSDK } from "../../SteamSDK";
 import { SendWinnerEvent } from "../../Transport";
 import { GameView } from "../../view";
+import "./MatchReport";
 
 @customElement("win-modal")
 export class WinModal extends LitElement implements Controller {
@@ -50,6 +52,10 @@ export class WinModal extends LitElement implements Controller {
 
   @state()
   private patternContent: TemplateResult | null = null;
+
+  /** The stats the win carried, for the match report; none on the death modal. */
+  @state()
+  private finalStats: AllPlayersStats | undefined = undefined;
 
   private _title: string;
 
@@ -75,6 +81,12 @@ export class WinModal extends LitElement implements Controller {
           ${this._title || ""}
         </h2>
         <div class="min-h-0 flex-1 overflow-y-auto pr-0.5">
+          ${this.isVisible
+            ? html`<match-report
+                .game=${this.game}
+                .stats=${this.finalStats}
+              ></match-report>`
+            : null}
           ${this.innerHtml()}
         </div>
         <div
@@ -327,6 +339,7 @@ export class WinModal extends LitElement implements Controller {
     const updates = this.game.updatesSinceLastTick();
     const winUpdates = updates?.[GameUpdateType.Win] ?? [];
     winUpdates.forEach((wu) => {
+      this.finalStats = wu.allPlayersStats;
       if (wu.winner === undefined) {
         // Match cancelled (e.g. a ranked 2v2 that didn't fill or fully
         // spawn): the game ends with no winner. Still vote the result to the

@@ -102,8 +102,8 @@ licenses:check`, `npm run perf:gate` on an idle box; per sim change an 8000-tick
    ring and the hill on the map), the Blitz one-click preset, placements, and the four
    historical scenarios, and Draft. Every mode in §6.7 has shipped. §5's remainders:
    a capital marker for Capital Strike, the scenarios in the rotation, region and
-   doctrine picks in the draft; then spectator/caster, replay scrubbing, post-match
-   analytics, challenges, creation tools.
+   doctrine picks in the draft; post-match analytics are in (the match report in the win
+   modal); then spectator/caster, replay scrubbing, challenges, creation tools.
 
 ### Things that bit us in session 13 (do not relearn)
 
@@ -655,9 +655,9 @@ Remaining, roughly in the order the brief implies:
 - **Spectator/caster mode** with economy graphs and a win projection (`spectator` join
   exists; graphs are `dataviz` work), **replay viewer** with timeline scrubbing and
   jump-to-event (the client already replays records; scrubbing needs snapshotting or
-  re-simulation from turn 0), **post-match analytics** (territory over time, troop
-  efficiency, gold by category — `StatsSchemas` gold indices exist — the tick an alliance
-  broke).
+  re-simulation from turn 0). **Post-match analytics are in** (session 13: `MatchTimeline`
+  on the client, `<match-report>` in the win modal — land over time for the top five, gold
+  by source, tiles per thousand troops sent, alliances broken).
 - **Daily/weekly challenges** and cosmetic-only progression (API tables + `/users/@me`
   fields; the client's inventory/cosmetics UI exists but the catalogue is empty by design).
   **No pay-to-win, ever**; the store switch in `Brand.ts` stays off.
