@@ -24,6 +24,8 @@ export interface ShadowSimLike {
   hashAt(turn: number): number | null;
   /** The win the server's own sim declared, with its stats, or null. */
   winResult(): ShadowWin | null;
+  /** The server's own game, for the balance dashboard; null until ready. */
+  game?(): Game | null;
 }
 
 /** What the sim declares when a game ends: the same update the clients vote from. */

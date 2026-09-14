@@ -1681,3 +1681,17 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
 #### FightWars-only files added
 
 - `tests/client/graphics/RadialMenuKeyboard.test.ts`.
+
+### The balance dashboard and the cold-load gate (Phase 7, session 13)
+
+#### Shared upstream files edited
+
+- `src/server/GameServer.ts` — `balanceSnapshot()`, `BalanceSnapshot`.
+- `src/server/GameManager.ts` — `balance` on the metrics snapshot.
+- `.github/workflows/ci.yml` — `coldload:gate` after the build; `package.json` — the script.
+
+#### FightWars-only files edited or added
+
+- `src/server/ShadowSim.ts` — `game?()` on the interface; `src/server/MetricsDashboard.ts` — the balance table.
+- `scripts/coldLoadGate.ts`, `scripts/coldLoadModel.ts`.
+- `tests/server/BalanceMetrics.test.ts`, `tests/scripts/ColdLoadModel.test.ts`.

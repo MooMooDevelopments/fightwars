@@ -733,10 +733,14 @@ parsed with the client's schemas (the pattern in `tests/api/`).
   opens it, arrows and Enter drive it, arcs are menu items — the build and emoji
   sub-panels are the remainder), **i18n** (every
   string goes through `translateText` with a key in `en.json`; `tests/TranslationSystem.test.ts`
-  fails the build on an unused or missing key, which is the audit, continuous), analytics
-  and a live balance dashboard (`dataviz`; the metrics endpoint is the data source).
-- **Performance in CI**: server tick, bandwidth and bundle are gated; add cold-load time
-  (< 2.5 s on 10 Mbps) and fps once a GPU runner exists.
+  fails the build on an unused or missing key, which is the audit, continuous), **the
+  live balance dashboard is in** (session 13: `/metrics` shows each shadowed game's
+  leader against the win bar, alive counts, and a two-minute sparkline).
+- **Performance in CI**: server tick, bandwidth and bundle are gated, and **cold load is
+  gated** (session 13: `npm run coldload:gate` in the build job models the critical
+  path's wire time at 10 Mbps — 0.99 s today, budget 2.5 s — and the initial download with
+  the largest map — 19.2 MB, budget 90 MB); fps waits on a GPU runner, and the parse-and-
+  execute half of cold load on a laptop.
 
 **Definition of done** (brief §11) is checked line by line, then `SHIPPED.md` is written:
 what was built, what was cut and why, the measured numbers, what next.

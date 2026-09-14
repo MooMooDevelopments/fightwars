@@ -11,6 +11,7 @@ import {
   GameMode,
   GameType,
   HumansVsNations,
+  Player,
   PlayerInfo,
   PlayerType,
   RankedType,
@@ -126,6 +127,19 @@ export interface GameServerOptions {
 // (the archive upload, the tribe fetch, the environment) without mocking
 // modules. env and turnIntervalMs are thunks so the value is read when it
 // is used, not when the game is created.
+/** One game's balance as the dashboard reads it. */
+export interface BalanceSnapshot {
+  tick: number;
+  alive: number;
+  humansAlive: number;
+  leaderName: string | null;
+  /** Of the claimable land (fallout excluded), 0–1. */
+  leaderShare: number;
+  claimedShare: number;
+  /** The win bar of the moment, 0–1. */
+  winBar: number;
+}
+
 export interface GameServerDeps {
   // Hand a finished game's record on for upload. The default stamps the
   // deployment (finalizeGameRecord) first; a test receives the record as the
@@ -196,6 +210,38 @@ export class GameServer {
   // The server's own copy of the game, once started (ShadowSim), and the
   // gameplay intents it has refused.
   private shadow: ShadowSimLike | null = null;
+
+  /**
+   * The balance dashboard's read of this game (brief §11, a live balance
+   * dashboard): from the shadow sim, so it is the server's own view. Who
+   * leads, how much of the claimable land they hold against the win bar
+   * of the moment, how many stand. Null without a shadow.
+   */
+  public balanceSnapshot(): BalanceSnapshot | null {
+    const game = this.shadow?.game?.() ?? null;
+    if (game === null) return null;
+    const land = Math.max(1, game.numLandTiles() - game.numTilesWithFallout());
+    const alive = game.players().filter((p) => p.isAlive());
+    let leader: Player | null = null;
+    let claimed = 0;
+    for (const p of alive) {
+      claimed += p.numTilesOwned();
+      if (leader === null || p.numTilesOwned() > leader.numTilesOwned()) {
+        leader = p;
+      }
+    }
+    return {
+      tick: game.ticks(),
+      alive: alive.length,
+      humansAlive: alive.filter((p) => p.type() === PlayerType.Human).length,
+      leaderName: leader === null ? null : leader.displayName(),
+      leaderShare: leader === null ? 0 : leader.numTilesOwned() / land,
+      claimedShare: claimed / land,
+      winBar:
+        game.config().percentageTilesOwnedToWin(game.elapsedGameSeconds()) /
+        100,
+    };
+  }
   private shadowRefusals = 0;
   // Winner votes that named someone other than the winner the shadow saw.
   private overruledWinnerVotes = 0;

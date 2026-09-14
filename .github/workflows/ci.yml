@@ -31,6 +31,9 @@ jobs:
           cache: "npm"
       - run: npm ci --ignore-scripts
       - run: npm run build-prod
+      # FightWars (brief §11): the wire half of the cold-load number, and the
+      # initial download with the largest map. scripts/coldLoadGate.ts.
+      - run: npm run coldload:gate
       - uses: actions/upload-artifact@v7
         with:
           path: out/index.html

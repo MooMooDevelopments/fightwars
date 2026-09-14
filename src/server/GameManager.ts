@@ -10,7 +10,12 @@ import {
 import { GameConfig, GameID, PublicGameType } from "../core/Schemas";
 import { Client } from "./Client";
 import { desyncEventCount } from "./DesyncAlert";
-import { GamePhase, GameServer, JoinResult } from "./GameServer";
+import {
+  BalanceSnapshot,
+  GamePhase,
+  GameServer,
+  JoinResult,
+} from "./GameServer";
 import {
   noopMatchTelemetryEmitter,
   type MatchTelemetryEmitter,
@@ -142,6 +147,7 @@ export class GameManager {
         maxMs: t.maxMs,
         overBudget: t.overBudget,
         bytesOutPerSec: t.bytesOutPerSec,
+        balance: game.balanceSnapshot(),
       };
     });
     const started = games.filter((x) => x.turns > 0);
@@ -267,5 +273,6 @@ export interface WorkerMetricsSnapshot {
     maxMs: number;
     overBudget: number;
     bytesOutPerSec: number;
+    balance: BalanceSnapshot | null;
   }[];
 }

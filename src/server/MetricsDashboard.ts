@@ -1,6 +1,8 @@
 /**
  * The live operations dashboard served by the master at /metrics
- * (FightWars, Section 8: tick time, player count, bandwidth, desyncs).
+ * (FightWars, Section 8: tick time, player count, bandwidth, desyncs) and,
+ * per started game, the balance as the shadow sim sees it: the leader's
+ * share against the win bar, sparklined over the page's own history.
  *
  * Deliberately dependency-free inline HTML: it is an operator page, not
  * product UI, and it must work on a bare master with no CDN or bundle.
@@ -23,6 +25,9 @@ export function metricsDashboardHtml(numWorkers: number): string {
   td:first-child, th:first-child { text-align: left; }
   .bad { color: #f97316; font-weight: 700; }
   small { color: #9fb0c8; }
+  .spark { vertical-align: middle; }
+  .bar { display: inline-block; height: 8px; background: #22304a; width: 80px; vertical-align: middle; }
+  .bar > i { display: block; height: 100%; background: #2563eb; }
 </style>
 </head>
 <body>
@@ -42,8 +47,33 @@ export function metricsDashboardHtml(numWorkers: number): string {
   </tr></thead>
   <tbody></tbody>
 </table>
+<table id="balance">
+  <thead><tr>
+    <th>game</th><th>tick</th><th>alive</th><th>humans</th><th>leader</th>
+    <th>leader share</th><th>win bar</th><th>share vs bar</th><th>claimed</th><th>trend (leader share, last 2 min)</th>
+  </tr></thead>
+  <tbody></tbody>
+</table>
 <script>
   const N = ${numWorkers};
+  // Leader-share history per game, kept by the page: sixty polls, two minutes.
+  const history = new Map();
+  function remember(id, share) {
+    const h = history.get(id) ?? [];
+    h.push(share);
+    while (h.length > 60) h.shift();
+    history.set(id, h);
+    return h;
+  }
+  function spark(h, bar) {
+    const w = 120, ht = 24;
+    const max = Math.max(bar, ...h, 0.01);
+    const pts = h.map((v, i) => ((i / Math.max(1, h.length - 1)) * w).toFixed(1) + "," + (ht - (v / max) * ht).toFixed(1)).join(" ");
+    const barY = (ht - (bar / max) * ht).toFixed(1);
+    return '<svg class="spark" width="' + w + '" height="' + ht + '" viewBox="0 0 ' + w + ' ' + ht + '">'
+      + '<line x1="0" x2="' + w + '" y1="' + barY + '" y2="' + barY + '" stroke="#f97316" stroke-width="1" stroke-dasharray="3,3"/>'
+      + '<polyline fill="none" stroke="#2563eb" stroke-width="2" points="' + pts + '"/></svg>';
+  }
   const BUDGET = ${budgetMs};
   const f = (x, d = 1) => Number(x).toFixed(d);
   const td = (v, bad = false) => "<td" + (bad ? " class=\\"bad\\"" : "") + ">" + v + "</td>";
@@ -77,6 +107,16 @@ export function metricsDashboardHtml(numWorkers: number): string {
         + td(g.overBudget, g.overBudget > 0) + td(f(g.bytesOutPerSec / 1024)) + td(g.desyncedClients, g.desyncedClients > 0)
         + td(g.shadowRefusals, g.shadowRefusals > 0)
         + "</tr>").join("");
+    document.querySelector("#balance tbody").innerHTML = games.filter((g) => g.balance).map((g) => {
+      const b = g.balance;
+      const h = remember(g.gameID, b.leaderShare);
+      const pct = (x) => (x * 100).toFixed(1) + "%";
+      const ratio = Math.min(1, b.winBar > 0 ? b.leaderShare / b.winBar : 0);
+      return "<tr>" + td(esc(g.gameID)) + td(b.tick) + td(b.alive) + td(b.humansAlive)
+        + td(esc(b.leaderName ?? "—")) + td(pct(b.leaderShare)) + td(pct(b.winBar))
+        + td('<span class="bar"><i style="width:' + (ratio * 100).toFixed(0) + '%"></i></span>', ratio >= 1)
+        + td(pct(b.claimedShare)) + td(spark(h, b.winBar)) + "</tr>";
+    }).join("");
   }
   tick();
   setInterval(tick, 2000);

@@ -79,6 +79,24 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — the balance dashboard and the cold-load gate
+
+- **What shipped.** `/metrics` gained a balance table: per shadowed game, the leader
+  against the win bar of the moment, the alive and human counts, the claimed share, and
+  a two-minute sparkline of the leader's share with the bar dashed across it — read from
+  the shadow sim, so it is the server's own view. And a cold-load gate in CI's build job:
+  the critical path of the built page gzipped and modelled on a 10 Mbps line, plus the
+  initial download with the largest map.
+- **Measured (this build):** 735 KB gzipped on the critical path over four files, 0.99 s
+  modelled (budget 2.5 s); assets 3.5 MB + the largest map 15.6 MB = 19.2 MB (budget 90 MB).
+  The entry chunk is 2.6 MB raw, 669 KB gzipped — the one number to watch. What the gate
+  cannot see is parse and execute on a 2019 laptop, which stays on the blocked list.
+- **Also found:** the three colourblind palettes the Definition of Done asks for are
+  already in — protanopia, deuteranopia and tritanopia presets, generated with the
+  dichromacy simulated into the distances — so that line is met without new work.
+- **Not done:** a GPU runner for fps, the laptop for the other half of cold load, and a
+  desync-rate line on the balance table.
+
 ### Session 13 — the radial menu on the keyboard
 
 - **What shipped.** `M` opens the action menu on the screen's centre tile; the arrows and
