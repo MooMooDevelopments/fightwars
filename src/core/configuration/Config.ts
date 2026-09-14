@@ -404,6 +404,18 @@ export class Config {
   }
 
   /**
+   * Whether a Hard/Impossible nation's "too many alliances" reckoning counts
+   * non-aggression pacts. Off (the session-12 retune): a pact is peace and
+   * nothing more, so only partners who would defend each other — `allies()`,
+   * defensive pact and up — count against the cap; on, every rung counts and
+   * the cheap pacts nations hand out block the defensive pacts the cap exists
+   * to ration. The balance lever `--pacts-count` uses this.
+   */
+  allianceCapCountsPacts(): boolean {
+    return false;
+  }
+
+  /**
    * How much longer the traitor mark lasts for breaking a deeper bond: a
    * pact is half the usual window, a defensive pact the usual, a full
    * alliance half again as long. Breaking a promise costs in proportion to

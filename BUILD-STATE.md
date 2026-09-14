@@ -52,6 +52,25 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   8000-tick hash `47153110926552660` to the digit. Guard broken and watched fail: the
   execution reading the flat threshold fails only the new "share of the occupier's own land"
   case.
+- **Second lever: the Hard/Impossible alliance cap counts allies, not pacts.**
+  `hasTooManyAlliances` refuses a partner already bound to half (Hard) or a quarter
+  (Impossible) of the non-tribe players; it counted every `alliances()` entry, so the pacts
+  nations hand any non-hostile neighbour blocked the defensive pacts the cap rations. Now
+  `allies()`; `Config.allianceCapCountsPacts()` is the switch, `--pacts-count` the lever, and
+  `balance:run` gained `--difficulty` because the Medium default never reaches the cap at
+  all. Guard broken and watched fail: counting every rung again fails exactly the two "grants
+  a defensive pact to an asker holding many pacts" cases.
+- **Where the cap bites, and where it does not.** The threshold is a share of the _non-tribe_
+  player count, so with 72 nations on the world map Hard needs 36 partners and Impossible 18:
+  on Hard the two 8000-tick runs are byte-identical (`67031158969095820`, nobody near it) and
+  on Medium the run reproduces the unrest commit's hash. On Impossible it is live: alive
+  41 → 43, pacts 28 → 37, defensive 20 → 18, fallout 24296 → 11380 tiles, leader 11.6 → 11.1 %.
+  The second instrument, the impossible-nations `NationGoldPerMinute` snapshot (61 nations,
+  cap 15): alive **23 → 26**, trade gold −2.1 % (475.9M → 466.1M), train gold −2.5 % (99.6M →
+  97.1M). Three nations back of the eleven that snapshot lost when tiers landed, so the cap
+  was part of that story, not all of it — the rest is the doctrines commit's 30 → 23, which
+  is the next lever's business.
+
 - **Three shares measured, one chosen.** Same seed, 8000 ticks: flat / 5 % / 10 % gave 507 /
   342 / 269 uprisings, leader share 12.7 / 13.2 / 11.3 %, top-20 96.2 / 96.1 / 91.8 %, alive
   37 / 33 / 34. Occupied tiles barely move (327k / 352k / 333k) because that number is
@@ -880,6 +899,25 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   remains by design.
 - The discord card on a clan overview says "invite is no longer valid" for any invite the
   browser cannot resolve against Discord's public API (offline / fake invite) — expected.
+
+## Numbers last measured — Phase 5 retune, alliance cap counts allies (2026-09-14, session 12)
+
+- **Bot-vs-bot** (`balance:run --ticks 8000 --difficulty impossible`, world, 150 bots + nations, seed `perf-gate`):
+
+  | after 8000 ticks     | `--pacts-count` (old count) | allies only (shipped) |
+  | -------------------- | --------------------------- | --------------------- |
+  | players alive        | 41                          | 43                    |
+  | top 1 / 5 / 20 share | 11.3 / 46.0 / 94.8          | 11.0 / 45.7 / 97.4    |
+  | pacts / defensive    | 28 / 20                     | 37 / 18               |
+  | fallout tiles        | 24296                       | 11380                 |
+  | uprisings            | 263 (4 alive)               | 259 (5 alive)         |
+  | final hash           | `77315446805294380`         | `73248487342847200`   |
+
+  Hard: both runs `67031158969095820` (the cap needs 36 partners of 72 nations; nobody has
+  them). Medium: `44195822438377410`, the unrest commit's hash, to the digit.
+
+- **Nation economy** (`NationGoldPerMinute`, impossible nations, 20 minutes): alive 23 → 26,
+  trade gold 475.9M → 466.1M, train gold 99.6M → 97.1M, ships arrived 2116 → 2097.
 
 ## Numbers last measured — Phase 5 retune, unrest share (2026-09-14, session 12)
 

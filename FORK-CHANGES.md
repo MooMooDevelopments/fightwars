@@ -788,17 +788,21 @@ reputation are deliberately not built; §05 2 and 4 say why.
 - `src/core/execution/WinCheckExecution.ts` — publishes the leader and its share, both modes.
 - `src/core/execution/nation/NationAllianceBehavior.ts`, `src/core/execution/NationExecution.ts`,
   `src/core/execution/utils/AiAttackBehavior.ts` — acceptance by rung, pacts first, climbing with
-  partners the nation likes, the coalition rule, free help for a full ally.
+  partners the nation likes, the coalition rule, free help for a full ally; (session 12) the
+  Hard/Impossible cap counts `allies()`, not pacts.
 - `src/core/configuration/Config.ts` — `allianceTiersEnabled`, `allianceBreakTraitorScale`,
-  `coalitionThreshold`.
+  `coalitionThreshold`; (session 12) `allianceCapCountsPacts`.
 - `src/client/Utils.ts` — `COALITION_OFFER` gets the warn colour (the exhaustiveness test
   console-warns on any message type without one).
 - `src/client/Transport.ts`, `src/client/hud/layers/ActionableEvents.ts`,
   `src/client/hud/layers/PlayerPanel.ts`, `resources/lang/en.json` — the intent carries the
   rung, the incoming card names it and accepts at it, the coalition card, the button label.
-- `scripts/balanceRun.ts` — `--flat-alliances`, `--no-coalition`, and an alliances line.
+- `scripts/balanceRun.ts` — `--flat-alliances`, `--no-coalition`, and an alliances line;
+  (session 12) `--pacts-count` and `--difficulty <easy|medium|hard|impossible>`.
 - `tests/NationAllianceBehavior.test.ts` — the mock request gained `tier: () => FullAlliance`;
-  three fixtures with alliance-view literals gained `tier: 3`.
+  three fixtures with alliance-view literals gained `tier: 3`; (session 12) the cap suite —
+  a pact-holder gets a defensive pact, a defensive-pact-holder does not, the lever restores
+  the old count.
 
 #### FightWars-only files added
 

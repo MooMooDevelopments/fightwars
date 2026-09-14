@@ -500,3 +500,116 @@ describe("AllianceBehavior.maybeBetray - juicy ally strategy", () => {
     },
   );
 });
+
+// Brief §6.5, session-12 retune. On Hard and Impossible a nation refuses a
+// partner who is already allied with much of the map, so that enough of the
+// map stays free to stop a runaway leader. Counting every rung meant the
+// cheap non-aggression pacts nations hand out to any non-hostile neighbour
+// blocked the defensive pacts the cap exists to ration — the
+// impossible-nations snapshot lost eleven alive nations to it. A pact is
+// peace and nothing more; the cap now counts allies() (defensive and up).
+describe("AllianceBehavior.hasTooManyAlliances - pacts are not alliances", () => {
+  async function setupCapTest(difficulty: Difficulty) {
+    const testGame = await setup(
+      "big_plains",
+      { infiniteGold: true, difficulty },
+      [
+        new PlayerInfo("nation", PlayerType.Nation, null, "nation_id"),
+        new PlayerInfo("asker", PlayerType.Human, null, "asker_id"),
+      ],
+    );
+    const nation = testGame.player("nation_id");
+    const asker = testGame.player("asker_id");
+    let assigned = 0;
+    testGame.map().forEachTile((tile) => {
+      if (assigned >= 20 || !testGame.map().isLand(tile)) return;
+      (assigned % 2 === 0 ? nation : asker).conquer(tile);
+      assigned++;
+    });
+    nation.updateRelation(asker, 60);
+    asker.updateRelation(nation, 60);
+
+    const random = new PseudoRandom(46);
+    const behavior = new NationAllianceBehavior(
+      random,
+      testGame,
+      nation,
+      new NationEmojiBehavior(random, testGame, nation),
+    );
+    // Pin every other route to "yes" so the cap is the one thing deciding.
+    vi.spyOn(behavior as any, "isConfused").mockReturnValue(false);
+    vi.spyOn(behavior as any, "isAlliancePartnerThreat").mockReturnValue(false);
+    vi.spyOn(behavior as any, "isAlliancePartnerFriendly").mockReturnValue(
+      true,
+    );
+
+    /** The asker holds `n` bonds of one rung with players elsewhere. */
+    const holding = (n: number, tier: AllianceTier) => {
+      vi.spyOn(asker, "alliances").mockReturnValue(
+        Array.from({ length: n }, () => ({
+          tier: () => tier,
+          other: () => nation,
+        })) as unknown as ReturnType<Player["alliances"]>,
+      );
+    };
+    const request = {
+      requestor: () => asker,
+      recipient: () => nation,
+      createdAt: () =>
+        (testGame.config().numSpawnPhaseTurns() + 2) as unknown as Tick,
+      tier: () => AllianceTier.DefensivePact,
+      accept: vi.fn(),
+      reject: vi.fn(),
+    } as unknown as AllianceRequest;
+    vi.spyOn(nation, "incomingAllianceRequests").mockReturnValue([request]);
+
+    return { testGame, holding, request, behavior };
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it.each([Difficulty.Hard, Difficulty.Impossible])(
+    "%s: grants a defensive pact to an asker holding many pacts",
+    async (difficulty) => {
+      const { holding, request, behavior } = await setupCapTest(difficulty);
+      holding(10, AllianceTier.NonAggression);
+
+      behavior.handleAllianceRequests();
+
+      expect(request.accept).toHaveBeenCalled();
+      expect(request.reject).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([Difficulty.Hard, Difficulty.Impossible])(
+    "%s: refuses one holding many defensive pacts",
+    async (difficulty) => {
+      const { holding, request, behavior } = await setupCapTest(difficulty);
+      holding(10, AllianceTier.DefensivePact);
+
+      behavior.handleAllianceRequests();
+
+      expect(request.accept).not.toHaveBeenCalled();
+      expect(request.reject).toHaveBeenCalled();
+    },
+  );
+
+  it.each([Difficulty.Hard, Difficulty.Impossible])(
+    "%s: with the cap counting pacts (the lever), the pacts block it",
+    async (difficulty) => {
+      const { testGame, holding, request, behavior } =
+        await setupCapTest(difficulty);
+      vi.spyOn(testGame.config(), "allianceCapCountsPacts").mockReturnValue(
+        true,
+      );
+      holding(10, AllianceTier.NonAggression);
+
+      behavior.handleAllianceRequests();
+
+      expect(request.accept).not.toHaveBeenCalled();
+      expect(request.reject).toHaveBeenCalled();
+    },
+  );
+});

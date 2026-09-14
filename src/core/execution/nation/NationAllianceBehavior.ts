@@ -249,7 +249,11 @@ export class NationAllianceBehavior {
     const totalPlayers = this.game
       .players()
       .filter((p) => p.type() !== PlayerType.Bot).length;
-    const otherPlayerAlliances = otherPlayer.alliances().length;
+    // A pact is peace and nothing more; the cap rations the partners who
+    // would actually fight for each other (brief §6.5, session-12 retune).
+    const otherPlayerAlliances = this.game.config().allianceCapCountsPacts()
+      ? otherPlayer.alliances().length
+      : otherPlayer.allies().length;
 
     if (difficulty === Difficulty.Hard) {
       return otherPlayerAlliances >= totalPlayers * 0.5;

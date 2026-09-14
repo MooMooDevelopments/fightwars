@@ -13,12 +13,14 @@
  *
  * Usage: npx tsx scripts/balanceRun.ts [--ticks 5000] [--bots 150]
  *                                      [--map world] [--seed perf-gate]
+ *                                      [--difficulty medium]
  *                                      [--no-supply] [--flat-terrain]
  *                                      [--no-upkeep] [--no-materials]
  *                                      [--no-blockades] [--no-embargo-price]
  *                                      [--legacy-fallout] [--flat-alliances]
  *                                      [--no-coalition] [--no-doctrines]
  *                                      [--no-unrest] [--flat-unrest]
+ *                                      [--pacts-count]
  *
  * `--no-supply` turns the supply penalty and its attrition off, and
  * `--flat-terrain` turns the elevation curves off (the band table stays),
@@ -85,6 +87,13 @@ class FlatAlliances extends Config {
 class NoUnrest extends Config {
   unrestEnabled(): boolean {
     return false;
+  }
+}
+
+/** The same game with Hard/Impossible nations counting pacts against the alliance cap. */
+class PactsCount extends Config {
+  allianceCapCountsPacts(): boolean {
+    return true;
   }
 }
 
@@ -171,6 +180,17 @@ function resolveMap(name: string): GameMapType {
   return GameMapType[key as keyof typeof GameMapType];
 }
 
+/** Difficulty name to enum member, case-insensitive. */
+function resolveDifficulty(name: string): Difficulty {
+  const key = Object.keys(Difficulty).find(
+    (k) => k.toLowerCase() === name.toLowerCase(),
+  );
+  if (key === undefined) {
+    throw new Error(`unknown difficulty "${name}"`);
+  }
+  return Difficulty[key as keyof typeof Difficulty];
+}
+
 function pct(part: number, whole: number): string {
   return whole === 0 ? "0.0%" : `${((part / whole) * 100).toFixed(1)}%`;
 }
@@ -179,6 +199,7 @@ async function main(): Promise<void> {
   const ticks = Number(arg("--ticks", "5000"));
   const bots = Number(arg("--bots", "150"));
   const map = resolveMap(arg("--map", "world"));
+  const difficulty = resolveDifficulty(arg("--difficulty", "medium"));
   const seed = arg("--seed", "perf-gate");
   const noSupply = process.argv.includes("--no-supply");
   const flatTerrain = process.argv.includes("--flat-terrain");
@@ -192,6 +213,7 @@ async function main(): Promise<void> {
   const noDoctrines = process.argv.includes("--no-doctrines");
   const noUnrest = process.argv.includes("--no-unrest");
   const flatUnrest = process.argv.includes("--flat-unrest");
+  const pactsCount = process.argv.includes("--pacts-count");
   if (
     [
       noSupply,
@@ -206,13 +228,14 @@ async function main(): Promise<void> {
       noDoctrines,
       noUnrest,
       flatUnrest,
+      pactsCount,
     ].filter(Boolean).length > 1
   ) {
     throw new Error("one lever at a time");
   }
   console.debug = () => {};
   console.log(
-    `[balance] map=${map} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}${noUpkeep ? " upkeep=off" : ""}${noMaterials ? " materials=off" : ""}${noBlockades ? " blockades=off" : ""}${noEmbargoPrice ? " embargo-price=off" : ""}${legacyFallout ? " fallout=legacy" : ""}${flatAlliances ? " alliances=flat" : ""}${noCoalition ? " coalition=off" : ""}${noDoctrines ? " doctrines=off" : ""}${noUnrest ? " unrest=off" : ""}${flatUnrest ? " unrest=flat" : ""}\n`,
+    `[balance] map=${map} difficulty=${Difficulty[difficulty]} bots=${bots} seed=${seed} ticks=${ticks}${noSupply ? " supply=off" : ""}${flatTerrain ? " terrain=flat" : ""}${noUpkeep ? " upkeep=off" : ""}${noMaterials ? " materials=off" : ""}${noBlockades ? " blockades=off" : ""}${noEmbargoPrice ? " embargo-price=off" : ""}${legacyFallout ? " fallout=legacy" : ""}${flatAlliances ? " alliances=flat" : ""}${noCoalition ? " coalition=off" : ""}${noDoctrines ? " doctrines=off" : ""}${noUnrest ? " unrest=off" : ""}${flatUnrest ? " unrest=flat" : ""}${pactsCount ? " alliance-cap=counts-pacts" : ""}\n`,
   );
 
   const gameConfig: GameConfig = {
@@ -220,7 +243,7 @@ async function main(): Promise<void> {
     gameMapSize: GameMapSize.Normal,
     gameMode: GameMode.FFA,
     gameType: GameType.Public,
-    difficulty: Difficulty.Medium,
+    difficulty,
     nations: "default",
     donateGold: false,
     donateTroops: false,
@@ -261,7 +284,9 @@ async function main(): Promise<void> {
                         ? new NoUnrest(gameConfig, null, false)
                         : flatUnrest
                           ? new FlatUnrest(gameConfig, null, false)
-                          : new Config(gameConfig, null, false);
+                          : pactsCount
+                            ? new PactsCount(gameConfig, null, false)
+                            : new Config(gameConfig, null, false);
   const mapLoader = new NodeGameMapLoader(
     path.join(PROJECT_ROOT, "resources/maps"),
   );

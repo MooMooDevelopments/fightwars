@@ -52,6 +52,9 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   five minutes; hold enough of one people's land without a defense post over it and their
   partisans rise on your own ground — and you cannot absorb them, only fight them. Their
   people, returning, walk right in.
+- **Retune: pacts are not alliances.** Hard and Impossible nations refuse a partner who is
+  already allied with much of the map. That count no longer includes non-aggression pacts,
+  so a peaceable neighbour can still be offered a defensive pact.
 - **Retune: uprisings scale with the conqueror.** "Enough of one people's land" is now
   300 tiles or a tenth of everything you own, whichever is more — a small state feels
   its first conquest, an empire is not kept in permanent revolt by every border it ever
