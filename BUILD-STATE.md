@@ -744,7 +744,7 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 
 ## In progress
 
-- [ ] Nothing mid-flight. The tree is committed and green.
+- [ ] Nothing mid-flight. The tree is committed and green. Session 12 starts from `docs/HANDOFF.md` §1a (the retune pass, then the six 6.4 units).
 
 ## Next up (concrete, ordered)
 
