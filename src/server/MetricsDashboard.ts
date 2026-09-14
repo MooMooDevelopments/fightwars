@@ -31,14 +31,14 @@ export function metricsDashboardHtml(numWorkers: number): string {
   <thead><tr>
     <th>worker</th><th>games</th><th>clients</th><th>turn mean ms</th><th>turn p99 ms</th>
     <th>turn max ms</th><th>over budget</th><th>KB/s out</th><th>desynced clients</th>
-    <th>desync events</th><th>RSS MB</th>
+    <th>desync events</th><th>refused</th><th>RSS MB</th>
   </tr></thead>
   <tbody></tbody>
 </table>
 <table id="games">
   <thead><tr>
     <th>game</th><th>worker</th><th>phase</th><th>clients</th><th>turns</th><th>mean ms</th>
-    <th>p50 ms</th><th>p99 ms</th><th>max ms</th><th>over</th><th>KB/s</th><th>desynced</th>
+    <th>p50 ms</th><th>p99 ms</th><th>max ms</th><th>over</th><th>KB/s</th><th>desynced</th><th>refused</th>
   </tr></thead>
   <tbody></tbody>
 </table>
@@ -69,11 +69,13 @@ export function metricsDashboardHtml(numWorkers: number): string {
         + td(f(m.turnMs.mean, 2), m.turnMs.mean > BUDGET) + td(f(m.turnMs.p99, 2)) + td(f(m.turnMs.max, 1))
         + td(m.turnMs.overBudget, m.turnMs.overBudget > 0) + td(f(m.bytesOutPerSec / 1024))
         + td(m.desyncedClients, m.desyncedClients > 0) + td(m.desyncEvents, m.desyncEvents > 0)
+        + td(m.shadowRefusals, m.shadowRefusals > 0)
         + td(f(m.memoryRssBytes / 1048576, 0)) + "</tr>").join("");
     document.querySelector("#games tbody").innerHTML = games.map((g) =>
       "<tr>" + td(esc(g.gameID)) + td("w" + g.worker) + td(esc(g.phase)) + td(g.clients) + td(g.turns)
         + td(f(g.meanMs, 2), g.meanMs > BUDGET) + td(f(g.p50Ms, 2)) + td(f(g.p99Ms, 2)) + td(f(g.maxMs, 1))
         + td(g.overBudget, g.overBudget > 0) + td(f(g.bytesOutPerSec / 1024)) + td(g.desyncedClients, g.desyncedClients > 0)
+        + td(g.shadowRefusals, g.shadowRefusals > 0)
         + "</tr>").join("");
   }
   tick();

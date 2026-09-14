@@ -1371,3 +1371,27 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
   nothing while it cannot; sends once and forgets when it can, with the rocket direction;
   cancel by chip or by asking again; a newer build replaces; death forgets; the grid and the
   radial both queue with the name and the rocket direction.
+
+### The shadow simulation (Phase 7, session 13)
+
+#### Shared upstream files edited
+
+- `src/server/GameServer.ts` — `deps.shadowSim`; the shadow started with the game, handed
+  every committed turn, asked before a gameplay intent joins a turn; `numShadowRefusals()`.
+- `src/server/GameManager.ts`, `MetricsDashboard.ts`, `WorkerMetrics.ts` — the refusal count
+  on the snapshot, the dashboard and the OTel gauge.
+- `src/server/MapLandTiles.ts` — `mapFilePath` (the manifest's resolution, for any map file),
+  `mapDirName` exported.
+- `src/server/ServerEnv.ts` — `shadowSimEnabled()` (`SHADOW_SIM=off`).
+
+#### FightWars-only files added
+
+- `src/server/ShadowSim.ts` — the server's own `GameRunner`, the turn queue, the rule list.
+- `src/server/ServerMapLoader.ts` — `GameMapLoader` over the server's map files.
+- `tests/server/ShadowSim.test.ts` — the real sim on the plains test map: judges nothing
+  before ready and applies the queued turns; never refuses when the map fails; control and
+  spawn pass; no such client, disabled type, attacking self, unknown target, unknown unit,
+  dead player, spawn after the phase, a unit that is not the sender's.
+- `tests/server/GameServerShadow.test.ts` — started with the game, every turn handed over,
+  a refusal is 403 and counted and kept out of the turn, control intents not asked about,
+  the relay alone without a shadow.

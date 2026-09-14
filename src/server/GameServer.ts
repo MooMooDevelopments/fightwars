@@ -69,6 +69,8 @@ import { identityFor, MatchTelemetryRecorder } from "./MatchTelemetryRecorder";
 import { friendsLookup, NameVisibility } from "./NameVisibility";
 import { Roster } from "./Roster";
 import { ServerEnv } from "./ServerEnv";
+import { ServerMapLoader } from "./ServerMapLoader";
+import { ShadowLog, ShadowSim, ShadowSimLike } from "./ShadowSim";
 import { SocketIngress } from "./SocketIngress";
 import {
   noopMatchTelemetryEmitter,
@@ -135,6 +137,9 @@ export interface GameServerDeps {
   // so a test can pin a value it can assert on; production always takes the
   // random default.
   mintGroupToken: () => string;
+  // The server-side shadow simulation for a started game, or null for none
+  // (SHADOW_SIM=off, or a test that wants the relay alone).
+  shadowSim: (gameStart: GameStartInfo, log: ShadowLog) => ShadowSimLike | null;
 }
 
 // 16 URL-safe characters of CSPRNG output — 12 bytes is exactly 16 base64url
@@ -152,6 +157,10 @@ export function defaultGameServerDeps(): GameServerDeps {
     fetchTribes: fetchCustomTribes,
     env: () => ServerEnv.env(),
     turnIntervalMs: () => ServerEnv.turnIntervalMs(),
+    shadowSim: (gameStart, log) =>
+      ServerEnv.shadowSimEnabled()
+        ? new ShadowSim(gameStart, new ServerMapLoader(), log)
+        : null,
     telemetry: noopMatchTelemetryEmitter,
     telemetryBuildHash: "DEV",
     mintGroupToken,
@@ -181,6 +190,10 @@ export class GameServer {
 
   private turns: Turn[] = [];
   private intents: StampedIntent[] = [];
+  // The server's own copy of the game, once started (ShadowSim), and the
+  // gameplay intents it has refused.
+  private shadow: ShadowSimLike | null = null;
+  private shadowRefusals = 0;
   // Who joined, who is connected, and the per-account reconnect, admission
   // and kick flags (see Roster.ts). The join policy stays here.
   private readonly clients = new Roster();
@@ -431,7 +444,19 @@ export class GameServer {
       }
 
       default: {
-        // Gameplay intents, into the turn queue.
+        // Gameplay intents: what the server's own copy of the game says is
+        // impossible is refused here, before it reaches a turn.
+        const refusal = this.shadow?.check(stamped) ?? null;
+        if (refusal !== null) {
+          this.shadowRefusals++;
+          this.log.warn("intent refused by shadow sim", {
+            type: stamped.type,
+            clientID: stamped.clientID,
+            reason: refusal,
+          });
+          return finish({ status: 403, error: refusal });
+        }
+        // Into the turn queue.
         // While paused the intent is accepted at ingress but not queued into a
         // turn; tag it so telemetry can tell it apart from a queued intent.
         const paused = this.paused;
@@ -787,6 +812,11 @@ export class GameServer {
     return this.desync.count();
   }
 
+  /** Gameplay intents the shadow simulation refused (ShadowSim). */
+  public numShadowRefusals(): number {
+    return this.shadowRefusals;
+  }
+
   // Matchmade ranked games (1v1/2v2) must start with full attendance: the
   // roster freezes at start(), so a game missing a player would run
   // short-handed only to be voided by the sim (2v2) or hand out a walkover
@@ -1064,6 +1094,11 @@ export class GameServer {
     // every client receives in the start message.
     this.zbinCtx = createGameWireContext(this.gameStartInfo.players);
 
+    // The shadow loads its map in the background; turns committed before it
+    // is ready queue inside it, and intents it cannot yet see go through.
+    this.shadow = this.deps.shadowSim(this.gameStartInfo, this.log);
+    void this.shadow?.start();
+
     this.endTurnIntervalID = setInterval(
       () => this.endTurn(),
       this.deps.turnIntervalMs(),
@@ -1326,6 +1361,7 @@ export class GameServer {
     };
     this.turns.push(pastTurn);
     this.intents = [];
+    this.shadow?.applyTurn(pastTurn);
     const counts = this.telemetry.takeTickCounts(pastTurn.turnNumber);
     this.telemetry.emit(
       "turn_committed",

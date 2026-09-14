@@ -79,6 +79,34 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — Phase 7 opens: the server runs its own copy of the game
+
+- **What shipped.** `ShadowSim`: the server builds the same `GameRunner` the clients run
+  (`createGameRunner` with `ServerMapLoader`, which resolves map files the way
+  `MapLandTiles` resolves a manifest — hashed under `static/` in production, `resources/`
+  in dev), feeds it every committed turn from `endTurn`, and asks it before a gameplay
+  intent joins a turn. A refusal is a 403 with the reason, logged and counted: the game's
+  `numShadowRefusals()`, the worker's `shadowRefusalCount()`, a "refused" column on the
+  metrics dashboard, the OTel gauge `shadow_refusals.total`. `SHADOW_SIM=off` runs the
+  relay alone. `docs/MECHANICS.md` §06 2e has the rule list.
+- **The line it draws.** One turn behind the clients, it refuses only what cannot become
+  possible within a turn: a client with no player, a spawn after the phase, a dead player, a
+  disabled unit type, an attack on oneself or on nobody, a unit that is not the sender's.
+  Gold, territory, reachability and alliances move within a tick, and refusing on them would
+  drop honest intents — those stay the simulation's, where every client applies the same
+  rule. Until its map loads it judges nothing; if the map fails or a tick throws, it logs
+  and judges nothing from then on. The relay never depends on it.
+- **Measured.** Through the server's own loader on this box: the world map in 47 ms, 300
+  turns with 50 bots in 255 ms (0.85 ms a turn early in a game). A stranger's intent refused,
+  a player who failed to spawn refused as dead after the phase. Not exercised through a real
+  lobby: the pane cannot fill a second seat, and a one-player private lobby does not start.
+- **Guards broken and watched fail:** the dead keep playing, anyone's unit (the first cut's
+  ownership case was conditional on a nation existing and skipped itself — a third player
+  made it unconditional), the server ignoring the shadow.
+- **Also fixed in passing:** a `clientID` in a server test must match the ID regex or
+  `start()` bails at the start-info parse before any hook runs — the harness's `cid()`
+  makes valid ones.
+
 ### Session 13 — item 7's remainder, looked at on a phone
 
 - **Photographed at 375 × 812** (the pane's mobile preset: Android user agent, five touch

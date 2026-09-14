@@ -73,6 +73,15 @@ export function initWorkerMetrics(gameManager: GameManager): void {
     },
   );
 
+  // FightWars: gameplay intents the shadow simulations refused (ShadowSim).
+  const shadowRefusalsGauge = meter.createObservableGauge(
+    `${ATTR_PREFIX}.shadow_refusals.total`,
+    {
+      description:
+        "Gameplay intents refused by the server-side shadow simulation",
+    },
+  );
+
   const memoryUsageGauge = meter.createObservableGauge(
     `${ATTR_PREFIX}.memory_usage.bytes`,
     {
@@ -97,6 +106,10 @@ export function initWorkerMetrics(gameManager: GameManager): void {
 
   desyncEventsGauge.addCallback((result) => {
     result.observe(desyncEventCount(), getPromLabels());
+  });
+
+  shadowRefusalsGauge.addCallback((result) => {
+    result.observe(gameManager.shadowRefusalCount(), getPromLabels());
   });
 
   memoryUsageGauge.addCallback((result) => {

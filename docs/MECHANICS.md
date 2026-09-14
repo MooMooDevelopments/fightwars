@@ -21,10 +21,14 @@ brief and the exact hook points for closing them.
 
 ## Headline findings (what a fresh engineer must know before touching anything)
 
-1. **The sim runs on every client; the server relays intents.** The server validates schema
-   shape, rate limits and who may send four control intents. It checks **zero gameplay semantics**
-   (affordability, ownership, reachability, cooldowns are all client-side in the deterministic
-   core). Winner and stats are settled by client vote. See §06.
+1. **The sim runs on every client; the server relays intents — and, since session 13, runs its
+   own copy too.** The server validates schema shape, rate limits and who may send four control
+   intents, and `ShadowSim` (§06 2e) runs the same `GameRunner` the clients run, one turn behind,
+   refusing the gameplay intents its state says are impossible (no such player, dead player, a
+   unit that is not theirs, a unit type the lobby disabled, an attack on oneself). What moves
+   within a tick — affordability, territory, alliances — stays the clients' business, where every
+   client applies the same rule to the same state. Winner and stats are still settled by client
+   vote (the shadow knows the winner; using that is the next step). See §06.
 2. **The live desync hash is weak.** It covers troop count, tile count and unit `(tile, type, id)`
    per player. Gold, relations, tile identity, PRNG state and the tick are not hashed. A desynced
    client is told once and has its votes ignored; nothing alerts. FightWars' determinism gate
@@ -2958,7 +2962,7 @@ Every frame on the game and lobby WebSockets is a zbin payload — a bare positi
 
 ### 2. Server validation and abuse controls actually present
 
-Blunt framing first: **the server does not run the simulation.** It is an intent relay plus a lobby coordinator. It never knows how much gold, troops, or territory anyone has, never checks that an attack target is adjacent, never checks that a build is affordable or legally placed, and never checks that a unit ID belongs to the sender. All of that is decided independently by every client's copy of `src/core`, and agreement is verified after the fact by hash comparison (section 3). What the server actually checks is listed below, in the order a frame passes through it.
+Blunt framing first, as it stood before session 13: **the server did not run the simulation.** It was an intent relay plus a lobby coordinator. It never knew how much gold, troops, or territory anyone had, never checked that an attack target was adjacent, never checked that a build was affordable or legally placed, and never checked that a unit ID belonged to the sender. All of that is decided independently by every client's copy of `src/core`, and agreement is verified after the fact by hash comparison (section 3). Since session 13 the server also runs its own copy (2e below) and refuses the stable impossibilities; the rest of this section is what a frame passes through before that.
 
 #### 2a. Connection / join gate (`src/server/Worker.ts:400-780`)
 
@@ -2986,6 +2990,14 @@ Blunt framing first: **the server does not run the simulation.** It is an intent
 #### 2c. Intent authorization (`src/server/IntentAuthorization.ts`)
 
 Covered in the table above. Summary: the server authorizes **who may send control intents** (kick / config / start timer / pause) and rejects `mark_disconnected`; every gameplay intent from a non-spectator roster member passes with zero semantic checks (`:130-135`). Admin-bot HTTP intents are limited to control intents on private games (`:38-40`, `:132-134`).
+
+#### 2e. The shadow simulation (`src/server/ShadowSim.ts`, FightWars, session 13)
+
+`GameServer.start()` asks `deps.shadowSim` for a `ShadowSim` (`SHADOW_SIM=off` gives none) and calls `start()` on it, which builds a `GameRunner` through `createGameRunner` with `ServerMapLoader` — the same resolution `MapLandTiles` uses: the hashed map files under `static/` in production, `resources/maps` in dev. Every committed turn (`endTurn`) is handed to `shadow.applyTurn`, which queues it until the map has loaded and then executes it; the shadow is therefore always exactly the turns the server has committed, one turn behind the clients. On the gameplay path of `handleIntent`, `shadow.check(stamped)` runs before the intent joins a turn; a string refuses it with `403` and the reason, logged (`intent refused by shadow sim`) and counted (`GameServer.numShadowRefusals()`, `GameManager.shadowRefusalCount()`, the `refused` column on `/metrics`, the OTel gauge `shadow_refusals.total`).
+
+What it refuses, and why only this: a client with no player in the game; a `spawn` after the spawn phase; any gameplay intent from a dead player after the spawn phase; `build_unit` of a type the lobby disabled; `attack` on oneself or on a player id the game does not have; `move_warship` / `delete_unit` / `cancel_boat` / `upgrade_structure` naming a unit that does not exist or is not the sender's. Every one of these is a fact that cannot change within a turn. Gold, territory, reachability and alliances all move within a tick, and a shadow one turn behind that refused on them would drop honest intents — so those stay where they were, in the simulation every client runs. Until the map has loaded the shadow judges nothing (an intent it cannot see goes through, never refused); if the map cannot load or a tick throws, it logs and judges nothing from then on.
+
+Cost: one extra simulation per lobby on the worker. Measured on this box: the world map loads in 47 ms through the server loader; 300 turns with 50 bots took 255 ms (0.85 ms a turn early in a game; the perf gate's 150-player tick is ~3 ms). Tests: `tests/server/ShadowSim.test.ts` (the real sim on the plains test map) and `tests/server/GameServerShadow.test.ts` (the hooks, with a fake shadow).
 
 #### 2d. HTTP surface
 

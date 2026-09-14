@@ -108,6 +108,14 @@ export class ServerEnv {
   static turnIntervalMs(): number {
     return 100;
   }
+  /**
+   * The server-side shadow simulation (ShadowSim). One extra sim per lobby
+   * — the perf gate says a 150-player tick is ~3 ms — so SHADOW_SIM=off is
+   * the switch for a worker that cannot afford it.
+   */
+  static shadowSimEnabled(): boolean {
+    return process.env.SHADOW_SIM !== "off";
+  }
   static gameCreationRate(): number {
     return ServerEnv.gameEnv === GameEnv.Dev ? 5 * 1000 : 2 * 60 * 1000;
   }

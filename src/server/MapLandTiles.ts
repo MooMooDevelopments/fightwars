@@ -10,12 +10,12 @@ const log = logger.child({ component: "MapLandTiles" });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const staticDir = path.join(__dirname, "../../static");
-const resourcesDir = path.join(__dirname, "../../resources");
+export const staticDir = path.join(__dirname, "../../static");
+export const resourcesDir = path.join(__dirname, "../../resources");
 
 const landTilesCache = new Map<GameMapType, number>();
 
-function mapDirName(map: GameMapType): string {
+export function mapDirName(map: GameMapType): string {
   const key = (
     Object.keys(GameMapType) as Array<keyof typeof GameMapType>
   ).find((k) => GameMapType[k] === map);
@@ -23,22 +23,27 @@ function mapDirName(map: GameMapType): string {
   return key.toLowerCase();
 }
 
-async function readManifestFile(map: GameMapType): Promise<string> {
-  const relativePath = `maps/${mapDirName(map)}/manifest.json`;
-
-  // Production: resolve via the asset manifest to the hashed file under static/_assets/.
+/**
+ * Where a map file lives on this server: the hashed copy under static/ in
+ * production (via the runtime asset manifest), resources/ in dev. The
+ * Dockerfile deletes resources/maps in production, so the second branch
+ * only runs locally. Shared with ServerMapLoader, which reads the binaries.
+ */
+export async function mapFilePath(
+  map: GameMapType,
+  file: string,
+): Promise<string> {
+  const relativePath = `maps/${mapDirName(map)}/${file}`;
   const assetManifest = await getRuntimeAssetManifest();
   const hashedUrl = assetManifest[relativePath];
   if (hashedUrl) {
-    return fs.readFile(
-      path.join(staticDir, normalizeAssetPath(hashedUrl)),
-      "utf8",
-    );
+    return path.join(staticDir, normalizeAssetPath(hashedUrl));
   }
+  return path.join(resourcesDir, relativePath);
+}
 
-  // Dev: read directly from resources/. The Dockerfile deletes resources/maps in
-  // production, so this branch only runs locally.
-  return fs.readFile(path.join(resourcesDir, relativePath), "utf8");
+async function readManifestFile(map: GameMapType): Promise<string> {
+  return fs.readFile(await mapFilePath(map, "manifest.json"), "utf8");
 }
 
 // Gets the number of land tiles for a map.

@@ -651,15 +651,18 @@ parsed with the client's schemas (the pattern in `tests/api/`).
 
 ## 7. Phase 7 — Hardening (brief §8 security, §11 definition of done)
 
-- **Server-side intent validation.** The single biggest gap the audit found
-  (`docs/MECHANICS.md` headline 1): the server checks schema, rate limits and four control
-  intents, and zero gameplay semantics. The fix is a server-side shadow of the sim — the
-  server already has every intent and could run `GameRunner` itself per lobby (cost: one
-  extra sim per lobby; the perf gate says a 150-player tick is ~2 ms) and reject intents
-  the authoritative state refuses (affordability, ownership, reachability, cooldown).
-  Reject silently, log, count in `/api/metrics`.
-- **Winner and stats by client vote** (headline 1): with a server-side sim the server settles
-  them itself; ingest (`src/api/Matches.ts`) then trusts the server's record only.
+- **Server-side intent validation — the shadow sim is in (session 13).** `ShadowSim` runs
+  `GameRunner` per lobby on the server, fed every committed turn, and refuses the stable
+  impossibilities (no such player, dead, not their unit, disabled type, attacking self) with
+  403, logged and counted (`/metrics` "refused", OTel `shadow_refusals.total`);
+  `SHADOW_SIM=off` disables it. `docs/MECHANICS.md` §06 2e. **Deliberately not refused:**
+  affordability, reachability, alliances — they move within a tick and a shadow one turn
+  behind would drop honest intents. Next steps on this: the shadow's own hash as the
+  authoritative desync reference (`DesyncDetector` compares clients to each other today),
+  and cooldowns once the shadow can read them.
+- **Winner and stats by client vote** (headline 1): the shadow knows the winner now
+  (`WinCheckExecution` runs in it); the server could settle the vote against it and ingest
+  (`src/api/Matches.ts`) then trust the server's record only. Not done.
 - **Rate limits and spam caps** per client per tick (`SocketIngress` has the hook); alliance,
   emoji, donation caps beyond today's cooldowns.
 - **Automation detection** (click cadence, pixel-perfect timing) as a server-side scorer over

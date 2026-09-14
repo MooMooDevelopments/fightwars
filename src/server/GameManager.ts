@@ -134,6 +134,7 @@ export class GameManager {
         phase: game.phase(),
         clients: game.numClients(),
         desyncedClients: game.numDesyncedClients(),
+        shadowRefusals: game.numShadowRefusals(),
         turns: t.turns,
         meanMs: t.meanMs,
         p50Ms: t.p50Ms,
@@ -152,6 +153,7 @@ export class GameManager {
       activeClients: this.activeClients(),
       desyncedClients: this.desyncCount(),
       desyncEvents: desyncEventCount(),
+      shadowRefusals: this.shadowRefusalCount(),
       turnMs: {
         mean: totalTurns > 0 ? weighted / totalTurns : 0,
         p99: started.reduce((a, x) => Math.max(a, x.p99Ms), 0),
@@ -167,6 +169,14 @@ export class GameManager {
   desyncCount(): number {
     return [...this.games.values()].reduce(
       (acc, game) => acc + game.numDesyncedClients(),
+      0,
+    );
+  }
+
+  /** Gameplay intents the shadow simulations refused, across active games. */
+  shadowRefusalCount(): number {
+    return [...this.games.values()].reduce(
+      (acc, game) => acc + game.numShadowRefusals(),
       0,
     );
   }
@@ -240,6 +250,7 @@ export interface WorkerMetricsSnapshot {
   activeClients: number;
   desyncedClients: number;
   desyncEvents: number;
+  shadowRefusals: number;
   turnMs: { mean: number; p99: number; max: number; overBudget: number };
   bytesOutPerSec: number;
   memoryRssBytes: number;
@@ -248,6 +259,7 @@ export interface WorkerMetricsSnapshot {
     phase: string;
     clients: number;
     desyncedClients: number;
+    shadowRefusals: number;
     turns: number;
     meanMs: number;
     p50Ms: number;
