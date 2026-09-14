@@ -49,6 +49,7 @@ function createSidebar(overrides: Partial<TimerState> = {}) {
         maxTimerValue: state.maxTimerValue,
       }),
       isReplay: () => false,
+      gameSpeed: () => 1,
       listed: false,
       numSpawnPhaseTurns: () => 400,
     }),
