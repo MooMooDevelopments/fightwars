@@ -1,6 +1,10 @@
 import { Game } from "../core/game/Game";
 import { GameMapLoader } from "../core/game/GameMapLoader";
-import { GameUpdateType, HashUpdate } from "../core/game/GameUpdates";
+import {
+  GameUpdateType,
+  HashUpdate,
+  WinUpdate,
+} from "../core/game/GameUpdates";
 import { createGameRunner, GameRunner } from "../core/GameRunner";
 import { GameStartInfo, StampedIntent, Turn } from "../core/Schemas";
 
@@ -18,6 +22,14 @@ export interface ShadowSimLike {
   check(intent: StampedIntent): string | null;
   /** The hash the server's own sim produced for `turn`, or null if none. */
   hashAt(turn: number): number | null;
+  /** The win the server's own sim declared, with its stats, or null. */
+  winResult(): ShadowWin | null;
+}
+
+/** What the sim declares when a game ends: the same update the clients vote from. */
+export interface ShadowWin {
+  winner: WinUpdate["winner"];
+  allPlayersStats: WinUpdate["allPlayersStats"];
 }
 
 /**
@@ -52,6 +64,9 @@ export class ShadowSim implements ShadowSimLike {
   // disagrees with these is out of sync with the server, whatever the
   // other clients say.
   private readonly hashes = new Map<number, number>();
+  // The win the sim declared, if it has. The clients vote on exactly this
+  // update; the server has it first-hand.
+  private win: ShadowWin | null = null;
 
   constructor(
     private readonly gameStart: GameStartInfo,
@@ -69,6 +84,10 @@ export class ShadowSim implements ShadowSimLike {
           if (!("updates" in gu)) return;
           for (const hu of gu.updates[GameUpdateType.Hash] ?? []) {
             this.hashes.set((hu as HashUpdate).tick, (hu as HashUpdate).hash);
+          }
+          for (const wu of gu.updates[GameUpdateType.Win] ?? []) {
+            const { winner, allPlayersStats } = wu as WinUpdate;
+            this.win ??= { winner, allPlayersStats };
           }
         },
       );
@@ -102,6 +121,10 @@ export class ShadowSim implements ShadowSimLike {
 
   hashAt(turn: number): number | null {
     return this.hashes.get(turn) ?? null;
+  }
+
+  winResult(): ShadowWin | null {
+    return this.win;
   }
 
   applyTurn(turn: Turn): void {

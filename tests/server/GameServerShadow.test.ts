@@ -20,6 +20,7 @@ describe("GameServer with a shadow simulation", () => {
     applyTurn: ReturnType<typeof vi.fn>;
     check: ReturnType<typeof vi.fn>;
     hashAt: ReturnType<typeof vi.fn>;
+    winResult: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
@@ -29,6 +30,7 @@ describe("GameServer with a shadow simulation", () => {
       applyTurn: vi.fn(),
       check: vi.fn(() => null),
       hashAt: vi.fn(() => null),
+      winResult: vi.fn(() => null),
     };
   });
 
@@ -135,6 +137,48 @@ describe("GameServer with a shadow simulation", () => {
     await mockWsOf(solo).emit({ type: "hash", hash: 9999, turnNumber: 0 });
     vi.advanceTimersByTime(10 * 100);
     expect(lone.numDesyncedClients()).toBe(1);
+  });
+
+  it("overrules a winner vote the shadow disagrees with, and records the shadow's win", async () => {
+    const archive = vi.fn(async (_record: unknown) => {});
+    const game = makeGame({
+      deps: { shadowSim: () => shadow as unknown as ShadowSimLike, archive },
+    });
+    const a = makeClient({ clientID: cid("a") });
+    const b = makeClient({ clientID: cid("b") });
+    for (const x of [a, b]) game.joinClient(x);
+    startGame(game);
+    const stats = { [a.clientID]: {}, [b.clientID]: {} };
+    shadow.winResult.mockReturnValue({
+      winner: ["player", a.clientID],
+      allPlayersStats: stats,
+    });
+
+    // b votes for themselves: overruled, and the game is not archived on it.
+    await mockWsOf(b).emit({
+      type: "winner",
+      winner: ["player", b.clientID],
+      allPlayersStats: stats,
+    });
+    expect(game.numOverruledWinnerVotes()).toBe(1);
+    expect(archive).not.toHaveBeenCalled();
+
+    // The honest ballots still carry the vote; the record takes the shadow's.
+    await mockWsOf(a).emit({
+      type: "winner",
+      winner: ["player", a.clientID],
+      allPlayersStats: stats,
+    });
+    // One of two IPs is not a majority; the vote resolves when b's IP leaves
+    // the electorate or on the end-of-game path. Force the end instead.
+    vi.advanceTimersByTime(100);
+    expect(archive).not.toHaveBeenCalled();
+    game.end();
+    expect(archive).toHaveBeenCalledTimes(1);
+    const record = archive.mock.calls[0][0] as unknown as {
+      info: { winner?: unknown };
+    };
+    expect(record.info.winner).toEqual(["player", a.clientID]);
   });
 
   it("runs the relay alone when there is no shadow", () => {

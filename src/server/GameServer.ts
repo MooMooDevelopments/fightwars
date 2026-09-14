@@ -194,6 +194,8 @@ export class GameServer {
   // gameplay intents it has refused.
   private shadow: ShadowSimLike | null = null;
   private shadowRefusals = 0;
+  // Winner votes that named someone other than the winner the shadow saw.
+  private overruledWinnerVotes = 0;
   // Who joined, who is connected, and the per-account reconnect, admission
   // and kick flags (see Roster.ts). The join policy stays here.
   private readonly clients = new Roster();
@@ -815,6 +817,11 @@ export class GameServer {
   /** Gameplay intents the shadow simulation refused (ShadowSim). */
   public numShadowRefusals(): number {
     return this.shadowRefusals;
+  }
+
+  /** Winner votes that named someone other than the winner the shadow saw. */
+  public numOverruledWinnerVotes(): number {
+    return this.overruledWinnerVotes;
   }
 
   // Matchmade ranked games (1v1/2v2) must start with full attendance: the
@@ -1773,10 +1780,34 @@ export class GameServer {
   }
 
   private archiveGame() {
-    const winner = this.winnerVote.winner();
+    // The shadow's own win outranks the vote: the record carries what the
+    // server saw, with the stats the server computed, whoever voted for
+    // what. Without a shadow (or before it saw the end) the vote stands.
+    const truth = this.shadow?.winResult() ?? null;
+    const vote = this.winnerVote.winner();
+    const winner =
+      truth !== null
+        ? { winner: truth.winner, allPlayersStats: truth.allPlayersStats }
+        : vote;
+    if (
+      truth !== null &&
+      vote !== null &&
+      JSON.stringify(vote.winner ?? null) !==
+        JSON.stringify(truth.winner ?? null)
+    ) {
+      this.log.warn(
+        "winner vote disagreed with the shadow sim; recording the shadow's",
+        {
+          gameID: this.id,
+          voted: vote.winner,
+          actual: truth.winner,
+        },
+      );
+    }
     this.log.info("archiving game", {
       gameID: this.id,
       winner: winner?.winner,
+      settledBy: truth !== null ? "shadow" : "vote",
     });
 
     // Players must stay in the same order as the game start info.
@@ -1921,6 +1952,24 @@ export class GameServer {
       return;
     }
     client.reportedWinner = clientMsg.winner;
+
+    // The server's own sim saw the game end: a vote for anyone else is a
+    // client that is wrong or lying, and it does not count. The vote still
+    // runs, on the honest ballots, so the end of the game keeps its timing.
+    const truth = this.shadow?.winResult() ?? null;
+    if (
+      truth !== null &&
+      JSON.stringify(clientMsg.winner ?? null) !==
+        JSON.stringify(truth.winner ?? null)
+    ) {
+      this.overruledWinnerVotes++;
+      this.log.warn("winner vote overruled by shadow sim", {
+        clientID: client.clientID,
+        voted: clientMsg.winner,
+        actual: truth.winner,
+      });
+      return;
+    }
 
     const activeUniqueIPs = this.clients.votingUniqueIPs();
     const { key: winnerKey, votes } = this.winnerVote.cast(

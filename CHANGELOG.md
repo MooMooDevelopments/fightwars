@@ -76,8 +76,9 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   Nations drop rather than sail when a silo reaches a target they cannot walk to.
 - **The server now runs its own copy of every game.** A hacked client that asks to move
   a ship it does not own, or to keep playing after it is dead, is refused before anyone
-  else sees the request, and a client whose game has drifted from the server's is told so
-  even if it is the only one in the room. Honest play is untouched.
+  else sees the request, a client whose game has drifted from the server's is told so
+  even if it is the only one in the room, and the winner on record is the one the server
+  saw, not the one the room voted for. Honest play is untouched.
 - **Queue a build you cannot afford yet.** Click a greyed-out item in the build menu and
   it is queued; it goes up the moment you have the gold. The control panel shows what is
   queued, with a cancel.

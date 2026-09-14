@@ -27,8 +27,9 @@ brief and the exact hook points for closing them.
    refusing the gameplay intents its state says are impossible (no such player, dead player, a
    unit that is not theirs, a unit type the lobby disabled, an attack on oneself). What moves
    within a tick — affordability, territory, alliances — stays the clients' business, where every
-   client applies the same rule to the same state. Winner and stats are still settled by client
-   vote (the shadow knows the winner; using that is the next step). See §06.
+   client applies the same rule to the same state. The winner and the stats are the shadow's
+   where it saw the game end: a vote for anyone else is overruled, and the archived record
+   carries what the server saw. Without a shadow the client vote stands, as before. See §06.
 2. **The live desync hash is weak.** It covers troop count, tile count and unit `(tile, type, id)`
    per player. Gold, relations, tile identity, PRNG state and the tick are not hashed. A desynced
    client is told once and has its votes ignored; a desync alerts (session 2). FightWars'
@@ -3001,6 +3002,8 @@ Covered in the table above. Summary: the server authorizes **who may send contro
 What it refuses, and why only this: a client with no player in the game; a `spawn` after the spawn phase; any gameplay intent from a dead player after the spawn phase; `build_unit` of a type the lobby disabled; `attack` on oneself or on a player id the game does not have; `move_warship` / `delete_unit` / `cancel_boat` / `upgrade_structure` naming a unit that does not exist or is not the sender's. Every one of these is a fact that cannot change within a turn. Gold, territory, reachability and alliances all move within a tick, and a shadow one turn behind that refused on them would drop honest intents — so those stay where they were, in the simulation every client runs. Until the map has loaded the shadow judges nothing (an intent it cannot see goes through, never refused); if the map cannot load or a tick throws, it logs and judges nothing from then on.
 
 The shadow also keeps the state hashes its own sim emits (every ten ticks, `GameUpdateType.Hash`, the same numbers the clients report). `DesyncDetector.check` takes a `reference(turn)`; when the shadow has a hash for the turn being checked, that hash is the correct one and every client that reported something else is out of sync — no vote, no strict-majority rule, and a lone client is checked too. A majority of tampered clients cannot outvote the server. Where the shadow has no hash (not ready, failed, or the turn is not a hash tick) the check falls back to the vote it always was.
+
+The shadow also keeps the `WinUpdate` its sim declared — the same update every client votes from, winner and `allPlayersStats`. In `handleWinner`, a vote that names anyone other than the shadow's winner is overruled (logged, `numOverruledWinnerVotes()`) and does not enter the tally; the honest ballots still carry the vote, so the end of the game keeps its timing. `archiveGame` records the shadow's winner and stats whenever it has them, whoever voted for what, and logs `settledBy: "shadow"`; without a shadow, or before it saw the end, the vote stands as before. Ingest (`src/api/Matches.ts`) therefore receives the server's own result for every shadowed game.
 
 Cost: one extra simulation per lobby on the worker. Measured on this box: the world map loads in 47 ms through the server loader; 300 turns with 50 bots took 255 ms (0.85 ms a turn early in a game; the perf gate's 150-player tick is ~3 ms). Tests: `tests/server/ShadowSim.test.ts` (the real sim on the plains test map) and `tests/server/GameServerShadow.test.ts` (the hooks, with a fake shadow), `tests/server/DesyncDetector.test.ts` (the reference).
 

@@ -79,6 +79,20 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — the winner is the server's
+
+- **What shipped.** The shadow keeps the `WinUpdate` its sim declared — the same update
+  every client votes from, winner and stats. A winner vote that names anyone else is
+  overruled (logged, `numOverruledWinnerVotes()`) and never enters the tally; the honest
+  ballots still carry the vote so the end of the game keeps its timing. The archived record
+  carries the shadow's winner and stats whenever it has them (`settledBy: "shadow"` in the
+  log), whoever voted for what; without a shadow the vote stands as before. Headline 1's
+  "winner and stats by client vote" is closed for every shadowed game.
+- **Guards broken and watched fail:** any vote counting, the record taking the vote.
+- **Not exercised end to end:** a real game ending on the dev server (a one-player private
+  lobby does not start); `ShadowSim.test.ts` shows no win before the sim declares one, and
+  the integration test drives the server with a fake shadow that has.
+
 ### Session 13 — the server's hash is the desync reference
 
 - **What shipped.** The shadow keeps the state hashes its sim emits every ten ticks — the

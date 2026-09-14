@@ -661,9 +661,11 @@ parsed with the client's schemas (the pattern in `tests/api/`).
   (session 13, same commit series): where it has one, a client that disagrees is out of
   sync whatever the other clients say, and a lone client is checked too. Next on this:
   cooldowns once the shadow can read them.
-- **Winner and stats by client vote** (headline 1): the shadow knows the winner now
-  (`WinCheckExecution` runs in it); the server could settle the vote against it and ingest
-  (`src/api/Matches.ts`) then trust the server's record only. Not done.
+- **Winner and stats by client vote — settled by the shadow now (session 13).** A vote for
+  anyone other than the shadow's winner is overruled and counted
+  (`numOverruledWinnerVotes()`); the archived record carries the shadow's winner and its
+  stats whenever the shadow saw the end. Without a shadow the vote stands. Ingest is
+  unchanged: it trusts the record, which is now the server's for every shadowed game.
 - **Rate limits and spam caps** per client per tick (`SocketIngress` has the hook); alliance,
   emoji, donation caps beyond today's cooldowns.
 - **Automation detection** (click cadence, pixel-perfect timing) as a server-side scorer over

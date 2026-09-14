@@ -102,6 +102,13 @@ describe("ShadowSim", () => {
     expect(shadow.ticks()).toBe(2);
   });
 
+  it("has no win until the sim declares one", async () => {
+    const shadow = new ShadowSim(startInfo(), new PlainsLoader(), log);
+    await shadow.start();
+    for (let n = 0; n < 25; n++) shadow.applyTurn(turn(n));
+    expect(shadow.winResult()).toBeNull();
+  });
+
   it("keeps the hashes its own sim produced, by tick", async () => {
     const shadow = new ShadowSim(startInfo(), new PlainsLoader(), log);
     await shadow.start();
