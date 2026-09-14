@@ -1031,7 +1031,7 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 
 ## In progress
 
-- [ ] Nothing mid-flight. The tree is committed and green. Session 12 starts from `docs/HANDOFF.md` §1a (the retune pass, then the six 6.4 units).
+- [ ] Nothing mid-flight. The tree is committed and green; Phase 5 is whole. Session 13 starts from `docs/HANDOFF.md` §1a (Phase 4 identity, the readouts first, then §5–§7).
 
 ## Next up (concrete, ordered)
 

@@ -23,135 +23,102 @@ Repo: `C:\Users\disbo\dev\fightwars` (`origin` = github.com/MooMooDevelopments/f
 `Claude Memories/fightwars-autonomous-prompt.md`. Tests: 484 + 67 files, 5791 + 673 tests.
 `src/core` coverage 87 % lines with a CI floor of 85.
 
-## 1a. Session 12 handoff — finish Phase 5 (written 2026-09-14, end of session 11)
+## 1a. Session 13 handoff — Phase 5 is whole; next is Phase 4 identity and the hook points (written 2026-09-15, end of session 12)
 
 The same text is the paste-ready prompt at `Claude Memories/fightwars-finish-prompt.md`.
 
 ### Where things stand
 
-Phase 5 (Depth, brief §6.1–6.6) is **shipped whole** as of session 12 (the retune pass and
-the six 6.4 units landed there, one commit each); the table below is the state session 12
-started from, kept so the §1 handoff still reads:
+Phase 5 (Depth, brief §6.1–6.6) is **shipped whole** as of session 12 — twelve commits that
+session, one per increment, all on `origin/main` (head `a2de15239`):
 
-| Item                                            | State                                                                   |
-| ----------------------------------------------- | ----------------------------------------------------------------------- |
-| 6.1 supply lines                                | done (`src/core/game/SupplyNetwork.ts`)                                 |
-| 6.2 terrain that costs something                | done for elevation; forest/marsh/desert need painted content nobody has |
-| 6.3 upkeep, materials, blockades, embargo price | done                                                                    |
-| 6.4 nuke consequences                           | done — **the six new units are not started**                            |
-| 6.5 alliance tiers, auto-coalitions             | done; vassal / war goals / reputation deliberately not                  |
-| 6.6 doctrines, stability + partisans            | done (last two commits, `4517bba17` and `f84011140`)                    |
+| Session-12 increment                               | Lever                 | What the bots said (8000 ticks, seed `perf-gate`)                               |
+| -------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------- |
+| Retune: uprising threshold = max(300, 10 % land)   | `--flat-unrest`       | uprisings 507 → 269, leader 12.7 → 11.3 %                                       |
+| Retune: Hard/Impossible alliance cap counts allies | `--pacts-count`       | Medium/Hard identical; Impossible alive 41 → 43; snapshot alive 23 → 26         |
+| Retune: nations play their doctrine                | `--no-doctrine-play`  | structure counts move; survivors by doctrine are noise at two seeds             |
+| Retune: arms cost twice the materials              | `--cheap-materials`   | factories 36 → 46, fallout 5202 → 0                                             |
+| Retune: arms upkeep ×2                             | `--cheap-arms-upkeep` | leader share swings ±7 points by seed; cities up both seeds                     |
+| 6.4 Artillery                                      | `--no-artillery`      | 40 guns, materials go to guns not warheads                                      |
+| 6.4 Radar                                          | `--no-radar`          | 14 radars beside 22 SAMs; one read point for a SAM's reach                      |
+| 6.4 Bomber                                         | `--no-bomber`         | cheap strikes flatten the top: top-1 20.1 → 14.9 %                              |
+| 6.4 Submarine                                      | `--no-submarine`      | live and small: warships 8 → 6, subs sunk by the end                            |
+| 6.4 Carrier                                        | `--no-carrier`        | byte-identical (no nation affords 3 000 materials by tick 8000); snapshot moved |
+| 6.4 Paratrooper                                    | `--no-paratrooper`    | alive 28 → 25, fallout 2004 → 0                                                 |
 
-Every item has: a `Config` switch, a `balance:run` lever (`scripts/balanceRun.ts`, one per
-mechanic, one at a time), tests whose guards were broken and watched fail, a section in
-`docs/MECHANICS.md` (§01–§05, "Gaps" numbered per section, each saying _built_ or _not built,
-here is the hook_), a file list in `FORK-CHANGES.md`, and numbers in `BUILD-STATE.md`.
+Every item has: a `Config` switch, a `balance:run` lever (`scripts/balanceRun.ts`, a lever
+table now, one at a time), tests whose guards were broken and watched fail, a section in
+`docs/MECHANICS.md` (§01–§05, "Gaps" per section; §04 D–E for the six units), a file list in
+`FORK-CHANGES.md`, and numbers in `BUILD-STATE.md`. The Impossible `NationGoldPerMinute`
+alive count sits at 23 after all of it.
 
-## What "finish it" means — in this order
+### What Phase 5 still owes — hook points only, none required for "done"
 
-### 0. Resume protocol (every session)
+Each is written up where its system lives, with the hook named:
 
-1. `git fetch upstream && git rebase upstream/main`. Expect conflicts in the Phase 1 brand
-   commit (take upstream's code, keep the fork's deletions of `deploy.yml` and the pr-gate)
-   and in `tests/__snapshots__/NationGoldPerMinute.test.ts.snap` at _every_ Phase 5 commit
-   (`git checkout --theirs`, add, continue; regenerate it **alone** at the end with
-   `npx vitest run tests/NationGoldPerMinute.test.ts -u`). `git config rerere.enabled true`
-   is set. After the rebase, run `tests/Brand.test.ts` — upstream comments that name its
-   domains must be rewritten as `<domain>` / `<dev domain>` / `<app>` — and
-   `tests/client/ServerList.test.ts` (the desktop marker is `BRAND.desktop.windowObject`).
-2. Read `BUILD-STATE.md` top to bottom ("Handoff — read this first"), then `docs/HANDOFF.md`
-   §2 and §4, then the MECHANICS sections for the item you are about to touch.
-3. Gates, all of them, before every commit: `npm test` (full suite — targeted runs are not the
-   suite; three exhaustiveness gates catch new `MessageType`s without a colour, template-built
-   locale keys, and mock players missing a new `Player` method), `npm run test:determinism`
-   and `test:determinism:full` (8–12 min — give it its own background job, the background
-   limit is 10 min and a killed job leaves vitest workers running: `Get-Process node`, kill
-   anything older than the run before believing a flaky suite), `npm run lint`, `npx prettier
---check .`, `npm run licenses:check`, `npm run perf:gate` **on an idle box** (the 1000-tick
-   hash must move for a balance change and must not for a refactor; its horizon never reaches
-   late mechanics — use `balance:run --ticks 8000` for those).
-4. Per item: tests per formula/execution; break every new guard and watch the named test
-   fail; `docs/MECHANICS.md` updated; a bot-vs-bot A/B (lever off vs on, 8000 ticks) recorded
-   in `BUILD-STATE.md` with the final hashes (the lever must reproduce the previous commit's
-   hash to the digit); `FORK-CHANGES.md`, `CHANGELOG.md`, `docs/HANDOFF.md` §4 table
-   current; commit ending `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`;
-   `git push --force-with-lease origin main`.
-5. Editing: python heredocs asserting `s.count(old) == 1` per anchor, per-file atomic; no
-   backslashes in patterns (they silently fail to match through the shell); match bytes after
-   prettier re-wrapping. Bypass-permissions mode: prefer Bash.
+- Docking at a carrier: a retreat is a tile in `WarshipState`, a carrier moves — the retreat
+  target must become a unit id (a wire change). `docs/MECHANICS.md` §04 D.
+- The six units' own glyphs: the icon and unit atlases (`resources/atlases/*.png`) cannot be
+  regenerated here (no generator in the repo, node-canvas not built) — each new unit draws
+  with a neighbour's column (`StructurePass` / `UnitPass` fallbacks). §03 7.1.
+- A shell drawn for an artillery volley (`ArtilleryExecution.tick`); SAM interception of
+  drops (a SAM reads a warhead's `trajectory()`, a drop carries none).
+- Readouts: manpower (`maxTroops`), materials, unrest, a doctrine badge — `PlayerView` has
+  every accessor; map shading for unsupplied and occupied land (§02 G1, §05 6).
+- Rail as a supply source (§03 7.4), train delivery of materials (§03 7.2), garrison as
+  troops (§05 6), vassals and war goals (§05 1–2), forest / marsh / desert terrain (§02 G2,
+  needs painted content nobody has).
 
-### 1. The retune pass (do this first — every item since 6.3 has been asking for it)
+### What to do next — in this order
 
-The mechanics are live; their first-cut numbers are not tuned against each other. Measure
-with the levers, one at a time, same seed (`perf-gate`), 8000 ticks, world map, 150 bots:
+0. **Resume protocol, every session** (unchanged, §2 below): `git fetch upstream && git rebase
+upstream/main` (rerere on; expect the Phase 1 brand commit and the
+   `NationGoldPerMinute` snapshot to conflict — take the fork side, regenerate the snapshot
+   alone at the end with `npx vitest run tests/NationGoldPerMinute.test.ts -u`), then
+   `tests/Brand.test.ts` and `tests/client/ServerList.test.ts`. **In a git worktree, `npm run
+inst` first** — a worktree has no `node_modules` of its own and every test that spawns a
+   child process with a worktree-relative path fails until it does. Read `BUILD-STATE.md`
+   top to bottom, then §2 and §4 here. Gates before every commit: `npm test`, `npm run
+test:determinism` and `test:determinism:full` (its own background job; a killed job
+   leaves vitest workers behind), `npm run lint`, `npx prettier --check .`, `npm run
+licenses:check`, `npm run perf:gate` on an idle box; per sim change an 8000-tick A/B with
+   a lever that reproduces the previous commit's hash to the digit.
+1. **Phase 4 identity** (§3 below, per item): load `frontend-design` before any UI code,
+   `ui-ux-pro-max` for palette/type, `dataviz` before any chart or stat tile, `impeccable`
+   and `web-design-guidelines` on the result. The cheapest first increment is the readouts
+   above (manpower, materials, unrest, doctrine badge) on the player panel and HUD — the
+   accessors exist, the design pass is the work. Then item 3's halo/flash legibility, item 6's
+   layout and radial menus, item 7's mobile remainder, item 9's build queue / rally points /
+   attack presets (the one simulation item — a lever and an A/B like any Phase 5 item).
+2. **Then Phase 6** (§5: modes and metagame) and **Phase 7** (§7: hardening), with §6's
+   blocked items (Discord OAuth secret, a Docker box, hardware) waiting on the owner.
 
-- **Unrest threshold as a share of the occupier's land.** `Config.unrestPartisanThreshold()`
-  is 300 flat tiles → ~500 uprisings in 8000 ticks, 40 % of the world "occupied" at any
-  moment. Make it `max(300, share × occupier.numTilesOwned())` so a small conqueror feels it
-  before an empire does; re-measure leader share (11.3 % off / 12.7 % on today).
-- **`hasTooManyAlliances` counts pacts.** On Hard/Impossible it counts every
-  `alliances()` entry, so cheap non-aggression pacts block defensive pacts; the
-  impossible-nations snapshot lost 11 alive nations while the Medium bot run gained 11.
-  Count `allies()` (defensive-and-up) instead and compare both runs.
-- **Nations playing their doctrine.** A nation's doctrine only changes its prices; survivors
-  skew away from Expansionist and Mercantile because a Mercantile nation builds no more ports
-  than any other. Smallest honest fix: weight the nation build-choice by doctrine
-  (`NationExecution` / its behaviours). Record survivor-by-doctrine before and after.
-- **Economy table**: upkeep (`unitUpkeep`), flat materials prices (`unitMaterialsCost`),
-  `embargoTariffMax`, `startingMaterials` — one change per commit, A/B each; the `NationGold
-PerMinute` snapshot is the second instrument (regenerate alone, report trade/train deltas).
-- Nation AI never blockades on purpose; note it, do not build it unless cheap.
+### Things that bit us in session 12 (do not relearn)
 
-### 2. 6.4's six units (the one unstarted half of Phase 5)
-
-`docs/MECHANICS.md` §03 7.1 has the 25-file checklist per unit (the compiler enforces the
-five core switches via `assertNever`); §04 D–E the hooks. Budget ~25 code files + atlas +
-37 locale files per unit — **one unit per commit, a lever each**, A/B each. Suggested order,
-cheapest first: Artillery (from `DefensePostExecution`'s commented ship-targeting), Radar
-(`Config.dynamicSamRange` + three nation call sites + client preview), Bomber (a non-nuclear
-`NukeType`), Submarine (a `submerged` warship state), Carrier (generalises the port lookups),
-then the sixth. Materials cost each (`unitMaterialsCost`); the infinite-gold rule makes them
-free for humans in sandbox lobbies — nation fixtures must grant materials too.
-
-### 3. Loose ends with hook points (fold into whichever item touches them)
-
-Manpower readout (`maxTroops` in the HUD — do not build a pool); materials and unrest
-readouts and a doctrine badge on the player panel (`PlayerView.materials()`,
-`numUnrestTiles()`, `doctrine()` exist); map shading for unsupplied and occupied land (§02 G1,
-§05 6); rail as a supply source (§03 7.4); train delivery of materials (§03 7.2); vassal tier,
-war goals / peace terms (§05 1–2); garrison as troops (§05 6). None is required for "done".
-
-### 4. Then Phase 4 identity and beyond
-
-`docs/HANDOFF.md` §3 (identity — load `frontend-design` before any UI, `dataviz` before any
-chart), §5 (modes), §6 (blocked on the owner: Discord OAuth secret, Docker box, hardware),
-§7 (hardening). `BUILD-STATE.md` "Next up" is the ordered list.
-
-## Things that bit us (do not relearn them)
-
-- A guard never watched failing is not a guard: two of this session's break-it passes were
-  vacuous (a coalition test that said yes through `isEarlygame()`; an enclave test that was
-  never checked because `PlayerExecution` staggers a player's first cluster check up to
-  `ticksPerClusterCalc` ticks after init and only runs after a _later_ tile change).
-- `TestConfig` flattens `attackLogic`; assert attack modifiers against a plain `new Config`.
-  A singleplayer game ends its spawn phase on the first pick: a suite sending two spawn
-  intents must be `gameType: Public` with `setup(..., autoEndSpawnPhase=false)`.
-- Any per-second scan over an empire's tiles must be bounded (the unbounded rising-ground
-  search took `determinism:full` from 8 min to never; perf at 1000 ticks never saw it).
-- Tunables go where their system keeps them (`DOOMSDAY_CLOCK_DEFAULTS`, not `Config`, for
-  nuclear winter — 38 fixture-built tests said so).
-- Partisan ground must stay the people's, or uprisings launder occupied land into free tribe
-  land and the strongest empire eats it (leader 11 % → 23 % before `partisanFor`).
-- The wire lane is decided per field: per-tick churn → the packed sextet in `GameView`
-  (`[smallID, tiles, gold, troops, goldEarned, materials]`), rare change → the object lane
-  (`diffPlayerUpdate` / `applyStateUpdate`), and every fixture with a `PlayerState` literal
-  must gain the new field (`tests/GameUpdateUtils.test.ts`, the two `derive` tests,
-  `PlayerInfoOverlay`, `TradeTrainGolden`, `TradeShipExecution` mocks).
-- Dev server: `.claude/launch.json` → `fightwars-dev` on :9000; a second player needs
-  `http://[::1]:9000` (shared `localStorage`); the lobby WebSocket errors in the console are
-  the landing page, not the game.
-
-Start with step 0. Then the retune pass. Commit every working increment.
+- A worktree has no `node_modules`: five of eight red files after the rebase were that.
+- Append a `UnitType` member at the end of the enum: `z.enum(UnitType)` rides the wire by
+  member order (`zbin/README.md`). Every new unit went on the end, and so must the next.
+- The 24000-tick determinism gate had never seen a decided game: it serialised
+  `game.getWinner()` (a `Player`, bigint fields) and crashed the first time a world match
+  ended inside the horizon. The digest names the winner by id now.
+- A guard that cannot fail, twice more: the submarine's radar-sight case passed with the
+  clause disabled (a patrolling warship wandered into plain sight — pin detection to
+  nothing), and the paratrooper's own-land clause is covered by the friendliness clause
+  beside it (recorded, not disguised). Break it before you trust it, every time.
+- A lever whose A/B is byte-identical is a finding, not a pass: the submarine's first A/B
+  said nations' standing-fleet build fires a handful of times a game (instrumented: two
+  entries in 4000 ticks), so the hull rule moved to where ships are actually laid down;
+  the carrier's says no nation affords 3 000 materials by tick 8000, and the richer
+  20-minute Impossible snapshot is the instrument that moves.
+- `TestConfig` flattens `nukeMagnitudes` and `nukeSpeed` as well as `attackLogic`: assert
+  tables against a plain `Config`, and spy the real blast in when a test needs it.
+- The balance script's config chain was a twenty-two-deep ternary that prettier re-wrapped
+  under every edit script; it is a lever table now. Edit scripts must match bytes after
+  prettier, and an anchor that is a prefix of its own replacement double-applies.
+- Hand-built mocks gain every new `Config` / `Player` method (`doctrineNationBuildScale`,
+  `artilleryNationRatio`, `radarNationRatio`, `samRangeBonus`), and every render
+  `UnitState` literal gains every new field — the compiler finds the typed ones, tests the
+  rest.
 
 ## 2. How to resume (every session, in this order)
 
