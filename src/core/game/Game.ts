@@ -702,6 +702,19 @@ export interface Player {
   isTraitor(): boolean;
   /** `durationScale` stretches or shortens the traitor window (per-tier break cost). */
   markTraitor(durationScale?: number): void;
+  // Stability (brief §6.6): land held from other peoples, not yet assimilated.
+  /** Occupied tiles held, all peoples together. */
+  unrestTiles(): number;
+  /** Occupied tiles held, by the small id of the people they were taken from. */
+  unrestByPeople(): ReadonlyMap<number, number>;
+  /** Tick of the last uprising of these people against this player, or -1. */
+  lastUprising(formerSmallID: number): Tick;
+  markUprising(formerSmallID: number, tick: Tick): void;
+  /** The occupier these partisans rose against; null for anyone else. */
+  partisanOf(): Player | null;
+  /** The small id of the people these partisans stand for; 0 for anyone else. */
+  partisanFor(): number;
+  markPartisanOf(occupier: Player, people: number): void;
   // Doomsday Clock (anti-stall): marked when below the rising territory bar.
   inDoomsdayClock(): boolean;
   /** Territory is actively rotting away (the final doomsday phase). */
@@ -1030,6 +1043,8 @@ export interface Game extends GameMap {
   nations(): Nation[];
 
   numTilesWithFallout(): number;
+  /** Small id of the people a tile is held from (brief §6.6), 0 when not occupied. */
+  occupiedFrom(tile: TileRef): number;
   stats(): Stats;
 
   addUpdate(update: GameUpdate): void;
@@ -1189,6 +1204,7 @@ export enum MessageType {
   CHAT,
   RENEW_ALLIANCE,
   COALITION_OFFER,
+  PARTISANS_RISE,
 }
 
 // Message categories used for filtering events in the EventsDisplay
@@ -1222,6 +1238,7 @@ export const MESSAGE_TYPE_CATEGORIES: Record<MessageType, MessageCategory> = {
   [MessageType.ALLIANCE_EXPIRED]: MessageCategory.ALLIANCE,
   [MessageType.RENEW_ALLIANCE]: MessageCategory.ALLIANCE,
   [MessageType.COALITION_OFFER]: MessageCategory.ALLIANCE,
+  [MessageType.PARTISANS_RISE]: MessageCategory.ATTACK,
   [MessageType.DONATION_SENT]: MessageCategory.TRADE,
   [MessageType.DONATION_RECEIVED]: MessageCategory.TRADE,
   [MessageType.CHAT]: MessageCategory.CHAT,

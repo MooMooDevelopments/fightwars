@@ -2,6 +2,7 @@
 import { PseudoRandom } from "../PseudoRandom";
 import { simpleHash } from "../Util";
 import { AllianceExtensionExecution } from "./alliance/AllianceExtensionExecution";
+import { AttackExecution } from "./AttackExecution";
 import { DeleteUnitExecution } from "./DeleteUnitExecution";
 import { AiAttackBehavior } from "./utils/AiAttackBehavior";
 
@@ -18,7 +19,12 @@ export class TribeExecution implements Execution {
   private reserveRatio: number;
   private expandRatio: number;
 
-  constructor(private tribe: Player) {
+  constructor(
+    private tribe: Player,
+    // Partisans (brief §6.6): the occupier they rose against. Fought first
+    // and never befriended; once it is dead they are a tribe like any other.
+    private occupier: Player | null = null,
+  ) {
     this.random = new PseudoRandom(simpleHash(tribe.id()));
     this.attackRate = this.random.nextInt(40, 80);
     this.attackTick = this.random.nextInt(0, this.attackRate);
@@ -65,8 +71,12 @@ export class TribeExecution implements Execution {
   }
 
   private acceptAllAllianceRequests() {
-    // Accept all alliance requests
+    // Accept all alliance requests — except the occupier's, for partisans.
     for (const req of this.tribe.incomingAllianceRequests()) {
+      if (this.occupier !== null && req.requestor() === this.occupier) {
+        req.reject();
+        continue;
+      }
       req.accept();
     }
 
@@ -96,6 +106,22 @@ export class TribeExecution implements Execution {
   private maybeAttack() {
     if (this.attackBehavior === null) {
       throw new Error("not initialized");
+    }
+    // Partisans throw themselves at the occupier whatever the odds: the
+    // tribe brain would not attack a stronger neighbour, and an uprising
+    // that waits to be stronger than an empire never happens.
+    if (
+      this.occupier !== null &&
+      this.occupier.isAlive() &&
+      this.tribe.sharesBorderWith(this.occupier)
+    ) {
+      const troops = Math.floor(this.tribe.troops() * (1 - this.reserveRatio));
+      if (troops > 0) {
+        this.mg.addExecution(
+          new AttackExecution(troops, this.tribe, this.occupier.id()),
+        );
+        return;
+      }
     }
     const toAttack = this.attackBehavior.getNeighborTraitorToAttack();
     if (toAttack !== null) {

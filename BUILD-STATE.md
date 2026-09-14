@@ -28,6 +28,51 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 
 ## Handoff — read this first (written 2026-09-14 at the end of session 11)
 
+### Session 11 (continued) — item 6.6 closes: conquest is a commitment
+
+- **What shipped.** Stability and partisans (brief §6.6, second half). Land taken from
+  another state is held from its people until it assimilates (five minutes in the same
+  hands); enough of one people's land held unassimilated and out of reach of the occupier's
+  posts raises their partisans — a tribe spawned on the occupier's own ground, aimed at the
+  occupier whatever the odds, refusing its hand, and exempt from the enclave rule _against the
+  occupier only_, so the people returning walk right in. The Partisan doctrine's unlock lands
+  with it: half the land, twice the time. `docs/MECHANICS.md` §05 6; files in
+  `FORK-CHANGES.md`. Lever: `--no-unrest`, which reproduces the doctrines commit's hash.
+- **Two per-tile stores, allocated on the first conquest of the kind.** The people a tile is
+  held from (`Uint16`, 1.3 MB on the world map) and the tick it settles on (`Uint32`,
+  2.6 MB). The second exists because the first cut's queue settled a re-taken tile early:
+  the same holder losing and re-taking a tile pushes a second entry, and the first must be
+  recognised as superseded. A queue entry is current only while it matches the tile's tick.
+- **Partisans stand for a people, or the strongest empire eats them.** The first bot run
+  put the leader at 23 % of the map (11 % without unrest): uprisings turned occupied land into
+  _tribe_ land, which nobody records a grievance for, and the biggest army took it free.
+  Now a partisan's ground is its people's — taking it is taking it from the people — and
+  the laundering loop is closed.
+- **A guard that could not fail, again.** The enclave-exemption break passed its test twice:
+  `PlayerExecution` staggers a player's first cluster check up to `ticksPerClusterCalc`
+  ticks after init and only runs it after a tile change later than that, so the test's
+  enclave was never checked at all. It now waits the stagger out and takes one more tile.
+  All four breaks caught: the conquer bookkeeping, the threshold, the exemption, the attack.
+- **The bots**, same seed, 8000 ticks, unrest off → on: alive 35 → 37; top 1 / 5 / 20
+  11.3 / 41.5 / 89.1 → 12.7 / 46.8 / 96.2 %; 327170 tiles occupied at the end and 507 (7 alive)
+  uprisings; fallout 3894 → 0. Read against the doctrine commit's run: the mechanic is
+  live and expensive, and the numbers say the threshold (300 tiles, flat) is a first cut —
+  the retune should make it a share of the occupier's land so a small conqueror feels it
+  before an empire does. the `NationGoldPerMinute` snapshot did not move: no nation holds 300 tiles of another's for long enough in that twenty-minute run.
+- **A killed gate job leaves its workers behind.** Stopping the ten-minute gate chain
+  mid-`determinism:full` left 28 vitest workers running; the next three full-suite runs each
+  failed one _different_ test (a hardening bound, the ICU check, a shell-script timeout), all
+  green alone. `Get-Process node` before trusting a flaky suite; kill anything older than the
+  run. On a clean box the suite was green (514 files); with the owner's desktop busy (a game
+  client, Discord, Spotify at a third of the CPU) the three heaviest tests — the ICU sweep, the
+  2 000-value zbin fuzz, an inventory-settings sweep — hit their 5 s timeouts and pass alone.
+  Those timeouts measure the machine, not the code.
+- **The uprising search had to be bounded.** `determinism:full` went from eight minutes to not
+  finishing: a fully garrisoned empire was walked to its last tile once a second, two grid
+  queries per candidate, for every people it held. Now at most 256 candidates per attempt, and
+  a fruitless attempt counts against the cooldown. Perf at 1000 ticks never showed it — the
+  horizon again.
+
 ### Session 11 (continued) — item 6.6 opens with doctrines
 
 - **Rebased first** onto upstream `0e0fb9ea6` (18 commits: the GAME_DOMAIN page/game host
@@ -704,11 +749,11 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
 ## Next up (concrete, ordered)
 
 0. **Phase 5 continues.** 6.1, 6.2, 6.3, the nuke half of 6.4, the tiers-and-coalitions
-   half of 6.5 and the doctrines half of 6.6 are done. Next: **stability and partisans**
-   (§05 6 — note the enclave-absorption rule in `PlayerExecution.removeClusters`: a partisan
-   spawned inside occupied land is surrounded by definition and must be exempt from it, or it
-   vanishes on the next cluster pass), the Partisan doctrine's unlock with it, or the **six
-   units** of 6.4 (`docs/MECHANICS.md` §03 7.1 has the 25-file checklist, §04 D–E the hooks;
+   half of 6.5 and all of 6.6 are done. Next: the **retune pass** the last four items have
+   been asking for (upkeep table, flat materials prices, tariff maximum, whether
+   `hasTooManyAlliances` counts pacts, nations playing their doctrine, the unrest threshold
+   as a share of the occupier's land) — measured with the levers, one at a time — or the
+   **six units** of 6.4 (`docs/MECHANICS.md` §03 7.1 has the 25-file checklist, §04 D–E the hooks;
    budget ~25 files + atlas + locale per unit, so do them one at a time with a lever each).
    Before either: a retune pass on the economy and diplomacy as a whole (upkeep
    table, flat materials prices, tariff maximum, whether `hasTooManyAlliances` should count
@@ -804,6 +849,25 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   remains by design.
 - The discord card on a clan overview says "invite is no longer valid" for any invite the
   browser cannot resolve against Discord's public API (offline / fake invite) — expected.
+
+## Numbers last measured — Phase 5 item 6.6, stability (2026-09-14, session 11)
+
+- Determinism hash at `perf:gate` (1000 ticks): `23271086399647930` → `24046876959589696`.
+  `perf:gate` on a busy desktop (a game client and Discord at a third of the CPU): **mean 4.09 ms**, p95 7.62, p99 10.9, 0 over budget — read against 3.36 idle at the doctrines commit; the bookkeeping is O(1) per conquest and the search is bounded.
+- `test:determinism:full`: pass 3/3 in 736 s (the same busy box; 476 s at the doctrines commit). `npm test`: 514 files, 6267 tests.
+- **Bot-vs-bot** (`balance:run --ticks 8000`, world, 150 bots + nations, seed `perf-gate`):
+
+  | after 8000 ticks     | `--no-unrest`       | unrest on           |
+  | -------------------- | ------------------- | ------------------- |
+  | players alive        | 35                  | 37                  |
+  | top 1 / 5 / 20 share | 11.3 / 41.5 / 89.1  | 12.7 / 46.8 / 96.2  |
+  | occupied tiles       | 0                   | 327170              |
+  | uprisings            | 0 (0 alive)         | 507 (7 alive)       |
+  | fallout tiles        | 3894                | 0                   |
+  | pacts / defensive    | 52 / 6              | 39 / 10             |
+  | final hash           | `45194573167176620` | `47153110926552660` |
+
+  The off hash equals the doctrines commit's: the lever restores that game exactly.
 
 ## Numbers last measured — Phase 5 item 6.6, doctrines (2026-09-14, session 11)
 

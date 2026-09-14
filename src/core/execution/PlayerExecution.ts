@@ -297,6 +297,12 @@ export class PlayerExecution implements Execution {
     if (capturing === null) {
       return;
     }
+    // Partisans (brief §6.6) are an enclave by definition — they rose on the
+    // occupier's own ground — and the occupier has to fight them, not
+    // inherit them. Anyone else walking in absorbs them as usual.
+    if (capturing === this.player.partisanOf()) {
+      return;
+    }
 
     const firstTile = cluster[0];
     if (firstTile === undefined) {

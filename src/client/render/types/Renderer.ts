@@ -84,6 +84,8 @@ export interface PlayerState {
   irradiatedTiles: number;
   /** Doctrine picked at spawn (Doctrine enum value; 0 = none). */
   doctrine: number;
+  /** Occupied tiles held, not yet assimilated (live, object lane). */
+  unrestTiles: number;
   troops: number;
   isTraitor: boolean;
   traitorRemainingTicks: number;

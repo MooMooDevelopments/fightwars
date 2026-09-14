@@ -127,6 +127,12 @@ export class PlayerImpl implements Player {
   public _irradiatedTiles = 0;
   /** Picked at spawn (brief §6.6); changes once, so the object lane. */
   private _doctrine: Doctrine = Doctrine.None;
+  /** Occupied tiles held, by the people they were taken from (brief §6.6). */
+  public _unrest = new Map<number, number>();
+  public _unrestTotal = 0;
+  private _uprisings = new Map<number, Tick>();
+  private _partisanOf: Player | null = null;
+  private _partisanFor = 0;
 
   /** Cumulative ship-trade revenue (arrival credit for src + dst port owners). */
   private _tradeGold: bigint = 0n;
@@ -399,6 +405,7 @@ export class PlayerImpl implements Player {
       materials: this._materials,
       irradiatedTiles: this._irradiatedTiles,
       doctrine: this._doctrine,
+      unrestTiles: this._unrestTotal,
       troops: this.troops(),
       allies: allies,
       embargoes: embargoes,
@@ -758,6 +765,35 @@ export class PlayerImpl implements Player {
 
   setDoctrine(doctrine: Doctrine): void {
     this._doctrine = doctrine;
+  }
+
+  unrestTiles(): number {
+    return this._unrestTotal;
+  }
+
+  unrestByPeople(): ReadonlyMap<number, number> {
+    return this._unrest;
+  }
+
+  lastUprising(formerSmallID: number): Tick {
+    return this._uprisings.get(formerSmallID) ?? -1;
+  }
+
+  markUprising(formerSmallID: number, tick: Tick): void {
+    this._uprisings.set(formerSmallID, tick);
+  }
+
+  partisanOf(): Player | null {
+    return this._partisanOf;
+  }
+
+  partisanFor(): number {
+    return this._partisanFor;
+  }
+
+  markPartisanOf(occupier: Player, people: number): void {
+    this._partisanOf = occupier;
+    this._partisanFor = people;
   }
 
   incomingAllianceRequests(): AllianceRequest[] {

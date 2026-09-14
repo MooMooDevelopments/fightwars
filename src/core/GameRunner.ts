@@ -4,6 +4,7 @@ import { DoomsdayClockExecution } from "./execution/DoomsdayClockExecution";
 import { Executor } from "./execution/ExecutionManager";
 import { RecomputeRailClusterExecution } from "./execution/RecomputeRailClusterExecution";
 import { SpawnTimerExecution } from "./execution/SpawnTimerExecution";
+import { UnrestExecution } from "./execution/UnrestExecution";
 import { WinCheckExecution } from "./execution/WinCheckExecution";
 import {
   AllPlayers,
@@ -120,6 +121,9 @@ export class GameRunner {
       );
     }
     this.game.addExecution(new WinCheckExecution());
+    if (this.game.config().unrestEnabled()) {
+      this.game.addExecution(new UnrestExecution());
+    }
     if (this.game.config().doomsdayClockConfig().enabled) {
       this.game.addExecution(new DoomsdayClockExecution());
     }

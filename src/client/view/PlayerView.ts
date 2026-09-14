@@ -89,6 +89,7 @@ function stateFromUpdate(pu: PlayerUpdate): PlayerState {
     materials: Number(pu.materials ?? 0n),
     irradiatedTiles: pu.irradiatedTiles ?? 0,
     doctrine: pu.doctrine ?? 0,
+    unrestTiles: pu.unrestTiles ?? 0,
     troops: pu.troops!,
     isTraitor: pu.isTraitor!,
     traitorRemainingTicks: Math.max(0, pu.traitorRemainingTicks ?? 0),
@@ -549,6 +550,11 @@ export class PlayerView {
 
   doctrine(): Doctrine {
     return this.state.doctrine as Doctrine;
+  }
+
+  /** Occupied tiles held from other peoples, not yet assimilated (brief §6.6). */
+  numUnrestTiles(): number {
+    return this.state.unrestTiles;
   }
 
   /** The tile picked as spawn, once the simulation has honoured a pick. */

@@ -271,6 +271,8 @@ export interface PlayerUpdate {
   irradiatedTiles?: number;
   /** Doctrine picked at spawn (brief §6.6). Changes once: object lane. */
   doctrine?: Doctrine;
+  /** Occupied tiles held (brief §6.6). Moves only while land changes hands. */
+  unrestTiles?: number;
   troops?: number;
   allies?: number[];
   embargoes?: Set<PlayerID>;

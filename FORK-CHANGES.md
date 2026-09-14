@@ -855,3 +855,43 @@ the length of the spawn phase. `docs/MECHANICS.md` §05 "Gaps" 5 has the table a
   formula (`TestConfig` flattens `attackLogic`, so the two attack cases build a plain `Config`),
   and the lever. The suite is a Public game with the spawn phase left open: in singleplayer
   the first pick ends the phase and a second intent is refused.
+
+### Stability and partisans (brief §6.6, session 11)
+
+Land taken from another state is held from its people until it assimilates (five minutes in
+the same hands); enough of one people's land held unassimilated and ungarrisoned raises their
+partisans — a tribe on the occupier's own ground, aimed at the occupier, that the occupier
+cannot absorb as an enclave. `docs/MECHANICS.md` §05 "Gaps" 6.
+
+#### Shared upstream files edited
+
+- `src/core/game/Game.ts` — `Player.unrestTiles` / `unrestByPeople` / `lastUprising` /
+  `markUprising` / `partisanOf` / `partisanFor` / `markPartisanOf`; `Game.occupiedFrom`;
+  `MessageType.PARTISANS_RISE` (category ATTACK).
+- `src/core/game/GameImpl.ts` — the per-tile people and settle-tick stores, the assimilation
+  queue drained beside fallout, the bookkeeping in `conquer` and `relinquish`.
+- `src/core/game/PlayerImpl.ts`, `src/core/game/GameUpdates.ts`,
+  `src/core/game/GameUpdateUtils.ts`, `src/client/render/types/Renderer.ts`,
+  `src/client/view/PlayerView.ts` — `unrestTiles` on the object lane; `numUnrestTiles()`.
+- `src/core/execution/TribeExecution.ts` — an optional occupier: fought first whatever the
+  odds, never befriended.
+- `src/core/execution/PlayerExecution.ts` — the occupier cannot absorb its partisans as an
+  enclave.
+- `src/core/GameRunner.ts` — registers `UnrestExecution` when stability is on.
+- `src/core/configuration/Config.ts` — `unrestEnabled`, `unrestAssimilationTicks`,
+  `unrestPartisanThreshold`, `partisanCooldownTicks`, `partisanTroops`,
+  `doctrineUnrestScale`.
+- `src/client/Utils.ts`, `resources/lang/en.json` — the uprising message and its colour.
+- `scripts/balanceRun.ts` — `--no-unrest`, and an unrest line in the report.
+- Fixtures: `tests/GameUpdateUtils.test.ts` and the two `derive` tests gained `unrestTiles`.
+
+#### FightWars-only files added
+
+- `src/core/execution/UnrestExecution.ts` — once a second, where the next uprising stands.
+- `tests/Stability.test.ts` — the books (held, not for tribes, liberated / inherited / let go,
+  assimilated, on the wire, off), uprisings (at the threshold on the occupier's ground aimed at
+  it, not below it or under a garrison or off, fighting the occupier and refusing its hand,
+  the Partisan doctrine's half-and-double), and the enclave rule. Two things it had to learn:
+  a queue entry must carry the tile's current settle tick or a re-taken tile settles early,
+  and `PlayerExecution`'s cluster pass is staggered — an enclave is checked only after a tile
+  change later than its last check, so the test takes one more tile after the first pass.

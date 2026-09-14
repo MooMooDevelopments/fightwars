@@ -29,6 +29,7 @@ function makePlayerState(overrides: Partial<PlayerState> = {}): PlayerState {
     materials: 0,
     irradiatedTiles: 0,
     doctrine: 0,
+    unrestTiles: 0,
     troops: 100,
     isTraitor: false,
     traitorRemainingTicks: 0,
@@ -436,6 +437,7 @@ describe("applyStateUpdate", () => {
       materials: 0,
       irradiatedTiles: 0,
       doctrine: 0,
+      unrestTiles: 0,
     });
     applyStateUpdate(target, {
       type: GameUpdateType.Player,

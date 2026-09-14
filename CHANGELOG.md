@@ -48,6 +48,10 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
 - **Doctrines.** Pick one of eight when you pick where to spawn — Expansionist, Mercantile,
   Fortress, Naval, Nuclear, Diplomatic, Industrial, Partisan — for a small passive and one
   unlock. Nations pick too.
+- **Conquest is a commitment.** Land you take from another state is theirs in spirit for
+  five minutes; hold enough of one people's land without a defense post over it and their
+  partisans rise on your own ground — and you cannot absorb them, only fight them. Their
+  people, returning, walk right in.
 
 ### Phase 2 — Infrastructure (2026-09-12)
 

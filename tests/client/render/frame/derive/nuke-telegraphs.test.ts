@@ -42,6 +42,7 @@ function ps(overrides: Partial<PlayerState> = {}): PlayerState {
     materials: 0,
     irradiatedTiles: 0,
     doctrine: 0,
+    unrestTiles: 0,
     troops: 0,
     isTraitor: false,
     traitorRemainingTicks: 0,

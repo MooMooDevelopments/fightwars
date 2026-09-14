@@ -657,6 +657,45 @@ export class Config {
     return 1 - this.falloutRegenDepth() * (past > 1 ? 1 : past);
   }
 
+  /**
+   * Stability (brief §6.6): land taken from another state breeds unrest
+   * until it assimilates, and enough of one people's land held
+   * unassimilated and ungarrisoned raises their partisans. Off, nothing is
+   * recorded and nobody rises — the balance lever `--no-unrest`.
+   */
+  unrestEnabled(): boolean {
+    return true;
+  }
+
+  /** Ticks an occupied tile takes to assimilate in the same hands: five minutes. */
+  unrestAssimilationTicks(): Tick {
+    return 3000;
+  }
+
+  /** Unassimilated tiles held from one people before their partisans rise. */
+  unrestPartisanThreshold(): number {
+    return 300;
+  }
+
+  /** Ticks between uprisings of the same people against the same occupier. */
+  partisanCooldownTicks(): Tick {
+    return 1800;
+  }
+
+  /** The troops an uprising starts with, by the land held from its people. */
+  partisanTroops(unrestTiles: number): number {
+    return Math.min(80_000, 5_000 + 30 * unrestTiles);
+  }
+
+  /**
+   * Partisan doctrine (brief §6.6): the people's land rebels twice as fast —
+   * half the tiles raise them and the land takes twice as long to settle.
+   */
+  doctrineUnrestScale(doctrine: Doctrine): number {
+    if (!this.doctrinesEnabled()) return 1;
+    return doctrine === Doctrine.Partisan ? 2 : 1;
+  }
+
   msPerTick(): number {
     return 100;
   }

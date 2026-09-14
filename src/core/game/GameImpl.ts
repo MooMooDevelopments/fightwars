@@ -260,6 +260,87 @@ export class GameImpl implements Game {
   private falloutExpiry: number[] = [];
   private falloutExpiryHead = 0;
 
+  // Stability (brief §6.6). A tile taken from another state is held from
+  // that people until it assimilates: `_occupiedFrom` is the people's small
+  // id per tile (0 = nobody's, 1.3 MB on the world map, allocated on the
+  // first conquest of the kind); the queue is [assimilateTick, tile,
+  // occupierSmallID] in push order, drained from the front once a second
+  // like fallout. A stale entry — the tile changed hands since — is skipped,
+  // because whoever holds it now pushed an entry of their own.
+  private _occupiedFrom: Uint16Array | null = null;
+  // The tick each occupied tile settles on. A queue entry is only current
+  // while it matches: the same holder re-taking a tile it had lost restarts
+  // the window, and the old entry must not settle it early.
+  private _assimilateAt: Uint32Array | null = null;
+  private assimilation: number[] = [];
+  private assimilationHead = 0;
+
+  private occupied(): Uint16Array {
+    if (this._occupiedFrom === null) {
+      this._occupiedFrom = new Uint16Array(this.width() * this.height());
+      this._assimilateAt = new Uint32Array(this.width() * this.height());
+    }
+    return this._occupiedFrom;
+  }
+
+  occupiedFrom(tile: TileRef): number {
+    return this._occupiedFrom === null ? 0 : this._occupiedFrom[tile];
+  }
+
+  /** Whether a player's land is somebody's to hold: states occupy, tribes raid. */
+  private isOccupier(player: Player): boolean {
+    return player.type() !== PlayerType.Bot;
+  }
+
+  /** Bookkeeping for a tile leaving `holder`'s hands; returns the people it was held from. */
+  private releaseOccupied(holder: PlayerImpl, tile: TileRef): number {
+    const from = this.occupiedFrom(tile);
+    if (from === 0) return 0;
+    this.occupied()[tile] = 0;
+    this._assimilateAt![tile] = 0;
+    const left = (holder._unrest.get(from) ?? 1) - 1;
+    if (left <= 0) holder._unrest.delete(from);
+    else holder._unrest.set(from, left);
+    holder._unrestTotal--;
+    return from;
+  }
+
+  private holdOccupied(holder: PlayerImpl, tile: TileRef, from: number): void {
+    this.occupied()[tile] = from;
+    holder._unrest.set(from, (holder._unrest.get(from) ?? 0) + 1);
+    holder._unrestTotal++;
+    const people = this.playerBySmallID(from);
+    const scale = people.isPlayer()
+      ? this._config.doctrineUnrestScale((people as Player).doctrine())
+      : 1;
+    const at =
+      this._ticks + Math.floor(this._config.unrestAssimilationTicks() * scale);
+    this._assimilateAt![tile] = at;
+    this.assimilation.push(at, tile, holder.smallID());
+  }
+
+  /** Occupied land settles once its window has passed in the same hands. */
+  private assimilate(): void {
+    const q = this.assimilation;
+    while (
+      this.assimilationHead < q.length &&
+      q[this.assimilationHead] <= this._ticks
+    ) {
+      const at = q[this.assimilationHead];
+      const tile = q[this.assimilationHead + 1];
+      const holderID = q[this.assimilationHead + 2];
+      this.assimilationHead += 3;
+      if (this.occupiedFrom(tile) === 0) continue;
+      if (this._assimilateAt![tile] !== at) continue; // superseded
+      if (this._map.ownerID(tile) !== holderID) continue;
+      this.releaseOccupied(this.playerBySmallID(holderID) as PlayerImpl, tile);
+    }
+    if (this.assimilationHead >= 4096 && this.assimilationHead * 2 > q.length) {
+      this.assimilation = q.slice(this.assimilationHead);
+      this.assimilationHead = 0;
+    }
+  }
+
   /**
    * Fallout consequences (brief §6.4): irradiated ground clears itself after
    * falloutDurationTicks, whoever holds it by then. Once a second, like the
@@ -552,7 +633,10 @@ export class GameImpl implements Game {
     this.updates = createGameUpdatesMap();
     this.tileUpdatePairs.length = 0;
     this._supplyNetwork.tick(this._ticks);
-    if (this._ticks % 10 === 0) this.expireFallout();
+    if (this._ticks % 10 === 0) {
+      this.expireFallout();
+      this.assimilate();
+    }
     this.execs.forEach((e) => {
       if (
         (!this.inSpawnPhase() || e.activeDuringSpawnPhase()) &&
@@ -842,6 +926,27 @@ export class GameImpl implements Game {
         this._map.setFallout(tile, false);
       }
     }
+    // Stability (brief §6.6): land taken from another state is held from
+    // its people until it assimilates; their own return liberates it, and a
+    // third party inherits the grievance rather than starting a new one.
+    if (this._config.unrestEnabled()) {
+      // Whose land this is: the people it was already held from, or the
+      // previous owner's own — and partisans' ground is their people's, so
+      // taking it from them is taking it from the people, not from a tribe.
+      let from = previousOwner.isPlayer()
+        ? this.releaseOccupied(previousOwner, tile)
+        : 0;
+      if (from === 0 && previousOwner.isPlayer()) {
+        if (previousOwner.partisanOf() !== null) {
+          from = previousOwner.partisanFor();
+        } else if (this.isOccupier(previousOwner)) {
+          from = previousOwner.smallID();
+        }
+      }
+      if (this.isOccupier(owner) && from !== 0 && from !== owner.smallID()) {
+        this.holdOccupied(owner, tile, from);
+      }
+    }
     this._supplyNetwork.onConquer(tile, owner.smallID());
     this.recordTileUpdate(tile);
   }
@@ -860,6 +965,7 @@ export class GameImpl implements Game {
     previousOwner._tiles.delete(tile);
     previousOwner._borderTiles.delete(tile);
     if (this._map.hasFallout(tile)) previousOwner._irradiatedTiles--;
+    this.releaseOccupied(previousOwner, tile);
 
     this._territoryVersion++;
     this._map.setOwnerID(tile, 0);
