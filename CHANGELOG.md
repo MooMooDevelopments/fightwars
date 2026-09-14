@@ -74,6 +74,8 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   nearest Missile Silo within 120 tiles straight to the tile you click and land as an attack
   from there — over water, mountains, anyone's land. Nothing shoots them down. Hotkey I.
   Nations drop rather than sail when a silo reaches a target they cannot walk to.
+- **A rally point for your fleet.** Press O over water and every warship you build from
+  then on sails there; press O over land to clear it. Rebindable in Settings › Keybinds.
 - **Attack presets.** Shift+1 to Shift+4 set your attack ratio to a quarter, a half, three
   quarters or everything. Rebindable in Settings › Keybinds.
 - **The leaderboard in the game's own colours.** Gold, silver and bronze are three colours

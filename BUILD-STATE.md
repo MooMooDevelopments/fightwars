@@ -79,6 +79,20 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — item 9: a rally point for warships, client-side
+
+- **What shipped.** `O` over water sets the rally point; the tick a new warship, submarine
+  or carrier of the player's own appears, `RallyPointController` sends it the ordinary move
+  intent — the one a click on the water sends for a selected ship. `O` over land clears it.
+  The move indicator marks the tile when it is set and each time a ship is sent. Listed and
+  rebindable. The simulation never knows a rally point exists; a ship that cannot reach the
+  tile is refused by the same water-component rule that refuses a click.
+- **Guards broken and watched fail:** other players' ships sent (the owner clause), ships
+  from earlier ticks sent (the created-at clause), land accepted as a rally point.
+- **Not photographed** — a port, a warship and the key are a couple of minutes of browser
+  work and the unit tests cover every clause; the standing flag on the map is the hook
+  point (a pass of its own; `MoveIndicatorPass` is a transient animation).
+
 ### Session 13 — item 9 opens: attack presets, client-side
 
 - **What shipped.** Four keybinds — `Shift+1` to `Shift+4` — set the attack ratio to a

@@ -208,6 +208,17 @@ export class ToggleCoordinateGridEvent implements GameEvent {
 /** The chrome hides with one key (brief §7): every HUD surface at once. */
 export class ToggleHudEvent implements GameEvent {}
 
+/**
+ * Set (or, over land, clear) the warship rally point at a screen position
+ * (brief §7 item 9). RallyPointController resolves it to a tile.
+ */
+export class SetRallyPointEvent implements GameEvent {
+  constructor(
+    public readonly x: number,
+    public readonly y: number,
+  ) {}
+}
+
 export class TickMetricsEvent implements GameEvent {
   constructor(
     public readonly tickExecutionDuration?: number,
@@ -396,6 +407,11 @@ export class InputHandler {
     });
     this.addKeybindAndEvent(this.keybinds.toggleHud, () => {
       this.eventBus.emit(new ToggleHudEvent());
+    });
+    this.addKeybindAndEvent(this.keybinds.setRallyPoint, () => {
+      this.eventBus.emit(
+        new SetRallyPointEvent(this.lastPointerX, this.lastPointerY),
+      );
     });
     const resetKey = this.keybinds.resetGfx ?? "KeyR";
     this.addKeybindAndEvent(

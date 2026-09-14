@@ -1841,6 +1841,10 @@
     "delete_unit_title": "Delete Unit",
     "upgrade_x": "Upgrade x{amount}"
   },
+  "rally": {
+    "cleared": "Rally point cleared",
+    "set": "Rally point set: new warships will sail here"
+  },
   "relation": {
     "default": "Default",
     "distrustful": "Distrustful",
@@ -2326,6 +2330,8 @@
     "retaliate_attack_desc": "Send a retaliation attack to blunt/negate the force of the most recent active attacker. Only available when you are being attacked.",
     "select_all_warships": "Select All Warships",
     "select_all_warships_desc": "Select all of your warships on the map.",
+    "set_rally_point": "Set Rally Point",
+    "set_rally_point_desc": "New warships sail to the water under the cursor; press over land to clear",
     "special_effects_desc": "Toggle special effects. Deactivate to improve performances",
     "special_effects_label": "Special effects",
     "swap_direction": "Swap Rocket Direction",

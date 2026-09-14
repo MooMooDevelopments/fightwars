@@ -21,6 +21,7 @@ export function getDefaultKeybinds(isMac: boolean): Record<string, string> {
     toggleView: "Space",
     coordinateGrid: "KeyM",
     toggleHud: "KeyZ",
+    setRallyPoint: "KeyO",
     buildCity: "Digit1",
     buildFactory: "Digit2",
     buildPort: "Digit3",

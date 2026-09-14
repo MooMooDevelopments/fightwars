@@ -457,10 +457,11 @@ section said all three were intents through the lockstep protocol. They need not
   ordinary `buildUnit` intent the tick the player can afford it, then drops it. The sim never
   knows a queue existed. UI: an unaffordable item in the build menu becomes "queued" on
   click; the control panel shows the queue as chips with a cancel.
-- **Rally points**: a client controller keeps one tile per player; each new warship of the
-  player's own (seen in `updatesSinceLastTick` with `createdAt === ticks()`) gets the
-  ordinary move intent to it. Set from the radial menu on a water tile; shown as a flag on
-  the map (`MoveIndicatorPass` has the grammar).
+- **Rally points — done (session 13).** `RallyPointController`: `O` over water sets it, `O`
+  over land clears it; each new warship, submarine or carrier of the player's own gets the
+  ordinary move intent the tick it appears. `tests/client/RallyPoint.test.ts`. Hook point: a
+  standing flag on the map (`MoveIndicatorPass` is a transient animation; a flag is a pass of
+  its own).
 
 Neither touches `src/core`, so the determinism gate is unaffected and no replay version
 bump is needed. If either ever needs the sim to know (a queue that reserves gold, a rally

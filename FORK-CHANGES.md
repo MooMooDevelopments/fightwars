@@ -1328,3 +1328,22 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
 - `tests/client/AttackPresets.test.ts` — the keys and their values, no collision with the
   build digits, the input handler naming the ratio on Shift+digit and not on the plain digit,
   the panel taking and clamping a preset without touching the stored default.
+
+### Rally point (Phase 4 item 9, session 13)
+
+#### Shared upstream files edited
+
+- `src/core/game/UserSettings.ts` — `setRallyPoint: "KeyO"`.
+- `src/client/InputHandler.ts` — `SetRallyPointEvent` with the last pointer position.
+- `src/client/hud/GameRenderer.ts` — registers `RallyPointController`.
+- `src/client/UserSettingModal.ts`, `src/client/HelpModal.ts` — the keybind, listed.
+- `resources/lang/en.json` — `user_setting.set_rally_point`, `set_rally_point_desc`,
+  `rally.set`, `rally.cleared`.
+
+#### FightWars-only files added
+
+- `src/client/controllers/RallyPointController.ts` — one water tile; the ordinary move intent
+  for each new hull of the player's own.
+- `tests/client/RallyPoint.test.ts` — the key; set over water and marked, cleared over land,
+  off-map ignored; each new own hull sent and nothing else; nothing without a point or after
+  it is cleared.

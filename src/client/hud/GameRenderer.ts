@@ -9,6 +9,7 @@ import { HudVisibilityController } from "../controllers/HudVisibilityController"
 import { ImpactFeedbackController } from "../controllers/ImpactFeedbackController";
 import { LiveStatsController } from "../controllers/LiveStatsController";
 import { MapLayerController } from "../controllers/MapLayerController";
+import { RallyPointController } from "../controllers/RallyPointController";
 import { SoundEffectController } from "../controllers/SoundEffectController";
 import { StructureHighlightController } from "../controllers/StructureHighlightController";
 import { ViewModeController } from "../controllers/ViewModeController";
@@ -346,6 +347,7 @@ export function createRenderer(
     new SoundEffectController(game, eventBus),
     new AmbienceController(game, eventBus, transformHandler),
     new HudVisibilityController(eventBus, userSettings),
+    new RallyPointController(game, eventBus, transformHandler, view),
     new ImpactFeedbackController(game, transformHandler, view),
     ...(mapLayerController ? [mapLayerController] : []),
     eventsDisplay,

@@ -1168,6 +1168,16 @@ export class UserSettingModal extends BaseModal {
       ></setting-keybind>
 
       <setting-keybind
+        action="setRallyPoint"
+        label=${translateText("user_setting.set_rally_point")}
+        description=${translateText("user_setting.set_rally_point_desc")}
+        defaultKey=${this.defaultKeybinds.setRallyPoint}
+        .value=${this.getKeyValue("setRallyPoint")}
+        .display=${this.getKeyChar("setRallyPoint")}
+        @change=${this.handleKeybindChange}
+      ></setting-keybind>
+
+      <setting-keybind
         action="coordinateGrid"
         label=${translateText("user_setting.coordinate_grid_label")}
         description=${translateText("user_setting.coordinate_grid_desc")}
