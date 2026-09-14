@@ -108,9 +108,11 @@ export class LeaderboardClanTable extends LitElement {
         class="flex flex-col items-center justify-center p-12 text-white h-full"
       >
         <div
-          class="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-6"
+          class="w-12 h-12 border-4 border-action/30 border-t-action rounded-full animate-spin mb-6"
         ></div>
-        <p class="text-blue-200/80 text-sm font-bold tracking-widest uppercase">
+        <p
+          class="text-action-ink/80 text-sm font-bold tracking-widest uppercase"
+        >
           ${translateText("common.loading")}
         </p>
       </div>
@@ -123,11 +125,11 @@ export class LeaderboardClanTable extends LitElement {
         class="flex flex-col items-center justify-center p-12 text-white h-full"
       >
         <div
-          class="bg-red-500/10 p-6 rounded-full mb-6 border border-red-500/20 shadow-lg shadow-red-500/10"
+          class="bg-status-loss/10 p-6 rounded-full mb-6 border border-status-loss/20 shadow-lg shadow-status-loss/10"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            class="h-12 w-12 text-red-500"
+            class="h-12 w-12 text-status-loss"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -140,11 +142,11 @@ export class LeaderboardClanTable extends LitElement {
             />
           </svg>
         </div>
-        <p class="mb-8 text-center text-red-100/80 font-medium">
+        <p class="mb-8 text-center text-ink/80 font-medium">
           ${this.error ?? translateText("leaderboard_modal.error")}
         </p>
         <button
-          class="px-8 py-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-xl text-sm font-bold uppercase transition-all active:scale-95"
+          class="px-8 py-3 bg-status-loss/10 hover:bg-status-loss/20 border border-status-loss/30 rounded-xl text-sm font-bold uppercase transition-all active:scale-95"
           @click=${() => this.loadClanLeaderboard()}
         >
           ${translateText("leaderboard_modal.try_again")}
@@ -312,11 +314,11 @@ export class LeaderboardClanTable extends LitElement {
                   const displayRank = index + 1;
                   const rankColor =
                     displayRank === 1
-                      ? "text-yellow-400 bg-yellow-400/10 ring-1 ring-yellow-400/20"
+                      ? "text-rank-gold bg-rank-gold/10 ring-1 ring-rank-gold/20"
                       : displayRank === 2
-                        ? "text-slate-300 bg-slate-400/10 ring-1 ring-slate-400/20"
+                        ? "text-rank-silver bg-rank-silver/10 ring-1 ring-rank-silver/20"
                         : displayRank === 3
-                          ? "text-amber-600 bg-amber-600/10 ring-1 ring-amber-600/20"
+                          ? "text-rank-bronze bg-rank-bronze/10 ring-1 ring-rank-bronze/20"
                           : "text-white/40 bg-white/5";
                   const rankIcon =
                     displayRank === 1
@@ -338,9 +340,9 @@ export class LeaderboardClanTable extends LitElement {
                           ${rankIcon}
                         </div>
                       </td>
-                      <td class="py-3 px-4 font-bold text-blue-300">
+                      <td class="py-3 px-4 font-bold text-action-ink">
                         <div
-                          class="px-2.5 py-1 rounded bg-blue-500/10 border border-blue-500/20 inline-block"
+                          class="px-2.5 py-1 rounded bg-action/10 border border-action-ink/20 inline-block"
                         >
                           ${clan.clanTag}
                         </div>
@@ -354,21 +356,21 @@ export class LeaderboardClanTable extends LitElement {
                             class="w-24 h-1 bg-white/10 rounded-full overflow-hidden"
                           >
                             <div
-                              class="h-full bg-blue-500/50 rounded-full"
+                              class="h-full bg-action/50 rounded-full"
                               style="width: ${(clan.games / maxGames) * 100}%"
                             ></div>
                           </div>
                         </div>
                       </td>
                       <td
-                        class="py-3 px-4 text-right font-mono text-green-400/90"
+                        class="py-3 px-4 text-right font-mono text-status-gain/90"
                       >
                         ${clan.weightedWins.toLocaleString(undefined, {
                           maximumFractionDigits: 1,
                         })}
                       </td>
                       <td
-                        class="py-3 px-4 text-right font-mono text-red-400/90"
+                        class="py-3 px-4 text-right font-mono text-status-loss/90"
                       >
                         ${clan.weightedLosses.toLocaleString(undefined, {
                           maximumFractionDigits: 1,
@@ -379,8 +381,8 @@ export class LeaderboardClanTable extends LitElement {
                           <span
                             class="font-mono font-bold ${clan.weightedWLRatio >=
                             1
-                              ? "text-green-400"
-                              : "text-red-400"}"
+                              ? "text-status-gain"
+                              : "text-status-loss"}"
                             >${clan.weightedWLRatio.toLocaleString(undefined, {
                               maximumFractionDigits: 2,
                             })}</span

@@ -295,7 +295,7 @@ export class LeaderboardPlayerList extends LitElement {
 
     return html`
       <tfoot class="sticky bottom-0 z-20">
-        <tr class="bg-blue-600 border-t border-blue-400/30 shadow-2xl">
+        <tr class="bg-action border-t border-action-ink/30 shadow-2xl">
           <td class="py-3 px-4 text-center">
             <div
               class="w-10 h-10 mx-auto flex items-center justify-center rounded-lg font-bold font-mono text-lg bg-white/20 text-white"
@@ -306,7 +306,7 @@ export class LeaderboardPlayerList extends LitElement {
           <td class="py-3 px-4">
             <div class="flex flex-col">
               <span
-                class="text-[10px] uppercase font-bold text-blue-200/80 leading-tight"
+                class="text-[10px] uppercase font-bold text-action-ink/80 leading-tight"
                 >${translateText("leaderboard_modal.your_ranking")}</span
               >
               <player-name
@@ -329,7 +329,7 @@ export class LeaderboardPlayerList extends LitElement {
                 >${(entry.winRate * 100).toFixed(1)}%</span
               >
               <span
-                class="text-[10px] uppercase text-blue-200/80 font-bold tracking-wider"
+                class="text-[10px] uppercase text-action-ink/80 font-bold tracking-wider"
                 >${translateText("leaderboard_modal.ratio")}</span
               >
             </div>
@@ -345,9 +345,9 @@ export class LeaderboardPlayerList extends LitElement {
 
     const rankColor =
       {
-        1: "text-yellow-400 bg-yellow-400/10 ring-1 ring-yellow-400/20",
-        2: "text-slate-300 bg-slate-400/10 ring-1 ring-slate-400/20",
-        3: "text-amber-600 bg-amber-600/10 ring-1 ring-amber-600/20",
+        1: "text-rank-gold bg-rank-gold/10 ring-1 ring-rank-gold/20",
+        2: "text-rank-silver bg-rank-silver/10 ring-1 ring-rank-silver/20",
+        3: "text-rank-bronze bg-rank-bronze/10 ring-1 ring-rank-bronze/20",
       }?.[displayRank] ?? "text-white/40 bg-white/5";
 
     const rankIcon =
@@ -361,7 +361,7 @@ export class LeaderboardPlayerList extends LitElement {
       <tr
         data-current-user=${isCurrentUser ? "true" : "false"}
         class="border-b border-white/5 hover:bg-white/[0.07] transition-colors group ${isCurrentUser
-          ? "bg-blue-500/15"
+          ? "bg-action/15"
           : ""}"
       >
         <td class="py-3 px-4 text-center">
@@ -376,7 +376,7 @@ export class LeaderboardPlayerList extends LitElement {
             <player-name
               .username=${player.accountUsername}
               .publicId=${player.playerId}
-              .nameClass=${"font-bold text-blue-300 truncate text-base hover:underline"}
+              .nameClass=${"font-bold text-action-ink truncate text-base hover:underline"}
               .onNameClick=${() => this.openProfile(player.playerId)}
             ></player-name>
           </div>
@@ -391,8 +391,8 @@ export class LeaderboardPlayerList extends LitElement {
           <div class="inline-flex flex-col items-end">
             <span
               class="font-mono font-bold ${player.winRate >= 0.5
-                ? "text-green-400"
-                : "text-red-400"}"
+                ? "text-status-gain"
+                : "text-status-loss"}"
               >${(player.winRate * 100).toFixed(1)}%</span
             >
             <span
@@ -410,7 +410,7 @@ export class LeaderboardPlayerList extends LitElement {
       return html`
         <div class="flex items-center justify-center py-4 text-white/50">
           <div
-            class="w-4 h-4 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mr-2"
+            class="w-4 h-4 border-2 border-action/30 border-t-action rounded-full animate-spin mr-2"
           ></div>
           <span class="text-[10px] font-bold uppercase tracking-widest">
             ${translateText("common.loading")}
@@ -423,7 +423,7 @@ export class LeaderboardPlayerList extends LitElement {
       return html`
         <div class="flex items-center justify-center py-4">
           <button
-            class="px-6 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-xl text-xs font-bold uppercase transition-all active:scale-95"
+            class="px-6 py-2 bg-status-loss/10 hover:bg-status-loss/20 border border-status-loss/30 rounded-xl text-xs font-bold uppercase transition-all active:scale-95"
             @click=${() => this.loadPlayerLeaderboard()}
           >
             ${translateText("leaderboard_modal.try_again")}
@@ -441,9 +441,11 @@ export class LeaderboardPlayerList extends LitElement {
         class="flex flex-col items-center justify-center p-12 text-white h-full"
       >
         <div
-          class="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-6"
+          class="w-12 h-12 border-4 border-action/30 border-t-action rounded-full animate-spin mb-6"
         ></div>
-        <p class="text-blue-200/80 text-sm font-bold tracking-widest uppercase">
+        <p
+          class="text-action-ink/80 text-sm font-bold tracking-widest uppercase"
+        >
           ${translateText("common.loading")}
         </p>
       </div>
@@ -456,11 +458,11 @@ export class LeaderboardPlayerList extends LitElement {
         class="flex flex-col items-center justify-center p-12 text-white h-full"
       >
         <div
-          class="bg-red-500/10 p-6 rounded-full mb-6 border border-red-500/20 shadow-lg shadow-red-500/10"
+          class="bg-status-loss/10 p-6 rounded-full mb-6 border border-status-loss/20 shadow-lg shadow-status-loss/10"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            class="h-12 w-12 text-red-500"
+            class="h-12 w-12 text-status-loss"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -473,11 +475,11 @@ export class LeaderboardPlayerList extends LitElement {
             />
           </svg>
         </div>
-        <p class="mb-8 text-center text-red-100/80 font-medium">
+        <p class="mb-8 text-center text-ink/80 font-medium">
           ${this.error ?? translateText("leaderboard_modal.error")}
         </p>
         <button
-          class="px-8 py-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-xl text-sm font-bold uppercase transition-all active:scale-95"
+          class="px-8 py-3 bg-status-loss/10 hover:bg-status-loss/20 border border-status-loss/30 rounded-xl text-sm font-bold uppercase transition-all active:scale-95"
           @click=${() => this.loadPlayerLeaderboard(true)}
         >
           ${translateText("leaderboard_modal.try_again")}

@@ -79,6 +79,32 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — the leaderboard tables and the send-resource modal name no raw hue
+
+- **What shipped.** The three leaderboard tables (117 raw hue classes between them and the
+  send-resource modal) and the modal are at zero, held there by `HudTokens.test.ts`. What
+  said something: the podium (yellow / slate / amber), the local player's row and the clan
+  tag (blue), win against loss (green / red — the dichromat trap the feeds already left),
+  the loading spinner and every error state (red), the modal's primary action (indigo),
+  its cap marker and dead-target note (amber), its keep figure (amber / emerald).
+- **Two new tokens, measured before they were chosen.** `rank-silver` is the muted ink
+  (28.0 CIEDE2000 from gold at its worst); `rank-bronze` is the classic #cd7f32 (20.2 from
+  gold, 36.2 from silver, 11.9 from `signal` for the worst-off viewer — the podium must not
+  read as an alert — 5.68:1 on the surface). Twenty candidates were measured with the
+  repo's own CIEDE2000 and vision simulation; the runner-up bronzes either fell under 4.5:1
+  on the surface (#b45309, #c2410c) or sat within 12 of `signal`. Pinned by three tests,
+  broken and watched fail (bronze set to `signal`; silver set to gold).
+- **The rest wears the roles it already had:** wins are `gain`, losses `loss`, the local
+  row and the tag the `action` ramp, the spinner `action`, every error `loss`, the primary
+  button `action` / `action-hover`, the cap and the boost `signal`, the keep figure `alert`
+  / `gain`, greys as ink steps on `surface-deep`.
+- **Not photographed.** The dev box has no leaderboard data (the modal says "no data yet"),
+  and the send-resource modal needs a second player to send to. The tokens are measured;
+  the layout is untouched.
+- **Palette sweep count:** 265 → 148 raw hue classes across the HUD. Held to zero: the
+  control panel, the feeds, the player panel, the three leaderboard tables, the send-resource
+  modal. What is left is the modals nobody reads mid-game and the radial menus' hex colours.
+
 ### Session 13 — the player panel names no raw hue (item 6, the palette sweep)
 
 - **What shipped.** `PlayerPanel.ts` had 51 raw hue classes — the most of any HUD surface —

@@ -74,6 +74,9 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   nearest Missile Silo within 120 tiles straight to the tile you click and land as an attack
   from there — over water, mountains, anyone's land. Nothing shoots them down. Hotkey I.
   Nations drop rather than sail when a silo reaches a target they cannot walk to.
+- **The leaderboard in the game's own colours.** Gold, silver and bronze are three colours
+  to everyone, wins and losses are the same two colours the rest of the interface uses for
+  gain and loss, and the send-troops dialog wears the same palette.
 - **The player panel in the game's own colours.** A hostile, wary, friendly or neutral
   relation, an alliance about to run out, a traitor and a trade stopped each wear one of the
   four status colours the rest of the interface uses — the ones chosen so that no two of them

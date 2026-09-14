@@ -1293,3 +1293,21 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
 #### FightWars-only files changed
 
 - `tests/client/HudTokens.test.ts` — the player panel names no raw hue.
+
+### The leaderboard tables' and the send-resource modal's palette (Phase 4 item 6, session 13)
+
+#### Shared upstream files edited
+
+- `src/client/styles.css` — `--color-rank-silver` (the muted ink) and `--color-rank-bronze`
+  (#cd7f32), with the numbers that chose them.
+- `src/client/components/leaderboard/LeaderboardPlayerList.ts`, `LeaderboardClanTable.ts`,
+  `LeaderboardTribeTable.ts` — the podium in the rank tokens, the local row and clan tag on
+  the `action` ramp, wins and losses as `gain` / `loss`, spinner and errors as `action` /
+  `loss`, the tribe boost as `signal`.
+- `src/client/hud/layers/SendResourceModal.ts` — primary action `action`, cap and dead-target
+  note `signal` / `alert`, keep figure `alert` / `gain`, greys as ink steps.
+
+#### FightWars-only files changed
+
+- `tests/client/HudTokens.test.ts` — the podium (three colours to every viewer, legible on
+  the surface, bronze apart from `signal`); the four files name no raw hue.

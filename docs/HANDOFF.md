@@ -366,10 +366,11 @@ player reads every tick — `ControlPanel.ts` and the shared `StatsTable.ts`.
   build menu still sit where upstream put them.
 - **The radial menus.** `RadialMenu.ts` (1402 lines) and `RadialMenuElements.ts` (819) are
   untouched.
-- **The rest of the palette sweep.** 265 raw hue class names remain across the HUD after
-  session 13 took the player panel to zero: `SendResourceModal.ts` 41 and the three
-  leaderboard tables (30 / 26 / 20) are the bulk. The control panel, the feeds and the
-  player panel are held to zero by `tests/client/HudTokens.test.ts`.
+- **The rest of the palette sweep.** 148 raw hue class names remain across the HUD after
+  session 13 took the player panel, the three leaderboard tables and the send-resource modal
+  to zero (all held there by `tests/client/HudTokens.test.ts`, with `rank-silver` and
+  `rank-bronze` measured in). What is left is the modals nobody reads mid-game; count them
+  with the `HUE_CLASS` regex in that test before believing any number here.
 - **Stat tiles, meters and sparklines beyond the troop meter.** `dataviz` is mandatory before
   the first line of any of them.
 

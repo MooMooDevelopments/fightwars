@@ -151,6 +151,31 @@ describe("the chrome's status colours", () => {
   });
 });
 
+describe("the podium", () => {
+  const gold = token("rank-gold");
+  const silver = token("rank-silver");
+  const bronze = token("rank-bronze");
+  const surface = token("surface");
+
+  test("first, second and third are three colours to every viewer", () => {
+    expect(worstSeparation(gold, silver)).toBeGreaterThanOrEqual(8);
+    expect(worstSeparation(gold, bronze)).toBeGreaterThanOrEqual(8);
+    expect(worstSeparation(silver, bronze)).toBeGreaterThanOrEqual(8);
+  });
+
+  test("each reads as type on the leaderboard's surface", () => {
+    for (const hex of [gold, silver, bronze]) {
+      expect(contrast(hex, surface)).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  test("third place does not read as an alert", () => {
+    // Bronze and the signal colour are both warm; a bronze that collapsed
+    // into `signal` would make the podium look like a warning.
+    expect(worstSeparation(bronze, token("signal"))).toBeGreaterThanOrEqual(8);
+  });
+});
+
 describe("the event feed's severity palette", () => {
   // The feed sits on the same dark surface as the rest of the chrome.
   const FEED_SURFACE = token("surface");
@@ -219,6 +244,17 @@ describe("the HUD does not reach past the palette", () => {
       "src/client/hud/layers/AttacksDisplay.ts",
     ]) {
       expect(read(relative), relative).not.toMatch(/filter: brightness\(0\)/);
+    }
+  });
+
+  test("the leaderboard tables and the send-resource modal name no raw hue", () => {
+    for (const relative of [
+      "src/client/components/leaderboard/LeaderboardPlayerList.ts",
+      "src/client/components/leaderboard/LeaderboardClanTable.ts",
+      "src/client/components/leaderboard/LeaderboardTribeTable.ts",
+      "src/client/hud/layers/SendResourceModal.ts",
+    ]) {
+      expect(read(relative).match(HUE_CLASS) ?? [], relative).toEqual([]);
     }
   });
 

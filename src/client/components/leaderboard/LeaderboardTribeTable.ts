@@ -33,19 +33,19 @@ export function formatWindowDate(value: string): string | null {
 function rankStyle(rank: number): { color: string; icon: string } {
   if (rank === 1) {
     return {
-      color: "text-yellow-400 bg-yellow-400/10 ring-1 ring-yellow-400/20",
+      color: "text-rank-gold bg-rank-gold/10 ring-1 ring-rank-gold/20",
       icon: "👑",
     };
   }
   if (rank === 2) {
     return {
-      color: "text-slate-300 bg-slate-400/10 ring-1 ring-slate-400/20",
+      color: "text-rank-silver bg-rank-silver/10 ring-1 ring-rank-silver/20",
       icon: "🥈",
     };
   }
   if (rank === 3) {
     return {
-      color: "text-amber-600 bg-amber-600/10 ring-1 ring-amber-600/20",
+      color: "text-rank-bronze bg-rank-bronze/10 ring-1 ring-rank-bronze/20",
       icon: "🥉",
     };
   }
@@ -103,9 +103,11 @@ export class LeaderboardTribeTable extends LitElement {
         class="flex flex-col items-center justify-center p-12 text-white h-full"
       >
         <div
-          class="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-6"
+          class="w-12 h-12 border-4 border-action/30 border-t-action rounded-full animate-spin mb-6"
         ></div>
-        <p class="text-blue-200/80 text-sm font-bold tracking-widest uppercase">
+        <p
+          class="text-action-ink/80 text-sm font-bold tracking-widest uppercase"
+        >
           ${translateText("common.loading")}
         </p>
       </div>
@@ -118,11 +120,11 @@ export class LeaderboardTribeTable extends LitElement {
         class="flex flex-col items-center justify-center p-12 text-white h-full"
       >
         <div
-          class="bg-red-500/10 p-6 rounded-full mb-6 border border-red-500/20 shadow-lg shadow-red-500/10"
+          class="bg-status-loss/10 p-6 rounded-full mb-6 border border-status-loss/20 shadow-lg shadow-status-loss/10"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            class="h-12 w-12 text-red-500"
+            class="h-12 w-12 text-status-loss"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -135,11 +137,11 @@ export class LeaderboardTribeTable extends LitElement {
             />
           </svg>
         </div>
-        <p class="mb-8 text-center text-red-100/80 font-medium">
+        <p class="mb-8 text-center text-ink/80 font-medium">
           ${this.error ?? translateText("leaderboard_modal.error")}
         </p>
         <button
-          class="px-8 py-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-xl text-sm font-bold uppercase transition-all active:scale-95"
+          class="px-8 py-3 bg-status-loss/10 hover:bg-status-loss/20 border border-status-loss/30 rounded-xl text-sm font-bold uppercase transition-all active:scale-95"
           @click=${() => this.loadTribeLeaderboard()}
         >
           ${translateText("leaderboard_modal.try_again")}
@@ -189,7 +191,7 @@ export class LeaderboardTribeTable extends LitElement {
     }
     const multiplier = boosts + 1;
     return html`<span
-      class="font-mono font-medium text-amber-300"
+      class="font-mono font-medium text-signal"
       title=${translateText("leaderboard_modal.tribes_boost_value_tooltip", {
         multiplier,
       })}
@@ -337,7 +339,7 @@ export class LeaderboardTribeTable extends LitElement {
                             class="w-24 h-1 bg-white/10 rounded-full overflow-hidden"
                           >
                             <div
-                              class="h-full bg-blue-500/50 rounded-full"
+                              class="h-full bg-action/50 rounded-full"
                               style="width: ${(tribe.playerReach / maxReach) *
                               100}%"
                             ></div>

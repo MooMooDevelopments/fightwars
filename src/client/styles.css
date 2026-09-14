@@ -53,6 +53,14 @@
    * carries the currency's identity; its figure wears `ink` like every other
    * figure. */
   --color-rank-gold: #ffd700;
+  /** Second and third place. Silver is the muted ink — a grey that reads as
+   * a medal beside gold and bronze, 28.0 CIEDE2000 from gold for the
+   * worst-off viewer. Bronze is the classic #cd7f32: 20.2 from gold, 36.2
+   * from silver, 11.9 from `signal` at its worst (the podium must not read
+   * as an alert), 5.68:1 on the surface. All pinned in
+   * tests/client/HudTokens.test.ts. */
+  --color-rank-silver: var(--color-ink-muted);
+  --color-rank-bronze: #cd7f32;
 
   /* The event feed's severity palette.
    *
