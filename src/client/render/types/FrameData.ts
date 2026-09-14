@@ -7,6 +7,7 @@ import type {
   PlayerState,
   PlayerStatusData,
   UnitState,
+  ZoneData,
 } from "./Renderer";
 
 /**
@@ -74,6 +75,8 @@ export interface FrameData {
   readonly allianceClusters: ReadonlyMap<number, number>;
   readonly nukeTelegraphs: NukeTelegraphData[];
   readonly attackRings: AttackRingInput[];
+  /** The mode zones to draw (brief §6.7): at most one per kind. */
+  readonly zones: readonly ZoneData[];
   /** True when structures changed this tick (added/removed/level change). */
   readonly structuresDirty: boolean;
 }

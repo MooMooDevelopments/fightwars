@@ -3,6 +3,11 @@ import { Config } from "../src/core/configuration/Config";
 import { KingOfTheHillExecution } from "../src/core/execution/KingOfTheHillExecution";
 import { SpawnExecution } from "../src/core/execution/SpawnExecution";
 import { Game, Player, PlayerInfo, PlayerType } from "../src/core/game/Game";
+import {
+  GameUpdateType,
+  ZoneKind,
+  ZoneUpdate,
+} from "../src/core/game/GameUpdates";
 import { setup } from "./util/Setup";
 import { TestConfig } from "./util/TestConfig";
 
@@ -28,6 +33,7 @@ describe("King of the Hill", () => {
   let king: Player;
   let edge: Player;
   let hill: KingOfTheHillExecution;
+  let placed: ZoneUpdate[] = [];
 
   async function start(map: string, kingAt: [number, number]) {
     game = await setup(
@@ -50,7 +56,8 @@ describe("King of the Hill", () => {
     while (game.inSpawnPhase()) game.executeNextTick();
     hill = new KingOfTheHillExecution();
     game.addExecution(hill);
-    game.executeNextTick();
+    const gu = game.executeNextTick();
+    placed = gu[GameUpdateType.Zone] as ZoneUpdate[];
   }
 
   const run = (n: number) => {
@@ -77,6 +84,24 @@ describe("King of the Hill", () => {
     expect(hill.score(king)).toBe(3);
     expect(game.getWinner()).toBe(king);
     expect(hill.isActive()).toBe(false);
+  });
+
+  it("tells the client where the hill is, once", async () => {
+    await start("plains", [50, 50]);
+    // An execution added by hand ticks from the tick after it was added.
+    placed.push(
+      ...(game.executeNextTick()[GameUpdateType.Zone] as ZoneUpdate[]),
+    );
+    expect(placed).toHaveLength(1);
+    expect(placed[0]).toMatchObject({
+      kind: ZoneKind.Hill,
+      x: 50,
+      y: 50,
+      radius: 5,
+      active: true,
+    });
+    const again = game.executeNextTick()[GameUpdateType.Zone];
+    expect(again).toHaveLength(0);
   });
 
   it("scores nobody while the hill is empty", async () => {

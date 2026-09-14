@@ -108,6 +108,7 @@ export enum GameUpdateType {
   GamePaused,
   DonateEvent,
   Coalition,
+  Zone,
 }
 
 export type GameUpdate =
@@ -134,7 +135,8 @@ export type GameUpdate =
   | SpawnPhaseEndUpdate
   | GamePausedUpdate
   | DonateEventUpdate
-  | CoalitionUpdate;
+  | CoalitionUpdate
+  | ZoneUpdate;
 
 export interface BonusEventUpdate {
   type: GameUpdateType.BonusEvent;
@@ -325,6 +327,29 @@ export interface CoalitionUpdate {
   leaderID: number;
   /** Share of the land the leading side holds, 0–1. */
   share: number;
+  active: boolean;
+}
+
+/** The zones a mode draws on the map (brief §6.7). */
+export enum ZoneKind {
+  /** Battle Royale's playable circle: outside it the land is lost. */
+  BattleRoyale = 0,
+  /** King of the Hill's hill: hold the most of it to score. */
+  Hill = 1,
+}
+
+/**
+ * A mode's zone changed: sent when Battle Royale's circle shrinks and once
+ * when the hill is placed. One live zone per kind; `active: false` clears it.
+ */
+export interface ZoneUpdate {
+  type: GameUpdateType.Zone;
+  kind: ZoneKind;
+  /** Tile coordinates of the centre. */
+  x: number;
+  y: number;
+  /** Radius in tiles. */
+  radius: number;
   active: boolean;
 }
 

@@ -79,6 +79,28 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — the zone layer: the ring and the hill on the map
+
+- **What shipped.** A `Zone` game update from the core (Battle Royale on every shrink,
+  the hill once), one live zone per kind on the client's frame, and `ZonePass` in the
+  WebGL renderer: the range circle's single-quad SDF with a kind switch. The Battle
+  Royale ring is a two-tile rim in the fallout's warm hue that breathes on the wall clock
+  with a faint haze outside it — the direction of loss reads before the ground is
+  irradiated; the hill is a gold disc at low alpha with a firm rim. Drawn under the build
+  preview's range circle. Direction: the renderer's own overlay grammar (the range circle,
+  the SAM radius, the fallout bloom), no new visual world — so no `frontend-design` pass,
+  and no skill audit on a forty-line shader: the check was the world map in the browser
+  pane, where the hill sits on the Gulf of Guinea coast (the map's centre is water, so it
+  moved to the nearest land) and reads at spawn zoom as a gold disc with a firm rim.
+- **Guards broken and watched fail:** the view never marking its zones dirty, the ring
+  never announced. Typecheck (`tsc --noEmit`, which the production build runs) caught the
+  wrapper `MapRenderer` missing the new method — vitest does not type-check, and two
+  committed tests carried type errors (`PlayerType.FakeHuman`, a `name()` on a possibly
+  unowned tile) that only `tsc` saw; fixed here. **Run `tsc --noEmit` before a commit that
+  touches the client**; it is not in `npm test` or `npm run lint`.
+- **Not done:** a capital marker for Capital Strike; a HUD score for the hill; a countdown
+  to the next shrink.
+
 ### Session 13 — King of the Hill, hold the middle
 
 - **What shipped.** `KingOfTheHillExecution`: the hill is every land tile within six

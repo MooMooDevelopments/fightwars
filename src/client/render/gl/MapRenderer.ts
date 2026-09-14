@@ -29,6 +29,7 @@ import type {
   RendererConfig,
   TerrainRect,
   UnitState,
+  ZoneData,
 } from "../types";
 import type { SpawnCenter } from "./passes/SpawnOverlayPass";
 import type { AttackTroopLabel } from "./passes/WorldTextPass";
@@ -283,6 +284,11 @@ export class MapRenderer {
   /** Update in-flight nuke target telegraph circles. */
   updateNukeTelegraphs(data: NukeTelegraphData[]): void {
     this.renderer?.updateNukeTelegraphs(data);
+  }
+
+  /** The mode zones (brief §6.7): Battle Royale's ring, the hill. */
+  updateZones(zones: readonly ZoneData[]): void {
+    this.renderer?.updateZones(zones);
   }
 
   /** Update spawn phase overlay (tile highlights + breathing rings). */

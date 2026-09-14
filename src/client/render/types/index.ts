@@ -23,6 +23,7 @@ export type {
   RendererConfig,
   TerrainRect,
   UnitState,
+  ZoneData,
 } from "./Renderer";
 
 // Frame data — boundary contract between game integration and features

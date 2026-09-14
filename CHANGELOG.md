@@ -74,6 +74,8 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   nearest Missile Silo within 120 tiles straight to the tile you click and land as an attack
   from there — over water, mountains, anyone's land. Nothing shoots them down. Hotkey I.
   Nations drop rather than sail when a silo reaches a target they cannot walk to.
+- **The zones are on the map.** Battle Royale's ring closes in on the map itself, and
+  the hill is drawn where it stands.
 - **King of the Hill.** A hill on the middle of the map. Whoever holds the most of it
   scores a second every second, and the first to five minutes wins. The standing is
   posted to the event feed every thirty seconds. A lobby toggle and a public-rotation

@@ -28,6 +28,7 @@ import type {
   RendererConfig,
   TerrainRect,
   UnitState,
+  ZoneData,
 } from "../types";
 import { Camera } from "./Camera";
 import { GLUnavailableError, initGL } from "./initGL";
@@ -67,6 +68,7 @@ import { TerritoryPass } from "./passes/TerritoryPass";
 import { TrailPass } from "./passes/TrailPass";
 import { UnitPass } from "./passes/UnitPass";
 import { WorldTextPass } from "./passes/WorldTextPass";
+import { ZonePass } from "./passes/ZonePass";
 import type { RenderSettings } from "./RenderSettings";
 import { AffiliationPalette } from "./utils/Affiliation";
 import {
@@ -140,6 +142,7 @@ export class GPURenderer {
   private namePass: NamePass;
   private fxPass: FxPass;
   private rangeCirclePass: RangeCirclePass;
+  private zonePass: ZonePass;
   private samRadiusPass: SAMRadiusPass;
   private crosshairPass: CrosshairPass;
   private flashPass: FlashPass;
@@ -572,6 +575,9 @@ export class GPURenderer {
 
     // --- Range circle (ghost preview radius) ---
     this.rangeCirclePass = new RangeCirclePass(gl);
+
+    // --- Mode zones (Battle Royale's ring, the hill) ---
+    this.zonePass = new ZonePass(gl);
 
     // --- SAM radius overlay (dashed green circles during build mode) ---
     this.samRadiusPass = new SAMRadiusPass(gl, mapW, this.settings);
@@ -1115,6 +1121,10 @@ export class GPURenderer {
     this.nukeTrajectoryPass.update(data);
   }
 
+  updateZones(zones: readonly ZoneData[]): void {
+    this.zonePass.update(zones);
+  }
+
   updateNukeTelegraphs(data: NukeTelegraphData[]): void {
     this.nukeTelegraphPass.update(data);
   }
@@ -1415,6 +1425,8 @@ export class GPURenderer {
     if (pe.unit) this.unitPass.drawGround(cam);
     if (pe.falloutBloom) this.bloomPass.draw(cam, this.frameTick);
     this.samRadiusPass.draw(cam);
+    // Under the range circle: the mode's zone is the ground truth a preview sits on.
+    this.zonePass.draw(cam, performance.now());
     this.rangeCirclePass.draw(cam);
     this.nukeTrajectoryPass.draw(cam);
     this.crosshairPass.draw(cam);
@@ -1556,6 +1568,7 @@ export class GPURenderer {
     this.smallPlayerGlowPass.dispose();
     this.railroadPass.dispose();
     this.rangeCirclePass.dispose();
+    this.zonePass.dispose();
     this.samRadiusPass.dispose();
     this.crosshairPass.dispose();
     this.flashPass.dispose();

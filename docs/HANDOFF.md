@@ -98,8 +98,8 @@ licenses:check`, `npm run perf:gate` on an idle box; per sim change an 8000-tick
    Royale (a standing zone, `BattleRoyaleExecution`) and Capital Strike (the spawn tile
    is the capital; taken, the nation collapses into rebels) and King of the Hill (hold
    the centre five minutes, cumulative). Next in §5: Survival, scenarios, Draft, the
-   Blitz one-click preset, placements — and a map layer that draws the three modes'
-   zones (Battle Royale's ring, the hill, a capital marker), which none of them has.
+   Blitz one-click preset, placements. The zone layer is in (`ZonePass`: Battle Royale's
+   ring and the hill on the map); a capital marker for Capital Strike is the remainder.
 
 ### Things that bit us in session 13 (do not relearn)
 
@@ -628,8 +628,10 @@ Remaining, roughly in the order the brief implies:
   `isCapitalStrike` in the rotation with a badge; no capital marker on the map yet).
   **King of the Hill is in** (session 13: `KingOfTheHillExecution` — a hill of land on
   the centre, the plurality holder scores a second a second, first to five minutes wins
-  through `setWinner`; flag, toggle, rotation, badge, the standing in the feed; not drawn
-  on the map, no HUD score). Still to do: Survival (co-op vs
+  through `setWinner`; flag, toggle, rotation, badge, the standing in the feed; no HUD
+  score yet). **Both zones are drawn** (session 13: `ZonePass`, fed by a `Zone` game
+  update — Battle Royale's ring and the hill; a capital marker is still missing). Still
+  to do: Survival (co-op vs
   escalating nations — the difficulty enum plus `NationExecution` cadence), Historical
   scenarios (map manifests with fixed spawns and doctrines), Draft (lobby-phase picks are
   server state, not sim state), **Blitz** — the engine is in (session 13: `gameSpeed` in

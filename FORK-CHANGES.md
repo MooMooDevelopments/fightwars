@@ -1521,3 +1521,20 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
 - `tests/KingOfTheHill.test.ts` — the hill's place and land, scoring and the win, an empty
   hill, a tie, the centre moved onto land.
 - `tests/server/MapPlaylistModes.test.ts` — gains the hill.
+
+### The zone layer (Phase 6, session 13)
+
+#### Shared upstream files edited
+
+- `src/core/game/GameUpdates.ts` — `GameUpdateType.Zone`, `ZoneKind`, `ZoneUpdate`.
+- `src/core/execution/BattleRoyaleExecution.ts`, `KingOfTheHillExecution.ts` — send it.
+- `src/client/view/GameView.ts` — one live zone per kind, `FrameData.zones`.
+- `src/client/render/types/Renderer.ts`, `types/index.ts`, `types/FrameData.ts` — `ZoneData`.
+- `src/client/render/frame/Upload.ts` — `updateZones` on the upload target.
+- `src/client/render/gl/MapRenderer.ts`, `gl/Renderer.ts` — the pass, wired and drawn.
+
+#### FightWars-only files added
+
+- `src/client/render/gl/passes/ZonePass.ts`, `src/client/render/gl/shaders/zone/zone.vert.glsl`,
+  `zone.frag.glsl` — the ring and the hill.
+- `tests/client/view/ZoneView.test.ts` — the view's zones.

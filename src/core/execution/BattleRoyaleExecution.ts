@@ -1,5 +1,6 @@
 import { Execution, Game, MessageType, Unit } from "../game/Game";
 import { TileRef } from "../game/GameMap";
+import { GameUpdateType, ZoneKind } from "../game/GameUpdates";
 
 /**
  * Battle Royale (brief §6.7): a shrinking playable area.
@@ -92,6 +93,14 @@ export class BattleRoyaleExecution implements Execution {
         undefined,
         { step: this.step, steps: config.battleRoyaleSteps() },
       );
+      mg.addUpdate({
+        type: GameUpdateType.Zone,
+        kind: ZoneKind.BattleRoyale,
+        x: this.cx,
+        y: this.cy,
+        radius: this.radius(),
+        active: true,
+      });
     }
     if (this.step > 0) this.sweep(mg, config.battleRoyaleRowsPerTick());
   }

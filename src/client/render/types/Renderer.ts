@@ -301,6 +301,15 @@ export interface AttackRingInput {
   unitId: number;
 }
 
+/** A mode's zone on the map (brief §6.7): Battle Royale's ring or the hill. */
+export interface ZoneData {
+  /** ZoneKind from the core: 0 Battle Royale, 1 Hill. */
+  kind: number;
+  x: number;
+  y: number;
+  radius: number;
+}
+
 /** In-flight nuke target circle data. */
 export interface NukeTelegraphData {
   x: number;

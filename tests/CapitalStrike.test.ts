@@ -33,7 +33,7 @@ describe("Capital Strike", () => {
       {},
       [
         new PlayerInfo("striker", PlayerType.Human, "c-s", "striker"),
-        new PlayerInfo("nation", PlayerType.FakeHuman, null, "nation"),
+        new PlayerInfo("nation", PlayerType.Nation, null, "nation"),
       ],
       undefined,
       config,
@@ -82,7 +82,7 @@ describe("Capital Strike", () => {
     expect(rebels.troops()).toBeGreaterThanOrEqual(12345);
     expect(nation.troops()).toBe(0);
     expect(post.owner().name()).toBe(rebels.name());
-    expect(game.owner(capital).name()).toBe(striker.name());
+    expect(game.owner(capital) === striker).toBe(true);
   });
 
   it("does nothing when the capital is merely lost, not taken", () => {

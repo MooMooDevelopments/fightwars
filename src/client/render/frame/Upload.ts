@@ -9,6 +9,7 @@ import type {
   PlayerState,
   PlayerStatusData,
   UnitState,
+  ZoneData,
 } from "../types";
 import type { SpiralRibbon } from "./SpiralTrails";
 
@@ -40,6 +41,7 @@ export interface FrameUploadTarget {
   applyBonusEvents(events: BonusEvent[]): void;
   updateAttackRings(rings: AttackRingInput[]): void;
   updateNukeTelegraphs(data: NukeTelegraphData[]): void;
+  updateZones(zones: readonly ZoneData[]): void;
   updateNames(
     names: ReadonlyMap<string, NameEntry>,
     players: ReadonlyMap<number, PlayerState>,
@@ -110,6 +112,7 @@ export function uploadFrameData(
   // --- Attack rings + nuke telegraphs ---
   view.updateAttackRings(frame.attackRings);
   view.updateNukeTelegraphs(frame.nukeTelegraphs);
+  view.updateZones(frame.zones);
 
   // --- Names + player status ---
   view.updateNames(frame.names, frame.players, false, frame.playerStatus);

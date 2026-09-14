@@ -9,6 +9,11 @@ import {
   PlayerType,
   UnitType,
 } from "../src/core/game/Game";
+import {
+  GameUpdateType,
+  ZoneKind,
+  ZoneUpdate,
+} from "../src/core/game/GameUpdates";
 import { setup } from "./util/Setup";
 import { TestConfig } from "./util/TestConfig";
 
@@ -118,7 +123,7 @@ describe("Battle Royale", () => {
     // can take it (a structure goes down with its land already).
     const far = game.ref(5, 5);
     expect(game.owner(far).isPlayer()).toBe(false);
-    const ship = centre.buildUnit(UnitType.Warship, far, {});
+    const ship = centre.buildUnit(UnitType.Warship, far, { patrolTile: far });
     expect(ship.isActive()).toBe(true);
     run(101);
     expect(post.isActive()).toBe(false);
@@ -143,6 +148,22 @@ describe("Battle Royale", () => {
     run(game.config().falloutDurationTicks() + 5);
     expect(game.hasFallout(corner)).toBe(true);
     expect(game.owner(corner).isPlayer()).toBe(false);
+  });
+
+  it("tells the client where the ring is on every shrink", () => {
+    const seen: ZoneUpdate[] = [];
+    for (let i = 0; i < 101; i++) {
+      const gu = game.executeNextTick();
+      seen.push(...(gu[GameUpdateType.Zone] as ZoneUpdate[]));
+    }
+    expect(seen).toHaveLength(4);
+    for (const z of seen) {
+      expect(z.kind).toBe(ZoneKind.BattleRoyale);
+      expect(z.active).toBe(true);
+      expect([z.x, z.y]).toEqual([50, 50]);
+    }
+    expect(seen[0].radius).toBeGreaterThan(seen[3].radius);
+    expect(seen[3].radius).toBe(royale.radius());
   });
 
   it("never runs when the lobby did not ask for it", async () => {

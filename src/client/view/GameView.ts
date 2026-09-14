@@ -17,6 +17,7 @@ import {
   GameUpdateType,
   GameUpdateViewData,
   SpawnPhaseEndUpdate,
+  ZoneUpdate,
 } from "../../core/game/GameUpdates";
 import { ATTACK_DELTA_OUTGOING } from "../../core/game/GameUpdateUtils";
 import {
@@ -38,7 +39,7 @@ import { RailroadCache } from "../render/frame/RailroadCache";
 import type { SpiralParams } from "../render/frame/SpiralTrails";
 import { SpiralTrails } from "../render/frame/SpiralTrails";
 import { TrailManager } from "../render/frame/TrailManager";
-import type { FrameData, NameEntry } from "../render/types";
+import type { FrameData, NameEntry, ZoneData } from "../render/types";
 import { STRUCTURE_TYPES } from "../render/types";
 import { resolveTeamClanTag } from "../Utils";
 import { PlayerView } from "./PlayerView";
@@ -211,6 +212,7 @@ export class GameView implements GameMap {
       allianceClusters: new Map(),
       nukeTelegraphs: [],
       attackRings: [],
+      zones: [],
       structuresDirty: false,
     };
   }
@@ -318,6 +320,22 @@ export class GameView implements GameMap {
     }
     if (gu.updates[GameUpdateType.Win].length > 0) {
       this._gameOver = true;
+    }
+    const zoneUpdates = gu.updates[GameUpdateType.Zone] as ZoneUpdate[];
+    if (zoneUpdates.length > 0) {
+      for (const z of zoneUpdates) {
+        if (z.active) {
+          this._zones.set(z.kind, {
+            kind: z.kind,
+            x: z.x,
+            y: z.y,
+            radius: z.radius,
+          });
+        } else {
+          this._zones.delete(z.kind);
+        }
+      }
+      this._zonesDirty = true;
     }
 
     const myDisplayName = formatPlayerDisplayName(
@@ -629,6 +647,10 @@ export class GameView implements GameMap {
     if (this._clustersDirty) {
       this._clustersDirty = false;
       f.allianceClusters = computeAllianceClusters(this._playerStates);
+    }
+    if (this._zonesDirty) {
+      this._zonesDirty = false;
+      f.zones = [...this._zones.values()];
     }
     f.nukeTelegraphs = extractNukeTelegraphs(
       this._unitStates,
@@ -1125,6 +1147,9 @@ export class GameView implements GameMap {
   // Set once the sim has decided the game (WinUpdate). Play may go on for
   // those who stay, but the server archives the record at that point.
   private _gameOver = false;
+  /** The mode zones (brief §6.7), one per kind, as last announced. */
+  private _zones = new Map<number, ZoneData>();
+  private _zonesDirty = false;
   gameOver(): boolean {
     return this._gameOver;
   }

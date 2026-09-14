@@ -8,6 +8,7 @@ import {
   Team,
 } from "../game/Game";
 import { TileRef } from "../game/GameMap";
+import { GameUpdateType, ZoneKind } from "../game/GameUpdates";
 
 /**
  * King of the Hill (brief §6.7): hold the middle, win the game.
@@ -31,6 +32,7 @@ export class KingOfTheHillExecution implements Execution {
   private radius = 0;
   private scores = new Map<Player | Team, number>();
   private done = false;
+  private drawn = false;
 
   init(mg: Game): void {
     this.mg = mg;
@@ -130,7 +132,20 @@ export class KingOfTheHillExecution implements Execution {
 
   tick(ticks: number): void {
     const mg = this.mg;
-    if (mg === null || this.done || ticks % 10 !== 0) return;
+    if (mg === null || this.done) return;
+    if (!this.drawn) {
+      // Once, on the first tick: the client draws the hill from this.
+      this.drawn = true;
+      mg.addUpdate({
+        type: GameUpdateType.Zone,
+        kind: ZoneKind.Hill,
+        x: this.cx,
+        y: this.cy,
+        radius: this.radius,
+        active: true,
+      });
+    }
+    if (ticks % 10 !== 0) return;
     if (mg.inSpawnPhase()) return;
     const holder = this.holder();
     if (holder !== null) {
