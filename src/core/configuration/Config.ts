@@ -1488,6 +1488,17 @@ export class Config {
     return 32;
   }
 
+  /**
+   * Capital Strike (brief §6.7). A nation's capital is its spawn tile — the
+   * tile the supply network already feeds from. When another player takes
+   * it the nation collapses: the taker is paid as for a conquest, and every
+   * other tile, troop and structure the nation held passes to a rebel tribe
+   * raised against the taker.
+   */
+  capitalStrike(): boolean {
+    return this._gameConfig.capitalStrike ?? false;
+  }
+
   numSpawnPhaseTurns(): number {
     if (this._gameConfig.gameType === GameType.Singleplayer) {
       return 100;

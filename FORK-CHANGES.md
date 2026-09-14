@@ -1478,3 +1478,25 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
 - `src/core/execution/BattleRoyaleExecution.ts` — the zone.
 - `tests/BattleRoyale.test.ts` — the schedule, the edge irradiated and relinquished, the
   centre untouched, a unit outside destroyed, nothing with the flag off.
+
+### Capital Strike (Phase 6, session 13)
+
+#### Shared upstream files edited
+
+- `src/core/Schemas.ts` — `GameConfig.capitalStrike` (appended), `publicGameModifiers.isCapitalStrike`.
+- `src/core/game/Game.ts` — `PublicGameModifiers.isCapitalStrike`, `MessageType.CAPITAL_FELL`.
+- `src/core/configuration/Config.ts` — `capitalStrike()`.
+- `src/core/GameRunner.ts` — registers the execution when the flag is on.
+- `src/server/MapPlaylist.ts` — the modifier, three tickets.
+- `src/client/HostLobbyModal.ts`, `src/client/SinglePlayerModal.ts` — the toggle.
+- `src/client/Utils.ts` — the badge and the event colour.
+- `scripts/balanceRun.ts` — `--capital-strike`.
+- `resources/lang/en.json` — `game_settings.capital_strike`, `public_game_modifier.capital_strike`, `events_display.capital_fell`.
+
+#### FightWars-only files added
+
+- `src/core/execution/CapitalStrikeExecution.ts` — the collapse.
+- `tests/CapitalStrike.test.ts` — the collapse, a capital lost to fallout, a held capital, the
+  flag off.
+- `tests/server/MapPlaylistModes.test.ts` — Battle Royale and Capital Strike through the
+  rotation to the config and the lobby card.

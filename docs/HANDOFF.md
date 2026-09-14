@@ -95,8 +95,9 @@ licenses:check`, `npm run perf:gate` on an idle box; per sim change an 8000-tick
    blocked items (Discord OAuth secret, a Docker box, hardware) waiting on the owner.
    Session 13 opened both: Phase 7's shadow sim, desync reference, winner truth, spam
    caps and automation flags; Phase 6's game speed, Blitz in the rotation, and Battle
-   Royale (a standing zone, `BattleRoyaleExecution`). Next in §5: King of the Hill,
-   Capital Strike, Survival, scenarios, Draft, the Blitz one-click preset, placements.
+   Royale (a standing zone, `BattleRoyaleExecution`) and Capital Strike (the spawn tile
+   is the capital; taken, the nation collapses into rebels). Next in §5: King of the
+   Hill, Survival, scenarios, Draft, the Blitz one-click preset, placements.
 
 ### Things that bit us in session 13 (do not relearn)
 
@@ -619,8 +620,11 @@ Remaining, roughly in the order the brief implies:
   land outside irradiated and relinquished, units outside destroyed; `battleRoyale` in the
   wire config, a lobby toggle, `isBattleRoyale` in the public rotation with a badge; not
   drawn on the map yet — the zone is announced by event, the fallout shows where it is).
-  Still to do: King of the Hill,
-  Capital Strike (a capital unit + `conquerPlayer` on its loss), Survival (co-op vs
+  **Capital Strike is in** (session 13: `CapitalStrikeExecution` — the spawn tile is the
+  capital; another player holding it collapses the nation into a rebel tribe aimed at the
+  taker, on the partisan machinery; `capitalStrike` in the wire config, a lobby toggle,
+  `isCapitalStrike` in the rotation with a badge; no capital marker on the map yet).
+  Still to do: King of the Hill, Survival (co-op vs
   escalating nations — the difficulty enum plus `NationExecution` cadence), Historical
   scenarios (map manifests with fixed spawns and doctrines), Draft (lobby-phase picks are
   server state, not sim state), **Blitz** — the engine is in (session 13: `gameSpeed` in

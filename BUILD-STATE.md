@@ -79,6 +79,46 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — Capital Strike, the nation collapses into rebels
+
+- **What shipped.** `CapitalStrikeExecution`: a nation's capital is its spawn tile — the
+  tile the supply network already feeds from, so no new unit, no new wire field beyond the
+  flag. Once a second, a living human or nation whose capital another player holds
+  collapses: the taker is paid as for a conquest (the existing `conquerPlayer` — gold, the
+  kill, the finishing place), and every other tile, the troops and every structure and
+  ship pass to a rebel tribe raised against the taker on the §6.6 partisan machinery, so
+  the taker cannot absorb the remains as an enclave and has to fight for them. A capital
+  merely lost — nuked, irradiated, relinquished by the Battle Royale zone — does not fall:
+  nobody took it. `GameConfig.capitalStrike` appended, a lobby toggle, `isCapitalStrike`
+  in the rotation (three tickets, composes with everything) with a badge, a broadcast
+  event, `balance:run --capital-strike`.
+- **A/B, 8000 ticks (the off arm reproduces the Battle Royale commit's hash):**
+
+  | metric (World, Medium, 150 bots, seed `perf-gate`) | off                                              | `--capital-strike`       |
+  | -------------------------------------------------- | ------------------------------------------------ | ------------------------ |
+  | alive at 8000                                      | 25                                               | 27                       |
+  | land claimed                                       | 100.0 %                                          | 100.0 %                  |
+  | top-1 / top-5 / top-20 share                       | 13.9 % / 53.1 % / 99.3 %                         | 11.8 % / 41.2 % / 97.5 % |
+  | uprisings (alive)                                  | 261 (1)                                          | 363 (4)                  |
+  | cities / ports / factories                         | 158 / 100 / 39                                   | 154 / 107 / 32           |
+  | alliances: pacts / defensive                       | 22 / 10                                          | 14 / 16                  |
+  | final hash                                         | `44138072306226350` (the Battle Royale commit's) | `49283760174073100`      |
+
+  Read: collapses happen by accident — nations do not aim at capitals — and each one
+  hands a rebel tribe the fallen nation's whole remainder, which is why the leader's share
+  and the top five's are lower and more tribes are alive at the horizon. The instrument
+  does not count the collapses themselves; the event feed does, in a real game.
+
+- **Guards broken and watched fail:** the land not passed to the rebels, the units not
+  passed, a held capital counted as taken, an empty capital counted as taken. One test
+  first built its structure on the capital tile itself — which the striker's conquest
+  captures before the collapse — and would have passed with the unit hand-over dropped;
+  it stands on the nation's other ground now.
+- **Not done:** a capital marker on the map and in the attack-hover breakdown (the spawn
+  tile is not drawn today, so a player has to remember where they started), and nations
+  that aim at capitals — the AI plays the mode as a normal game and only collapses others
+  by accident.
+
 ### Session 13 — Battle Royale, a shrinking zone
 
 - **What shipped.** `BattleRoyaleExecution` (`src/core/execution/`): a circle on the map's

@@ -517,6 +517,7 @@ export const GameConfigSchema = z.object({
       // Brief §6.7 Blitz: a compact map at 4x for five minutes of wall clock.
       isBlitz: z.boolean().optional(),
       isBattleRoyale: z.boolean().optional(),
+      isCapitalStrike: z.boolean().optional(),
     })
     .optional(),
   nations: zb.union(
@@ -574,6 +575,9 @@ export const GameConfigSchema = z.object({
   // Battle Royale (brief §6.7): the playable area shrinks toward the map's
   // centre on a schedule; land left outside is irradiated and let go.
   battleRoyale: z.boolean().nullable().optional(),
+  // Capital Strike (brief §6.7): a nation whose capital — its spawn tile —
+  // is taken by another player collapses into rebels.
+  capitalStrike: z.boolean().nullable().optional(),
   hostCheats: z
     .object({
       infiniteGold: z.boolean().optional(),

@@ -217,6 +217,12 @@ export function getActiveModifiers(
       badgeKey: "public_game_modifier.battle_royale",
     });
   }
+  if (modifiers.isCapitalStrike) {
+    result.push({
+      labelKey: "game_settings.capital_strike",
+      badgeKey: "public_game_modifier.capital_strike",
+    });
+  }
   if (modifiers.isBlitz) {
     result.push({
       labelKey: "public_game_modifier.blitz_label",
@@ -713,6 +719,7 @@ export function getMessageTypeClasses(type: MessageType): string {
     case MessageType.COALITION_OFFER:
     case MessageType.PARTISANS_RISE:
     case MessageType.BATTLE_ROYALE_SHRINK:
+    case MessageType.CAPITAL_FELL:
       return severityColors["warn"];
     case MessageType.CHAT:
     case MessageType.ALLIANCE_REQUEST:

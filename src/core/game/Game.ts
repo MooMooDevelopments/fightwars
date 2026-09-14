@@ -169,6 +169,7 @@ export interface PublicGameModifiers {
   isDoomsdayClock?: boolean;
   isBlitz?: boolean;
   isBattleRoyale?: boolean;
+  isCapitalStrike?: boolean;
 }
 
 // Largest bulk-purchase amount an intent may carry (mirrored by the intent
@@ -1255,6 +1256,7 @@ export enum MessageType {
   PARTISANS_RISE,
   // Appended: the wire and the category table both key on member order.
   BATTLE_ROYALE_SHRINK = "BATTLE_ROYALE_SHRINK",
+  CAPITAL_FELL = "CAPITAL_FELL",
 }
 
 // Message categories used for filtering events in the EventsDisplay
@@ -1269,6 +1271,7 @@ export enum MessageCategory {
 // Ensures that all message types are included in a category
 export const MESSAGE_TYPE_CATEGORIES: Record<MessageType, MessageCategory> = {
   [MessageType.BATTLE_ROYALE_SHRINK]: MessageCategory.ATTACK,
+  [MessageType.CAPITAL_FELL]: MessageCategory.ATTACK,
   [MessageType.ATTACK_FAILED]: MessageCategory.ATTACK,
   [MessageType.ATTACK_CANCELLED]: MessageCategory.ATTACK,
   [MessageType.ATTACK_REQUEST]: MessageCategory.ATTACK,

@@ -830,6 +830,7 @@
     "betrayal_description": "You broke your alliance with {name}, making you a TRAITOR ({malusPercent}% defense debuff for {durationText})",
     "betrayed_you": "{name} broke their alliance with you",
     "bomber_detonated": "{name} - bomber strike landed",
+    "capital_fell": "{name}'s capital has fallen to {taker}: the nation collapses into rebels",
     "coalition_offer": "{name} holds {percent}% of the map. Join the coalition?",
     "conquered_no_gold": "Conquered {name} (didn't play, no gold awarded)",
     "duration_second": "1 second",
@@ -941,6 +942,7 @@
   "game_settings": {
     "battle_royale": "Battle Royale (shrinking map)",
     "bots": "Tribes: ",
+    "capital_strike": "Capital Strike (lose your capital, lose the nation)",
     "compact_map": "Compact Map",
     "custom_alliances": "Alliance Duration",
     "disable_units": "Disable Units",
@@ -1801,6 +1803,7 @@
     "battle_royale": "Battle Royale",
     "blitz": "Blitz: 4× speed, 5 minutes",
     "blitz_label": "Blitz",
+    "capital_strike": "Capital Strike",
     "compact_map": "Compact Map",
     "crowded": "Crowded",
     "disable_alliances": "Alliances Disabled",
