@@ -74,6 +74,8 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   nearest Missile Silo within 120 tiles straight to the tile you click and land as an attack
   from there — over water, mountains, anyone's land. Nothing shoots them down. Hotkey I.
   Nations drop rather than sail when a silo reaches a target they cannot walk to.
+- **Blitz in one click.** The speed picker in the host and solo lobbies has a Blitz card:
+  4×, a compact map and five minutes on the clock, together.
 - **Survival.** Every player on one side against the nations, who reinforce in waves
   every two minutes and never stop. Hold out for twenty minutes to win; lose the last
   player and the nations take it. A lobby toggle and a public-rotation game with its own

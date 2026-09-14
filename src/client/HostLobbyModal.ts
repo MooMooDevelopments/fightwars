@@ -33,6 +33,7 @@ import { BaseModal } from "./components/BaseModal";
 import "./components/ConfirmDialog";
 import { CopyButton } from "./components/CopyButton";
 import "./components/GameConfigSettings";
+import { BLITZ_PRESET } from "./components/GameConfigSettings";
 import "./components/InputCard";
 import "./components/LobbyPlayerView";
 import "./components/ToggleInputCard";
@@ -521,6 +522,7 @@ export class HostLobbyModal extends BaseModal {
               },
               gameSpeed: {
                 selected: this.gameSpeed,
+                blitz: this.isBlitzPreset(),
               },
               teamCount: {
                 selected: this.teamCount,
@@ -637,6 +639,7 @@ export class HostLobbyModal extends BaseModal {
               .handleConfigDoomsdayClockSpeedSelected}
             @game-mode-selected=${this.handleConfigGameModeSelected}
             @game-speed-selected=${this.handleConfigGameSpeedSelected}
+            @blitz-preset-selected=${this.handleConfigBlitzPreset}
             @team-count-selected=${this.handleConfigTeamCountSelected}
             @bots-changed=${this.handleBotsChange}
             @nations-changed=${this.handleNationsChange}
@@ -951,6 +954,24 @@ export class HostLobbyModal extends BaseModal {
     this.gameSpeed = customEvent.detail.speed;
     this.putGameConfig();
   };
+
+  /** Blitz in one click: 4x, a compact map, five minutes on the clock. */
+  private handleConfigBlitzPreset = () => {
+    this.gameSpeed = BLITZ_PRESET.speed;
+    this.handleCompactMapChange(true);
+    this.maxTimer = true;
+    this.maxTimerValue = BLITZ_PRESET.timerGameMinutes;
+    this.putGameConfig();
+  };
+
+  private isBlitzPreset(): boolean {
+    return (
+      this.gameSpeed === BLITZ_PRESET.speed &&
+      this.compactMap &&
+      this.maxTimer &&
+      this.maxTimerValue === BLITZ_PRESET.timerGameMinutes
+    );
+  }
 
   private handleConfigOptionToggleChanged = (e: Event) => {
     const customEvent = e as CustomEvent<{

@@ -1558,3 +1558,16 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
 - `src/core/execution/SurvivalExecution.ts` — the waves and the clock.
 - `tests/Survival.test.ts` — the sides, the waves, the win, the loss, the flag off.
 - `tests/server/MapPlaylistModes.test.ts` — gains the forcing.
+
+### Blitz in one click (Phase 6, session 13)
+
+#### Shared upstream files edited
+
+- `src/client/components/GameConfigSettings.ts` — `BLITZ_PRESET`, the card, `blitz-preset-selected`, `gameSpeed.blitz`.
+- `src/client/HostLobbyModal.ts`, `src/client/SinglePlayerModal.ts` — the handler and `isBlitzPreset()`.
+- `resources/lang/en.json` — `host_modal.blitz_preset_hint`.
+
+#### FightWars-only files edited
+
+- `tests/client/GameSpeedSettings.test.ts` — the card, the event, both modals building
+  the same Blitz, the press released when any of the three moves.

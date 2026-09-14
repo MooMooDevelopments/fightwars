@@ -37,6 +37,13 @@ const DISABLED_CARD =
 
 /** The speeds a host may pick: normal, fast, Blitz (brief §6.7). */
 export const GAME_SPEEDS = [1, 2, 4] as const;
+
+/**
+ * Blitz (brief §6.7) as one click: 4x on a compact map with a five-minute
+ * wall clock, which is twenty game minutes on the timer. The public
+ * rotation builds the same in `MapPlaylist`.
+ */
+export const BLITZ_PRESET = { speed: 4, timerGameMinutes: 20 } as const;
 // Literal keys, so the locale audit can see each one is used.
 const GAME_SPEED_LABEL_KEYS: Record<(typeof GAME_SPEEDS)[number], string> = {
   1: "game_speed.x1",
@@ -222,6 +229,8 @@ export interface GameConfigSettingsData {
   /** Turns per 100 ms; absent hides the section (the join view, replays). */
   gameSpeed?: {
     selected: number;
+    /** The Blitz preset is what the lobby currently is (speed, map, clock). */
+    blitz?: boolean;
   };
   teamCount: {
     selected: TeamCountConfig;
@@ -307,6 +316,10 @@ export class GameConfigSettings extends LitElement {
 
   private handleGameSpeedSelect = (speed: number) => {
     this.emit("game-speed-selected", { speed });
+  };
+
+  private handleBlitzPresetSelect = () => {
+    this.emit("blitz-preset-selected", { ...BLITZ_PRESET });
   };
 
   private handleTeamCountSelect = (count: TeamCountConfig) => {
@@ -549,7 +562,7 @@ export class GameConfigSettings extends LitElement {
               "bg-purple-500/20",
               "host_modal.speed",
               html`
-                <div class="grid grid-cols-3 gap-4">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                   ${GAME_SPEEDS.map((speed) => {
                     const isSelected = settings.gameSpeed!.selected === speed;
                     return html`
@@ -567,6 +580,26 @@ export class GameConfigSettings extends LitElement {
                       </button>
                     `;
                   })}
+                  <button
+                    class="${cardClass(
+                      settings.gameSpeed!.blitz === true,
+                      "py-6 text-center",
+                    )}"
+                    data-blitz-preset
+                    aria-pressed=${settings.gameSpeed!.blitz === true
+                      ? "true"
+                      : "false"}
+                    @click=${this.handleBlitzPresetSelect}
+                  >
+                    <span
+                      class="text-sm font-bold text-white uppercase tracking-widest"
+                    >
+                      ${translateText("public_game_modifier.blitz_label")}
+                    </span>
+                    <span class="block text-xs text-white/50 mt-1">
+                      ${translateText("host_modal.blitz_preset_hint")}
+                    </span>
+                  </button>
                 </div>
               `,
             )}

@@ -1201,6 +1201,7 @@
     "anonymous_players": "Anonymous players",
     "assigned_teams": "Assigned Teams",
     "auto_start_timer": "Time until the game starts automatically",
+    "blitz_preset_hint": "4×, compact map, 5 minutes",
     "crowded": "Crowded modifier",
     "donate_gold": "Donate gold",
     "donate_troops": "Donate troops",

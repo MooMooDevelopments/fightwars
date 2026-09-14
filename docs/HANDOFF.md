@@ -99,8 +99,8 @@ licenses:check`, `npm run perf:gate` on an idle box; per sim change an 8000-tick
    is the capital; taken, the nation collapses into rebels) and King of the Hill (hold
    the centre five minutes, cumulative), Survival (co-op on Humans vs Nations, waves
    every two minutes, twenty minutes to hold out) and the zone layer (`ZonePass`: the
-   ring and the hill on the map). Next in §5: scenarios, Draft, the Blitz one-click
-   preset, placements; a capital marker for Capital Strike is the small remainder.
+   ring and the hill on the map), and the Blitz one-click preset. Next in §5: scenarios,
+   Draft, placements; a capital marker for Capital Strike is the small remainder.
 
 ### Things that bit us in session 13 (do not relearn)
 
@@ -642,9 +642,9 @@ Remaining, roughly in the order the brief implies:
   local server pacing by it, the HUD clock in wall time) and the preset is in the public
   rotation (`isBlitz` in `MapPlaylist`: compact map, 4×, `maxTimerValue` 20 = five wall
   minutes, four tickets in the special pool, never beside a peace time or a doomsday
-  clock; a "Blitz" badge on the lobby card). A host can build the same by hand (compact
-  - 4× + five minutes); a one-click preset in the host and single-player modals is the
-    small remainder.
+  clock; a "Blitz" badge on the lobby card) and **one card in the host and solo modals**
+  (session 13: `BLITZ_PRESET`, the speed, the compact map and the clock at once, pressed
+  while all three hold).
 - **Spectator/caster mode** with economy graphs and a win projection (`spectator` join
   exists; graphs are `dataviz` work), **replay viewer** with timeline scrubbing and
   jump-to-event (the client already replays records; scrubbing needs snapshotting or

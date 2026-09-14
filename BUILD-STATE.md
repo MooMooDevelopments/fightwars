@@ -79,6 +79,18 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — Blitz in one click
+
+- **What shipped.** A fourth card in the speed section of the host and solo modals:
+  Blitz. One click sets 4×, the compact map (through the modal's own compact handler, so
+  bots and nations rescale as they do for the toggle) and twenty game minutes on the
+  clock — five wall minutes at 4× — and the card reads pressed while all three hold. The
+  join view, which only reads, does not get it. Same grammar as the speed cards, a hint
+  line under the label.
+- **Guards broken and watched fail:** the preset forgetting the map, the card never
+  reading pressed.
+- **Not done:** nothing in §6.7's Blitz line; the rotation and the lobby now agree.
+
 ### Session 13 — Survival, co-op against nations that keep coming
 
 - **What shipped.** `SurvivalExecution` on top of the Humans-vs-Nations preset the game

@@ -22,6 +22,7 @@ import "./components/baseComponents/Button";
 import "./components/baseComponents/Modal";
 import { BaseModal } from "./components/BaseModal";
 import "./components/GameConfigSettings";
+import { BLITZ_PRESET } from "./components/GameConfigSettings";
 import { MEDAL_ORDER, medalIcon } from "./components/map/Medals";
 import "./components/ToggleInputCard";
 import { modalHeader } from "./components/ui/ModalHeader";
@@ -513,6 +514,7 @@ export class SinglePlayerModal extends BaseModal {
               },
               gameSpeed: {
                 selected: this.gameSpeed,
+                blitz: this.isBlitzPreset(),
               },
               teamCount: {
                 selected: this.teamCount,
@@ -591,6 +593,7 @@ export class SinglePlayerModal extends BaseModal {
               .handleConfigDoomsdayClockSpeedSelected}
             @game-mode-selected=${this.handleConfigGameModeSelected}
             @game-speed-selected=${this.handleConfigGameSpeedSelected}
+            @blitz-preset-selected=${this.handleConfigBlitzPreset}
             @team-count-selected=${this.handleConfigTeamCountSelected}
             @bots-changed=${this.handleBotsChange}
             @nations-changed=${this.handleNationsChange}
@@ -1005,6 +1008,23 @@ export class SinglePlayerModal extends BaseModal {
     const customEvent = e as CustomEvent<{ speed: number }>;
     this.gameSpeed = customEvent.detail.speed;
   };
+
+  /** Blitz in one click: 4x, a compact map, five minutes on the clock. */
+  private handleConfigBlitzPreset = () => {
+    this.gameSpeed = BLITZ_PRESET.speed;
+    this.handleCompactMapChange(true);
+    this.maxTimer = true;
+    this.maxTimerValue = BLITZ_PRESET.timerGameMinutes;
+  };
+
+  private isBlitzPreset(): boolean {
+    return (
+      this.gameSpeed === BLITZ_PRESET.speed &&
+      this.compactMap &&
+      this.maxTimer &&
+      this.maxTimerValue === BLITZ_PRESET.timerGameMinutes
+    );
+  }
 
   private handleTeamCountSelection(value: TeamCountConfig) {
     this.teamCount = value;
