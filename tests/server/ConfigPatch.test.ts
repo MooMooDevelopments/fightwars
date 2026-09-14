@@ -38,6 +38,7 @@ const EDITABLE: { [K in keyof GameConfig]?: GameConfig[K] } = {
   anonymizeNames: true,
   nameReveals: ["c1000000"],
   nameRevealPublicIds: ["pub-b"],
+  gameSpeed: 4,
 };
 
 // `.nullable().optional()` in the schema: null clears, undefined leaves alone.
@@ -50,6 +51,13 @@ const NULLABLE: { [K in keyof GameConfig]?: NonNullable<GameConfig[K]> } = {
   disableAlliances: true,
   customAllianceDuration: 5,
   waterNukes: true,
+  // The modes (session 13): a host toggle after creation must reach the game.
+  battleRoyale: true,
+  capitalStrike: true,
+  kingOfTheHill: true,
+  survival: true,
+  scenario: "ww1",
+  draft: true,
 };
 
 describe("applyGameConfigPatch", () => {

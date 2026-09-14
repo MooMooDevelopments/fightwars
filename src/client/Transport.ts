@@ -217,6 +217,11 @@ export class SendKickPlayerIntentEvent implements GameEvent {
   constructor(public readonly target: string) {}
 }
 
+/** Draft (brief §6.7): the captain on turn takes a player from the pool. */
+export class SendDraftPickIntentEvent implements GameEvent {
+  constructor(public readonly target: string) {}
+}
+
 export class SendUpdateGameConfigIntentEvent implements GameEvent {
   constructor(public readonly config: Partial<GameConfig>) {}
 }
@@ -345,6 +350,9 @@ export class Transport {
 
     this.eventBus.on(SendKickPlayerIntentEvent, (e) =>
       this.onSendKickPlayerIntent(e),
+    );
+    this.eventBus.on(SendDraftPickIntentEvent, (e) =>
+      this.onSendDraftPickIntent(e),
     );
 
     this.eventBus.on(SendUpdateGameConfigIntentEvent, (e) =>
@@ -926,6 +934,13 @@ export class Transport {
     this.sendIntent({
       type: "kick_player",
       targetClientID: event.target,
+    });
+  }
+
+  private onSendDraftPickIntent(event: SendDraftPickIntentEvent) {
+    this.sendIntent({
+      type: "draft_pick",
+      target: event.target,
     });
   }
 

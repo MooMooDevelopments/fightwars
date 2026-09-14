@@ -1825,6 +1825,7 @@ exports[`GameServer wire transcript > matches the golden transcript for a script
         "verified": undefined,
       },
     ],
+    "draft": undefined,
     "featured": undefined,
     "gameConfig": {
       "bots": 5,

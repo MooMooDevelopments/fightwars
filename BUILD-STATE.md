@@ -79,6 +79,34 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — Draft, and the config patch that dropped every mode
+
+- **What shipped.** Draft as server lobby state: the host and the first other seated
+  player captain, pinned to the two teams; the captain on turn — snake order — picks a
+  pooled player with a `draft_pick` intent and the pick is a team pin that the lobby
+  list, telemetry and the game start all read through the same path as matchmade pins,
+  so the start assigns the teams the captains built and balances the unpicked as usual.
+  The lobby draws the two sides and the pool in place of the team preview; only the
+  captain on turn sees Pick buttons. A captain leaving resets the draft. Host toggle,
+  two teams forced.
+- **Found on the way, and the more important fix.** `applyGameConfigPatch` copies only
+  listed keys, and none of this session's mode flags were on the list: a host toggling
+  game speed, Battle Royale, Capital Strike, King of the Hill, Survival, a scenario or the
+  draft after creating the lobby changed the host's screen and nothing else. The create
+  path carries the full config, which is why every mode test passed and the lobby cards
+  looked right. Each key is on the list now and in the patch test. Lesson: a new
+  `GameConfig` field needs three places — the schema, the modal, and `ConfigPatch.ts` —
+  and the third is silent when missed.
+- **Guards broken and watched fail:** the draft key dropped from the patch (the patch
+  test), plus the draft tests' refusals as written.
+- **The wire golden moved, and was read:** `GameServerWire.test.ts`'s transcript gained
+  `"draft": undefined` on every decoded lobby-info — the appended optional field, absent
+  on the wire, present as a key in the decoded object. Nothing else in the transcript
+  changed; the snapshot was updated on that reading.
+- **Not done:** captains picking spawn regions or doctrines for their side, a pick timer,
+  the draft in a public listed lobby (private lobbies only by construction: it needs a
+  host).
+
 ### Session 13 — historical scenarios
 
 - **What shipped.** Four scenarios as data in the core — 1914 and 1939 on Europe, the Cold

@@ -111,6 +111,7 @@ import { StoreModal } from "./Store";
 import "./SubscriptionModal";
 import { TokenLoginModal } from "./TokenLoginModal";
 import {
+  SendDraftPickIntentEvent,
   SendKickPlayerIntentEvent,
   SendToggleGameStartTimer,
   SendUpdateGameConfigIntentEvent,
@@ -214,6 +215,7 @@ declare global {
   interface DocumentEventMap {
     "join-lobby": CustomEvent<JoinLobbyEvent>;
     "kick-player": CustomEvent;
+    "draft-pick": CustomEvent;
     toggle_game_start_timer: CustomEvent;
     "join-changed": CustomEvent;
     "open-matchmaking": CustomEvent<{ mode?: "1v1" | "2v2" } | undefined>;
@@ -555,6 +557,7 @@ class Client {
     });
     document.addEventListener("leave-lobby", this.handleLeaveLobby.bind(this));
     document.addEventListener("kick-player", this.handleKickPlayer.bind(this));
+    document.addEventListener("draft-pick", this.handleDraftPick.bind(this));
     document.addEventListener(
       "toggle_game_start_timer",
       this.handleToggleGameStartTimer.bind(this),
@@ -1747,6 +1750,13 @@ class Client {
     // Forward to eventBus if available
     if (this.eventBus) {
       this.eventBus.emit(new SendKickPlayerIntentEvent(target));
+    }
+  }
+
+  private handleDraftPick(event: CustomEvent) {
+    const { target } = event.detail;
+    if (this.eventBus) {
+      this.eventBus.emit(new SendDraftPickIntentEvent(target));
     }
   }
 

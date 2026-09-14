@@ -23,6 +23,7 @@ import { scenarioById } from "../core/game/Scenarios";
 import { UserSettings } from "../core/game/UserSettings";
 import {
   ClientInfo,
+  DraftInfo,
   GameConfig,
   LobbyInfoEvent,
   TeamCountConfig,
@@ -68,6 +69,8 @@ export class HostLobbyModal extends BaseModal {
   @state() private kingOfTheHill: boolean = false;
   @state() private survival: boolean = false;
   @state() private scenario: string | null = null;
+  @state() private draft: boolean = false;
+  @state() private draftInfo: DraftInfo | undefined = undefined;
   @state() private teamCount: TeamCountConfig = 2;
 
   constructor() {
@@ -153,6 +156,7 @@ export class HostLobbyModal extends BaseModal {
     if (lobby.clients) {
       this.clients = lobby.clients;
     }
+    this.draftInfo = lobby.draft;
     // The server can delist on its own (duplicate creator / cap overflow
     // resolved by the master); follow its state unless our own toggle
     // request is mid-flight.
@@ -571,6 +575,10 @@ export class HostLobbyModal extends BaseModal {
                     checked: this.survival,
                   },
                   {
+                    labelKey: "game_settings.draft",
+                    checked: this.draft,
+                  },
+                  {
                     labelKey: "host_modal.donate_gold",
                     checked: this.donateGold,
                   },
@@ -666,6 +674,8 @@ export class HostLobbyModal extends BaseModal {
             .onKickPlayer=${this.publiclyListed
               ? undefined
               : (clientID: string) => this.kickPlayer(clientID)}
+            .draft=${this.draftInfo}
+            .onDraftPick=${(clientID: string) => this.draftPick(clientID)}
             .onToggleNameReveal=${(clientID: string) =>
               this.toggleNameReveal(clientID)}
             .nameReveals=${this.nameReveals}
@@ -1026,6 +1036,10 @@ export class HostLobbyModal extends BaseModal {
         break;
       case "game_settings.survival":
         this.survival = checked;
+        this.putGameConfig();
+        break;
+      case "game_settings.draft":
+        this.draft = checked;
         this.putGameConfig();
         break;
       case "host_modal.donate_gold":
@@ -1501,18 +1515,25 @@ export class HostLobbyModal extends BaseModal {
             instantBuild: this.instantBuild,
             randomSpawn: this.randomSpawn,
             // Survival is co-op by definition: every human on one side.
-            gameMode: this.survival ? GameMode.Team : this.gameMode,
+            gameMode:
+              this.survival || this.draft ? GameMode.Team : this.gameMode,
             gameSpeed: this.gameSpeed,
             battleRoyale: this.battleRoyale,
             capitalStrike: this.capitalStrike,
             kingOfTheHill: this.kingOfTheHill,
             survival: this.survival,
             scenario: this.scenario ?? undefined,
+            draft: this.draft,
             disabledUnits: this.disabledUnits,
             spawnImmunityDuration: this.spawnImmunity
               ? spawnImmunityTicks
               : null,
-            playerTeams: this.survival ? HumansVsNations : this.teamCount,
+            // A draft is two captains, so two teams.
+            playerTeams: this.survival
+              ? HumansVsNations
+              : this.draft
+                ? 2
+                : this.teamCount,
             nations: sliderToNationsConfig(
               this.nations,
               this.defaultNationCount,
@@ -1598,6 +1619,16 @@ export class HostLobbyModal extends BaseModal {
   private kickPlayer(clientID: string) {
     this.dispatchEvent(
       new CustomEvent("kick-player", {
+        detail: { target: clientID },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  private draftPick(clientID: string) {
+    this.dispatchEvent(
+      new CustomEvent("draft-pick", {
         detail: { target: clientID },
         bubbles: true,
         composed: true,

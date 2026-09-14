@@ -29,6 +29,8 @@ const COPIED_KEYS = [
   "anonymizeNames",
   "nameReveals",
   "nameRevealPublicIds",
+  // FightWars (session 13): the speed rides with the lobby edits too.
+  "gameSpeed",
 ] as const satisfies readonly (keyof GameConfig)[];
 
 // `.nullable().optional()` in the schema: the wire says null to clear a
@@ -42,6 +44,14 @@ const NULLABLE_KEYS = [
   "disableAlliances",
   "customAllianceDuration",
   "waterNukes",
+  // FightWars (session 13): the modes a host toggles in the lobby. Without
+  // these a toggle after creation never reached the game.
+  "battleRoyale",
+  "capitalStrike",
+  "kingOfTheHill",
+  "survival",
+  "scenario",
+  "draft",
 ] as const satisfies readonly (keyof GameConfig)[];
 
 type NullableKey = (typeof NULLABLE_KEYS)[number];

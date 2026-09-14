@@ -1608,3 +1608,21 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
 
 - `src/core/game/Scenarios.ts` — the four casts.
 - `tests/Scenarios.test.ts` — the manifests, the cast, the doctrine kept, the unknown id.
+
+### Draft (Phase 6, session 13)
+
+#### Shared upstream files edited
+
+- `src/core/Schemas.ts` — `GameConfig.draft`, `DraftPickIntentSchema` (appended to the intent union), `DraftInfoSchema`, `GameInfo.draft`.
+- `src/server/GameServer.ts` — the draft state, `draft_pick`, pins on the lobby list and the start.
+- `src/server/IntentAuthorization.ts` — `draft_pick`.
+- `src/server/ConfigPatch.ts` — the mode keys a host may edit.
+- `src/client/Transport.ts`, `src/client/Main.ts` — `SendDraftPickIntentEvent`, the `draft-pick` event.
+- `src/client/components/LobbyPlayerView.ts` — the draft board.
+- `src/client/HostLobbyModal.ts`, `src/client/JoinLobbyModal.ts` — the toggle, the board wired.
+- `resources/lang/en.json` — `game_settings.draft`, `host_modal.draft_*`.
+
+#### FightWars-only files added
+
+- `tests/server/Draft.test.ts`, `tests/client/LobbyDraft.test.ts`.
+- `tests/server/ConfigPatch.test.ts` — gains the mode keys.

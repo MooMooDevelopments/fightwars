@@ -54,7 +54,8 @@ export type Intent =
   | KickPlayerIntent
   | TogglePauseIntent
   | UpdateGameConfigIntent
-  | ToggleGameStartTimer;
+  | ToggleGameStartTimer
+  | DraftPickIntent;
 
 export type AttackIntent = z.infer<typeof AttackIntentSchema>;
 export type CancelAttackIntent = z.infer<typeof CancelAttackIntentSchema>;
@@ -84,6 +85,7 @@ export type AllianceExtensionIntent = z.infer<
 >;
 export type DeleteUnitIntent = z.infer<typeof DeleteUnitIntentSchema>;
 export type KickPlayerIntent = z.infer<typeof KickPlayerIntentSchema>;
+export type DraftPickIntent = z.infer<typeof DraftPickIntentSchema>;
 export type TogglePauseIntent = z.infer<typeof TogglePauseIntentSchema>;
 export type UpdateGameConfigIntent = z.infer<
   typeof UpdateGameConfigIntentSchema
@@ -308,6 +310,15 @@ const ClientInfoSchema = z.object({
   teamIndex: zb.uint().optional(),
 });
 
+/** Draft (brief §6.7): who captains, whose pick it is, who has been picked. */
+export const DraftInfoSchema = z.object({
+  captains: z.array(z.string()),
+  /** The captain to pick next; null while a captain is missing or once everyone is placed. */
+  turn: z.string().nullable(),
+  picked: z.array(z.string()),
+});
+export type DraftInfo = z.infer<typeof DraftInfoSchema>;
+
 export const GameInfoSchema = z.object({
   gameID: z.string(),
   clients: z.array(ClientInfoSchema).optional(),
@@ -329,6 +340,8 @@ export const GameInfoSchema = z.object({
   label: LobbyLabelSchema.optional(),
   accent: LobbyAccentSchema.optional(),
   featured: z.boolean().optional(),
+  // Draft (brief §6.7); absent when the lobby is not drafting.
+  draft: DraftInfoSchema.optional(),
 });
 
 // Browser-facing lobby info. Master/worker-internal fields (the creator hash
@@ -588,6 +601,8 @@ export const GameConfigSchema = z.object({
   survival: z.boolean().nullable().optional(),
   // Historical scenarios (brief §6.7): the id of a fixed cast for the map.
   scenario: z.string().max(40).nullable().optional(),
+  // Draft (brief §6.7): two captains pick the teams in the lobby.
+  draft: z.boolean().nullable().optional(),
   hostCheats: z
     .object({
       infiniteGold: z.boolean().optional(),
@@ -812,6 +827,13 @@ export const ToggleGameStartTimerIntentSchema = z.object({
   type: z.literal("toggle_game_start_timer"),
 });
 
+// Draft (brief §6.7): the captain whose turn it is takes a player from the
+// pool onto their team. Lobby-phase only; the server keeps the picks.
+export const DraftPickIntentSchema = z.object({
+  type: z.literal("draft_pick"),
+  target: MappedID,
+});
+
 export const IntentSchema = z.discriminatedUnion("type", [
   AttackIntentSchema,
   CancelAttackIntentSchema,
@@ -838,6 +860,7 @@ export const IntentSchema = z.discriminatedUnion("type", [
   TogglePauseIntentSchema,
   UpdateGameConfigIntentSchema,
   ToggleGameStartTimerIntentSchema,
+  DraftPickIntentSchema,
 ]);
 
 // StampedIntent = Intent with server-stamped clientID (used in turns and execution)

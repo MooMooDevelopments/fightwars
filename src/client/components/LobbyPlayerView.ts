@@ -1,4 +1,4 @@
-import { LitElement, html } from "lit";
+import { LitElement, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
 import {
@@ -14,7 +14,12 @@ import {
 } from "../../core/game/Game";
 import { assignTeamsLobbyPreview } from "../../core/game/TeamAssignment";
 import { UserSettings } from "../../core/game/UserSettings";
-import { ClientID, ClientInfo, TeamCountConfig } from "../../core/Schemas";
+import {
+  ClientID,
+  ClientInfo,
+  DraftInfo,
+  TeamCountConfig,
+} from "../../core/Schemas";
 import { createRandomName, formatPlayerDisplayName } from "../../core/Util";
 import { Theme, themeProvider } from "../theme/ThemeProvider";
 import {
@@ -39,6 +44,9 @@ export class LobbyTeamView extends LitElement {
   @property({ type: String }) currentClientID: string = "";
   @property({ attribute: "team-count" }) teamCount: TeamCountConfig = 2;
   @property({ type: Function }) onKickPlayer?: (clientID: string) => void;
+  /** Draft (brief §6.7): the lobby's captains, turn and picks; absent = no draft. */
+  @property({ attribute: false }) draft?: DraftInfo;
+  @property({ type: Function }) onDraftPick?: (clientID: string) => void;
   @property({ type: Function }) onToggleNameReveal?: (clientID: string) => void;
   @property({ type: Array }) nameReveals: string[] = [];
   @property({ type: Boolean }) anonymizeNames: boolean = false;
@@ -131,7 +139,9 @@ export class LobbyTeamView extends LitElement {
           class="players-list block rounded-lg border border-white/10 bg-white/5 p-2"
         >
           ${this.gameMode === GameMode.Team
-            ? this.renderTeamMode()
+            ? this.draft !== undefined
+              ? this.renderDraft(this.draft)
+              : this.renderTeamMode()
             : this.renderFreeForAll()}
         </div>
         ${this.renderSpectators()}
@@ -242,6 +252,116 @@ export class LobbyTeamView extends LitElement {
               (p) => p.team,
               (preview) => this.renderTeamCard(preview, true),
             )}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Draft (brief §6.7): the two captains' sides and the pool between them.
+  // The captain on turn sees a Pick button on every pooled player; everyone
+  // else sees whose pick it is.
+  private renderDraft(draft: DraftInfo) {
+    const byId = new Map(this.activePlayers.map((c) => [c.clientID, c]));
+    const nameOf = (id: string) => {
+      const c = byId.get(id);
+      return c === undefined ? id : this.getClientDisplayName(c);
+    };
+    const sides = draft.captains.map((captain, i) => ({
+      captain,
+      members: this.activePlayers.filter(
+        (c) => c.clientID !== captain && c.teamIndex === i,
+      ),
+    }));
+    const pool = this.activePlayers.filter(
+      (c) => !draft.captains.includes(c.clientID) && c.teamIndex === undefined,
+    );
+    const myTurn = draft.turn !== null && draft.turn === this.currentClientID;
+    const status =
+      draft.captains.length < 2
+        ? translateText("host_modal.draft_waiting_captains")
+        : draft.turn === null
+          ? translateText("host_modal.draft_done")
+          : translateText("host_modal.draft_turn", {
+              name: nameOf(draft.turn),
+            });
+    return html`<div class="flex flex-col gap-3" data-draft-board>
+      <div class="flex flex-wrap items-baseline justify-between gap-2 px-1">
+        <span class="text-sm font-semibold text-gray-200">
+          ${draft.captains.length === 2
+            ? translateText("host_modal.draft_captains", {
+                a: nameOf(draft.captains[0]),
+                b: nameOf(draft.captains[1]),
+              })
+            : translateText("game_settings.draft")}
+        </span>
+        <span class="text-xs text-white/60" data-draft-status>${status}</span>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        ${sides.map(
+          (side, i) =>
+            html`<div
+              class="bg-gray-800 border rounded-xl ${side.captain ===
+                this.currentClientID ||
+              side.members.some((m) => this.isCurrentPlayer(m))
+                ? "border-sky-500/60"
+                : "border-gray-700"}"
+              data-draft-side=${i}
+            >
+              <div
+                class="px-2 py-1 font-bold text-white rounded-t-xl text-[13px] bg-gray-700/70 truncate"
+              >
+                ${nameOf(side.captain)}
+              </div>
+              <div class="p-2 flex flex-col gap-1.5">
+                ${repeat(
+                  side.members,
+                  (m) => m.clientID,
+                  (m) =>
+                    html`<div
+                      class="px-2 py-1 rounded-sm text-xs text-white bg-gray-700/70"
+                    >
+                      ${this.getClientDisplayName(m)}
+                    </div>`,
+                )}
+              </div>
+            </div>`,
+        )}
+        <div
+          class="bg-gray-800 border border-gray-700 rounded-xl"
+          data-draft-pool
+        >
+          <div
+            class="px-2 py-1 font-bold text-white rounded-t-xl text-[13px] bg-gray-700/70"
+          >
+            ${translateText("host_modal.draft_pool")}
+          </div>
+          <div class="p-2 flex flex-col gap-1.5">
+            ${pool.length === 0
+              ? html`<div class="text-[11px] italic text-gray-400">
+                  ${translateText("host_modal.empty_team")}
+                </div>`
+              : repeat(
+                  pool,
+                  (p) => p.clientID,
+                  (p) =>
+                    html`<div
+                      class="px-2 py-1 rounded-sm text-xs flex items-center justify-between text-white bg-gray-700/70"
+                    >
+                      <span class="truncate">
+                        ${this.getClientDisplayName(p)}
+                      </span>
+                      ${myTurn
+                        ? html`<button
+                            class="ml-2 px-2 py-0.5 rounded bg-action text-action-ink text-[11px] font-bold uppercase tracking-wider"
+                            data-draft-pick=${p.clientID}
+                            @click=${() => this.onDraftPick?.(p.clientID)}
+                          >
+                            ${translateText("host_modal.draft_pick")}
+                          </button>`
+                        : nothing}
+                    </div>`,
+                )}
           </div>
         </div>
       </div>

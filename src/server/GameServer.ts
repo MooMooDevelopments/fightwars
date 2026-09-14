@@ -26,6 +26,7 @@ import {
   ClientReportMessage,
   ClientSendLiveStatsMessage,
   ClientSendWinnerMessage,
+  DraftInfo,
   GameConfig,
   GameID,
   GameInfo,
@@ -310,7 +311,7 @@ export class GameServer {
       gameID: opts.id,
       config: () => this.gameConfig,
       clients: () => this.clients.all(),
-      teamIndex: (c) => this.matchmakingTeamIndex(c),
+      teamIndex: (c) => this.draftTeamIndex(c) ?? this.matchmakingTeamIndex(c),
     });
     this.log = opts.log.child({ gameID: opts.id });
     this.ingress = new SocketIngress(this.log, this.telemetry, {
@@ -346,6 +347,87 @@ export class GameServer {
 
   public updateGameConfig(gameConfig: Partial<GameConfig>): void {
     applyGameConfigPatch(this.gameConfig, gameConfig);
+    this.syncDraft();
+  }
+
+  // ── Draft (brief §6.7) ────────────────────────────────────────────────
+  // Two captains — the host and the first other player to sit down — pick
+  // the teams in the lobby, in snake order (A B B A A B ...). A pick is a
+  // team pin the lobby preview and the game start both read, the same way
+  // matchmade pins are read. Server state, never the sim's: the picks are
+  // stamped into the players list at start like any pin.
+  private draftCaptains: ClientID[] = [];
+  private draftPins = new Map<ClientID, number>();
+
+  private draftEnabled(): boolean {
+    return (
+      this.gameConfig.draft === true &&
+      this.gameConfig.gameMode === GameMode.Team &&
+      !this.hasStarted()
+    );
+  }
+
+  /** Seat the captains, drop pins of players who left, reset if a captain left. */
+  private syncDraft(): void {
+    if (!this.draftEnabled()) {
+      this.draftCaptains = [];
+      this.draftPins.clear();
+      return;
+    }
+    const players = this.clients.players();
+    const seated = new Set(players.map((c) => c.clientID));
+    if (this.draftCaptains.some((id) => !seated.has(id))) {
+      this.draftCaptains = [];
+      this.draftPins.clear();
+    }
+    for (const id of [...this.draftPins.keys()]) {
+      if (!seated.has(id)) this.draftPins.delete(id);
+    }
+    if (this.draftCaptains.length < 2) {
+      const captains: ClientID[] = [];
+      const creator = this.lobbyCreatorID;
+      if (creator !== undefined && seated.has(creator)) captains.push(creator);
+      for (const c of players) {
+        if (captains.length >= 2) break;
+        if (!captains.includes(c.clientID)) captains.push(c.clientID);
+      }
+      this.draftCaptains = captains;
+      this.draftPins.clear();
+      captains.forEach((id, i) => this.draftPins.set(id, i));
+    }
+  }
+
+  /** The captain to pick next, or null with a captain missing or the pool empty. */
+  private draftTurn(): ClientID | null {
+    if (this.draftCaptains.length < 2) return null;
+    const pool = this.clients
+      .players()
+      .filter((c) => !this.draftPins.has(c.clientID));
+    if (pool.length === 0) return null;
+    const picksMade = this.draftPins.size - this.draftCaptains.length;
+    return this.draftCaptains[((picksMade + 1) >> 1) & 1];
+  }
+
+  public draftInfo(): DraftInfo | undefined {
+    if (!this.draftEnabled()) return undefined;
+    this.syncDraft();
+    return {
+      captains: [...this.draftCaptains],
+      turn: this.draftTurn(),
+      picked: [...this.draftPins.keys()].filter(
+        (id) => !this.draftCaptains.includes(id),
+      ),
+    };
+  }
+
+  private draftTeamIndex(c: Client): number | undefined {
+    if (
+      this.gameConfig.draft !== true ||
+      this.gameConfig.gameMode !== GameMode.Team
+    ) {
+      return undefined;
+    }
+    return this.draftPins.get(c.clientID);
   }
 
   // Dispatch a control/gameplay intent from either a websocket client or the
@@ -423,6 +505,32 @@ export class GameServer {
 
       case "update_game_config": {
         this.updateGameConfig(stamped.config);
+        return finish({ status: 200 });
+      }
+
+      case "draft_pick": {
+        if (!this.draftEnabled()) {
+          return finish({ status: 400, error: "lobby is not drafting" });
+        }
+        this.syncDraft();
+        const turn = this.draftTurn();
+        if (turn === null || turn !== stamped.clientID) {
+          return finish({ status: 403, error: "not your pick" });
+        }
+        const target = stamped.target;
+        const inPool = this.clients
+          .players()
+          .some((c) => c.clientID === target && !this.draftPins.has(target));
+        if (!inPool) {
+          return finish({ status: 400, error: "player is not in the pool" });
+        }
+        this.draftPins.set(target, this.draftCaptains.indexOf(turn));
+        this.log.info("draft pick", {
+          captain: turn,
+          target,
+          gameID: this.id,
+        });
+        this.broadcastLobbyInfo();
         return finish({ status: 200 });
       }
 
@@ -663,7 +771,8 @@ export class GameServer {
         joinedAt: Date.now(),
         username: client.username,
         playerType: "human",
-        teamIndex: this.matchmakingTeamIndex(client),
+        teamIndex:
+          this.draftTeamIndex(client) ?? this.matchmakingTeamIndex(client),
       },
       this.turns.length,
     );
@@ -1113,7 +1222,7 @@ export class GameServer {
         cosmetics: c.cosmetics,
         isLobbyCreator: this.lobbyCreatorID === c.clientID,
         friends: friendsFor(c),
-        teamIndex: this.matchmakingTeamIndex(c),
+        teamIndex: this.draftTeamIndex(c) ?? this.matchmakingTeamIndex(c),
       })),
       tribes: this.tribes,
     });
@@ -1625,6 +1734,9 @@ export class GameServer {
   // Omitting viewer (e.g. the HTTP /api/game/:id and link-preview routes)
   // anonymizes all names when the option is on.
   public gameInfo(viewer?: ClientID): GameInfo {
+    // First: the draft seats its captains here, and the client list below
+    // carries their pins.
+    const draft = this.draftInfo();
     return {
       gameID: this.id,
       clients: this.names.lobbyClients(viewer, this.clients.active()),
@@ -1638,6 +1750,7 @@ export class GameServer {
       label: this.listing.lobbyLabel(),
       accent: this.listing.lobbyAccent(),
       featured: this.listing.isFeatured() ? true : undefined,
+      draft,
     };
   }
 

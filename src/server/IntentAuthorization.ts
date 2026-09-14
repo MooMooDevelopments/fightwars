@@ -127,6 +127,17 @@ export function authorizeIntent(
       }
       return null;
 
+    case "draft_pick":
+      // Any seated player may be the captain on turn; handleIntent checks
+      // whose pick it is. Once the game runs the teams are stamped.
+      if (actor.isAdminBot) {
+        return { status: 400, error: "intent not permitted for admin bot" };
+      }
+      if (game.hasStarted) {
+        return { status: 409, error: "game already started" };
+      }
+      return null;
+
     default:
       // Gameplay intents: websocket players only.
       if (actor.isAdminBot) {

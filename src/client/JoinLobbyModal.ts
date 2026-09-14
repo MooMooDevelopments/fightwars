@@ -15,6 +15,7 @@ import { assetUrl } from "../core/AssetUrls";
 import { EventBus } from "../core/EventBus";
 import {
   ClientInfo,
+  DraftInfo,
   GAME_ID_REGEX,
   GameConfig,
   GameInfo,
@@ -53,6 +54,7 @@ export class JoinLobbyModal extends BaseModal {
   @property({ attribute: false }) eventBus: EventBus | null = null;
 
   @state() private players: ClientInfo[] = [];
+  @state() private draftInfo: DraftInfo | undefined = undefined;
   @state() private playerCount: number = 0;
   @state() private gameConfig: GameConfig | null = null;
   @state() private currentLobbyId: string = "";
@@ -370,6 +372,15 @@ export class JoinLobbyModal extends BaseModal {
                           this.gameConfig?.nations ?? "default",
                           this.nationCount,
                         )}
+                        .draft=${this.draftInfo}
+                        .onDraftPick=${(clientID: string) =>
+                          this.dispatchEvent(
+                            new CustomEvent("draft-pick", {
+                              detail: { target: clientID },
+                              bubbles: true,
+                              composed: true,
+                            }),
+                          )}
                       ></lobby-player-view>
                     `
                   : ""}
@@ -1112,6 +1123,7 @@ export class JoinLobbyModal extends BaseModal {
 
   private updateFromLobby(lobby: GameInfo | PublicGameInfo) {
     this.players = "clients" in lobby ? (lobby.clients ?? []) : [];
+    this.draftInfo = "draft" in lobby ? lobby.draft : undefined;
     if ("serverTime" in lobby && typeof lobby.serverTime === "number") {
       this.serverTimeOffset = calculateServerTimeOffset(lobby.serverTime);
     }

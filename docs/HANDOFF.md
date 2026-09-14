@@ -100,8 +100,10 @@ licenses:check`, `npm run perf:gate` on an idle box; per sim change an 8000-tick
    the centre five minutes, cumulative), Survival (co-op on Humans vs Nations, waves
    every two minutes, twenty minutes to hold out) and the zone layer (`ZonePass`: the
    ring and the hill on the map), the Blitz one-click preset, placements, and the four
-   historical scenarios. Next in §5: Draft; a capital marker for Capital Strike and the
-   scenarios in the rotation are the small remainders.
+   historical scenarios, and Draft. Every mode in §6.7 has shipped. §5's remainders:
+   a capital marker for Capital Strike, the scenarios in the rotation, region and
+   doctrine picks in the draft; then spectator/caster, replay scrubbing, post-match
+   analytics, challenges, creation tools.
 
 ### Things that bit us in session 13 (do not relearn)
 
@@ -640,9 +642,9 @@ Remaining, roughly in the order the brief implies:
   the humans win at twenty minutes, the nations the second the last human falls; flag,
   toggle, rotation, badge). **Historical scenarios are in** (session 13: `Scenarios.ts`
   data — 1914, 1939, Cold War, Warring States — a fixed cast with doctrines and blocs on
-  a real map, a lobby section; not in the rotation, bloc names cosmetic). Still to do:
-  Draft (lobby-phase picks are
-  server state, not sim state), **Blitz** — the engine is in (session 13: `gameSpeed` in
+  a real map, a lobby section; not in the rotation, bloc names cosmetic). **Draft is in**
+  (session 13: two captains pick the pool in the host lobby, snake order, each pick a
+  team pin the start stamps; no region or doctrine picks yet). **Blitz** — the engine is in (session 13: `gameSpeed` in
   the wire config, 1× / 2× / 4× in the host and single-player lobbies, the server and the
   local server pacing by it, the HUD clock in wall time) and the preset is in the public
   rotation (`isBlitz` in `MapPlaylist`: compact map, 4×, `maxTimerValue` 20 = five wall
