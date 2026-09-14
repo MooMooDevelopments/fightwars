@@ -1212,6 +1212,9 @@
     "visibility_public": "Public",
     "waiting": "Waiting for players..."
   },
+  "hud": {
+    "show_hint": "Show HUD ({key})"
+  },
   "inventory": {
     "equipped": "Equipped",
     "load_failed": "Couldn't load your inventory. Please reload and try again.",
@@ -2333,6 +2336,8 @@
     "territory_patterns_desc": "Choose whether to display territory skin designs in game",
     "territory_patterns_label": "Territory Skins",
     "title": "Settings",
+    "toggle_hud": "Hide HUD",
+    "toggle_hud_desc": "Hide the interface and show only the map",
     "toggle_terrain": "Toggle Terrain",
     "toggle_view": "Toggle View",
     "toggle_view_desc": "Alternate view (terrain/countries)",

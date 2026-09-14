@@ -1257,3 +1257,26 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
 - `tests/client/ZoomLegibility.test.ts` — `haloWiden`: inert at and above a pixel per tile,
   the fewest iterations that clear the floor, the floor held at MIN_ZOOM inside the cap,
   monotone as the camera pulls out, coarser cells need fewer, finite below MIN_ZOOM, the cap.
+
+### The chrome hides with one key (Phase 4 items 6–7, session 13)
+
+#### Shared upstream files edited
+
+- `src/core/game/UserSettings.ts` — `toggleHud: "KeyZ"` in the default keybinds.
+- `src/client/InputHandler.ts` — `ToggleHudEvent`, fired on the key's release like the other
+  actions.
+- `src/client/hud/GameRenderer.ts` — registers `HudVisibilityController`.
+- `index.html` — `data-hud` on the bottom HUD, the top-right cluster and the left sidebar.
+- `src/client/styles.css` — `.hud-hidden [data-hud] { display: none }`.
+- `src/client/hud/layers/GameRightSidebar.ts` — an eye button that fires the event.
+- `src/client/UserSettingModal.ts`, `src/client/HelpModal.ts` — the keybind, listed.
+- `resources/lang/en.json` — `user_setting.toggle_hud`, `toggle_hud_desc`, `hud.show_hint`.
+
+#### FightWars-only files added
+
+- `src/client/controllers/HudVisibilityController.ts` — the state, the root class, the
+  "Show HUD (key)" button that names the bound key.
+- `resources/images/HudIconWhite.svg` — the eye, struck through (CC BY-SA like the rest).
+- `tests/client/HudVisibility.test.ts` — the default key, the key label, the input handler
+  firing on release and staying out of text fields, the controller starting visible, toggling
+  both ways, leaving a way back that works and names the rebound key.

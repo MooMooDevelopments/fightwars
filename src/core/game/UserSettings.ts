@@ -20,6 +20,7 @@ export function getDefaultKeybinds(isMac: boolean): Record<string, string> {
   return {
     toggleView: "Space",
     coordinateGrid: "KeyM",
+    toggleHud: "KeyZ",
     buildCity: "Digit1",
     buildFactory: "Digit2",
     buildPort: "Digit3",

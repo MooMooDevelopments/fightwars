@@ -74,6 +74,9 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   nearest Missile Silo within 120 tiles straight to the tile you click and land as an attack
   from there — over water, mountains, anyone's land. Nothing shoots them down. Hotkey I.
   Nations drop rather than sail when a silo reaches a target they cannot walk to.
+- **Hide the interface with one key.** Press Z and the map is the whole screen; press it
+  again, or tap the button in the corner, and the interface is back. The eye in the top-right
+  cluster does the same on a phone. Rebindable in Settings › Keybinds.
 - **Halos you can find zoomed out.** The glow around a small player and the glow over
   fallout used to shrink with the map until they vanished. Zoomed right out they now keep a
   minimum size on screen, so the player the glow points at is still there to be found.

@@ -79,6 +79,27 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — the chrome hides with one key (items 6 and 7, layout)
+
+- **What shipped.** `Z` (a keybind, `toggleHud`, rebindable in the settings and listed in the
+  help modal) hides every HUD surface at once — the leaderboard, the control panel and unit
+  bar, the feeds and chat, the top-right cluster, the tutorial — and the map is the whole
+  screen. `HudVisibilityController` owns the state: one class on the document root
+  (`hud-hidden`) and one rule in `styles.css`; every surface marked `data-hud` in
+  `index.html` follows without knowing. Modals and the radial menus are not marked — they are
+  things the player opened, not chrome. The way back is a small "Show HUD (Z)" button at the
+  bottom right that names the key the player actually has bound, because a phone has no Z;
+  the top-right cluster has an eye button for the same hand. A game always starts with its
+  interface, even on a page a previous game left hidden.
+- **Photographed** on the dev server: the key (as a real `KeyboardEvent` — the browser
+  pane's synthetic key press carries no `code`, and every keybind in the game reads `code`),
+  the button at the bottom right, and the eye in the cluster. All three paths toggle it.
+- **Guards broken and watched fail:** the key not wired, a stale class carrying into a new
+  game, no way back.
+- Stage 4 on this: `web-design-guidelines` by hand (a `<button>` with an accessible name, a
+  focus ring, a hover state, decorative `alt=""` on the icon); `impeccable` not run — a
+  chip and an icon in the incumbent grammar, not a surface.
+
 ### Session 13 — item 3's remainder: halos keep a width on screen
 
 - **What shipped.** The small-player glow and the fallout bloom are blurred in tile space

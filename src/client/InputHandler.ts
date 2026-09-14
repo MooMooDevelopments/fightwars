@@ -193,6 +193,9 @@ export class ToggleCoordinateGridEvent implements GameEvent {
   constructor(public readonly enabled: boolean) {}
 }
 
+/** The chrome hides with one key (brief §7): every HUD surface at once. */
+export class ToggleHudEvent implements GameEvent {}
+
 export class TickMetricsEvent implements GameEvent {
   constructor(
     public readonly tickExecutionDuration?: number,
@@ -373,6 +376,9 @@ export class InputHandler {
     this.addKeybindAndEvent(this.keybinds.toggleView, () => {
       this.alternateView = false;
       this.eventBus.emit(new AlternateViewEvent(false));
+    });
+    this.addKeybindAndEvent(this.keybinds.toggleHud, () => {
+      this.eventBus.emit(new ToggleHudEvent());
     });
     const resetKey = this.keybinds.resetGfx ?? "KeyR";
     this.addKeybindAndEvent(

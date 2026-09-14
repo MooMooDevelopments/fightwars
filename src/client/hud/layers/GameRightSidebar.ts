@@ -17,7 +17,7 @@ import {
   type DesktopDisplayMode,
 } from "../../DesktopDisplay";
 import { showInGameAlert, showInGameConfirm } from "../../InGameModal";
-import { TogglePauseIntentEvent } from "../../InputHandler";
+import { ToggleHudEvent, TogglePauseIntentEvent } from "../../InputHandler";
 import { PauseGameIntentEvent, SendWinnerEvent } from "../../Transport";
 import { homeHref, showToast, translateText } from "../../Utils";
 import { GameView } from "../../view";
@@ -32,6 +32,7 @@ const playIcon = assetUrl("images/PlayIconWhite.svg");
 const newLobbyIcon = assetUrl("images/ReplayRegularIconWhite.svg");
 const settingsIcon = assetUrl("images/SettingIconWhite.svg");
 const fullscreenIcon = assetUrl("images/FullscreenIconWhite.svg");
+const hudIcon = assetUrl("images/HudIconWhite.svg");
 const exitFullscreenIcon = assetUrl("images/ExitFullscreenIconWhite.svg");
 
 const LAST_MINUTE_SECONDS = 60;
@@ -606,6 +607,17 @@ export class GameRightSidebar extends LitElement implements Controller {
             </div>`
           : ""}
 
+        <button
+          type="button"
+          class="cursor-pointer leading-none"
+          data-hud-toggle
+          title=${translateText("user_setting.toggle_hud")}
+          aria-label=${translateText("user_setting.toggle_hud")}
+          @click=${this.onHudButtonClick}
+        >
+          <img src=${hudIcon} alt="" width="20" height="20" />
+        </button>
+
         <div class="cursor-pointer" @click=${this.onExitButtonClick}>
           <img src=${exitIcon} alt="exit" width="20" height="20" />
         </div>
@@ -622,6 +634,10 @@ export class GameRightSidebar extends LitElement implements Controller {
       ></overtime-panel>
     `;
   }
+
+  private onHudButtonClick = (): void => {
+    this.eventBus.emit(new ToggleHudEvent());
+  };
 
   maybeRenderReplayButtons() {
     const isReplayOrSingleplayer =

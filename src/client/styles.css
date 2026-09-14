@@ -883,6 +883,16 @@ unit-display .tutorial-highlight::after {
 }
 
 /**
+ * The chrome hides with one key. HudVisibilityController puts `hud-hidden`
+ * on the root; every surface marked `data-hud` in index.html goes with it,
+ * and the map is the whole screen. Modals and the radial menus are not
+ * marked — they are things the player opened, not chrome.
+ */
+.hud-hidden [data-hud] {
+  display: none !important;
+}
+
+/**
  * A range input a thumb can actually find.
  *
  * The attack-ratio slider is the control a phone player reaches for most, and

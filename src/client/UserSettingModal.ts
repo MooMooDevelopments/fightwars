@@ -1157,6 +1157,16 @@ export class UserSettingModal extends BaseModal {
       ></setting-keybind>
 
       <setting-keybind
+        action="toggleHud"
+        label=${translateText("user_setting.toggle_hud")}
+        description=${translateText("user_setting.toggle_hud_desc")}
+        defaultKey=${this.defaultKeybinds.toggleHud}
+        .value=${this.getKeyValue("toggleHud")}
+        .display=${this.getKeyChar("toggleHud")}
+        @change=${this.handleKeybindChange}
+      ></setting-keybind>
+
+      <setting-keybind
         action="coordinateGrid"
         label=${translateText("user_setting.coordinate_grid_label")}
         description=${translateText("user_setting.coordinate_grid_desc")}
