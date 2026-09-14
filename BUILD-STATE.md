@@ -79,6 +79,21 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — the radial menu on the keyboard
+
+- **What shipped.** `M` opens the action menu on the screen's centre tile; the arrows and
+  Tab walk the ring's enabled arcs, wrapping and skipping the disabled; Enter or Space
+  does what a click does through the one `activate` path the click now shares; Escape
+  and Backspace step back, Escape at the top closes. The focused arc gets a white ring and
+  `aria-current`, the svg is a menu of menu items with labels, and a live region names
+  the focused one. Phase 7's accessibility gap as the handoff named it.
+- **Under jsdom:** d3's transform interpolation asks for a DOMMatrix jsdom cannot build
+  from a CSS string; the test stubs an identity matrix and leaves the icon pass's promise
+  pending, and the four cases drive the real menu.
+- **Guards broken and watched fail:** disabled arcs focusable, Escape never closing.
+- **Not done:** Enter on the centre button with nothing focused, and the build and emoji
+  sub-panels' own keyboard paths.
+
 ### Session 13 — rulesets: the balance as data, per lobby
 
 - **What shipped.** Every scalar knob in `Config.ts` whose body was a plain number — 91 of

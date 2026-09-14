@@ -86,6 +86,13 @@ export class RadialMenu implements Controller {
   > = new Map();
 
   private selectedItemId: string | null = null;
+  // Keyboard navigation (brief §11, full keyboard navigation): the index
+  // into the current level's items that the arrows have focused, -1 for
+  // none. Enter and Space activate it the way a click would; Escape steps
+  // back a level or closes; the focused arc gets a ring and the live
+  // region says its name.
+  private focusIndex = -1;
+  private liveRegion: HTMLDivElement | null = null;
   private submenuHoverTimeout: number | null = null;
   private backButtonHoverTimeout: number | null = null;
   private navigationInProgress: boolean = false;
@@ -159,8 +166,17 @@ export class RadialMenu implements Controller {
       this.config.menuSize *
       Math.pow(this.config.submenuScale, this.config.maxNestedLevels - 1);
 
+    this.liveRegion = document.createElement("div");
+    this.liveRegion.setAttribute("aria-live", "polite");
+    this.liveRegion.setAttribute("role", "status");
+    this.liveRegion.className = "sr-only";
+    this.liveRegion.dataset.radialLive = "";
+    this.menuElement.node()?.appendChild(this.liveRegion);
+
     const svg = this.menuElement
       .append("svg")
+      .attr("role", "menu")
+      .attr("aria-label", translateText("radial_menu.label"))
       .attr("width", totalSize)
       .attr("height", totalSize)
       .style("position", "absolute")
@@ -329,6 +345,11 @@ export class RadialMenu implements Controller {
     arcs
       .append("path")
       .attr("class", "menu-item-path")
+      .attr("role", "menuitem")
+      .attr("aria-label", (d) => this.itemLabel(d.data))
+      .attr("aria-disabled", (d) =>
+        this.params === null || d.data.disabled(this.params) ? "true" : "false",
+      )
       .attr("d", arc)
       .attr("fill", (d) => {
         const disabled = this.params === null || d.data.disabled(this.params);
@@ -501,33 +522,7 @@ export class RadialMenu implements Controller {
 
     const onClick = (d: d3.PieArcDatum<MenuElement>, event: Event) => {
       event.stopPropagation();
-      if (
-        this.params === null ||
-        d.data.disabled(this.params) ||
-        this.navigationInProgress
-      )
-        return;
-      this.eventBus.emit(new PlaySoundEffectEvent("click"));
-
-      if (
-        this.currentLevel > 0 &&
-        level === 0 &&
-        d.data.id !== this.selectedItemId
-      )
-        return;
-
-      const subMenu = d.data.subMenu?.(this.params);
-      if (subMenu && subMenu.length > 0) {
-        this.navigationInProgress = true;
-        this.selectedItemId = d.data.id;
-        this.navigateToSubMenu(subMenu);
-        this.updateCenterButtonState("back");
-      } else {
-        d.data.action?.(this.params);
-        // Force transition state to false to ensure menu hides
-        this.isTransitioning = false;
-        this.hideRadialMenu();
-      }
+      this.activate(d.data, level);
     };
 
     function handleMouseMove(event: MouseEvent) {
@@ -566,6 +561,133 @@ export class RadialMenu implements Controller {
         onClick(d, event);
       });
     });
+  }
+
+  /** What a click on an item does; the keyboard's Enter goes through here too. */
+  private activate(item: MenuElement, level: number): void {
+    if (
+      this.params === null ||
+      item.disabled(this.params) ||
+      this.navigationInProgress
+    )
+      return;
+    this.eventBus.emit(new PlaySoundEffectEvent("click"));
+    if (this.currentLevel > 0 && level === 0 && item.id !== this.selectedItemId)
+      return;
+    const subMenu = item.subMenu?.(this.params);
+    if (subMenu && subMenu.length > 0) {
+      this.navigationInProgress = true;
+      this.selectedItemId = item.id;
+      this.navigateToSubMenu(subMenu);
+      this.updateCenterButtonState("back");
+    } else {
+      item.action?.(this.params);
+      // Force transition state to false to ensure menu hides
+      this.isTransitioning = false;
+      this.hideRadialMenu();
+    }
+  }
+
+  private itemLabel(item: MenuElement): string {
+    return item.text ?? item.name;
+  }
+
+  // ── Keyboard ──────────────────────────────────────────────────────────
+  private readonly handleKeyDown = (e: KeyboardEvent): void => {
+    if (!this.isVisible) return;
+    switch (e.key) {
+      case "ArrowRight":
+      case "ArrowDown":
+        e.preventDefault();
+        this.moveFocus(1);
+        return;
+      case "ArrowLeft":
+      case "ArrowUp":
+        e.preventDefault();
+        this.moveFocus(-1);
+        return;
+      case "Tab":
+        e.preventDefault();
+        this.moveFocus(e.shiftKey ? -1 : 1);
+        return;
+      case "Enter":
+      case " ":
+        e.preventDefault();
+        this.activateFocused();
+        return;
+      case "Backspace":
+        e.preventDefault();
+        if (this.currentLevel > 0) this.handleCenterButtonClick();
+        return;
+      case "Escape":
+        e.preventDefault();
+        if (this.currentLevel > 0) {
+          this.handleCenterButtonClick();
+        } else {
+          this.hideRadialMenu();
+          this.eventBus.emit(new CloseRadialMenuEvent());
+        }
+        return;
+      default:
+        return;
+    }
+  };
+
+  /** The enabled items of the current level, in ring order. */
+  private focusable(): number[] {
+    const out: number[] = [];
+    this.currentMenuItems.forEach((item, i) => {
+      if (this.params !== null && !item.disabled(this.params)) out.push(i);
+    });
+    return out;
+  }
+
+  private moveFocus(step: number): void {
+    const enabled = this.focusable();
+    if (enabled.length === 0) return;
+    const at = enabled.indexOf(this.focusIndex);
+    const next =
+      at === -1
+        ? step > 0
+          ? enabled[0]
+          : enabled[enabled.length - 1]
+        : enabled[(at + step + enabled.length) % enabled.length];
+    this.setFocus(next);
+  }
+
+  private setFocus(index: number): void {
+    if (this.focusIndex >= 0) {
+      const prev = this.currentMenuItems[this.focusIndex];
+      if (prev !== undefined) {
+        d3.select(`path[data-id="${prev.id}"]`)
+          .style("filter", null)
+          .style("stroke", null)
+          .style("stroke-width", null)
+          .attr("aria-current", null);
+      }
+    }
+    this.focusIndex = index;
+    const item = this.currentMenuItems[index];
+    if (item === undefined) return;
+    d3.select(`path[data-id="${item.id}"]`)
+      .style("filter", "brightness(1.5)")
+      .style("stroke", "#ffffff")
+      .style("stroke-width", "2px")
+      .attr("aria-current", "true");
+    if (this.liveRegion !== null) {
+      this.liveRegion.textContent = this.itemLabel(item);
+    }
+  }
+
+  private activateFocused(): void {
+    const item = this.currentMenuItems[this.focusIndex];
+    if (item === undefined) return;
+    this.activate(item, this.currentLevel);
+  }
+
+  /** The focused item's index, for tests and the live region. */
+  public focusedIndex(): number {
+    return this.focusIndex;
   }
 
   private isItemDisabled(item: MenuElement): boolean {
@@ -699,6 +821,7 @@ export class RadialMenu implements Controller {
     this.menuStack.push(this.currentMenuItems);
     this.currentMenuItems = children;
     this.currentLevel++;
+    this.focusIndex = -1;
 
     this.clampAndSetMenuPositionForLevel(this.currentLevel);
     this.renderMenuItems(this.currentMenuItems, this.currentLevel);
@@ -780,6 +903,7 @@ export class RadialMenu implements Controller {
     this.isTransitioning = true;
 
     this.updateMenuLevels();
+    this.focusIndex = -1;
     this.clampAndSetMenuPositionForLevel(this.currentLevel);
     this.clearSelectedItemHoverState();
     this.updateMenuVisibility("backward");
@@ -886,7 +1010,9 @@ export class RadialMenu implements Controller {
 
     this.renderMenuItems(this.currentMenuItems, this.currentLevel);
     this.onCenterButtonHover(true);
+    this.focusIndex = -1;
     window.addEventListener("resize", this.handleResize);
+    window.addEventListener("keydown", this.handleKeyDown);
   }
 
   public hideRadialMenu() {
@@ -910,7 +1036,9 @@ export class RadialMenu implements Controller {
     this.menuIcons.clear();
 
     this.lastHideTime = Date.now();
+    this.focusIndex = -1;
     window.removeEventListener("resize", this.handleResize);
+    window.removeEventListener("keydown", this.handleKeyDown);
   }
 
   private handleCenterButtonClick() {

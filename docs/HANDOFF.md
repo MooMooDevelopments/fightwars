@@ -729,7 +729,9 @@ parsed with the client's schemas (the pattern in `tests/api/`).
 - **Load testing to 500 lobbies** (blocked, above), **accessibility audit**
   (`web-design-guidelines`; full keyboard navigation and screen-reader labels on all chrome
   are Definition-of-Done items — the readouts, the hide-HUD button and the queue chip were
-  audited as they landed; the radial menu is mouse-only and is the gap), **i18n** (every
+  audited as they landed; the radial menu walks on the keyboard now — session 13: `M`
+  opens it, arrows and Enter drive it, arcs are menu items — the build and emoji
+  sub-panels are the remainder), **i18n** (every
   string goes through `translateText` with a key in `en.json`; `tests/TranslationSystem.test.ts`
   fails the build on an unused or missing key, which is the audit, continuous), analytics
   and a live balance dashboard (`dataviz`; the metrics endpoint is the data source).

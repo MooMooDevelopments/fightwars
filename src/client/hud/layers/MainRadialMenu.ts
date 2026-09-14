@@ -82,6 +82,9 @@ export class MainRadialMenu implements Controller {
 
   init() {
     this.radialMenu.init();
+    // Keyboard (brief §11): M opens the menu on the tile at the screen's
+    // centre, so the whole action set reaches a player without a mouse.
+    window.addEventListener("keydown", this.handleOpenKey);
     this.eventBus.on(ContextMenuEvent, (event) => {
       const worldCoords = this.transformHandler.screenToWorldCoordinates(
         event.x,
@@ -168,6 +171,26 @@ export class MainRadialMenu implements Controller {
       this.radialMenu.refresh();
     }
   }
+
+  private readonly handleOpenKey = (e: KeyboardEvent): void => {
+    if (e.code !== "KeyM" || e.repeat || e.ctrlKey || e.metaKey || e.altKey) {
+      return;
+    }
+    const target = e.target as HTMLElement | null;
+    if (
+      target !== null &&
+      (target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable)
+    ) {
+      return;
+    }
+    if (this.radialMenu.isMenuVisible()) return;
+    e.preventDefault();
+    this.eventBus.emit(
+      new ContextMenuEvent(window.innerWidth / 2, window.innerHeight / 2),
+    );
+  };
 
   async tick() {
     if (!this.radialMenu.isMenuVisible() || this.clickedTile === null) return;

@@ -1903,6 +1903,7 @@
   "radial_menu": {
     "delete_unit_description": "Click to delete the nearest unit",
     "delete_unit_title": "Delete Unit",
+    "label": "Actions",
     "upgrade_x": "Upgrade x{amount}"
   },
   "rally": {
