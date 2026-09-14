@@ -829,6 +829,17 @@ export class JoinLobbyModal extends BaseModal {
     const disabled = translateText("common.disabled");
     const pm = c.publicGameModifiers;
     const items: { label: string; value: string }[] = [];
+    if (
+      c.ruleset !== undefined &&
+      c.ruleset !== null &&
+      c.ruleset.values.length > 0
+    )
+      items.push({
+        label: translateText("host_modal.rules_title"),
+        value: translateText("host_modal.rules_count", {
+          count: c.ruleset.values.length,
+        }),
+      });
     if (pm?.isCrowded)
       items.push({
         label: translateText("host_modal.crowded"),

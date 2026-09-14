@@ -1,0 +1,369 @@
+{
+  "version": 1,
+  "values": [
+    {
+      "key": "SAMCooldown",
+      "value": 90
+    },
+    {
+      "key": "SiloCooldown",
+      "value": 90
+    },
+    {
+      "key": "allianceRequestCooldown",
+      "value": 300
+    },
+    {
+      "key": "allianceRequestDuration",
+      "value": 200
+    },
+    {
+      "key": "armsUpkeepScale",
+      "value": 2
+    },
+    {
+      "key": "armyLimitWarningThreshold",
+      "value": 0.8
+    },
+    {
+      "key": "artilleryAttackRate",
+      "value": 50
+    },
+    {
+      "key": "artilleryDamage",
+      "value": 2000
+    },
+    {
+      "key": "artilleryNationRatio",
+      "value": 0.2
+    },
+    {
+      "key": "artilleryRange",
+      "value": 40
+    },
+    {
+      "key": "battleRoyaleFinalRadiusPercent",
+      "value": 10
+    },
+    {
+      "key": "battleRoyaleGraceTicks",
+      "value": 1800
+    },
+    {
+      "key": "battleRoyaleIntervalTicks",
+      "value": 300
+    },
+    {
+      "key": "battleRoyaleRowsPerTick",
+      "value": 32
+    },
+    {
+      "key": "battleRoyaleSteps",
+      "value": 12
+    },
+    {
+      "key": "blockadeRange",
+      "value": 25
+    },
+    {
+      "key": "cityTroopIncrease",
+      "value": 250000
+    },
+    {
+      "key": "coalitionThreshold",
+      "value": 0.4
+    },
+    {
+      "key": "defaultNukeTargetableRange",
+      "value": 150
+    },
+    {
+      "key": "defaultSamMissileSpeed",
+      "value": 12
+    },
+    {
+      "key": "defaultSamRange",
+      "value": 70
+    },
+    {
+      "key": "defensePostDefenseBonus",
+      "value": 5
+    },
+    {
+      "key": "defensePostRange",
+      "value": 30
+    },
+    {
+      "key": "defensePostShellAttackRate",
+      "value": 100
+    },
+    {
+      "key": "defensePostSpeedBonus",
+      "value": 3
+    },
+    {
+      "key": "defensePostTargettingRange",
+      "value": 75
+    },
+    {
+      "key": "deleteUnitCooldown",
+      "value": 300
+    },
+    {
+      "key": "deletionMarkDuration",
+      "value": 300
+    },
+    {
+      "key": "donateCooldown",
+      "value": 100
+    },
+    {
+      "key": "embargoAllCooldown",
+      "value": 100
+    },
+    {
+      "key": "embargoTariffMax",
+      "value": 0.5
+    },
+    {
+      "key": "emojiMessageCooldown",
+      "value": 50
+    },
+    {
+      "key": "emojiMessageDuration",
+      "value": 50
+    },
+    {
+      "key": "falloutDurationTicks",
+      "value": 1800
+    },
+    {
+      "key": "falloutRegenDepth",
+      "value": 0.75
+    },
+    {
+      "key": "falloutRegenThreshold",
+      "value": 0.05
+    },
+    {
+      "key": "hillRadiusPercent",
+      "value": 6
+    },
+    {
+      "key": "hillSecondsToWin",
+      "value": 300
+    },
+    {
+      "key": "materialsPriceScale",
+      "value": 2
+    },
+    {
+      "key": "maxSamRange",
+      "value": 150
+    },
+    {
+      "key": "minDistanceBetweenPlayers",
+      "value": 30
+    },
+    {
+      "key": "mirvNormalizeTargetTicks",
+      "value": 14
+    },
+    {
+      "key": "nukeAllianceBreakThreshold",
+      "value": 100
+    },
+    {
+      "key": "paratrooperMaxTroops",
+      "value": 25000
+    },
+    {
+      "key": "paratrooperRange",
+      "value": 120
+    },
+    {
+      "key": "paratrooperStepsPerTick",
+      "value": 2
+    },
+    {
+      "key": "partisanCooldownTicks",
+      "value": 1800
+    },
+    {
+      "key": "quickChatCooldown",
+      "value": 30
+    },
+    {
+      "key": "radarNationRatio",
+      "value": 0.1
+    },
+    {
+      "key": "radarRange",
+      "value": 60
+    },
+    {
+      "key": "radarSamRangeBonus",
+      "value": 30
+    },
+    {
+      "key": "safeFromPiratesCooldownMax",
+      "value": 20
+    },
+    {
+      "key": "shellLifetime",
+      "value": 50
+    },
+    {
+      "key": "structureMinDist",
+      "value": 15
+    },
+    {
+      "key": "submarineDetectionRange",
+      "value": 12
+    },
+    {
+      "key": "supplyAttritionRate",
+      "value": 0.002
+    },
+    {
+      "key": "supplyFreeRange",
+      "value": 30
+    },
+    {
+      "key": "supplyMaxPenalty",
+      "value": 1.5
+    },
+    {
+      "key": "supplyMaxRange",
+      "value": 90
+    },
+    {
+      "key": "survivalSeconds",
+      "value": 1200
+    },
+    {
+      "key": "survivalWaveGold",
+      "value": 200000
+    },
+    {
+      "key": "survivalWaveTicks",
+      "value": 1200
+    },
+    {
+      "key": "survivalWaveTroopShare",
+      "value": 0.15
+    },
+    {
+      "key": "targetCooldown",
+      "value": 150
+    },
+    {
+      "key": "targetDuration",
+      "value": 100
+    },
+    {
+      "key": "teamLandShareWinThresholdTenths",
+      "value": 7
+    },
+    {
+      "key": "terrainClimbSlope",
+      "value": 1
+    },
+    {
+      "key": "terrainHeightSlope",
+      "value": 0.25
+    },
+    {
+      "key": "terrainHighGroundDefence",
+      "value": 0.3
+    },
+    {
+      "key": "tradeShipShortRangeDebuff",
+      "value": 300
+    },
+    {
+      "key": "trainStationMaxRange",
+      "value": 110
+    },
+    {
+      "key": "trainStationMinRange",
+      "value": 15
+    },
+    {
+      "key": "traitorDefenseDebuff",
+      "value": 0.5
+    },
+    {
+      "key": "traitorSpeedDebuff",
+      "value": 0.8
+    },
+    {
+      "key": "unrestAssimilationTicks",
+      "value": 3000
+    },
+    {
+      "key": "unrestPartisanShare",
+      "value": 10
+    },
+    {
+      "key": "upkeepGraceTicks",
+      "value": 300
+    },
+    {
+      "key": "warshipDockingRange",
+      "value": 5
+    },
+    {
+      "key": "warshipMaxVeterancy",
+      "value": 3
+    },
+    {
+      "key": "warshipPassiveHealing",
+      "value": 1
+    },
+    {
+      "key": "warshipPassiveHealingRange",
+      "value": 150
+    },
+    {
+      "key": "warshipPatrolRange",
+      "value": 100
+    },
+    {
+      "key": "warshipPortHealingBonusPerLevel",
+      "value": 5
+    },
+    {
+      "key": "warshipPortSwitchThreshold",
+      "value": 0.75
+    },
+    {
+      "key": "warshipRetreatHealthPercent",
+      "value": 75
+    },
+    {
+      "key": "warshipShellAttackRate",
+      "value": 20
+    },
+    {
+      "key": "warshipTargettingRange",
+      "value": 130
+    },
+    {
+      "key": "warshipVeterancyHealthBonus",
+      "value": 20
+    },
+    {
+      "key": "warshipVeterancyShellDamageBonus",
+      "value": 20
+    },
+    {
+      "key": "warshipVeterancyTradeCaptures",
+      "value": 25
+    },
+    {
+      "key": "warshipVeterancyTransportKills",
+      "value": 10
+    }
+  ]
+}

@@ -58,6 +58,7 @@ const NULLABLE: { [K in keyof GameConfig]?: NonNullable<GameConfig[K]> } = {
   survival: true,
   scenario: "ww1",
   draft: true,
+  ruleset: { version: 1, values: [{ key: "supplyMaxRange", value: 200 }] },
 };
 
 describe("applyGameConfigPatch", () => {

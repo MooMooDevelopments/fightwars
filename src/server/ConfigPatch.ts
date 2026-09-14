@@ -52,6 +52,7 @@ const NULLABLE_KEYS = [
   "survival",
   "scenario",
   "draft",
+  "ruleset",
 ] as const satisfies readonly (keyof GameConfig)[];
 
 type NullableKey = (typeof NULLABLE_KEYS)[number];

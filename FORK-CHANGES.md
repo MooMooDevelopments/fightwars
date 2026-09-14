@@ -1653,3 +1653,19 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
 
 - `src/client/hud/layers/CasterPanel.ts`, `src/client/hud/layers/TerritoryChart.ts`.
 - `tests/client/CasterPanel.test.ts`.
+
+### Rulesets (Phase 6, brief §6.9, session 13)
+
+#### Shared upstream files edited
+
+- `src/core/Schemas.ts` — `RulesetSchema`, `GameConfig.ruleset` (appended).
+- `src/core/configuration/Config.ts` — `tunable` / `tunableGold` and 92 accessors reading through them.
+- `src/server/ConfigPatch.ts` — `ruleset`.
+- `src/client/HostLobbyModal.ts` — the Custom rules editor; `src/client/JoinLobbyModal.ts` — the count.
+- `scripts/balanceRun.ts` — `--ruleset <file>`; `package.json` — `rules:export`.
+- `resources/lang/en.json` — `host_modal.rules_*`.
+
+#### FightWars-only files added
+
+- `src/core/configuration/Tunables.ts`, `resources/rulesets/default.json`, `scripts/exportRuleset.ts`.
+- `tests/Ruleset.test.ts`, `tests/client/RulesEditor.test.ts`.

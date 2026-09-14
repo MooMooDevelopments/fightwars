@@ -103,8 +103,9 @@ licenses:check`, `npm run perf:gate` on an idle box; per sim change an 8000-tick
    historical scenarios, and Draft. Every mode in §6.7 has shipped. §5's remainders:
    a capital marker for Capital Strike, the scenarios in the rotation, region and
    doctrine picks in the draft; post-match analytics and the caster view are in (the
-   match report in the win modal, the caster panel for watchers); then replay
-   scrubbing, challenges, creation tools.
+   match report in the win modal, the caster panel for watchers), and rulesets (the
+   data-driven balance of §6.9); then replay scrubbing, challenges, the map editor and
+   the map browser.
 
 ### Things that bit us in session 13 (do not relearn)
 
@@ -665,8 +666,10 @@ Remaining, roughly in the order the brief implies:
   **No pay-to-win, ever**; the store switch in `Brand.ts` stays off.
 - **Creation tools (6.9)**: in-browser map editor exporting a map package (the Go generator
   under `map-generator/` defines the format; `npm run gen-maps` regenerates `Maps.gen.ts`),
-  fully data-driven balance (one versioned config loadable per lobby — `GameConfig` is the
-  wire surface; `Config.ts` module-level literals must move into it), community map browser
+  **fully data-driven balance is in** (session 13: `Tunables.ts`, 91 knobs with bounds,
+  `GameConfig.ruleset` per lobby, `resources/rulesets/default.json` the versioned file of
+  record, a Custom rules editor in the host lobby, `balance:run --ruleset`; the accessors
+  with logic in them and hot reload mid-game are the remainder), community map browser
   with ratings (API + `docs/API.md`).
 
 **Phase 6 gate.** Each mode played to its end condition in the Browser pane with two

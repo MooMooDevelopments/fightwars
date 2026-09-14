@@ -74,6 +74,9 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   nearest Missile Silo within 120 tiles straight to the tile you click and land as an attack
   from there — over water, mountains, anyone's land. Nothing shoots them down. Hotkey I.
   Nations drop rather than sail when a silo reaches a target they cannot walk to.
+- **Custom rules.** A private lobby's host can override any of 91 balance knobs — supply
+  ranges, terrain costs, cooldowns, unit ranges and rates — from a JSON ruleset, and the
+  whole game runs under it. The defaults ship as a versioned file.
 - **Caster view.** Spectators, replay viewers and the fallen get a panel: who leads
   and how close they are to the win bar, at their pace; the territory chart; and the
   five largest's troops and gold.

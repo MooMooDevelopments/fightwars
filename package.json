@@ -25,6 +25,7 @@
     "marks:generate": "tsx scripts/generateBrandMarks.ts",
     "perf:gate": "tsx scripts/perfGate.ts",
     "balance:run": "tsx scripts/balanceRun.ts",
+    "rules:export": "tsx scripts/exportRuleset.ts",
     "load:test": "tsx tests/load/LoadTest.ts",
     "test:matchmaking": "node tests/matchmaking/contained.mjs",
     "test:matchmaking:e2e": "node tests/matchmaking/e2e.mjs",

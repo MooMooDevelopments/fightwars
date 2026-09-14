@@ -9,6 +9,7 @@ import {
   translateText,
 } from "../client/Utils";
 import { GameEnv } from "../core/configuration/Config";
+import { isTunable } from "../core/configuration/Tunables";
 import { EventBus } from "../core/EventBus";
 import { DoomsdayClockSpeed } from "../core/game/DoomsdayClock";
 import {
@@ -26,6 +27,8 @@ import {
   DraftInfo,
   GameConfig,
   LobbyInfoEvent,
+  Ruleset,
+  RulesetSchema,
   TeamCountConfig,
   isValidGameID,
 } from "../core/Schemas";
@@ -71,6 +74,9 @@ export class HostLobbyModal extends BaseModal {
   @state() private scenario: string | null = null;
   @state() private draft: boolean = false;
   @state() private draftInfo: DraftInfo | undefined = undefined;
+  @state() private ruleset: Ruleset | null = null;
+  @state() private rulesText: string = "";
+  @state() private rulesError: string | null = null;
   @state() private teamCount: TeamCountConfig = 2;
 
   constructor() {
@@ -662,6 +668,8 @@ export class HostLobbyModal extends BaseModal {
               .handleConfigHostCheatToggleChanged}
             @unit-toggle-changed=${this.handleConfigUnitToggleChanged}
           ></game-config-settings>
+
+          ${this.renderRulesEditor()}
 
           <lobby-player-view
             class="mt-10"
@@ -1524,6 +1532,7 @@ export class HostLobbyModal extends BaseModal {
             survival: this.survival,
             scenario: this.scenario ?? undefined,
             draft: this.draft,
+            ruleset: this.ruleset ?? undefined,
             disabledUnits: this.disabledUnits,
             spawnImmunityDuration: this.spawnImmunity
               ? spawnImmunityTicks
@@ -1624,6 +1633,99 @@ export class HostLobbyModal extends BaseModal {
         composed: true,
       }),
     );
+  }
+
+  // ── Custom rules (brief §6.9) ─────────────────────────────────────────
+  private renderRulesEditor() {
+    return html`<section class="mt-8" data-rules-editor>
+      <div
+        class="text-xs font-bold text-white/40 uppercase tracking-widest mb-2 pl-2"
+      >
+        ${translateText("host_modal.rules_title")}
+      </div>
+      <p class="text-xs text-white/60 mb-2 pl-2">
+        ${translateText("host_modal.rules_hint")}
+      </p>
+      <textarea
+        class="w-full min-h-24 rounded-lg border border-white/10 bg-black/30 p-2 font-mono text-xs text-white"
+        data-rules-json
+        spellcheck="false"
+        aria-label=${translateText("host_modal.rules_title")}
+        .value=${this.rulesText}
+        @input=${(e: Event) =>
+          (this.rulesText = (e.target as HTMLTextAreaElement).value)}
+      ></textarea>
+      ${this.rulesError === null
+        ? nothing
+        : html`<p class="mt-1 text-xs text-status-loss" data-rules-error>
+            ${translateText("host_modal.rules_error", {
+              error: this.rulesError,
+            })}
+          </p>`}
+      <div class="mt-2 flex gap-2">
+        <o-button
+          variant="primary"
+          size="sm"
+          .title=${translateText("host_modal.rules_apply")}
+          data-rules-apply
+          @click=${() => this.applyRules()}
+        ></o-button>
+        <o-button
+          variant="secondary"
+          size="sm"
+          .title=${translateText("host_modal.rules_reset")}
+          data-rules-reset
+          @click=${() => this.resetRules()}
+        ></o-button>
+        ${this.ruleset === null
+          ? nothing
+          : html`<span
+              class="self-center text-xs text-white/60"
+              data-rules-count
+            >
+              ${translateText("host_modal.rules_count", {
+                count: this.ruleset.values.length,
+              })}
+            </span>`}
+      </div>
+    </section>`;
+  }
+
+  /** Parse the editor's JSON into a ruleset; unknown keys are refused here so a typo is seen. */
+  private applyRules(): void {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(this.rulesText);
+    } catch (e) {
+      this.rulesError = e instanceof Error ? e.message : String(e);
+      return;
+    }
+    const result = RulesetSchema.safeParse(parsed);
+    if (!result.success) {
+      this.rulesError = result.error.issues
+        .map((i) => `${i.path.join(".")}: ${i.message}`)
+        .join("; ");
+      return;
+    }
+    const unknown = result.data.values
+      .map((v) => v.key)
+      .filter((k) => !isTunable(k));
+    if (unknown.length > 0) {
+      this.rulesError = translateText("host_modal.rules_unknown", {
+        keys: unknown.join(", "),
+      });
+      return;
+    }
+    this.rulesError = null;
+    this.ruleset = result.data;
+    this.putGameConfig();
+  }
+
+  private resetRules(): void {
+    this.ruleset = null;
+    this.rulesText = "";
+    this.rulesError = null;
+    this.putGameConfig();
   }
 
   private draftPick(clientID: string) {

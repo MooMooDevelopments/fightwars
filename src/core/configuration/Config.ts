@@ -26,6 +26,7 @@ import { UserSettings } from "../game/UserSettings";
 import { GameConfig, TeamCountConfig } from "../Schemas";
 import { NukeType } from "../StatsSchemas";
 import { assertNever, sigmoid, toInt, within } from "../Util";
+import { clampTunable } from "./Tunables";
 
 declare global {
   interface Window {
@@ -390,6 +391,40 @@ export class Config {
     return this._isReplay;
   }
 
+  // ── Rulesets (brief §6.9, data-driven balance) ────────────────────────
+  // A lobby may carry a versioned list of overrides for the tunables in
+  // `Tunables.ts`. Every scalar accessor below with a plain number reads
+  // through `tunable`: absent, the number in the code; present, the lobby's
+  // value clamped to the registry's bounds. The ruleset is part of the game
+  // config every client and the shadow sim share, so the simulation stays
+  // in lockstep whatever the lobby set.
+  private _rules: Map<string, number> | null = null;
+
+  private rules(): Map<string, number> {
+    if (this._rules === null) {
+      this._rules = new Map();
+      const ruleset = this._gameConfig.ruleset;
+      if (ruleset !== undefined && ruleset !== null) {
+        for (const { key, value } of ruleset.values) {
+          const clamped = clampTunable(key, value);
+          if (clamped !== null) this._rules.set(key, clamped);
+        }
+      }
+    }
+    return this._rules;
+  }
+
+  protected tunable(key: string, base: number): number {
+    const rules = this.rules();
+    if (rules.size === 0) return base;
+    return rules.get(key) ?? base;
+  }
+
+  protected tunableGold(key: string, base: bigint): bigint {
+    const v = this.rules().get(key);
+    return v === undefined ? base : BigInt(Math.round(v));
+  }
+
   /** True when the player joined the lobby as a spectator (watch-only). */
   isIntentionalSpectator(): boolean {
     return this._spectator;
@@ -444,7 +479,7 @@ export class Config {
    * is coming is the late game. 1.01 never triggers (the lever).
    */
   coalitionThreshold(): number {
-    return 0.4;
+    return this.tunable("coalitionThreshold", 0.4);
   }
 
   /**
@@ -584,17 +619,17 @@ export class Config {
   }
 
   traitorDefenseDebuff(): number {
-    return 0.5;
+    return this.tunable("traitorDefenseDebuff", 0.5);
   }
   traitorSpeedDebuff(): number {
-    return 0.8;
+    return this.tunable("traitorSpeedDebuff", 0.8);
   }
   traitorDuration(): number {
     return 30 * 10; // 30 seconds
   }
 
   teamLandShareWinThresholdTenths(): number {
-    return 7;
+    return this.tunable("teamLandShareWinThresholdTenths", 7);
   }
 
   // Doomsday Clock config, resolved against defaults. One read per tick.
@@ -658,7 +693,7 @@ export class Config {
   }
 
   cityTroopIncrease(): number {
-    return 250_000;
+    return this.tunable("cityTroopIncrease", 250_000);
   }
 
   /**
@@ -686,17 +721,17 @@ export class Config {
 
   /** Ticks an irradiated tile stays irradiated: three minutes. */
   falloutDurationTicks(): Tick {
-    return 1800;
+    return this.tunable("falloutDurationTicks", 1800);
   }
 
   /** Share of the world's land irradiated before recruiting starts to suffer. */
   falloutRegenThreshold(): number {
-    return 0.05;
+    return this.tunable("falloutRegenThreshold", 0.05);
   }
 
   /** Share of recruiting lost when the whole world is irradiated. */
   falloutRegenDepth(): number {
-    return 0.75;
+    return this.tunable("falloutRegenDepth", 0.75);
   }
 
   /** 1 below the threshold, falling linearly to 1 − depth at ratio 1. */
@@ -720,7 +755,7 @@ export class Config {
 
   /** Ticks an occupied tile takes to assimilate in the same hands: five minutes. */
   unrestAssimilationTicks(): Tick {
-    return 3000;
+    return this.tunable("unrestAssimilationTicks", 3000);
   }
 
   /**
@@ -739,12 +774,12 @@ export class Config {
 
   /** The share (whole percent) of the occupier's land behind the threshold. */
   unrestPartisanShare(): number {
-    return 10;
+    return this.tunable("unrestPartisanShare", 10);
   }
 
   /** Ticks between uprisings of the same people against the same occupier. */
   partisanCooldownTicks(): Tick {
-    return 1800;
+    return this.tunable("partisanCooldownTicks", 1800);
   }
 
   /** The troops an uprising starts with, by the land held from its people. */
@@ -765,14 +800,14 @@ export class Config {
     return 100;
   }
   SAMCooldown(): number {
-    return 90;
+    return this.tunable("SAMCooldown", 90);
   }
   SiloCooldown(): number {
-    return 90;
+    return this.tunable("SiloCooldown", 90);
   }
 
   defensePostRange(): number {
-    return 30;
+    return this.tunable("defensePostRange", 30);
   }
 
   /**
@@ -821,7 +856,7 @@ export class Config {
    * to just under 1.9.
    */
   terrainHeightSlope(): number {
-    return 0.25;
+    return this.tunable("terrainHeightSlope", 0.25);
   }
 
   /**
@@ -831,12 +866,12 @@ export class Config {
    * a plunge is never free.
    */
   terrainClimbSlope(): number {
-    return 1.0;
+    return this.tunable("terrainClimbSlope", 1.0);
   }
 
   /** Share of per-tile defender loss that a mag-30 defender is spared. */
   terrainHighGroundDefence(): number {
-    return 0.3;
+    return this.tunable("terrainHighGroundDefence", 0.3);
   }
 
   terrainHeightModifier(elevation: number): number {
@@ -866,17 +901,17 @@ export class Config {
    * This one is the reach that costs nothing.
    */
   supplyFreeRange(): number {
-    return 30;
+    return this.tunable("supplyFreeRange", 30);
   }
 
   /** Tiles of reach at which the penalty and the attrition saturate. */
   supplyMaxRange(): number {
-    return 90;
+    return this.tunable("supplyMaxRange", 90);
   }
 
   /** Loss and slowdown multiplier at (and past) `supplyMaxRange`. */
   supplyMaxPenalty(): number {
-    return 1.5;
+    return this.tunable("supplyMaxPenalty", 1.5);
   }
 
   /**
@@ -885,7 +920,7 @@ export class Config {
    * seconds of sitting at the end of a dead supply line.
    */
   supplyAttritionRate(): number {
-    return 0.002;
+    return this.tunable("supplyAttritionRate", 0.002);
   }
 
   /**
@@ -909,11 +944,11 @@ export class Config {
   }
 
   defensePostDefenseBonus(): number {
-    return 5;
+    return this.tunable("defensePostDefenseBonus", 5);
   }
 
   defensePostSpeedBonus(): number {
-    return 3;
+    return this.tunable("defensePostSpeedBonus", 3);
   }
 
   playerTeams(): TeamCountConfig {
@@ -1023,10 +1058,10 @@ export class Config {
   }
 
   trainStationMinRange(): number {
-    return 15;
+    return this.tunable("trainStationMinRange", 15);
   }
   trainStationMaxRange(): number {
-    return 110;
+    return this.tunable("trainStationMaxRange", 110);
   }
   railroadMaxSize(): number {
     return this.trainStationMaxRange() * 1.4142;
@@ -1371,38 +1406,38 @@ export class Config {
     return Math.floor(sender.troops() / 3);
   }
   donateCooldown(): Tick {
-    return 10 * 10;
+    return this.tunable("donateCooldown", 10 * 10);
   }
   embargoAllCooldown(): Tick {
-    return 10 * 10;
+    return this.tunable("embargoAllCooldown", 10 * 10);
   }
   deletionMarkDuration(): Tick {
-    return 30 * 10;
+    return this.tunable("deletionMarkDuration", 30 * 10);
   }
 
   deleteUnitCooldown(): Tick {
-    return 30 * 10;
+    return this.tunable("deleteUnitCooldown", 30 * 10);
   }
   emojiMessageDuration(): Tick {
-    return 5 * 10;
+    return this.tunable("emojiMessageDuration", 5 * 10);
   }
   emojiMessageCooldown(): Tick {
-    return 5 * 10;
+    return this.tunable("emojiMessageCooldown", 5 * 10);
   }
   quickChatCooldown(): Tick {
-    return 3 * 10;
+    return this.tunable("quickChatCooldown", 3 * 10);
   }
   targetDuration(): Tick {
-    return 10 * 10;
+    return this.tunable("targetDuration", 10 * 10);
   }
   targetCooldown(): Tick {
-    return 15 * 10;
+    return this.tunable("targetCooldown", 15 * 10);
   }
   allianceRequestDuration(): Tick {
-    return 20 * 10;
+    return this.tunable("allianceRequestDuration", 20 * 10);
   }
   allianceRequestCooldown(): Tick {
-    return 30 * 10;
+    return this.tunable("allianceRequestCooldown", 30 * 10);
   }
   allianceDuration(): Tick {
     // Host can set a custom alliance duration in minutes (1-15); 0 disables
@@ -1415,7 +1450,7 @@ export class Config {
     return 300 * 10; // 5 minutes.
   }
   minDistanceBetweenPlayers(): number {
-    return 30;
+    return this.tunable("minDistanceBetweenPlayers", 30);
   }
 
   percentageTilesOwnedToWin(elapsedGameSeconds: number): number {
@@ -1439,7 +1474,7 @@ export class Config {
     );
   }
   armyLimitWarningThreshold(): number {
-    return 0.8;
+    return this.tunable("armyLimitWarningThreshold", 0.8);
   }
   boatMaxNumber(): number {
     if (this.isUnitDisabled(UnitType.TransportShip)) {
@@ -1470,23 +1505,23 @@ export class Config {
   }
   /** Ticks after the spawn phase before the first shrink. */
   battleRoyaleGraceTicks(): Tick {
-    return 3 * 60 * 10;
+    return this.tunable("battleRoyaleGraceTicks", 3 * 60 * 10);
   }
   /** Ticks between shrinks. */
   battleRoyaleIntervalTicks(): Tick {
-    return 30 * 10;
+    return this.tunable("battleRoyaleIntervalTicks", 30 * 10);
   }
   /** Shrinks from the full map to the final zone. */
   battleRoyaleSteps(): number {
-    return 12;
+    return this.tunable("battleRoyaleSteps", 12);
   }
   /** The final zone's radius as a share (percent) of the starting radius. */
   battleRoyaleFinalRadiusPercent(): number {
-    return 10;
+    return this.tunable("battleRoyaleFinalRadiusPercent", 10);
   }
   /** Map rows irradiated per tick while a shrink is being applied. */
   battleRoyaleRowsPerTick(): number {
-    return 32;
+    return this.tunable("battleRoyaleRowsPerTick", 32);
   }
 
   /**
@@ -1512,11 +1547,11 @@ export class Config {
   }
   /** The hill's radius as a share (percent) of the map's shorter side. */
   hillRadiusPercent(): number {
-    return 6;
+    return this.tunable("hillRadiusPercent", 6);
   }
   /** Seconds of holding the hill, cumulative, that win the game. */
   hillSecondsToWin(): number {
-    return 5 * 60;
+    return this.tunable("hillSecondsToWin", 5 * 60);
   }
 
   /**
@@ -1532,19 +1567,19 @@ export class Config {
   }
   /** Ticks between waves. */
   survivalWaveTicks(): Tick {
-    return 2 * 60 * 10;
+    return this.tunable("survivalWaveTicks", 2 * 60 * 10);
   }
   /** Troops handed to a nation on wave n: this share of its ceiling, times n. */
   survivalWaveTroopShare(): number {
-    return 0.15;
+    return this.tunable("survivalWaveTroopShare", 0.15);
   }
   /** Gold handed to a nation on wave n, times n. */
   survivalWaveGold(): Gold {
-    return 200_000n;
+    return this.tunableGold("survivalWaveGold", 200_000n);
   }
   /** Seconds the humans have to hold out. */
   survivalSeconds(): number {
-    return 20 * 60;
+    return this.tunable("survivalSeconds", 20 * 60);
   }
 
   /** The historical scenario this game plays (brief §6.7), or null. */
@@ -1788,7 +1823,7 @@ export class Config {
    * commitment rather than a drive-by.
    */
   blockadeRange(): number {
-    return 25;
+    return this.tunable("blockadeRange", 25);
   }
 
   /**
@@ -1804,7 +1839,7 @@ export class Config {
    * you; scales linearly down to nothing at zero.
    */
   embargoTariffMax(): number {
-    return 0.5;
+    return this.tunable("embargoTariffMax", 0.5);
   }
 
   /** Multiplier on a trade payout for a player embargoed by `pressure` of its possible partners (0-1). */
@@ -1813,7 +1848,7 @@ export class Config {
   }
 
   tradeShipShortRangeDebuff(): number {
-    return 300;
+    return this.tunable("tradeShipShortRangeDebuff", 300);
   }
 
   proximityBonusPortsNb(totalPorts: number) {
@@ -1991,7 +2026,7 @@ export class Config {
    * hundred. The balance lever `--cheap-materials` restores 1.
    */
   materialsPriceScale(): number {
-    return 2;
+    return this.tunable("materialsPriceScale", 2);
   }
 
   /**
@@ -2066,7 +2101,7 @@ export class Config {
    * restores 1.
    */
   armsUpkeepScale(): number {
-    return 2;
+    return this.tunable("armsUpkeepScale", 2);
   }
 
   /**
@@ -2090,7 +2125,7 @@ export class Config {
    * short enough that ignoring it is not a strategy.
    */
   upkeepGraceTicks(): Tick {
-    return 300;
+    return this.tunable("upkeepGraceTicks", 300);
   }
 
   goldAdditionRate(player: Player | PlayerView): Gold {
@@ -2128,7 +2163,7 @@ export class Config {
   }
 
   nukeAllianceBreakThreshold(): number {
-    return 100;
+    return this.tunable("nukeAllianceBreakThreshold", 100);
   }
 
   nukeSpeed(unitType: UnitType): number {
@@ -2147,15 +2182,15 @@ export class Config {
   }
 
   mirvNormalizeTargetTicks(): number {
-    return 14;
+    return this.tunable("mirvNormalizeTargetTicks", 14);
   }
 
   defaultNukeTargetableRange(): number {
-    return 150;
+    return this.tunable("defaultNukeTargetableRange", 150);
   }
 
   defaultSamRange(): number {
-    return 70;
+    return this.tunable("defaultSamRange", 70);
   }
 
   samRange(level: number): number {
@@ -2164,7 +2199,7 @@ export class Config {
   }
 
   maxSamRange(): number {
-    return 150;
+    return this.tunable("maxSamRange", 150);
   }
 
   samUpgradeDuration(): number {
@@ -2201,12 +2236,12 @@ export class Config {
 
   /** Radar (brief §6.4): a SAM within this many tiles of an owner's active radar is covered. */
   radarRange(): number {
-    return 60;
+    return this.tunable("radarRange", 60);
   }
 
   /** Tiles of interception reach a covered SAM gains (capped at maxSamRange). */
   radarSamRangeBonus(): number {
-    return 30;
+    return this.tunable("radarSamRangeBonus", 30);
   }
 
   /**
@@ -2214,11 +2249,11 @@ export class Config {
    * to 0: nations never place one and nothing else draws on the RNG for it.
    */
   radarNationRatio(): number {
-    return 0.1;
+    return this.tunable("radarNationRatio", 0.1);
   }
 
   defaultSamMissileSpeed(): number {
-    return 12;
+    return this.tunable("defaultSamMissileSpeed", 12);
   }
 
   // Humans can be soldiers, soldiers attacking, soldiers in boat etc.
@@ -2241,11 +2276,11 @@ export class Config {
   }
 
   structureMinDist(): number {
-    return 15;
+    return this.tunable("structureMinDist", 15);
   }
 
   shellLifetime(): number {
-    return 50;
+    return this.tunable("shellLifetime", 50);
   }
 
   /**
@@ -2255,7 +2290,7 @@ export class Config {
    * and trade ships and never engages a warship.
    */
   submarineDetectionRange(): number {
-    return 12;
+    return this.tunable("submarineDetectionRange", 12);
   }
 
   /**
@@ -2281,7 +2316,7 @@ export class Config {
    * the nearest silo within this many tiles of the drop.
    */
   paratrooperRange(): number {
-    return 120;
+    return this.tunable("paratrooperRange", 120);
   }
 
   /** The troops a drop carries: a fifth of the owner's, capped. */
@@ -2293,12 +2328,12 @@ export class Config {
   }
 
   paratrooperMaxTroops(): number {
-    return 25_000;
+    return this.tunable("paratrooperMaxTroops", 25_000);
   }
 
   /** Air-path tiles a drop covers per tick (a shell covers three). */
   paratrooperStepsPerTick(): number {
-    return 2;
+    return this.tunable("paratrooperStepsPerTick", 2);
   }
 
   /**
@@ -2311,70 +2346,70 @@ export class Config {
   }
 
   warshipPatrolRange(): number {
-    return 100;
+    return this.tunable("warshipPatrolRange", 100);
   }
 
   warshipTargettingRange(): number {
-    return 130;
+    return this.tunable("warshipTargettingRange", 130);
   }
 
   warshipShellAttackRate(): number {
-    return 20;
+    return this.tunable("warshipShellAttackRate", 20);
   }
 
   warshipDockingRange(): number {
-    return 5;
+    return this.tunable("warshipDockingRange", 5);
   }
 
   warshipPortHealingBonusPerLevel(): number {
-    return 5;
+    return this.tunable("warshipPortHealingBonusPerLevel", 5);
   }
 
   /** Health at or below which a warship retreats to repair, as a percent of its
    *  (veterancy-adjusted) max health, so the threshold scales with max health. */
   warshipRetreatHealthPercent(): number {
-    return 75;
+    return this.tunable("warshipRetreatHealthPercent", 75);
   }
 
   warshipPassiveHealing(): number {
-    return 1;
+    return this.tunable("warshipPassiveHealing", 1);
   }
 
   warshipPassiveHealingRange(): number {
-    return 150;
+    return this.tunable("warshipPassiveHealingRange", 150);
   }
 
   warshipPortSwitchThreshold(): number {
-    return 0.75;
+    return this.tunable("warshipPortSwitchThreshold", 0.75);
   }
 
   // --- Warship veterancy ---
 
   /** Maximum veterancy level a warship can reach. */
   warshipMaxVeterancy(): number {
-    return 3;
+    return this.tunable("warshipMaxVeterancy", 3);
   }
 
   /** Max-health boost per veterancy level, as an integer percent of base max
    *  health. Integer-only to keep src/core deterministic (no float constants). */
   warshipVeterancyHealthBonus(): number {
-    return 20;
+    return this.tunable("warshipVeterancyHealthBonus", 20);
   }
 
   /** Shell-damage boost per veterancy level, as an integer percent of the
    *  rolled damage. Integer-only to keep src/core deterministic. */
   warshipVeterancyShellDamageBonus(): number {
-    return 20;
+    return this.tunable("warshipVeterancyShellDamageBonus", 20);
   }
 
   /** Transport ships a warship must destroy to gain one veterancy level. */
   warshipVeterancyTransportKills(): number {
-    return 10;
+    return this.tunable("warshipVeterancyTransportKills", 10);
   }
 
   /** Trade ships a warship must capture to gain one veterancy level. */
   warshipVeterancyTradeCaptures(): number {
-    return 25;
+    return this.tunable("warshipVeterancyTradeCaptures", 25);
   }
 
   /**
@@ -2383,17 +2418,17 @@ export class Config {
    * attack on its owner.
    */
   artilleryRange(): number {
-    return 40;
+    return this.tunable("artilleryRange", 40);
   }
 
   /** Ticks between volleys: five seconds. */
   artilleryAttackRate(): number {
-    return 50;
+    return this.tunable("artilleryAttackRate", 50);
   }
 
   /** Troops one volley takes off the attack it lands on. */
   artilleryDamage(): number {
-    return 2000;
+    return this.tunable("artilleryDamage", 2000);
   }
 
   /**
@@ -2403,19 +2438,19 @@ export class Config {
    * the build loop draws on the RNG for it.
    */
   artilleryNationRatio(): number {
-    return 0.2;
+    return this.tunable("artilleryNationRatio", 0.2);
   }
 
   defensePostShellAttackRate(): number {
-    return 100;
+    return this.tunable("defensePostShellAttackRate", 100);
   }
 
   safeFromPiratesCooldownMax(): number {
-    return 20;
+    return this.tunable("safeFromPiratesCooldownMax", 20);
   }
 
   defensePostTargettingRange(): number {
-    return 75;
+    return this.tunable("defensePostTargettingRange", 75);
   }
 
   allianceExtensionPromptOffset(): number {

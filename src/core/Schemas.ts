@@ -501,6 +501,19 @@ export const TerrainCostConfigSchema = z.object({
 });
 export type TerrainCostConfig = z.infer<typeof TerrainCostConfigSchema>;
 
+export const RulesetSchema = z.object({
+  version: zb.uint({ min: 1, max: 1 }),
+  values: z
+    .array(
+      z.object({
+        key: z.string().max(64),
+        value: zb.float({ min: -1e9, max: 1e9 }),
+      }),
+    )
+    .max(200),
+});
+export type Ruleset = z.infer<typeof RulesetSchema>;
+
 export const GameConfigSchema = z.object({
   gameMap: z.enum(GameMapType),
   difficulty: z.enum(Difficulty),
@@ -603,6 +616,9 @@ export const GameConfigSchema = z.object({
   scenario: z.string().max(40).nullable().optional(),
   // Draft (brief §6.7): two captains pick the teams in the lobby.
   draft: z.boolean().nullable().optional(),
+  // Rulesets (brief §6.9): a versioned list of overrides for the tunables
+  // in Config; unknown keys are ignored and values clamped there.
+  ruleset: RulesetSchema.nullable().optional(),
   hostCheats: z
     .object({
       infiniteGold: z.boolean().optional(),
