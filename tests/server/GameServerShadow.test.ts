@@ -5,6 +5,7 @@ import {
   cid,
   makeClient,
   makeGame,
+  mockWsOf,
   startGame,
 } from "../util/GameServerHarness";
 
@@ -18,6 +19,7 @@ describe("GameServer with a shadow simulation", () => {
     start: ReturnType<typeof vi.fn>;
     applyTurn: ReturnType<typeof vi.fn>;
     check: ReturnType<typeof vi.fn>;
+    hashAt: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
@@ -26,6 +28,7 @@ describe("GameServer with a shadow simulation", () => {
       start: vi.fn(async () => {}),
       applyTurn: vi.fn(),
       check: vi.fn(() => null),
+      hashAt: vi.fn(() => null),
     };
   });
 
@@ -101,6 +104,37 @@ describe("GameServer with a shadow simulation", () => {
     );
     expect(outcome.status).not.toBe(200);
     expect(game.numShadowRefusals()).toBe(0);
+  });
+
+  it("holds a lone client to the server's hash, and a majority too", async () => {
+    const game = makeGame({
+      deps: { shadowSim: () => shadow as unknown as ShadowSimLike },
+    });
+    const a = makeClient({ clientID: cid("a") });
+    const b = makeClient({ clientID: cid("b") });
+    const c = makeClient({ clientID: cid("c") });
+    for (const x of [a, b, c]) game.joinClient(x);
+    startGame(game);
+    shadow.hashAt.mockImplementation((turn: number) =>
+      turn === 0 ? 1234 : null,
+    );
+    // a and b agree with each other and not with the server; c agrees with
+    // the server. Without the reference a majority would have carried it.
+    await mockWsOf(a).emit({ type: "hash", hash: 9999, turnNumber: 0 });
+    await mockWsOf(b).emit({ type: "hash", hash: 9999, turnNumber: 0 });
+    await mockWsOf(c).emit({ type: "hash", hash: 1234, turnNumber: 0 });
+    vi.advanceTimersByTime(10 * 100);
+    expect(game.numDesyncedClients()).toBe(2);
+
+    const lone = makeGame({
+      deps: { shadowSim: () => shadow as unknown as ShadowSimLike },
+    });
+    const solo = makeClient({ clientID: cid("solo") });
+    lone.joinClient(solo);
+    startGame(lone);
+    await mockWsOf(solo).emit({ type: "hash", hash: 9999, turnNumber: 0 });
+    vi.advanceTimersByTime(10 * 100);
+    expect(lone.numDesyncedClients()).toBe(1);
   });
 
   it("runs the relay alone when there is no shadow", () => {

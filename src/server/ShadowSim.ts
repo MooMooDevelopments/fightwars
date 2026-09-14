@@ -1,5 +1,6 @@
 import { Game } from "../core/game/Game";
 import { GameMapLoader } from "../core/game/GameMapLoader";
+import { GameUpdateType, HashUpdate } from "../core/game/GameUpdates";
 import { createGameRunner, GameRunner } from "../core/GameRunner";
 import { GameStartInfo, StampedIntent, Turn } from "../core/Schemas";
 
@@ -15,6 +16,8 @@ export interface ShadowSimLike {
   start(): Promise<void>;
   applyTurn(turn: Turn): void;
   check(intent: StampedIntent): string | null;
+  /** The hash the server's own sim produced for `turn`, or null if none. */
+  hashAt(turn: number): number | null;
 }
 
 /**
@@ -44,6 +47,11 @@ export class ShadowSim implements ShadowSimLike {
   private runner: GameRunner | null = null;
   private queued: Turn[] = [];
   private failed = false;
+  // The state hashes the sim emits every ten ticks, by tick — the same
+  // numbers the clients report, from the same code, so a client that
+  // disagrees with these is out of sync with the server, whatever the
+  // other clients say.
+  private readonly hashes = new Map<number, number>();
 
   constructor(
     private readonly gameStart: GameStartInfo,
@@ -57,7 +65,12 @@ export class ShadowSim implements ShadowSimLike {
         this.gameStart,
         undefined,
         this.mapLoader,
-        () => {},
+        (gu) => {
+          if (!("updates" in gu)) return;
+          for (const hu of gu.updates[GameUpdateType.Hash] ?? []) {
+            this.hashes.set((hu as HashUpdate).tick, (hu as HashUpdate).hash);
+          }
+        },
       );
       this.runner = runner;
       for (const turn of this.queued) this.step(turn);
@@ -85,6 +98,10 @@ export class ShadowSim implements ShadowSimLike {
   /** The shadow's own game, for tests and diagnostics; null until ready. */
   game(): Game | null {
     return this.runner?.game ?? null;
+  }
+
+  hashAt(turn: number): number | null {
+    return this.hashes.get(turn) ?? null;
   }
 
   applyTurn(turn: Turn): void {

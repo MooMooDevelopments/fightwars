@@ -20,6 +20,50 @@ function clients(count: number): Client[] {
 const report = (client: Client, turnNumber: number, hash: number) =>
   client.hashes.set(turnNumber, hash);
 
+describe("findOutOfSyncClients against the server's own hash", () => {
+  it("holds every client to the reference, whatever the majority says", () => {
+    // Two tampered clients agree with each other; the server does not.
+    const [a, b, c] = clients(3);
+    report(a, 0, 1);
+    report(b, 0, 1);
+    report(c, 0, 2);
+
+    expect(findOutOfSyncClients([a, b, c], 0, 2)).toEqual({
+      mostCommonHash: 2,
+      outOfSyncClients: [a, b],
+    });
+  });
+
+  it("checks a lone client, who has the server to disagree with", () => {
+    const [a] = clients(1);
+    report(a, 0, 1);
+    expect(findOutOfSyncClients([a], 0, 2)).toEqual({
+      mostCommonHash: 2,
+      outOfSyncClients: [a],
+    });
+    expect(findOutOfSyncClients([a], 0, 1)).toEqual({
+      mostCommonHash: 1,
+      outOfSyncClients: [],
+    });
+  });
+
+  it("still ignores a client that has not reported the turn", () => {
+    const [a, b] = clients(2);
+    report(a, 0, 1);
+    expect(findOutOfSyncClients([a, b], 0, 1).outOfSyncClients).toEqual([]);
+  });
+
+  it("falls back to the vote without a reference", () => {
+    const [a, b, c] = clients(3);
+    report(a, 0, 1);
+    report(b, 0, 1);
+    report(c, 0, 2);
+    expect(findOutOfSyncClients([a, b, c], 0, null).outOfSyncClients).toEqual([
+      c,
+    ]);
+  });
+});
+
 describe("findOutOfSyncClients", () => {
   it("flags the minority that disagrees with the majority hash", () => {
     const [a, b, c] = clients(3);

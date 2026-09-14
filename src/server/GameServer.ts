@@ -1855,7 +1855,13 @@ export class GameServer {
   }
 
   private handleSynchronization() {
-    const check = this.desync.check(this.turns.length, this.clients.active());
+    // The server's own hash for the turn, when the shadow has one: then the
+    // check is against the server, not a vote among the clients.
+    const check = this.desync.check(
+      this.turns.length,
+      this.clients.active(),
+      (turn) => this.shadow?.hashAt(turn) ?? null,
+    );
     if (check === null) {
       return;
     }

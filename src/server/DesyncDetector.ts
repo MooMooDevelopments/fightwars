@@ -16,10 +16,27 @@ export interface HashTally {
 // that reported nothing for that turn are not counted. When a strict majority
 // disagrees with the most common hash, nobody can be trusted and everyone is
 // out of sync.
+//
+// With a `reference` — the hash the server's own simulation produced for the
+// turn (ShadowSim) — there is no vote: the reference is the correct hash, a
+// client that disagrees with it is out of sync however many agree with that
+// client, and a lone client can be checked. A majority of tampered clients
+// cannot outvote the server.
 export function findOutOfSyncClients(
   active: readonly Client[],
   turnNumber: number,
+  reference: number | null = null,
 ): HashTally {
+  if (reference !== null) {
+    return {
+      mostCommonHash: reference,
+      outOfSyncClients: active.filter(
+        (client) =>
+          client.hashes.has(turnNumber) &&
+          client.hashes.get(turnNumber) !== reference,
+      ),
+    };
+  }
   const counts = new Map<number, number>();
 
   // Count occurrences of each hash
@@ -88,11 +105,13 @@ export class DesyncDetector {
 
   // Called as each turn commits, with the number of turns now in the log.
   // Returns the tally for the turn due a check, or null when no check is due
-  // or there is only one client, who has nobody to disagree with.
-  check(turnsCommitted: number, active: readonly Client[]): DesyncCheck | null {
-    if (active.length <= 1) {
-      return null;
-    }
+  // or there is only one client and no reference to hold them to.
+  // `reference(turn)` is the server's own hash for a turn when it has one.
+  check(
+    turnsCommitted: number,
+    active: readonly Client[],
+    reference: (turn: number) => number | null = () => null,
+  ): DesyncCheck | null {
     if (
       turnsCommitted % CHECK_INTERVAL !== 0 ||
       turnsCommitted < CHECK_INTERVAL
@@ -100,7 +119,11 @@ export class DesyncDetector {
       return null;
     }
     const turn = turnsCommitted - CHECK_INTERVAL;
-    return { turn, ...findOutOfSyncClients(active, turn) };
+    const ref = reference(turn);
+    if (ref === null && active.length <= 1) {
+      return null;
+    }
+    return { turn, ...findOutOfSyncClients(active, turn, ref) };
   }
 
   // Records the clients a check found out of sync, and returns the ones that

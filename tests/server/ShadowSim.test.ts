@@ -102,6 +102,17 @@ describe("ShadowSim", () => {
     expect(shadow.ticks()).toBe(2);
   });
 
+  it("keeps the hashes its own sim produced, by tick", async () => {
+    const shadow = new ShadowSim(startInfo(), new PlainsLoader(), log);
+    await shadow.start();
+    for (let n = 0; n < 25; n++) shadow.applyTurn(turn(n));
+    // The core hashes every ten ticks; a tick it did not hash has nothing.
+    expect(shadow.hashAt(10)).toEqual(expect.any(Number));
+    expect(shadow.hashAt(20)).toEqual(expect.any(Number));
+    expect(shadow.hashAt(11)).toBeNull();
+    expect(shadow.hashAt(30)).toBeNull();
+  });
+
   it("never refuses when its map cannot load", async () => {
     // A different size: the terrain loader caches by map and size, and the
     // test above has already loaded this map at Normal.

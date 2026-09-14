@@ -1383,6 +1383,8 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
 - `src/server/MapLandTiles.ts` — `mapFilePath` (the manifest's resolution, for any map file),
   `mapDirName` exported.
 - `src/server/ServerEnv.ts` — `shadowSimEnabled()` (`SHADOW_SIM=off`).
+- `src/server/DesyncDetector.ts` — `findOutOfSyncClients` and `check` take the server's own
+  hash as the reference when there is one; a lone client is checked against it.
 
 #### FightWars-only files added
 

@@ -657,9 +657,10 @@ parsed with the client's schemas (the pattern in `tests/api/`).
   403, logged and counted (`/metrics` "refused", OTel `shadow_refusals.total`);
   `SHADOW_SIM=off` disables it. `docs/MECHANICS.md` §06 2e. **Deliberately not refused:**
   affordability, reachability, alliances — they move within a tick and a shadow one turn
-  behind would drop honest intents. Next steps on this: the shadow's own hash as the
-  authoritative desync reference (`DesyncDetector` compares clients to each other today),
-  and cooldowns once the shadow can read them.
+  behind would drop honest intents. The shadow's own hash is the desync reference now
+  (session 13, same commit series): where it has one, a client that disagrees is out of
+  sync whatever the other clients say, and a lone client is checked too. Next on this:
+  cooldowns once the shadow can read them.
 - **Winner and stats by client vote** (headline 1): the shadow knows the winner now
   (`WinCheckExecution` runs in it); the server could settle the vote against it and ingest
   (`src/api/Matches.ts`) then trust the server's record only. Not done.

@@ -31,9 +31,12 @@ brief and the exact hook points for closing them.
    vote (the shadow knows the winner; using that is the next step). See §06.
 2. **The live desync hash is weak.** It covers troop count, tile count and unit `(tile, type, id)`
    per player. Gold, relations, tile identity, PRNG state and the tick are not hashed. A desynced
-   client is told once and has its votes ignored; nothing alerts. FightWars' determinism gate
-   (`tests/determinism.test.ts`) therefore hashes the full state itself and passes a 24,000-tick
-   world match byte-for-byte. See §06 and `BUILD-STATE.md`.
+   client is told once and has its votes ignored; a desync alerts (session 2). FightWars'
+   determinism gate (`tests/determinism.test.ts`) therefore hashes the full state itself and
+   passes a 24,000-tick world match byte-for-byte. Since session 13 the check is no longer a
+   vote among the clients where the server has its own hash: `ShadowSim` produces the same
+   per-turn hash from the same code, and a client that disagrees with it is out of sync
+   however many clients agree with that client (§06 2e). See §06 and `BUILD-STATE.md`.
 3. **Terrain is one byte per tile:** land, shore, ocean bits and a 5-bit magnitude that combat
    collapses into three bands (plains / highland / mountain). Forest, marsh, desert, urban and
    rivers do not exist in the map format, the loader, or the Go generator. Map "layers" are
@@ -2997,7 +3000,9 @@ Covered in the table above. Summary: the server authorizes **who may send contro
 
 What it refuses, and why only this: a client with no player in the game; a `spawn` after the spawn phase; any gameplay intent from a dead player after the spawn phase; `build_unit` of a type the lobby disabled; `attack` on oneself or on a player id the game does not have; `move_warship` / `delete_unit` / `cancel_boat` / `upgrade_structure` naming a unit that does not exist or is not the sender's. Every one of these is a fact that cannot change within a turn. Gold, territory, reachability and alliances all move within a tick, and a shadow one turn behind that refused on them would drop honest intents — so those stay where they were, in the simulation every client runs. Until the map has loaded the shadow judges nothing (an intent it cannot see goes through, never refused); if the map cannot load or a tick throws, it logs and judges nothing from then on.
 
-Cost: one extra simulation per lobby on the worker. Measured on this box: the world map loads in 47 ms through the server loader; 300 turns with 50 bots took 255 ms (0.85 ms a turn early in a game; the perf gate's 150-player tick is ~3 ms). Tests: `tests/server/ShadowSim.test.ts` (the real sim on the plains test map) and `tests/server/GameServerShadow.test.ts` (the hooks, with a fake shadow).
+The shadow also keeps the state hashes its own sim emits (every ten ticks, `GameUpdateType.Hash`, the same numbers the clients report). `DesyncDetector.check` takes a `reference(turn)`; when the shadow has a hash for the turn being checked, that hash is the correct one and every client that reported something else is out of sync — no vote, no strict-majority rule, and a lone client is checked too. A majority of tampered clients cannot outvote the server. Where the shadow has no hash (not ready, failed, or the turn is not a hash tick) the check falls back to the vote it always was.
+
+Cost: one extra simulation per lobby on the worker. Measured on this box: the world map loads in 47 ms through the server loader; 300 turns with 50 bots took 255 ms (0.85 ms a turn early in a game; the perf gate's 150-player tick is ~3 ms). Tests: `tests/server/ShadowSim.test.ts` (the real sim on the plains test map) and `tests/server/GameServerShadow.test.ts` (the hooks, with a fake shadow), `tests/server/DesyncDetector.test.ts` (the reference).
 
 #### 2d. HTTP surface
 

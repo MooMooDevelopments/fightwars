@@ -79,6 +79,18 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — the server's hash is the desync reference
+
+- **What shipped.** The shadow keeps the state hashes its sim emits every ten ticks — the
+  same numbers the clients report, from the same code. `DesyncDetector.check` takes a
+  `reference(turn)`; where the shadow has a hash for the turn under check, that is the
+  correct hash, every client that reported something else is out of sync, no vote and no
+  strict-majority rule, and a lone client is checked too (headline 2 used to skip a room of
+  one). Where the shadow has nothing, the check is the vote it always was. A majority of
+  tampered clients cannot outvote the server any more.
+- **Guards broken and watched fail:** the vote outranking the server (three cases), the
+  shadow forgetting its hashes, the server never asking.
+
 ### Session 13 — Phase 7 opens: the server runs its own copy of the game
 
 - **What shipped.** `ShadowSim`: the server builds the same `GameRunner` the clients run
