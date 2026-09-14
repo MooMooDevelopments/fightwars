@@ -525,7 +525,7 @@
   "common": {
     "available": "Available",
     "back": "Back",
-    "backend_unreachable": "Can't reach the OpenFront servers. Check your connection and try again.",
+    "backend_unreachable": "Can't reach the FightWars servers. Check your connection and try again.",
     "cancel": "Cancel",
     "cap_label": "Cap",
     "cap_tooltip": "Recipient’s remaining capacity",
@@ -663,7 +663,7 @@
     "steam_wedged": "Steam couldn't verify your session. Restarting Steam usually fixes this."
   },
   "desktop_status": {
-    "offline": "Offline: can't reach the OpenFront servers",
+    "offline": "Offline: can't reach the FightWars servers",
     "retry": "Retry",
     "retrying": "Retrying…"
   },

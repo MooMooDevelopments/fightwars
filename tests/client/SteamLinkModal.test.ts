@@ -127,33 +127,41 @@ describe("SteamLinkModal", () => {
   // so linking from their real account afterwards is refused
   // (steam_has_progress) with no way for the player to undo it. The gate is
   // "does this account have an identity", not "is there a session".
+  // FightWars: a session is an account. The API mints a persistent guest
+  // account per visitor (keyed by persistent id), so a guest linking Steam
+  // binds it to the account they will keep playing on — the throwaway-account
+  // hazard upstream gates against does not exist here, and the gate would
+  // send every FightWars player to a login that does not exist. The guest
+  // reaches confirm like anyone else.
   describe("guest account (a session, but no linked identity)", () => {
-    it("routes a guest to the login flow instead of confirming, stashing the token", async () => {
+    it("lets a guest reach confirm from the token path", async () => {
       isLoggedInMock.mockResolvedValue(true);
       getUserMeMock.mockResolvedValue(makeUserMe("Ada", {}));
+      fetchSteamLinkTicketMock.mockResolvedValue({
+        ok: true,
+        personaName: "Ada",
+      });
 
       await modal.openWithToken("tok-abc");
       await modal.updateComplete;
 
-      expect(stashPendingLinkMock).toHaveBeenCalledWith("tok-abc");
-      expect(window.location.hash).toBe("#modal=account");
-      expect(modal.isOpen()).toBe(false);
-      expect(fetchSteamLinkTicketMock).not.toHaveBeenCalled();
-      expect(redeemSteamLinkMock).not.toHaveBeenCalled();
+      expect(stashPendingLinkMock).not.toHaveBeenCalled();
+      expect(window.location.hash).not.toBe("#modal=account");
+      expect(modal.isOpen()).toBe(true);
+      expect(fetchSteamLinkTicketMock).toHaveBeenCalled();
     });
 
-    it("routes a guest to the login flow from the code-entry path too, stashing the intent", async () => {
+    it("lets a guest reach the code-entry path too", async () => {
       isLoggedInMock.mockResolvedValue(true);
       getUserMeMock.mockResolvedValue(makeUserMe(null, {}));
 
       await modal.openForCodeEntry();
       await modal.updateComplete;
 
-      expect(stashPendingCodeEntryMock).toHaveBeenCalledTimes(1);
+      expect(stashPendingCodeEntryMock).not.toHaveBeenCalled();
       expect(stashPendingLinkMock).not.toHaveBeenCalled();
-      expect(window.location.hash).toBe("#modal=account");
-      expect(modal.isOpen()).toBe(false);
-      expect(redeemSteamLinkCodeMock).not.toHaveBeenCalled();
+      expect(window.location.hash).not.toBe("#modal=account");
+      expect(modal.isOpen()).toBe(true);
     });
 
     it("accepts an account whose only identity is Steam, which is a real account", async () => {
@@ -203,85 +211,12 @@ describe("SteamLinkModal", () => {
       expect(modal.isOpen()).toBe(true);
     });
 
-    // The window the gate above cannot close on its own. getUserMe() memoises
-    // its answer, but Api.ts deliberately UN-caches an aborted/timed-out
-    // attempt (and a 401 clears the session outright), so the gate's read and
-    // the modal's own read are not guaranteed to agree. A first read that
-    // times out returns `false` -- correctly not treated as a guest -- and
-    // the modal opens; the next read is then a fresh fetch that can succeed
-    // and hand back the very guest profile the gate never got to see. If only
-    // `userMe === false` is checked there, that guest reaches "ready" with the
-    // confirm control enabled, and confirming binds Steam to the throwaway
-    // account for good (steam_has_progress, unrecoverable) -- the exact
-    // outcome this whole change exists to prevent. The rule has to be applied
-    // at every read of userMe, not once at the door.
+    // Upstream re-applies its guest gate at every read of userMe because
+    // getUserMe() un-caches a timed-out attempt and a later read can be the
+    // first to see the guest. Here the guest is welcome at every read, so
+    // the only thing the disagreement must not do is bounce a player; the
+    // control below pins that.
     describe("when the gate's read failed and a later read sees the guest", () => {
-      it("routes to the login flow from the token path instead of reaching confirm", async () => {
-        isLoggedInMock.mockResolvedValue(true);
-        // 1st = the gate's read, timed out (Api.ts clears its cache for
-        // exactly this case). 2nd = onOpen's, a fresh fetch that succeeds.
-        getUserMeMock
-          .mockResolvedValueOnce(false)
-          .mockResolvedValue(makeUserMe("Ada", {}));
-        fetchSteamLinkTicketMock.mockResolvedValue({
-          ok: true,
-          personaName: "Ada",
-        });
-
-        await modal.openWithToken("tok-abc");
-        await vi.waitFor(async () => {
-          await modal.updateComplete;
-          expect(window.location.hash).toBe("#modal=account");
-        });
-
-        // Same destination as the gate's: stashed so the login redirect does
-        // not lose the token, and the modal is gone rather than sitting on a
-        // confirm step it must never show.
-        expect(stashPendingLinkMock).toHaveBeenCalledWith("tok-abc");
-        expect(modal.isOpen()).toBe(false);
-        // close() hides the shell but leaves the rendered body in the light
-        // DOM, so assert the state that actually matters: Confirm was never
-        // enabled (it is enabled only in loadState "ready"), so there was no
-        // moment at which a click could have redeemed anything.
-        expect(confirmButton()?.disabled ?? true).toBe(true);
-        expect(redeemSteamLinkMock).not.toHaveBeenCalled();
-      });
-
-      it("routes to the login flow from the code path instead of reaching confirm", async () => {
-        isLoggedInMock.mockResolvedValue(true);
-        // 1st = the gate's read (openForCodeEntry), timed out. 2nd =
-        // handleCodeSubmit's, which succeeds and returns the guest.
-        getUserMeMock
-          .mockResolvedValueOnce(false)
-          .mockResolvedValue(makeUserMe(null, {}));
-
-        await modal.openForCodeEntry();
-        await modal.updateComplete;
-        expect(modal.isOpen()).toBe(true);
-
-        const input = modal.querySelector<HTMLInputElement>(
-          "input.steam-link-code-input",
-        );
-        expect(input).not.toBeNull();
-        input!.value = "ABCDEFGH";
-        input!.dispatchEvent(new Event("input", { bubbles: true }));
-        modal
-          .querySelector<HTMLButtonElement>("button.steam-link-code-submit-btn")
-          ?.click();
-
-        await vi.waitFor(async () => {
-          await modal.updateComplete;
-          expect(window.location.hash).toBe("#modal=account");
-        });
-
-        expect(stashPendingCodeEntryMock).toHaveBeenCalledTimes(1);
-        expect(stashPendingLinkMock).not.toHaveBeenCalled();
-        expect(modal.isOpen()).toBe(false);
-        // See the token-path case above: absent-or-disabled, never enabled.
-        expect(confirmButton()?.disabled ?? true).toBe(true);
-        expect(redeemSteamLinkCodeMock).not.toHaveBeenCalled();
-      });
-
       // The control: the same disagreement between the two reads, but the
       // second one returns a REAL account. A rule applied at every read must
       // still let this through, or a single timed-out read would strand a

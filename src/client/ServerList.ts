@@ -633,7 +633,7 @@ function apply(): ServerListStatus {
  * **A server-rendered page prefers its own server.** Before v2 a page always
  * talked to the colour that rendered it; the list's random pick can send it
  * to a sibling instead, and the two do not have to agree about that sibling.
- * On dev (`openfront.dev`, a blue/green pair behind the apex with
+ * On dev (`<dev domain>`, a blue/green pair behind the apex with
  * `CLUSTER_STATE_SOURCE=apex`) the registry listed both colours `open` on the
  * same build while the apex poll had green considering itself draining: a
  * page rendered by blue that drew green got a lobby feed reporting
@@ -650,7 +650,7 @@ function apply(): ServerListStatus {
  * lagging-registry cases through it to "fallback", exactly as before.
  *
  * The desktop shell carries an injected `serverHost` too, but its value is a
- * SITE (openfront.io, main.openfront.dev) rather than a deployment the
+ * SITE (<domain>, main.<dev domain>) rather than a deployment the
  * registry lists, so it names no entry and the list's pick stands — except
  * on a standalone deployment whose one server IS that host, where the two
  * answers are the same server anyway.

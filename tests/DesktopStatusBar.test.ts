@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { BRAND } from "../src/brand/Brand";
 import { ClientEnv } from "../src/client/ClientEnv";
 import "../src/client/components/DesktopStatusBar";
 import { barSource } from "../src/client/components/DesktopStatusBar";
@@ -155,7 +156,7 @@ describe("the rendered offline state", () => {
     // The bar renders nothing on the web, so every assertion here needs a
     // shell. No `update` bridge on it: a shell too old to expose one must
     // still show this.
-    (window as { openfrontDesktop?: unknown }).openfrontDesktop = {};
+    (window as any)[BRAND.desktop.windowObject] = {};
     window.BOOTSTRAP_CONFIG = {
       gameEnv: "dev",
       numWorkers: 1,
@@ -181,7 +182,7 @@ describe("the rendered offline state", () => {
 
   afterEach(() => {
     document.body.innerHTML = "";
-    (window as { openfrontDesktop?: unknown }).openfrontDesktop = undefined;
+    delete (window as any)[BRAND.desktop.windowObject];
     window.BOOTSTRAP_CONFIG = undefined;
     ClientEnv.reset();
     resetServerList();

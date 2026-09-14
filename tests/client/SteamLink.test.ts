@@ -276,28 +276,26 @@ describe("resumePendingSteamLink", () => {
   // entry" in two places is how the entry gets burned for a player who has
   // not logged in yet.
   describe("login precondition", () => {
-    it("does not resume for a guest, and leaves the stash for a later login", () => {
+    // FightWars: a session is an account. The API mints a persistent guest
+    // account per visitor, so a guest's stash is redeemed like anyone's —
+    // upstream's "guest must log in first" gate would leave every FightWars
+    // player waiting for a login that does not exist.
+    it("resumes for a guest, whose session is an account here", () => {
       stashPendingLink("tok-abc");
       const modal = makeModal();
 
-      // A guest has a session, so a `!== false` check would wave this
-      // through — and the modal would then reopen, re-stash and redirect to
-      // #modal=account on every pass.
-      expect(resumePendingSteamLink(guest, modal)).toBe(false);
-      expect(modal.openWithToken).not.toHaveBeenCalled();
-      expect(modal.openForCodeEntry).not.toHaveBeenCalled();
-
-      // Still there: the login it is waiting for can still redeem it.
-      expect(takePendingLink()).toEqual({ kind: "token", token: "tok-abc" });
+      expect(resumePendingSteamLink(guest, modal)).toBe(true);
+      expect(modal.openWithToken).toHaveBeenCalledWith("tok-abc");
+      expect(takePendingLink()).toBeNull();
     });
 
-    it("does not resume a code-entry intent for a guest either", () => {
+    it("resumes a code-entry intent for a guest too", () => {
       stashPendingCodeEntry();
       const modal = makeModal();
 
-      expect(resumePendingSteamLink(guest, modal)).toBe(false);
-      expect(modal.openForCodeEntry).not.toHaveBeenCalled();
-      expect(takePendingLink()).toEqual({ kind: "code_entry" });
+      expect(resumePendingSteamLink(guest, modal)).toBe(true);
+      expect(modal.openForCodeEntry).toHaveBeenCalledTimes(1);
+      expect(takePendingLink()).toBeNull();
     });
 
     it("does not resume when there is no session at all", () => {
