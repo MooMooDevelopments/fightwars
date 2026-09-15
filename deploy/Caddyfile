@@ -1,0 +1,24 @@
+# TLS is automatic. Both names must have A records pointing at this box.
+# WebSocket upgrades are proxied transparently by reverse_proxy — the game is
+# a lockstep RTS over WS, so this matters.
+
+{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy game:80
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}
+
+# The client hard-codes api.<DOMAIN> (src/client/ApiBase.ts getApiBase).
+api.{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy api:8787
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+}

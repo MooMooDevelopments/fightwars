@@ -175,8 +175,11 @@ export async function createApiApp(
       res.setHeader("Access-Control-Allow-Credentials", "true");
       res.setHeader("Vary", "Origin");
       res.setHeader(
+        // Content-Encoding is not a CORS-safelisted request header, so the
+        // gzipped singleplayer archive upload (LocalServer.archiveGame) fails
+        // preflight without it listed here.
         "Access-Control-Allow-Headers",
-        "Content-Type, Authorization, X-Api-Key",
+        "Content-Type, Content-Encoding, Authorization, X-Api-Key",
       );
       res.setHeader(
         "Access-Control-Allow-Methods",

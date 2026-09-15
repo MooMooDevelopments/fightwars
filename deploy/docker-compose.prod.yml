@@ -1,0 +1,87 @@
+# FightWars — single-box production stack.
+#
+#   cd deploy && docker compose -f docker-compose.prod.yml up -d
+#
+# Pulls the image built by .github/workflows/docker-image.yml rather than
+# building here: `build-prod` runs tsc and Vite concurrently and will OOM a
+# small droplet. Never add `build:` to this file.
+#
+# Caddy terminates TLS (automatic Let's Encrypt) and proxies to the game
+# container's own nginx. The client resolves the API as api.<DOMAIN>
+# (src/client/ApiBase.ts), so BOTH hostnames must point at this box.
+#
+# redis is omitted deliberately: the compose file in the repo root marks it
+# "reserved ... not yet wired", and nothing reads it today.
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [game, api]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN, e.g. fightwars.burvic.com}
+
+  game:
+    image: ${IMAGE:-ghcr.io/moomoodevelopments/fightwars:latest}
+    restart: unless-stopped
+    depends_on: [api]
+    environment:
+      GAME_ENV: prod
+      DOMAIN: ${DOMAIN:?}
+      # Empty SUBDOMAIN means the self-match key is the bare DOMAIN, so the
+      # CLUSTER_JSON host below must equal DOMAIN exactly or boot is refused.
+      SUBDOMAIN: ""
+      CLUSTER_JSON: ${CLUSTER_JSON:?set CLUSTER_JSON with host == DOMAIN}
+      API_KEY: ${API_KEY:?shared with the api service}
+      ADMIN_BOT_API_KEY: ${ADMIN_BOT_API_KEY:-}
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:?}
+      REPLAY_DIR: /data/replays
+      DESYNC_WEBHOOK_URL: ${DESYNC_WEBHOOK_URL:-}
+    volumes:
+      - replays:/data/replays
+
+  api:
+    image: ${IMAGE:-ghcr.io/moomoodevelopments/fightwars:latest}
+    restart: unless-stopped
+    command: ["npm", "run", "start:api"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      GAME_ENV: prod
+      DOMAIN: ${DOMAIN:?}
+      API_PORT: "8787"
+      API_KEY: ${API_KEY:?}
+      # Persisted so every restart does not invalidate live sessions.
+      API_JWT_PRIVATE_KEY: ${API_JWT_PRIVATE_KEY:?generate one, see .env.example}
+      API_CORS_ORIGINS: https://${DOMAIN}
+      DATABASE_URL: postgres://fightwars:${POSTGRES_PASSWORD:?}@db:5432/fightwars
+      TURNSTILE_SECRET: ${TURNSTILE_SECRET:-}
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fightwars
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      POSTGRES_DB: fightwars
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fightwars"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  replays:
+  caddy_data:
+  caddy_config:
