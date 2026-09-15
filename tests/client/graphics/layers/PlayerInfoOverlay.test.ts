@@ -1,6 +1,7 @@
 /**
  * Hovering an owned tile must show the owner's info card, and the name color
- * must reflect the local player's relation to them (friendly = green).
+ * must reflect the local player's relation to them: the palette's gain role
+ * for a friend, the same green the event feed uses for good news.
  */
 
 vi.mock("lit", () => ({
@@ -95,7 +96,7 @@ describe("PlayerInfoOverlay", () => {
     overlay.init();
   });
 
-  it("shows the hovered player's card with a green name for a friend", () => {
+  it("shows the hovered player's card with the gain colour for a friend", () => {
     overlay.game = makeGame({
       isFriendly: () => true,
       isAlliedWith: () => false,
@@ -107,7 +108,7 @@ describe("PlayerInfoOverlay", () => {
 
     expect(out).toContain("opacity-100 visible");
     expect(out).toContain("Bob");
-    expect(out).toContain("text-green-500");
+    expect(out).toContain("text-status-gain");
   });
 
   it("shows a white name when there is no local player", () => {
@@ -118,7 +119,7 @@ describe("PlayerInfoOverlay", () => {
 
     expect(out).toContain("Bob");
     expect(out).toContain("text-white");
-    expect(out).not.toContain("text-green-500");
+    expect(out).not.toContain("text-status-gain");
   });
 
   it("adds the attack-cost breakdown once a uiState is wired in", () => {

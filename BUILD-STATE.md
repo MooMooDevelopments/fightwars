@@ -79,6 +79,31 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — the in-game HUD's last raw hues, and the phone seen
+
+- **What shipped.** The seven in-game surfaces that still named Tailwind hues — the
+  player-info overlay (17 of them), unit display, tutorial panel, emoji table, actionable
+  events, heads-up message, chat display — name palette roles now: `surface` for panels,
+  `ink`/`ink-muted`/`ink-dim` for type, `action`/`action-ink` for interaction, `signal`
+  for "it is your move", and the four status roles for gain, loss, alert and note.
+  `HudTokens.test.ts` holds every one of them to zero raw hues, beside the feeds, the
+  control panel, the player panel and the leaderboard tables it already held. That closes
+  Phase 4 item 6's palette half; what is left of the sweep is menus and modals, which a
+  player opens by choice rather than reads every tick.
+- **Seen, not assumed.** A real solo game in the browser pane at 375 px: the tutorial
+  panel, the control-panel row and the game-speed popover in their tokens; `M` opening the
+  radial menu (the keyboard path from earlier this session, working in a live game); an
+  arrow key moving the focus ring with the live region reading "info" and `aria-current`
+  set; Enter opening the player panel, which fits the phone with its stat tiles, alliance
+  list and trade buttons legible. Phase 4 item 7's last unseen surfaces.
+- **One test moved with the code:** `PlayerInfoOverlay.test.ts` asserted the literal
+  `text-green-500`; it asserts the gain role now. A test that names a colour instead of a
+  role has to be rewritten every time the palette is tightened — which is the argument for
+  roles, in miniature.
+- **Not done:** the menus and modals' own hue sweep, and the HUD layout rearrangement item
+  6 also mentions — the panels sit where upstream put them, and moving them is a design
+  decision the owner should see first.
+
 ### Session 13 — the map editor
 
 - **What shipped.** The map format written a second time, in TypeScript

@@ -235,6 +235,24 @@ describe("the HUD does not reach past the palette", () => {
     }
   });
 
+  test("the whole in-game HUD names no raw hue", () => {
+    // Everything a player reads without opening a menu: the feeds above, the
+    // panels below. A hue name on one of these is a colour decision made
+    // where the palette cannot measure it — and these are the surfaces the
+    // colourblind palettes have to carry.
+    for (const relative of [
+      "src/client/hud/layers/PlayerInfoOverlay.ts",
+      "src/client/hud/layers/UnitDisplay.ts",
+      "src/client/hud/layers/TutorialPanel.ts",
+      "src/client/hud/layers/EmojiTable.ts",
+      "src/client/hud/layers/ActionableEvents.ts",
+      "src/client/hud/layers/HeadsUpMessage.ts",
+      "src/client/hud/layers/ChatDisplay.ts",
+    ]) {
+      expect(read(relative).match(HUE_CLASS) ?? [], relative).toEqual([]);
+    }
+  });
+
   test("no icon is tinted by a hand-tuned filter chain", () => {
     // `filter: brightness(0) saturate(100%) invert(27%) sepia(91%) ...` is a
     // colour nobody can read and nothing can check against the palette. The

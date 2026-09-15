@@ -397,7 +397,7 @@ export class ActionableEvents extends LitElement implements Controller {
         ${sorted.map(
           (event) => html`
             <div
-              class="bg-gray-800/92 backdrop-blur-sm rounded-lg shadow-lg border-l-4 border-yellow-400 p-3 lg:p-4 text-white"
+              class="bg-surface/92 backdrop-blur-sm rounded-lg shadow-lg border-l-4 border-signal p-3 lg:p-4 text-white"
             >
               <button
                 class="text-left text-sm lg:text-base font-semibold w-full cursor-pointer ${getMessageTypeClasses(
@@ -413,10 +413,10 @@ export class ActionableEvents extends LitElement implements Controller {
                     <button
                       class="inline-block px-3 py-1 text-white rounded-sm text-xs lg:text-sm cursor-pointer transition-colors duration-300
                         ${btn.className.includes("btn-info")
-                        ? "bg-blue-500 hover:bg-blue-600"
+                        ? "bg-action hover:bg-action-hover"
                         : btn.className.includes("btn-gray")
-                          ? "bg-gray-500 hover:bg-gray-600"
-                          : "bg-green-600 hover:bg-green-700"}"
+                          ? "bg-white/20 hover:bg-white/30"
+                          : "bg-status-gain/80 hover:bg-status-gain"}"
                       @click=${() => {
                         btn.action();
                         if (!btn.preventClose) {

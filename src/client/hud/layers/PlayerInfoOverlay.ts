@@ -213,7 +213,7 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
   }
 
   private getPlayerNameColor(isFriendly: boolean): string {
-    if (isFriendly) return "text-green-500";
+    if (isFriendly) return "text-status-gain";
     return "text-white";
   }
 
@@ -247,7 +247,7 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
   private displayUnitCount(player: PlayerView, type: UnitType, icon: string) {
     return !this.game.config().isUnitDisabled(type)
       ? html`<div
-          class="flex items-center justify-center gap-0.5 lg:gap-1 p-0.5 lg:p-1 border rounded-md border-gray-500 text-[10px] lg:text-xs w-9 lg:w-12 h-6 lg:h-7"
+          class="flex items-center justify-center gap-0.5 lg:gap-1 p-0.5 lg:p-1 border rounded-md border-white/25 text-[10px] lg:text-xs w-9 lg:w-12 h-6 lg:h-7"
           translate="no"
         >
           <img
@@ -475,7 +475,7 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
       betrayalHtml = html`<span class="flex ml-auto items-center shrink-0 "
         ><img src=${traitorIcon} alt="" class="w-4 h-4 shrink-0" />
         <span
-          class="text-sm text-red-900 
+          class="text-sm text-status-loss 
           drop-shadow-[-.2px_-.2px_.8px_rgba(0,0,0,.7),.2px_.2px_.8px_rgba(0,0,0,.7)]"
         >
           ${renderDuration(Math.floor(traitorTicks / 10))} </span
@@ -489,7 +489,7 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
         <div class="flex flex-col gap-1 shrink-0 w-28 md:w-36">
           <div class="flex items-center gap-1">
             <div
-              class="flex items-center justify-center px-1 py-0.5 border rounded-md border-yellow-400 font-bold text-yellow-400 text-sm lg:gap-1"
+              class="flex items-center justify-center px-1 py-0.5 border rounded-md border-signal font-bold text-signal text-sm lg:gap-1"
               translate="no"
             >
               <img src=${goldCoinIcon} width="13" height="13" />
@@ -549,11 +549,11 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
                   class="flex flex-col items-center leading-tight shrink-0"
                 >
                   <span
-                    class="text-gray-400 text-xs font-mono font-normal whitespace-nowrap"
+                    class="text-ink-dim text-xs font-mono font-normal whitespace-nowrap"
                     >${playerType}</span
                   >
                   <span
-                    class="text-xs font-mono font-normal text-gray-400 whitespace-nowrap"
+                    class="text-xs font-mono font-normal text-ink-dim whitespace-nowrap"
                     >[<span
                       style="color: ${themeProvider
                         .current()
@@ -564,7 +564,7 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
                   >
                 </div>`
               : html`<span
-                  class="text-gray-400 text-xs font-mono font-normal shrink-0 whitespace-nowrap"
+                  class="text-ink-dim text-xs font-mono font-normal shrink-0 whitespace-nowrap"
                   >${playerType}</span
                 >`}
             ${this.renderPlayerNameIcons(playerIcons)} ${betrayalHtml ?? ""}
@@ -610,11 +610,11 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
 
     return html`
       <div
-        class="w-full h-5 lg:h-6 border border-gray-600 rounded-md bg-gray-900/60 overflow-hidden relative"
+        class="w-full h-5 lg:h-6 border border-white/20 rounded-md bg-surface-deep/60 overflow-hidden relative"
       >
         <div class="relative h-full">
           <div
-            class="absolute inset-y-0 left-0 w-full origin-left bg-sky-700 transition-transform duration-200 ease-out"
+            class="absolute inset-y-0 left-0 w-full origin-left bg-meter-fill transition-transform duration-200 ease-out"
             style="transform: scaleX(${greenPercent / 100});"
           ></div>
           <div
@@ -654,7 +654,9 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
 
     return html`
       <div class="p-2">
-        <div class="font-bold mb-1 ${isAlly ? "text-green-500" : "text-white"}">
+        <div
+          class="font-bold mb-1 ${isAlly ? "text-status-gain" : "text-white"}"
+        >
           ${unit.owner().displayName()}
         </div>
         <div class="mt-1">
@@ -701,7 +703,7 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
         <div class="flex flex-wrap gap-x-4 gap-y-0.5 mt-1">
           <span>
             ${translateText("attack_cost.you_lose")}
-            <span class="font-bold text-red-300"
+            <span class="font-bold text-status-loss"
               >${renderTroops(estimate.result.attackerTroopLoss)}</span
             >
           </span>
@@ -709,7 +711,7 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
             ? ""
             : html`<span>
                 ${translateText("attack_cost.they_lose")}
-                <span class="font-bold text-green-300"
+                <span class="font-bold text-status-gain"
                   >${renderTroops(estimate.result.defenderTroopLoss)}</span
                 >
               </span>`}
@@ -743,8 +745,8 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
                     ${translateText(`attack_cost.factor.${factor.key}`)}
                     <span
                       class=${factor.value > 1
-                        ? "text-red-300"
-                        : "text-green-300"}
+                        ? "text-status-loss"
+                        : "text-status-gain"}
                       >×${factor.value.toFixed(2)}</span
                     >
                   </span>`,
@@ -771,7 +773,7 @@ export class PlayerInfoOverlay extends LitElement implements Controller {
         @contextmenu=${(e: MouseEvent) => e.preventDefault()}
       >
         <div
-          class="bg-gray-800/92 backdrop-blur-sm shadow-xs min-[1200px]:rounded-lg sm:rounded-b-lg shadow-lg text-white text-lg lg:text-base w-full sm:w-[500px] overflow-hidden ${containerClasses}"
+          class="bg-surface/92 backdrop-blur-sm shadow-xs min-[1200px]:rounded-lg sm:rounded-b-lg shadow-lg text-white text-lg lg:text-base w-full sm:w-[500px] overflow-hidden ${containerClasses}"
         >
           ${this.player ? this.renderPlayerInfo(this.player) : ""}
           ${this.player && this.attackEstimate

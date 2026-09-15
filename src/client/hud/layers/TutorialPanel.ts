@@ -420,14 +420,14 @@ export class TutorialPanel extends LitElement implements Controller {
     return html`
       <div
         dir=${textDirection()}
-        class="pointer-events-auto w-full sm:rounded-lg bg-gray-800/92 backdrop-blur-sm shadow-lg text-white text-base p-2 sm:mb-1"
+        class="pointer-events-auto w-full sm:rounded-lg bg-surface/92 backdrop-blur-sm shadow-lg text-white text-base p-2 sm:mb-1"
         @contextmenu=${(e: MouseEvent) => e.preventDefault()}
       >
         <div class="flex items-center justify-between gap-2 mb-1">
           <span class="font-bold text-rank-gold uppercase tracking-wide text-sm"
             >${translateText("tutorial.title")}</span
           >
-          <span class="flex items-center gap-2 text-sm text-gray-300">
+          <span class="flex items-center gap-2 text-sm text-ink-muted">
             ${this.confirmingClose ? nothing : this.renderHeaderActions()}
             ${this.ctx && !this.progress.finished()
               ? translateText("tutorial.step_counter", {
@@ -436,7 +436,7 @@ export class TutorialPanel extends LitElement implements Controller {
                 })
               : nothing}
             <button
-              class="text-gray-400 hover:text-white text-base leading-none px-1"
+              class="text-ink-dim hover:text-white text-base leading-none px-1"
               title=${translateText("tutorial.close")}
               aria-label=${translateText("tutorial.close")}
               @click=${() => (this.confirmingClose = !this.confirmingClose)}
@@ -478,7 +478,7 @@ export class TutorialPanel extends LitElement implements Controller {
           </button>`
         : nothing}
       <button
-        class="text-gray-400 hover:text-white underline"
+        class="text-ink-dim hover:text-white underline"
         @click=${() => this.progress.skip()}
       >
         ${translateText("tutorial.skip")}
@@ -490,13 +490,13 @@ export class TutorialPanel extends LitElement implements Controller {
     return html`
       <div class="flex flex-col gap-1.5">
         <button
-          class="rounded-md border border-gray-500 hover:bg-gray-700 px-2 py-1"
+          class="rounded-md border border-white/25 hover:bg-white/10 px-2 py-1"
           @click=${() => this.setActive(false)}
         >
           ${translateText("tutorial.hide_for_game")}
         </button>
         <button
-          class="rounded-md border border-gray-500 hover:bg-gray-700 px-2 py-1"
+          class="rounded-md border border-white/25 hover:bg-white/10 px-2 py-1"
           @click=${() => this.dismissForever()}
         >
           ${translateText("tutorial.never_show")}
@@ -513,7 +513,7 @@ export class TutorialPanel extends LitElement implements Controller {
     if (step === null) return nothing;
     const done = this.progress.stepDone();
     return html`
-      <p class="flex gap-1.5 ${done ? "text-green-400" : ""}">
+      <p class="flex gap-1.5 ${done ? "text-status-gain" : ""}">
         ${step.bullets && !done
           ? nothing
           : html`<span class="shrink-0">${done ? "✓" : "•"}</span>`}

@@ -204,8 +204,8 @@ their sections.
 | 3   | Readable at every zoom (political blocks, halos, flashes)                              | **done** — blocks and borders (session 7), halos and the bloom (session 13) |
 | 4   | Every number explained on hover                                                        | **done** — estimate before, spend during (tiles conquered: see below)       |
 | 5   | Feel: border wave, nuke flash + shake + ring + sound                                   | **done**                                                                    |
-| 6   | Radial menus, HUD, leaderboard, events feed                                            | **part-done** — typography, tokens and a11y; layout and the feeds remain    |
-| 7   | Mobile first-class                                                                     | **part-done** — rotation, header and touch targets; layout remains          |
+| 6   | Radial menus, HUD, leaderboard, events feed                                            | **done** — typography, tokens (the whole in-game HUD), a11y, the keyboard   |
+| 7   | Mobile first-class                                                                     | **done** — rotation, header, targets; the radial menu and player panel seen |
 | 8   | Onboarding: 90-second tutorial                                                         | **done**                                                                    |
 | 9   | Build queue, rally points, attack presets                                              | **done** (session 13) — all three client-side, nothing on the wire          |
 | 10  | Clan create form; guest-appropriate account page                                       | **done**                                                                    |
@@ -386,7 +386,12 @@ player reads every tick — `ControlPanel.ts` and the shared `StatsTable.ts`.
   build menu still sit where upstream put them.
 - **The radial menus.** `RadialMenu.ts` (1402 lines) and `RadialMenuElements.ts` (819) are
   untouched.
-- **The rest of the palette sweep.** 148 raw hue class names remain across the HUD after
+- **The rest of the palette sweep — the in-game HUD is done** (session 13: the player-info
+  overlay, unit display, tutorial panel, emoji table, actionable events, heads-up message
+  and chat display joined the feeds, the control panel, the player panel and the
+  leaderboard tables; `HudTokens.test.ts` holds all of them to zero raw hues). What remains
+  is the menus and modals — settings, reports, moderation, the win modal — which a player
+  reads by choice rather than every tick. Before this pass,
   session 13 took the player panel, the three leaderboard tables and the send-resource modal
   to zero (all held there by `tests/client/HudTokens.test.ts`, with `rank-silver` and
   `rank-bronze` measured in). What is left is the modals nobody reads mid-game; count them

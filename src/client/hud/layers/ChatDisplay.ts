@@ -152,7 +152,7 @@ export class ChatDisplay extends LitElement implements Controller {
             <span
               class="${this.newEvents
                 ? ""
-                : "hidden"} inline-block px-2 bg-red-500 rounded-xs"
+                : "hidden"} inline-block px-2 bg-status-loss rounded-xs"
               >${this.newEvents}</span
             >
           </button>
@@ -166,7 +166,7 @@ export class ChatDisplay extends LitElement implements Controller {
             <tbody>
               ${this.chatEvents.map(
                 (chat) => html`
-                  <tr class="border-b border-gray-200/0">
+                  <tr class="border-b border-white/0">
                     <td class="lg:p-3 p-1 text-left">
                       ${this.getChatContent(chat)}
                     </td>
