@@ -4,6 +4,7 @@ import {
   buildMapPackage,
   createGrid,
   EditorGrid,
+  gridFromPacked,
   halveGrid,
   oceanMask,
   packGrid,
@@ -151,6 +152,26 @@ describe("map package", () => {
       }
     }
     void GameMapSize;
+  });
+
+  it("opens a package back up and exports the same map", () => {
+    const g = island();
+    const pkg = buildMapPackage({
+      name: "Test Isle",
+      grid: g,
+      nations: [{ name: "Northport", coordinates: [6, 6] }],
+    });
+    const reopened = gridFromPacked(pkg.manifest.map, pkg.mapBin);
+    expect(Array.from(reopened.terrain)).toEqual(Array.from(g.terrain));
+    expect(Array.from(reopened.elevation)).toEqual(Array.from(g.elevation));
+    const again = buildMapPackage({
+      name: "Test Isle",
+      grid: reopened,
+      nations: [{ name: "Northport", coordinates: [6, 6] }],
+    });
+    expect(Array.from(again.mapBin)).toEqual(Array.from(pkg.mapBin));
+    expect(Array.from(again.map4xBin)).toEqual(Array.from(pkg.map4xBin));
+    expect(again.manifest).toEqual(pkg.manifest);
   });
 
   it("says what is wrong before an export, and nothing when it is fine", () => {

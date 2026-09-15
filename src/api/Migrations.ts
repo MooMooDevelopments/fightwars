@@ -180,6 +180,31 @@ export const MIGRATIONS: { id: string; sql: string }[] = [
       CREATE INDEX challenge_progress_period ON challenge_progress(period_key);
     `,
   },
+  {
+    // FightWars (brief §6.9): maps made in the in-browser editor, published
+    // with their package whole, and rated one to five by account.
+    id: "0009_community_maps",
+    sql: `
+      CREATE TABLE community_maps (
+        id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name          TEXT NOT NULL,
+        persistent_id UUID NOT NULL REFERENCES accounts(persistent_id) ON DELETE CASCADE,
+        width         INTEGER NOT NULL,
+        height        INTEGER NOT NULL,
+        num_nations   INTEGER NOT NULL,
+        package       JSONB NOT NULL,
+        created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+      CREATE INDEX community_maps_created ON community_maps(created_at DESC);
+      CREATE TABLE community_map_ratings (
+        map_id        UUID NOT NULL REFERENCES community_maps(id) ON DELETE CASCADE,
+        persistent_id UUID NOT NULL REFERENCES accounts(persistent_id) ON DELETE CASCADE,
+        stars         SMALLINT NOT NULL CHECK (stars BETWEEN 1 AND 5),
+        rated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+        PRIMARY KEY (map_id, persistent_id)
+      );
+    `,
+  },
 ];
 
 export async function migrate(db: Db): Promise<string[]> {

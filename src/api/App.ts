@@ -49,6 +49,7 @@ import { Db, openDb } from "./Db";
 import { friendPublicIds, registerFriendRoutes } from "./FriendRoutes";
 import { registerGamesRoutes } from "./GamesRoutes";
 import { loadSigningKeys, SigningKeys, signToken, verifyToken } from "./Keys";
+import { registerMapRoutes } from "./MapRoutes";
 import {
   challengesFor,
   getMatchRecord,
@@ -491,6 +492,7 @@ export async function createApiApp(
   registerGamesRoutes(app, db);
   registerClanRoutes(app, db, callerFromBearer);
   registerFriendRoutes(app, db, callerFromBearer);
+  registerMapRoutes(app, db, callerFromBearer);
 
   app.get("/public/leaderboard/:ladder", async (req, res) => {
     const ladder = req.params.ladder;

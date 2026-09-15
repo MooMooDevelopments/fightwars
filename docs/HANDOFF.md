@@ -670,12 +670,14 @@ Remaining, roughly in the order the brief implies:
   format in TypeScript, tested against the real loader; `<map-editor-modal>` paints,
   places nations and exports a `.fwmap.json` package). The Go generator under
   `map-generator/` remains the format's first implementation (`npm run gen-maps`
-  regenerates `Maps.gen.ts`); loading a package back into a lobby is the browser's half,
-  **fully data-driven balance is in** (session 13: `Tunables.ts`, 91 knobs with bounds,
+  regenerates `Maps.gen.ts`). **The community map browser is in** (session 13: publish,
+  list by newest or rating, fetch, rate one to five per account, open in the editor —
+  `src/api/Maps.ts`, `<map-browser-modal>`); what is left of §6.9 is _playing_ a community
+  map, which needs a map identity on the wire so the server and every client fetch the same
+  package. **Fully data-driven balance is in** (session 13: `Tunables.ts`, 91 knobs with bounds,
   `GameConfig.ruleset` per lobby, `resources/rulesets/default.json` the versioned file of
   record, a Custom rules editor in the host lobby, `balance:run --ruleset`; the accessors
-  with logic in them and hot reload mid-game are the remainder), community map browser
-  with ratings (API + `docs/API.md`).
+  with logic in them and hot reload mid-game are the remainder).
 
 **Phase 6 gate.** Each mode played to its end condition in the Browser pane with two
 origins; determinism gate over a recorded match of each mode; API tests for every new route

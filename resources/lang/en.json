@@ -1561,6 +1561,23 @@
     "yellowsea": "Yellow Sea",
     "yenisei": "Yenisei"
   },
+  "map_browser": {
+    "anonymous": "someone",
+    "by": "by {author}",
+    "empty": "No community maps yet. Make one in the map editor.",
+    "loading": "Loading maps…",
+    "nations": "{count} nations",
+    "open": "Open in the editor",
+    "open_failed": "That map could not be opened.",
+    "opening": "Opening…",
+    "rate": "Rate {stars} stars",
+    "rate_failed": "Sign in to rate a map.",
+    "rating": "{average} from {count}",
+    "sort_new": "Newest",
+    "sort_rating": "Best rated",
+    "title": "Community maps",
+    "unrated": "Not rated yet"
+  },
   "map_categories": {
     "africa": "Africa",
     "antarctica": "Antarctica",
@@ -1609,6 +1626,9 @@
     "problem_nation_off_map": "A nation sits outside the map.",
     "problem_nations": "Place at least one nation.",
     "problem_size": "The map must be at least 16 by 16.",
+    "publish": "Publish to the community",
+    "publish_failed": "Not published: {error}",
+    "published": "Published",
     "remove_nation": "Remove {name}",
     "size": "Size",
     "title": "Map editor"

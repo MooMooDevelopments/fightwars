@@ -156,6 +156,55 @@ export const PlacementSchema = z.object({
 });
 export type Placement = z.infer<typeof PlacementSchema>;
 
+/** A map package as the editor exports it (brief §6.9). */
+const MapMetaSchema = z.object({
+  width: z.number().int().min(1).max(4096),
+  height: z.number().int().min(1).max(4096),
+  num_land_tiles: z.number().int().min(0),
+});
+
+export const MapPackageFileSchema = z.object({
+  format: z.literal("fightwars-map/1"),
+  manifest: z.object({
+    name: z.string().min(1).max(60),
+    map: MapMetaSchema,
+    map4x: MapMetaSchema,
+    map16x: MapMetaSchema,
+    nations: z
+      .array(
+        z.object({
+          name: z.string().min(1).max(40),
+          coordinates: z.tuple([z.number().int(), z.number().int()]),
+          flag: z.string().max(8).optional(),
+        }),
+      )
+      .max(400),
+  }),
+  mapBin: z.string(),
+  map4xBin: z.string(),
+  map16xBin: z.string(),
+});
+export type MapPackageFile = z.infer<typeof MapPackageFileSchema>;
+
+/** One community map as the browser lists it. */
+export const CommunityMapSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  author: z.string().nullable(),
+  width: z.number(),
+  height: z.number(),
+  nations: z.number(),
+  createdAt: z.iso.datetime(),
+  ratingAverage: z.number().nullable(),
+  ratingCount: z.number(),
+});
+export type CommunityMap = z.infer<typeof CommunityMapSchema>;
+
+export const CommunityMapListSchema = z.object({
+  maps: z.array(CommunityMapSchema),
+});
+export type CommunityMapList = z.infer<typeof CommunityMapListSchema>;
+
 /** One live challenge and the caller's progress toward it. */
 export const ChallengeProgressSchema = z.object({
   id: z.string(),

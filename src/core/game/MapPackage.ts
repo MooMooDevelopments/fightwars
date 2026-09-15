@@ -230,6 +230,34 @@ export function halveGrid(grid: EditorGrid): EditorGrid {
   return out;
 }
 
+/**
+ * The grid a packed map came from, as far as an editor needs it: the type
+ * of every tile and, for land, its elevation. The derived bits — ocean,
+ * shoreline, a water tile's distance — are recomputed on the way out, so
+ * a package opened in the editor and exported again is the same map.
+ */
+export function gridFromPacked(
+  meta: { width: number; height: number },
+  bin: Uint8Array,
+): EditorGrid {
+  const grid = createGrid(meta.width, meta.height);
+  for (let i = 0; i < grid.terrain.length && i < bin.length; i++) {
+    const byte = bin[i];
+    const magnitude = byte & 0b0001_1111;
+    if ((byte & 0b1000_0000) === 0) {
+      grid.terrain[i] = TERRAIN_CODES.water;
+      continue;
+    }
+    if (magnitude === IMPASSABLE_MAGNITUDE) {
+      grid.terrain[i] = TERRAIN_CODES.impassable;
+      continue;
+    }
+    grid.terrain[i] = TERRAIN_CODES.land;
+    grid.elevation[i] = magnitude;
+  }
+  return grid;
+}
+
 export interface MapPackageNation {
   name: string;
   coordinates: [number, number];

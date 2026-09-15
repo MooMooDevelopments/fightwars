@@ -73,6 +73,7 @@ import "./LangSelector";
 import { LangSelector } from "./LangSelector";
 import { initLayout } from "./Layout";
 import "./LeaderboardModal";
+import "./MapBrowserModal";
 import "./MapEditorModal";
 import "./Matchmaking";
 import { MatchmakingModal } from "./Matchmaking";
@@ -402,6 +403,10 @@ class Client {
     modalRouter.register("map-editor", {
       tag: "map-editor-modal",
       pageId: "page-map-editor",
+    });
+    modalRouter.register("map-browser", {
+      tag: "map-browser-modal",
+      pageId: "page-map-browser",
     });
     modalRouter.register("news", { tag: "news-modal", pageId: "page-news" });
     modalRouter.register("language", {

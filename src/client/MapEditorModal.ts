@@ -1,14 +1,17 @@
 import { html } from "lit";
 import { customElement, query, state } from "lit/decorators.js";
 import { translateText } from "../client/Utils";
+import { MapPackageFile } from "../core/ApiSchemas";
 import {
   buildMapPackage,
   createGrid,
   EditorGrid,
+  gridFromPacked,
   MapPackageNation,
   TERRAIN_CODES,
   validatePackage,
 } from "../core/game/MapPackage";
+import { publishCommunityMap } from "./Api";
 import { BaseModal } from "./components/BaseModal";
 import { modalHeader } from "./components/ui/ModalHeader";
 
@@ -92,6 +95,7 @@ export class MapEditorModal extends BaseModal {
   @state() private placingNation = false;
   @state() private problems: string[] = [];
   @state() private exported: string | null = null;
+  @state() private published: string | null = null;
   @query("canvas") private canvas?: HTMLCanvasElement | null;
 
   private painting = false;
@@ -218,6 +222,47 @@ export class MapEditorModal extends BaseModal {
   removeNation(index: number): void {
     this.nations = this.nations.filter((_, i) => i !== index);
     this.exported = null;
+  }
+
+  /** Open a published package (brief §6.9, the browser's Open). */
+  loadPackage(pkg: MapPackageFile): void {
+    const bin = Uint8Array.from(atob(pkg.mapBin), (c) => c.charCodeAt(0));
+    this.grid = gridFromPacked(pkg.manifest.map, bin);
+    this.nations = pkg.manifest.nations.map((n) => ({
+      name: n.name,
+      coordinates: [n.coordinates[0], n.coordinates[1]] as [number, number],
+      ...(n.flag === undefined ? {} : { flag: n.flag }),
+    }));
+    this.mapName = pkg.manifest.name;
+    this.problems = [];
+    this.exported = null;
+    this.published = null;
+  }
+
+  /** Publish to the community browser; the API validates before it stores. */
+  async publish(): Promise<void> {
+    const input = {
+      name: this.mapName,
+      grid: this.grid,
+      nations: this.nations,
+    };
+    this.problems = validatePackage(input);
+    if (this.problems.length > 0) {
+      this.published = null;
+      return;
+    }
+    const pkg = buildMapPackage(input);
+    const result = await publishCommunityMap({
+      format: "fightwars-map/1",
+      manifest: pkg.manifest,
+      mapBin: base64(pkg.mapBin),
+      map4xBin: base64(pkg.map4xBin),
+      map16xBin: base64(pkg.map16xBin),
+    });
+    this.published =
+      "id" in result
+        ? translateText("map_editor.published")
+        : translateText("map_editor.publish_failed", { error: result.error });
   }
 
   resize(width: number, height: number): void {
@@ -395,6 +440,17 @@ export class MapEditorModal extends BaseModal {
             data-export
             @click=${() => this.exportPackage()}
           ></o-button>
+          <o-button
+            variant="secondary"
+            .title=${translateText("map_editor.publish")}
+            data-publish
+            @click=${() => this.publish()}
+          ></o-button>
+          ${this.published === null
+            ? null
+            : html`<span class="text-xs text-white/70" data-published>
+                ${this.published}
+              </span>`}
           ${this.exported === null
             ? null
             : html`<span class="text-xs text-status-gain" data-exported>

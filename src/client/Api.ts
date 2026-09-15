@@ -7,8 +7,12 @@ import {
   ClaimAllRewardsResponseSchema,
   ClaimRewardResponse,
   ClaimRewardResponseSchema,
+  CommunityMap,
+  CommunityMapListSchema,
   GetMyTribeNamesResponse,
   GetMyTribeNamesResponseSchema,
+  MapPackageFile,
+  MapPackageFileSchema,
   NewsItemSchema,
   PaymentsCheckoutResponse,
   PaymentsCheckoutResponseSchema,
@@ -60,6 +64,74 @@ import {
 } from "./Auth";
 import { ClientEnv } from "./ClientEnv";
 import { ensureServerList } from "./ServerList";
+
+/**
+ * The community map browser (brief §6.9). Listing and fetching are open;
+ * publishing and rating carry the player's token.
+ */
+export async function fetchCommunityMaps(
+  sort: "new" | "rating" = "new",
+  page = 1,
+): Promise<CommunityMap[]> {
+  const res = await fetch(`${getApiBase()}/maps?sort=${sort}&page=${page}`, {
+    headers: { Accept: "application/json" },
+  });
+  if (res.status !== 200) return [];
+  const parsed = CommunityMapListSchema.safeParse(await res.json());
+  return parsed.success ? parsed.data.maps : [];
+}
+
+export async function fetchCommunityMap(
+  id: string,
+): Promise<MapPackageFile | null> {
+  const res = await fetch(`${getApiBase()}/maps/${encodeURIComponent(id)}`, {
+    headers: { Accept: "application/json" },
+  });
+  if (res.status !== 200) return null;
+  const parsed = MapPackageFileSchema.safeParse(await res.json());
+  return parsed.success ? parsed.data : null;
+}
+
+export async function publishCommunityMap(
+  pkg: MapPackageFile,
+): Promise<{ id: string } | { error: string }> {
+  const auth = await userAuth();
+  if (!auth) return { error: "unauthorized" };
+  const res = await fetch(`${getApiBase()}/maps`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${auth.jwt}`,
+    },
+    body: JSON.stringify(pkg),
+  });
+  const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+  if (res.status !== 201) {
+    return { error: String(json.error ?? res.status) };
+  }
+  return { id: String(json.id) };
+}
+
+export async function rateCommunityMap(
+  id: string,
+  stars: number,
+): Promise<{ average: number; count: number } | null> {
+  const auth = await userAuth();
+  if (!auth) return null;
+  const res = await fetch(
+    `${getApiBase()}/maps/${encodeURIComponent(id)}/rating`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${auth.jwt}`,
+      },
+      body: JSON.stringify({ stars }),
+    },
+  );
+  if (res.status !== 200) return null;
+  return (await res.json()) as { average: number; count: number };
+}
 
 export async function fetchPlayerById(
   playerId: string,
