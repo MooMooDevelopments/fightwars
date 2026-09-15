@@ -319,4 +319,27 @@ describe("FightWars API", () => {
     });
     expect(badKey.status).toBe(401);
   });
+
+  // The singleplayer archive upload (LocalServer.archiveGame) gzips its body
+  // and sends Content-Encoding: gzip. That is not a CORS-safelisted request
+  // header, so the browser preflights it and drops the upload entirely unless
+  // the header is advertised here.
+  it("allows Content-Encoding on preflight so the gzipped archive upload passes", async () => {
+    const res = await fetch(`${base}/archive_singleplayer_game`, {
+      method: "OPTIONS",
+      headers: {
+        Origin: "http://localhost:9000",
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "content-type,content-encoding",
+      },
+    });
+    expect(res.status).toBe(204);
+    const allowed = (res.headers.get("access-control-allow-headers") ?? "")
+      .toLowerCase()
+      .split(",")
+      .map((h) => h.trim());
+    expect(allowed).toContain("content-encoding");
+    expect(allowed).toContain("content-type");
+    expect(allowed).toContain("authorization");
+  });
 });
