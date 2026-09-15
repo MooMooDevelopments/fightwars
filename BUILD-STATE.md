@@ -79,6 +79,20 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — SHIPPED.md
+
+- **What it says.** The brief's §11 Definition of Done, audited line by line: determinism,
+  data-driven balance, licence, onboarding, every section of §6 and §7, and the performance
+  numbers that this box can produce — met. Four lines open because they need devices: 60 fps
+  on a 2019 laptop, mobile Safari, the parse-and-execute half of cold load, and the
+  500-lobby cluster run. What was cut and why (vassals, war goals, the unpainted terrain
+  types, server-side fog, playing a community map in a lobby, Discord login, cosmetic
+  rewards). The numbers as last measured. Six things to do next, in order.
+- **The one judgement it refuses to make** is whether the game is fun. The instrument is
+  bots against bots; it can say the leader's share fell, not that a match was good. Nobody
+  has played FightWars against another human, and the document says so rather than implying
+  otherwise.
+
 ### Session 13 — the in-game HUD's last raw hues, and the phone seen
 
 - **What shipped.** The seven in-game surfaces that still named Tailwind hues — the

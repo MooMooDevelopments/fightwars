@@ -29,6 +29,13 @@ The same text is the paste-ready prompt at `Claude Memories/fightwars-finish-pro
 
 ### Where things stand
 
+**`SHIPPED.md` is written** (end of session 13). Every section of the brief's §6 and §7 is
+shipped; the Definition of Done is audited there line by line, with four lines open because
+they need devices — 60 fps on a 2019 laptop, mobile Safari, the parse-and-execute half of
+cold load, and the 500-lobby cluster run — and the reasons each is not closable from here.
+Read it before deciding what to do next; the "what I would do next" list at its end is the
+current one.
+
 Phase 5 (Depth, brief §6.1–6.6) is **shipped whole** as of session 12 — twelve commits that
 session, one per increment, all on `origin/main` (head `a2de15239`):
 
