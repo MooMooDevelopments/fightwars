@@ -79,6 +79,24 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — the map editor
+
+- **What shipped.** The map format written a second time, in TypeScript
+  (`src/core/game/MapPackage.ts`): a painted grid becomes exactly the bytes the game
+  loads — the land/shoreline/ocean bits, elevation for land, distance-to-land for water,
+  the largest water body as ocean so a lake stays a lake, and the two minimaps halved with
+  water winning every contested cell. And the editor on top of it: a canvas one pixel a
+  tile, five brushes with a size, three starting sizes, nations placed by name, and an
+  export of one `.fwmap.json` file holding the manifest and the three binaries.
+- **The test that matters** hands the package to the real terrain loader and walks every
+  tile: what the loader sees is what was painted. Writing a second implementation of a
+  format is exactly where that check earns its place.
+- **Guards broken and watched fail:** water losing a contested cell at half scale (which
+  needed a sharper case first — the original had water arriving last anyway), every water
+  body counted as ocean.
+- **Not done:** loading a package back into the editor or a lobby, a thumbnail, team spawn
+  areas. The community map browser is the rest of §6.9.
+
 ### Session 13 — daily and weekly challenges
 
 - **What shipped.** A catalogue of seven challenges — win a game, play three, send half a

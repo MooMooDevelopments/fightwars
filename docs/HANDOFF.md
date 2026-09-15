@@ -666,8 +666,11 @@ Remaining, roughly in the order the brief implies:
   `/users/@me`, a Challenges tab in the account modal). Cosmetic-only progression: the
   client's inventory/cosmetics UI exists but the catalogue is empty by design.
   **No pay-to-win, ever**; the store switch in `Brand.ts` stays off.
-- **Creation tools (6.9)**: in-browser map editor exporting a map package (the Go generator
-  under `map-generator/` defines the format; `npm run gen-maps` regenerates `Maps.gen.ts`),
+- **Creation tools (6.9)**: **the map editor is in** (session 13: `MapPackage.ts` is the
+  format in TypeScript, tested against the real loader; `<map-editor-modal>` paints,
+  places nations and exports a `.fwmap.json` package). The Go generator under
+  `map-generator/` remains the format's first implementation (`npm run gen-maps`
+  regenerates `Maps.gen.ts`); loading a package back into a lobby is the browser's half,
   **fully data-driven balance is in** (session 13: `Tunables.ts`, 91 knobs with bounds,
   `GameConfig.ruleset` per lobby, `resources/rulesets/default.json` the versioned file of
   record, a Custom rules editor in the host lobby, `balance:run --ruleset`; the accessors

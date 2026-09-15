@@ -1710,3 +1710,16 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
 - `src/api/App.ts` — `challenges` on `/users/@me`.
 - `src/client/AccountModal.ts` — the Challenges tab; `src/client/components/ChallengeList.ts` — the panel.
 - `tests/api/Challenges.test.ts`, `tests/client/ChallengeList.test.ts`.
+
+### The map editor (Phase 6, brief §6.9, session 13)
+
+#### Shared upstream files edited
+
+- `index.html` — the `page-map-editor` page; `src/client/Main.ts` — the route.
+- `resources/lang/en.json` — `map_editor.*`.
+
+#### FightWars-only files added
+
+- `src/core/game/MapPackage.ts` — the map format in TypeScript.
+- `src/client/MapEditorModal.ts` — the editor.
+- `tests/MapPackage.test.ts`, `tests/client/MapEditor.test.ts`.

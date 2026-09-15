@@ -1590,6 +1590,29 @@
     "search_results": "Search Results",
     "unfavorite": "Remove from favourites"
   },
+  "map_editor": {
+    "brush_highland": "Highland",
+    "brush_impassable": "Impassable",
+    "brush_mountain": "Mountain",
+    "brush_plains": "Plains",
+    "brush_size": "Brush",
+    "brush_water": "Water",
+    "export": "Export map package",
+    "exported": "Saved {file}",
+    "hint": "Paint the terrain, name the nations that spawn on it, and export a map package. Water beats land where the map is scaled down, so a river one tile wide survives.",
+    "name": "Map name",
+    "nation_name": "Nation name",
+    "place_nation": "Place on the map",
+    "problem_land": "Paint at least 64 tiles of land.",
+    "problem_name": "The map needs a name.",
+    "problem_nation_at_sea": "A nation sits on water.",
+    "problem_nation_off_map": "A nation sits outside the map.",
+    "problem_nations": "Place at least one nation.",
+    "problem_size": "The map must be at least 16 by 16.",
+    "remove_nation": "Remove {name}",
+    "size": "Size",
+    "title": "Map editor"
+  },
   "map_layers": {
     "label": "label"
   },

@@ -73,6 +73,7 @@ import "./LangSelector";
 import { LangSelector } from "./LangSelector";
 import { initLayout } from "./Layout";
 import "./LeaderboardModal";
+import "./MapEditorModal";
 import "./Matchmaking";
 import { MatchmakingModal } from "./Matchmaking";
 import {
@@ -397,6 +398,11 @@ class Client {
       pageId: "page-profile",
     });
     modalRouter.register("help", { tag: "help-modal", pageId: "page-help" });
+    // FightWars (brief §6.9): the in-browser map editor.
+    modalRouter.register("map-editor", {
+      tag: "map-editor-modal",
+      pageId: "page-map-editor",
+    });
     modalRouter.register("news", { tag: "news-modal", pageId: "page-news" });
     modalRouter.register("language", {
       tag: "language-modal",
