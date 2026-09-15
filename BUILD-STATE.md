@@ -79,6 +79,33 @@ shows an empty lobby list with `/w0/lobbies` websocket errors. Load harness:
   name) but was not re-photographed — a nation was not in reach on the map by the time the
   fix landed.
 
+### Session 13 — daily and weekly challenges
+
+- **What shipped.** A catalogue of seven challenges — win a game, play three, send half a
+  million troops, build twenty structures; win five, earn five million from trade and
+  workers, land ten warheads — read entirely off the match records the API already
+  ingests. Three dailies and two weeklies are live at a time, chosen by hashing the
+  period key so every player sees the same set and the rotation needs no deployment.
+  Progress is summed per account per period at ingest (`challenge_progress`, migration 0008) with the completion stamped the first time a total reaches its target, and
+  `/users/@me` carries the live set with progress. Cosmetic only: a line on a profile,
+  nothing that touches a game.
+- **Two Postgres lessons, from the failures themselves:** a foreign key onto
+  `accounts.persistent_id` needs UUID, not TEXT (PGlite says "cannot be implemented"), and
+  a parameter used both as a value and in a comparison needs an explicit `::bigint` cast
+  ("inconsistent types deduced for parameter $4").
+- **A test that was right about the clock.** The API-backed case failed because its
+  records ended ten minutes ago and the suite runs at 00:00 UTC — a different day from the
+  read. The records end a second ago now; the behaviour it caught (a match counts for the
+  period it ended in) is correct and stays.
+- **Guards broken and watched fail:** the week keyed as a year, the completion never
+  stamped.
+- **The panel came with it, because the gate said so.** `TranslationSystem.test.ts` fails
+  on a key nothing uses, and seven `challenge.*` strings had no reader — so the account
+  modal gained a Challenges tab (`<challenge-list>`: the two periods, a bar and a count
+  each, "Done" in the gain colour). The i18n gate is an integration test in disguise: it
+  will not let a payload ship without a screen.
+- **Not done:** cosmetic rewards on completion (the catalogue is empty by design).
+
 ### Session 13 — the balance dashboard and the cold-load gate
 
 - **What shipped.** `/metrics` gained a balance table: per shadowed game, the leader

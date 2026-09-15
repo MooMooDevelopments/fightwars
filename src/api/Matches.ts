@@ -12,6 +12,7 @@
  */
 import { GameRecord } from "../core/Schemas";
 import { ensureAccount } from "./Accounts";
+import { CHALLENGES, MatchFacts, periodKey, progressFrom } from "./Challenges";
 import { Db } from "./Db";
 import { DEFAULT_RATING, matchResults, Rating, updateRating } from "./Glicko2";
 
@@ -152,6 +153,17 @@ export async function ingestMatch(
       // Played under the account's own name: the verified check in history.
       verified = account.username !== null && account.username === p.username;
     }
+    if (persistentId !== null) {
+      await recordChallengeProgress(
+        db,
+        persistentId,
+        {
+          won: won.has(p.clientID),
+          stats: (p.stats ?? null) as MatchFacts["stats"],
+        },
+        new Date(info.end),
+      );
+    }
     await db.query(
       `INSERT INTO match_players
          (game_id, client_id, persistent_id, username, won, clan_tag, verified, stats)
@@ -235,6 +247,80 @@ export function placementOf(
   return games >= PLACEMENT_GAMES
     ? null
     : { played: games, of: PLACEMENT_GAMES };
+}
+
+/**
+ * Adds one match's contribution to every live challenge, and stamps a
+ * completion the first time a total reaches its target. Idempotent per
+ * match only in the sense the ingest is: a record is stored once.
+ */
+export async function recordChallengeProgress(
+  db: Db,
+  persistentId: string,
+  facts: MatchFacts,
+  endedAt: Date,
+): Promise<void> {
+  const targets = new Map(CHALLENGES.map((c) => [c.id, c.target]));
+  for (const p of progressFrom(facts, endedAt)) {
+    const target = targets.get(p.id);
+    if (target === undefined) continue;
+    await db.query(
+      `INSERT INTO challenge_progress
+         (persistent_id, period_key, challenge_id, progress, completed_at, updated_at)
+       VALUES ($1, $2, $3, $4::bigint,
+               CASE WHEN $4::bigint >= $5::bigint THEN now() END, now())
+       ON CONFLICT (persistent_id, period_key, challenge_id) DO UPDATE SET
+         progress = challenge_progress.progress + EXCLUDED.progress,
+         completed_at = COALESCE(
+           challenge_progress.completed_at,
+           CASE WHEN challenge_progress.progress + EXCLUDED.progress >= $5::bigint
+                THEN now() END),
+         updated_at = now()`,
+      [persistentId, periodKey(p.period, endedAt), p.id, p.amount, target],
+    );
+  }
+}
+
+/** A player's live challenges with what they have done toward each. */
+export async function challengesFor(
+  db: Db,
+  persistentId: string,
+  at: Date,
+): Promise<
+  {
+    id: string;
+    period: string;
+    nameKey: string;
+    target: number;
+    progress: number;
+    completed: boolean;
+  }[]
+> {
+  const { activeChallenges } = await import("./Challenges");
+  const live = activeChallenges(at);
+  const rows = await db.query<{
+    challenge_id: string;
+    progress: string;
+    completed_at: Date | null;
+  }>(
+    `SELECT challenge_id, progress, completed_at
+       FROM challenge_progress
+      WHERE persistent_id = $1 AND period_key = ANY($2::text[])`,
+    [persistentId, live.map((c) => periodKey(c.period, at))],
+  );
+  const byId = new Map(rows.rows.map((r) => [r.challenge_id, r]));
+  return live.map((c) => {
+    const row = byId.get(c.id);
+    const progress = row === undefined ? 0 : Number(row.progress);
+    return {
+      id: c.id,
+      period: c.period,
+      nameKey: c.nameKey,
+      target: c.target,
+      progress: Math.min(progress, c.target),
+      completed: row?.completed_at !== null && row?.completed_at !== undefined,
+    };
+  });
 }
 
 export interface LeaderboardEntry {

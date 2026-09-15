@@ -163,6 +163,23 @@ export const MIGRATIONS: { id: string; sql: string }[] = [
       CREATE INDEX ratings_season_ladder_rating ON ratings(season, ladder, rating DESC);
     `,
   },
+  {
+    // FightWars (brief §6.7): daily and weekly challenge progress, summed
+    // from the match records as they are ingested. Cosmetic only.
+    id: "0008_challenges",
+    sql: `
+      CREATE TABLE challenge_progress (
+        persistent_id UUID NOT NULL REFERENCES accounts(persistent_id) ON DELETE CASCADE,
+        period_key    TEXT NOT NULL,
+        challenge_id  TEXT NOT NULL,
+        progress      BIGINT NOT NULL DEFAULT 0,
+        completed_at  TIMESTAMPTZ,
+        updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+        PRIMARY KEY (persistent_id, period_key, challenge_id)
+      );
+      CREATE INDEX challenge_progress_period ON challenge_progress(period_key);
+    `,
+  },
 ];
 
 export async function migrate(db: Db): Promise<string[]> {

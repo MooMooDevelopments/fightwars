@@ -156,6 +156,18 @@ export const PlacementSchema = z.object({
 });
 export type Placement = z.infer<typeof PlacementSchema>;
 
+/** One live challenge and the caller's progress toward it. */
+export const ChallengeProgressSchema = z.object({
+  id: z.string(),
+  period: z.enum(["daily", "weekly"]),
+  /** Translation key; the API never sends prose. */
+  nameKey: z.string(),
+  target: z.number(),
+  progress: z.number(),
+  completed: z.boolean(),
+});
+export type ChallengeProgress = z.infer<typeof ChallengeProgressSchema>;
+
 export const UserMeResponseSchema = z.object({
   user: z.object({
     discord: DiscordUserSchema.optional(),
@@ -209,6 +221,8 @@ export const UserMeResponseSchema = z.object({
     achievements: z.object({
       singleplayerMap: z.array(SingleplayerMapAchievementSchema),
     }),
+    // FightWars (brief §6.7): daily and weekly challenges, cosmetic only.
+    challenges: z.array(ChallengeProgressSchema).optional(),
     leaderboard: z
       .object({
         oneVone: z

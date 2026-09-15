@@ -50,6 +50,7 @@ import { friendPublicIds, registerFriendRoutes } from "./FriendRoutes";
 import { registerGamesRoutes } from "./GamesRoutes";
 import { loadSigningKeys, SigningKeys, signToken, verifyToken } from "./Keys";
 import {
+  challengesFor,
   getMatchRecord,
   getRating,
   ingestMatch,
@@ -322,13 +323,15 @@ export async function createApiApp(
       return;
     }
     const account = await ensureAccount(db, caller.persistentId);
-    const [ffa, team, clans, clanRequests, friends] = await Promise.all([
-      getRating(db, account.persistent_id, "ffa", season),
-      getRating(db, account.persistent_id, "team", season),
-      clansFor(db, account.persistent_id),
-      clanRequestsFor(db, account.persistent_id),
-      friendPublicIds(db, account.persistent_id),
-    ]);
+    const [ffa, team, clans, clanRequests, friends, challenges] =
+      await Promise.all([
+        getRating(db, account.persistent_id, "ffa", season),
+        getRating(db, account.persistent_id, "team", season),
+        clansFor(db, account.persistent_id),
+        clanRequestsFor(db, account.persistent_id),
+        friendPublicIds(db, account.persistent_id),
+        challengesFor(db, account.persistent_id, new Date()),
+      ]);
     res.setHeader("Cache-Control", "no-store");
     res.json({
       user: {},
@@ -342,6 +345,9 @@ export async function createApiApp(
         username: account.username,
         flares: [],
         achievements: { singleplayerMap: [] },
+        // FightWars (brief §6.7): the live challenges and what this account
+        // has done toward each. Cosmetic only — nothing here touches a game.
+        challenges,
         leaderboard: {
           oneVone: ffa
             ? {

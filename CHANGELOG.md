@@ -74,6 +74,9 @@ Player-facing changes, newest first. Engineering detail lives in `BUILD-STATE.md
   nearest Missile Silo within 120 tiles straight to the tile you click and land as an attack
   from there — over water, mountains, anyone's land. Nothing shoots them down. Hotkey I.
   Nations drop rather than sail when a silo reaches a target they cannot walk to.
+- **Challenges.** Three daily and two weekly challenges, rotating: win a game, build
+  twenty structures, land ten warheads. They fill in from the games you already play, show
+  up under Challenges in your account, and are cosmetic only.
 - **For operators:** the metrics page shows each running game's leader against the win
   bar with a two-minute trend, and the build now fails if the page would take more than
   2.5 seconds to arrive on a 10 Mbps line.

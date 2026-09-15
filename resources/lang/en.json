@@ -233,6 +233,21 @@
     "title": "Caster view",
     "troops": "Troops"
   },
+  "challenge": {
+    "daily": "Daily",
+    "daily_attack": "Send 500,000 troops into attacks",
+    "daily_build": "Build twenty structures",
+    "daily_play": "Play three games",
+    "daily_win": "Win a game",
+    "done": "Done",
+    "none": "No challenges right now",
+    "progress": "{progress} of {target}",
+    "title": "Challenges",
+    "weekly": "Weekly",
+    "weekly_nukes": "Land ten warheads",
+    "weekly_trade": "Earn five million gold from trade and workers",
+    "weekly_wins": "Win five games"
+  },
   "change_username_modal": {
     "title": "Change Username",
     "unavailable": "Username management isn't available on this account yet."

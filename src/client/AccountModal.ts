@@ -23,6 +23,7 @@ import "./components/baseComponents/stats/PlayerStatsTable";
 import "./components/baseComponents/stats/PlayerStatsTree";
 import "./components/baseComponents/stats/SteamUserHeader";
 import { BaseModal } from "./components/BaseModal";
+import "./components/ChallengeList";
 import "./components/CopyButton";
 import "./components/CreatorCodePanel";
 import type { CreatorChangedDetail } from "./components/CreatorCodePanel";
@@ -165,6 +166,10 @@ export class AccountModal extends BaseModal {
         { key: "account", label: translateText("account_modal.tab_account") },
         { key: "stats", label: translateText("account_modal.tab_stats") },
         { key: "games", label: translateText("account_modal.tab_games") },
+        {
+          key: "challenges",
+          label: translateText("challenge.title"),
+        },
         { key: "friends", label: translateText("account_modal.tab_friends") },
       ],
     };
@@ -196,6 +201,8 @@ export class AccountModal extends BaseModal {
         return this.renderStatsTab();
       case "games":
         return this.renderGamesTab();
+      case "challenges":
+        return this.renderChallengesTab();
       case "friends":
         return this.renderFriendsTab();
       default:
@@ -373,6 +380,14 @@ export class AccountModal extends BaseModal {
         .statsTree=${this.statsTree}
       ></player-stats-tree-view>
     `;
+  }
+
+  // The challenges (brief §6.7) ride on /users/@me, so they are already
+  // fetched when the modal opens.
+  private renderChallengesTab(): TemplateResult {
+    return html`<challenge-list
+      .challenges=${this.userMeResponse?.player?.challenges ?? []}
+    ></challenge-list>`;
   }
 
   private renderGamesTab(): TemplateResult {

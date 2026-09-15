@@ -661,8 +661,10 @@ Remaining, roughly in the order the brief implies:
   re-simulation from turn 0). **Post-match analytics are in** (session 13: `MatchTimeline`
   on the client, `<match-report>` in the win modal — land over time for the top five, gold
   by source, tiles per thousand troops sent, alliances broken).
-- **Daily/weekly challenges** and cosmetic-only progression (API tables + `/users/@me`
-  fields; the client's inventory/cosmetics UI exists but the catalogue is empty by design).
+- **Daily/weekly challenges are in** (session 13: `src/api/Challenges.ts`, the
+  `challenge_progress` table, progress summed at ingest, `player.challenges` on
+  `/users/@me`, a Challenges tab in the account modal). Cosmetic-only progression: the
+  client's inventory/cosmetics UI exists but the catalogue is empty by design.
   **No pay-to-win, ever**; the store switch in `Brand.ts` stays off.
 - **Creation tools (6.9)**: in-browser map editor exporting a map package (the Go generator
   under `map-generator/` defines the format; `npm run gen-maps` regenerates `Maps.gen.ts`),

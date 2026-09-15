@@ -1695,3 +1695,18 @@ the target tile and land as an attack from there. `docs/MECHANICS.md` §04 D.
 - `src/server/ShadowSim.ts` — `game?()` on the interface; `src/server/MetricsDashboard.ts` — the balance table.
 - `scripts/coldLoadGate.ts`, `scripts/coldLoadModel.ts`.
 - `tests/server/BalanceMetrics.test.ts`, `tests/scripts/ColdLoadModel.test.ts`.
+
+### Daily and weekly challenges (Phase 6, session 13)
+
+#### Shared upstream files edited
+
+- `src/core/ApiSchemas.ts` — `ChallengeProgressSchema`, `player.challenges`.
+- `resources/lang/en.json` — `challenge.*`.
+
+#### FightWars-only files edited or added
+
+- `src/api/Challenges.ts` — the catalogue, the period keys, the rotation.
+- `src/api/Migrations.ts` — `0008_challenges`; `src/api/Matches.ts` — progress at ingest and the read.
+- `src/api/App.ts` — `challenges` on `/users/@me`.
+- `src/client/AccountModal.ts` — the Challenges tab; `src/client/components/ChallengeList.ts` — the panel.
+- `tests/api/Challenges.test.ts`, `tests/client/ChallengeList.test.ts`.
